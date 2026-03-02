@@ -6,11 +6,20 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:seed": "node scripts/seed-mock.mjs",
+    "sync:clawhub": "node scripts/sync-clawhub.mjs",
+    "sync:anthropic": "node scripts/sync-anthropic-skills.mjs",
+    "sync:all": "node scripts/sync-clawhub.mjs && node scripts/sync-anthropic-skills.mjs",
+    "translate": "node scripts/translate-batch.mjs"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.78.0",
+    "@supabase/ssr": "^0.8.0",
+    "@supabase/supabase-js": "^2.98.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "dotenv": "^17.3.1",
     "lucide-react": "^0.575.0",
     "next": "16.1.6",
     "next-themes": "^0.4.6",

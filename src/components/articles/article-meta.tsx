@@ -7,6 +7,9 @@ const categoryLabels: Record<Article["category"], string> = {
   tutorial: "教程",
   analysis: "深度",
   release: "发布",
+  review: "评测",
+  comparison: "对比",
+  weekly: "周刊",
 };
 
 interface ArticleMetaProps {

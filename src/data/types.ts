@@ -1,4 +1,14 @@
 export type SecurityScore = "safe" | "warning" | "danger" | "unscanned";
+export type SkillSource =
+  | "clawhub"
+  | "skills_sh"
+  | "anthropic"
+  | "skillsmp"
+  | "agentskill"
+  | "manual";
+export type PricingType = "free" | "freemium" | "paid";
+export type ArticleType = "news" | "tutorial" | "analysis" | "release" | "review" | "comparison" | "weekly";
+export type SubmissionStatus = "pending" | "approved" | "rejected";
 
 export interface Skill {
   id: string;
@@ -10,10 +20,26 @@ export interface Skill {
   author: string;
   category: string;
   tags: string[];
+  // Source tracking
+  source: SkillSource;
+  sourceUrl?: string;
+  githubUrl?: string;
+  // Metrics
   stars: number;
   downloads: number;
+  weeklyDownloads?: number;
+  // Security & trust
   securityScore: SecurityScore;
-  clawhubUrl?: string;
+  isVerified?: boolean;
+  isFeatured?: boolean;
+  // Enrichment
+  pricingType?: PricingType;
+  platform?: string[];
+  version?: string;
+  screenshotUrls?: string[];
+  similarSkills?: string[];
+  // Freshness
+  lastVerifiedAt?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -28,9 +54,20 @@ export interface Article {
   content: string;
   contentZh?: string;
   sourceUrl?: string;
-  category: "news" | "tutorial" | "analysis" | "release";
+  category: ArticleType;
   coverImage?: string;
   readingTime: number;
   publishedAt: string;
+  createdAt: string;
+}
+
+export interface Submission {
+  id: string;
+  skillName: string;
+  skillUrl: string;
+  submitterEmail?: string;
+  description?: string;
+  isFastTrack: boolean;
+  status: SubmissionStatus;
   createdAt: string;
 }
