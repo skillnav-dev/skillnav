@@ -11,7 +11,9 @@
  *   node scripts/translate-batch.mjs --dry-run                # Preview only
  */
 
-import "dotenv/config";
+import dotenv from "dotenv";
+dotenv.config({ path: ".env.local" });
+dotenv.config();
 import Anthropic from "@anthropic-ai/sdk";
 import { createAdminClient } from "./lib/supabase-admin.mjs";
 import { createLogger } from "./lib/logger.mjs";

@@ -10,7 +10,9 @@
  *   node scripts/sync-anthropic-skills.mjs --limit 20  # Limit items
  */
 
-import "dotenv/config";
+import dotenv from "dotenv";
+dotenv.config({ path: ".env.local" });
+dotenv.config();
 import { createAdminClient } from "./lib/supabase-admin.mjs";
 import { githubFetch, githubFetchRaw } from "./lib/github.mjs";
 import { createLogger } from "./lib/logger.mjs";

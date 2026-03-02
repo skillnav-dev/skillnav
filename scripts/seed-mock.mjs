@@ -7,7 +7,9 @@
  * Usage: node scripts/seed-mock.mjs
  */
 
-import "dotenv/config";
+import dotenv from "dotenv";
+dotenv.config({ path: ".env.local" });
+dotenv.config();
 import { createAdminClient } from "./lib/supabase-admin.mjs";
 import { createLogger } from "./lib/logger.mjs";
 

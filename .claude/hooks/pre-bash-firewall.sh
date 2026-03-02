@@ -13,8 +13,8 @@ dangerous_patterns=(
   'git clean -f'
   'sudo '
   'chmod 777'
-  'curl.*|.*sh'
-  'wget.*|.*sh'
+  'curl.*[|].*sh'
+  'wget.*[|].*sh'
 )
 
 for pattern in "${dangerous_patterns[@]}"; do

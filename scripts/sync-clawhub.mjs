@@ -10,15 +10,17 @@
  *   node scripts/sync-clawhub.mjs --limit 50      # Limit items
  */
 
-import "dotenv/config";
+import dotenv from "dotenv";
+dotenv.config({ path: ".env.local" });
+dotenv.config();
 import { createAdminClient } from "./lib/supabase-admin.mjs";
 import { githubFetch, githubFetchRaw } from "./lib/github.mjs";
 import { createLogger } from "./lib/logger.mjs";
 
 const log = createLogger("clawhub");
 
-const REPO_OWNER = "anthropics";
-const REPO_NAME = "claude-code-skills";
+const REPO_OWNER = "openclaw";
+const REPO_NAME = "skills";
 
 // Category inference from tags/keywords
 const CATEGORY_MAP = {
@@ -67,21 +69,25 @@ function slugify(text) {
 
 /**
  * Parse SKILL.md content into structured data.
+ * Handles both flat YAML fields and nested metadata blocks.
  */
 function parseSkillMd(content) {
   const fmMatch = content.match(/^---\s*\n([\s\S]*?)\n---/);
-  if (!fmMatch) return null;
+
+  // Fallback: parse pure Markdown (no YAML frontmatter)
+  if (!fmMatch) {
+    return parseMarkdownOnly(content);
+  }
 
   const yamlStr = fmMatch[1];
   const fields = {};
 
-  // Simple YAML parser for flat key-value pairs
+  // Simple YAML parser for top-level key-value pairs
   for (const line of yamlStr.split("\n")) {
     const match = line.match(/^(\w[\w-]*):\s*(.+)/);
     if (match) {
       const key = match[1].trim();
       let value = match[2].trim();
-      // Strip quotes
       if (
         (value.startsWith('"') && value.endsWith('"')) ||
         (value.startsWith("'") && value.endsWith("'"))
@@ -92,7 +98,7 @@ function parseSkillMd(content) {
     }
   }
 
-  // Extract tags from YAML arrays like: tags: [a, b, c]
+  // Extract tags from top-level: tags: [a, b, c]
   const tagsMatch = yamlStr.match(/tags:\s*\[(.*?)\]/);
   if (tagsMatch) {
     fields.tags = tagsMatch[1]
@@ -101,9 +107,38 @@ function parseSkillMd(content) {
       .filter(Boolean);
   }
 
+  // Extract tags from nested metadata (openclaw/clawdbot blocks)
+  if (!fields.tags) {
+    const nestedTagsMatch = yamlStr.match(/"tags":\s*\[([^\]]*)\]/);
+    if (nestedTagsMatch) {
+      fields.tags = nestedTagsMatch[1]
+        .split(",")
+        .map((t) => t.trim().replace(/['"]/g, ""))
+        .filter(Boolean);
+    }
+  }
+
   const body = content.slice(fmMatch[0].length).trim();
 
   return { ...fields, body };
+}
+
+/**
+ * Fallback parser for SKILL.md without YAML frontmatter.
+ * Extracts name from first heading and description from first paragraph.
+ */
+function parseMarkdownOnly(content) {
+  const nameMatch = content.match(/^#\s+(.+)/m);
+  if (!nameMatch) return null;
+
+  const name = nameMatch[1].trim();
+
+  // First non-empty paragraph after the heading
+  const afterHeading = content.slice(nameMatch.index + nameMatch[0].length).trim();
+  const descMatch = afterHeading.match(/^([^\n#][^\n]{0,300})/);
+  const description = descMatch ? descMatch[1].replace(/\*\*/g, "").trim() : "";
+
+  return { name, description, body: afterHeading };
 }
 
 /**
@@ -155,9 +190,10 @@ async function main() {
         continue;
       }
 
-      // Derive slug from directory name
+      // Path: skills/<author>/<skill-name>/SKILL.md
       const dirParts = file.path.split("/");
-      const dirName = dirParts.length >= 2 ? dirParts[dirParts.length - 2] : parsed.name;
+      const pathAuthor = dirParts.length >= 3 ? dirParts[1] : null;
+      const dirName = dirParts.length >= 3 ? dirParts[2] : dirParts[dirParts.length - 2];
       const slug = slugify(dirName);
       const tags = Array.isArray(parsed.tags)
         ? parsed.tags
@@ -169,12 +205,12 @@ async function main() {
         slug,
         name: parsed.name || dirName,
         description: parsed.description || "",
-        author: parsed.author || "unknown",
+        author: parsed.author || pathAuthor || "unknown",
         category: inferCategory(parsed.name || dirName, tags),
         tags,
         source: "clawhub",
-        source_url: `https://github.com/${REPO_OWNER}/${REPO_NAME}/tree/main/${file.path.replace("/SKILL.md", "")}`,
-        github_url: `https://github.com/${REPO_OWNER}/${REPO_NAME}`,
+        source_url: `https://clawhub.com/skills/${pathAuthor || "unknown"}/${dirName}`,
+        github_url: `https://github.com/${REPO_OWNER}/${REPO_NAME}/tree/main/${file.path.replace("/SKILL.md", "")}`,
         stars: 0,
         downloads: 0,
         security_score: "unscanned",
