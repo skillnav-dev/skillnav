@@ -23,47 +23,11 @@ GitHub org: `skillnav-dev` | Domain: `skillnav.dev` (Cloudflare Registrar)
 | Email | Resend + React Email | |
 | Payment | LemonSqueezy | |
 
-Key decisions:
-- **Next.js over Astro**: ISR on-demand generation for 13K+ Skills pages
-- **Supabase over D1**: full-stack suite + PGroonga Chinese search
-- **Cloudflare over Vercel**: zero bandwidth fees at scale
-- **Orama → Meilisearch**: zero-cost client search for MVP, server search at growth stage
+Key decisions: Next.js over Astro (ISR for 13K+ pages) · Supabase over D1 (PGroonga Chinese search) · Cloudflare over Vercel (zero bandwidth) · Orama → Meilisearch (zero-cost MVP search)
 
 ## Database Schema
 
-```sql
--- Skills table
-CREATE TABLE skills (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  slug TEXT UNIQUE NOT NULL,
-  name TEXT NOT NULL,
-  name_zh TEXT,
-  description TEXT,
-  description_zh TEXT,
-  author TEXT,
-  category TEXT,
-  tags TEXT[],
-  stars INTEGER DEFAULT 0,
-  downloads INTEGER DEFAULT 0,
-  security_score TEXT,
-  clawhub_url TEXT,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
-);
-
--- News/Articles table
-CREATE TABLE articles (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  slug TEXT UNIQUE NOT NULL,
-  title TEXT NOT NULL,
-  title_zh TEXT,
-  content TEXT,
-  content_zh TEXT,
-  source_url TEXT,
-  published_at TIMESTAMPTZ,
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-```
+Core tables: `skills` (slug, name, name_zh, category, tags, stars, security_score) and `articles` (slug, title, title_zh, content, source_url, published_at). Full schema defined in product plan — see Knowledge Base References.
 
 ## Commands
 
@@ -82,23 +46,96 @@ npm run lint       # Run linter
 
 ## Deployment
 
-- **Platform**: Cloudflare Workers via OpenNext adapter
-- **Domain**: skillnav.dev (Cloudflare Registrar)
-- **CI/CD**: GitHub Actions → Cloudflare Workers
-- **China optimization**: Cloudflare Argo Smart Routing + HK/JP/SG edge nodes (no ICP needed)
+Cloudflare Workers (OpenNext adapter) · Domain: skillnav.dev · CI/CD: GitHub Actions · China: Argo Smart Routing + HK/JP/SG edge (no ICP)
 
 ## Architecture
 
-> This section will be filled as the project develops. Key directories and data flow will be documented here once the initial scaffolding is complete.
+```
+src/
+├── app/                        # Pages & routing (App Router)
+│   ├── page.tsx                # Homepage (5 sections assembled)
+│   ├── articles/               # Article list + [slug] detail (SSG)
+│   ├── skills/                 # Skills listing (TODO: [slug] detail)
+│   ├── layout.tsx              # Root layout (zh lang, fonts, Header/Footer)
+│   ├── globals.css             # Brand color variables (deep indigo theme)
+│   ├── robots.ts / sitemap.ts  # SEO
+│   └── not-found.tsx           # Custom 404
+├── components/
+│   ├── home/                   # Homepage sections (hero, stats, featured, articles, newsletter)
+│   ├── articles/               # Article card, meta, content
+│   ├── skills/                 # Skill card
+│   ├── layout/                 # Header, footer, mobile nav, theme toggle
+│   ├── shared/                 # Section header, security badge, JSON-LD
+│   └── ui/                     # shadcn/ui primitives
+├── data/                       # Mock data (skills, articles) + type definitions
+│   ├── types.ts                # Skill / Article interfaces
+│   ├── mock-skills.ts          # 10 mock Skills
+│   └── mock-articles.ts        # 7 mock articles with full Chinese content
+└── lib/                        # Utilities
+    ├── constants.ts            # Site-wide constants (name, URL, description)
+    └── fonts.ts                # Font configuration
+```
+
+Call direction: `page.tsx` → `components/` → `data/` → `lib/`
+
+## Key Rules
+
+- NEVER commit .env files or any file containing secrets
+- NEVER use `git add .` — add files individually
+- MUST read a file before modifying it — confirm types/functions exist before referencing
+- MUST run `npm run build` to verify after multi-file changes
+- New code MUST reference existing similar implementations for style consistency (anchor file pattern)
+- Use shadcn/ui components exclusively — NEVER introduce Ant Design / MUI / Chakra
+- Use Tailwind utility classes — NEVER write raw CSS
+- Single file should not exceed 300 lines — split if approaching limit
+
+## Work Mode
+
+- Show implementation plan (files to modify + changes) before writing code, wait for approval
+- When modifying shared types, search all references first and list impact scope
+- Small steps: complete one working state → verify → commit → next step
+- If a fix fails twice on the same issue, stop and reassess approach
+
+## Git Scope Mapping
+
+```
+home — Homepage          | skills — Skills module     | articles — Articles module
+ui — Shared UI/layout    | data — Data layer/types    | seo — SEO (sitemap, robots, JSON-LD)
+deps — Dependencies      | config — Configuration     | dx — Dev experience/tooling
+```
+
+## Project Glossary
+
+| Term | Meaning in this project | Not |
+|------|------------------------|-----|
+| Skill | A Claude Code custom skill (SKILL.md definition) | Not a general ability |
+| ClawHub | Third-party Skills registry (clawhub.com) | Not our product |
+| PGroonga | PostgreSQL extension for Chinese full-text search | Not standard pg_trgm |
+| ISR | Incremental Static Regeneration (Next.js) | Not server-side rendering |
+| OpenNext | Adapter to deploy Next.js on Cloudflare Workers | Not official Next.js tooling |
+
+## Known Pitfalls
+
+- `useEffect(() => { setMounted(true) }, [])` triggers `react-hooks/set-state-in-effect` lint error — use `useSyncExternalStore` or suppress with care
+- shadcn/ui components must be installed before import: `npx shadcn@latest add <component>`
+- Next.js 15 uses async `params` in dynamic routes — destructure with `await` in server components
+- Tailwind v4 uses CSS-based config (`@theme` in globals.css), not `tailwind.config.ts`
+
+## Context Management
+
+When executing `/compact`, preserve:
+1. Current task objective (one sentence)
+2. Completed and remaining steps
+3. Modified file list with key changes
+4. Test commands and verification results
+5. Architectural decisions made in this session
 
 ## Knowledge Base References
 
-Detailed docs live in the personal knowledge base (tishici repo):
+Detailed docs in personal knowledge base:
 
 | Document | Path |
 |----------|------|
 | 产品方案 | `/Users/apple/WeChatProjects/tishici/docs/playbook/skillnav-product-plan.md` |
 | 商业化路线图 | `/Users/apple/WeChatProjects/tishici/docs/playbook/skillnav-monetization-roadmap.md` |
 | 赛道调研 | `/Users/apple/WeChatProjects/tishici/docs/playbook/openclaw-skills-research.md` |
-| 域名注册实践 | `/Users/apple/WeChatProjects/tishici/docs/playbook/domain-registration.md` |
-| 域名设计方法论 | `/Users/apple/WeChatProjects/tishici/docs/playbook/domain-naming-methodology.md` |
