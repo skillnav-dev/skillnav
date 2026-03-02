@@ -26,7 +26,7 @@ export async function getSkills(options?: {
         (s) =>
           s.name.toLowerCase().includes(q) ||
           s.nameZh?.includes(q) ||
-          s.description.toLowerCase().includes(q)
+          s.description.toLowerCase().includes(q),
       );
     }
     const start = options?.offset ?? 0;
@@ -49,7 +49,7 @@ export async function getSkills(options?: {
   if (options?.source) query = query.eq("source", options.source);
   if (options?.search) {
     query = query.or(
-      `name.ilike.%${options.search}%,name_zh.ilike.%${options.search}%`
+      `name.ilike.%${options.search}%,name_zh.ilike.%${options.search}%`,
     );
   }
   if (options?.limit) {
@@ -138,12 +138,13 @@ export async function getAllSkillSlugs(): Promise<string[]> {
     return mockSkills.map((s) => s.slug);
   }
 
-  const { createServerClient } = await import("@/lib/supabase/server");
-  const supabase = await createServerClient();
+  const { createStaticClient } = await import("@/lib/supabase/static");
+  const supabase = createStaticClient();
 
-  const { data, error } = await supabase
-    .from("skills")
-    .select("slug") as { data: { slug: string }[] | null; error: unknown };
+  const { data, error } = (await supabase.from("skills").select("slug")) as {
+    data: { slug: string }[] | null;
+    error: unknown;
+  };
 
   if (error) throw error;
   return (data ?? []).map((r) => r.slug);

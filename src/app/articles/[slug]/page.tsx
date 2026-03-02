@@ -7,21 +7,22 @@ import { ArticleContent } from "@/components/articles/article-content";
 import { ArticleCard } from "@/components/articles/article-card";
 import { ArticleJsonLd, BreadcrumbJsonLd } from "@/components/shared/json-ld";
 import { siteConfig } from "@/lib/constants";
-import { mockArticles } from "@/data/mock-articles";
+import { getArticleBySlug, getArticles, getAllArticleSlugs } from "@/lib/data";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
 export async function generateStaticParams() {
-  return mockArticles.map((article) => ({
-    slug: article.slug,
-  }));
+  const slugs = await getAllArticleSlugs();
+  return slugs.map((slug) => ({ slug }));
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const article = mockArticles.find((a) => a.slug === slug);
+  const article = await getArticleBySlug(slug);
   if (!article) return {};
 
   const title = article.titleZh ?? article.title;
@@ -42,12 +43,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function ArticlePage({ params }: PageProps) {
   const { slug } = await params;
-  const article = mockArticles.find((a) => a.slug === slug);
+  const article = await getArticleBySlug(slug);
   if (!article) notFound();
 
-  const related = mockArticles
-    .filter((a) => a.id !== article.id)
-    .slice(0, 2);
+  const allArticles = await getArticles();
+  const related = allArticles.filter((a) => a.id !== article.id).slice(0, 2);
 
   return (
     <>
@@ -61,7 +61,10 @@ export default async function ArticlePage({ params }: PageProps) {
         items={[
           { name: "首页", href: "/" },
           { name: "资讯", href: "/articles" },
-          { name: article.titleZh ?? article.title, href: `/articles/${article.slug}` },
+          {
+            name: article.titleZh ?? article.title,
+            href: `/articles/${article.slug}`,
+          },
         ]}
       />
       <article className="mx-auto max-w-3xl px-4 py-12 sm:px-6">

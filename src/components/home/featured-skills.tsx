@@ -2,10 +2,10 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { SectionHeader } from "@/components/shared/section-header";
 import { SkillCard } from "@/components/skills/skill-card";
-import { mockSkills } from "@/data/mock-skills";
+import { getFeaturedSkills } from "@/lib/data";
 
-export function FeaturedSkills() {
-  const featured = mockSkills.slice(0, 6);
+export async function FeaturedSkills() {
+  const featured = await getFeaturedSkills();
 
   return (
     <section className="py-16">

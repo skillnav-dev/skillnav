@@ -1,11 +1,23 @@
 import type { MetadataRoute } from "next";
 import { siteConfig } from "@/lib/constants";
-import { mockArticles } from "@/data/mock-articles";
+import { getAllArticleSlugs, getAllSkillSlugs } from "@/lib/data";
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  const articles = mockArticles.map((article) => ({
-    url: `${siteConfig.url}/articles/${article.slug}`,
-    lastModified: new Date(article.publishedAt),
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const [articleSlugs, skillSlugs] = await Promise.all([
+    getAllArticleSlugs(),
+    getAllSkillSlugs(),
+  ]);
+
+  const articles = articleSlugs.map((slug) => ({
+    url: `${siteConfig.url}/articles/${slug}`,
+    lastModified: new Date(),
+    changeFrequency: "weekly" as const,
+    priority: 0.7,
+  }));
+
+  const skills = skillSlugs.map((slug) => ({
+    url: `${siteConfig.url}/skills/${slug}`,
+    lastModified: new Date(),
     changeFrequency: "weekly" as const,
     priority: 0.7,
   }));
@@ -29,6 +41,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "daily",
       priority: 0.8,
     },
+    ...skills,
     ...articles,
   ];
 }

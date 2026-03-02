@@ -100,12 +100,13 @@ export async function getAllArticleSlugs(): Promise<string[]> {
     return mockArticles.map((a) => a.slug);
   }
 
-  const { createServerClient } = await import("@/lib/supabase/server");
-  const supabase = await createServerClient();
+  const { createStaticClient } = await import("@/lib/supabase/static");
+  const supabase = createStaticClient();
 
-  const { data, error } = await supabase
-    .from("articles")
-    .select("slug") as { data: { slug: string }[] | null; error: unknown };
+  const { data, error } = (await supabase.from("articles").select("slug")) as {
+    data: { slug: string }[] | null;
+    error: unknown;
+  };
 
   if (error) throw error;
   return (data ?? []).map((r) => r.slug);

@@ -2,14 +2,16 @@ import type { Metadata } from "next";
 import { SectionHeader } from "@/components/shared/section-header";
 import { ArticleCard } from "@/components/articles/article-card";
 import { BreadcrumbJsonLd } from "@/components/shared/json-ld";
-import { mockArticles } from "@/data/mock-articles";
+import { getArticles } from "@/lib/data";
 
 export const metadata: Metadata = {
   title: "资讯",
   description: "AI Agent Skills 生态的最新动态、教程和深度分析。",
 };
 
-export default function ArticlesPage() {
+export default async function ArticlesPage() {
+  const articles = await getArticles();
+
   return (
     <>
       <BreadcrumbJsonLd
@@ -24,7 +26,7 @@ export default function ArticlesPage() {
           description="AI Agent Skills 生态的最新动态、教程和深度分析"
         />
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
-          {mockArticles.map((article) => (
+          {articles.map((article) => (
             <ArticleCard key={article.id} article={article} />
           ))}
         </div>

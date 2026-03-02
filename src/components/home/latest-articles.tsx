@@ -2,10 +2,10 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { SectionHeader } from "@/components/shared/section-header";
 import { ArticleCard } from "@/components/articles/article-card";
-import { mockArticles } from "@/data/mock-articles";
+import { getLatestArticles } from "@/lib/data";
 
-export function LatestArticles() {
-  const latest = mockArticles.slice(0, 4);
+export async function LatestArticles() {
+  const latest = await getLatestArticles();
 
   return (
     <section className="py-16">

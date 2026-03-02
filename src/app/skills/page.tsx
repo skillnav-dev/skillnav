@@ -2,14 +2,16 @@ import type { Metadata } from "next";
 import { SectionHeader } from "@/components/shared/section-header";
 import { SkillCard } from "@/components/skills/skill-card";
 import { BreadcrumbJsonLd } from "@/components/shared/json-ld";
-import { mockSkills } from "@/data/mock-skills";
+import { getSkills } from "@/lib/data";
 
 export const metadata: Metadata = {
   title: "Skills 导航",
   description: "浏览和发现最好用的 AI Agent Skills，包含安全评分和社区评价。",
 };
 
-export default function SkillsPage() {
+export default async function SkillsPage() {
+  const skills = await getSkills();
+
   return (
     <>
       <BreadcrumbJsonLd
@@ -24,7 +26,7 @@ export default function SkillsPage() {
           description="浏览和发现最好用的 AI Agent Skills"
         />
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {mockSkills.map((skill) => (
+          {skills.map((skill) => (
             <SkillCard key={skill.id} skill={skill} />
           ))}
         </div>
