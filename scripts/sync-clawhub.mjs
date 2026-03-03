@@ -5,9 +5,11 @@
  * Fetches SKILL.md files from the openclaw/skills GitHub repo.
  *
  * Usage:
- *   node scripts/sync-clawhub.mjs                 # Full sync
- *   node scripts/sync-clawhub.mjs --dry-run       # Preview only
- *   node scripts/sync-clawhub.mjs --limit 50      # Limit items
+ *   node scripts/sync-clawhub.mjs                          # Full sync
+ *   node scripts/sync-clawhub.mjs --dry-run                # Preview only
+ *   node scripts/sync-clawhub.mjs --limit 50               # Limit items
+ *   node scripts/sync-clawhub.mjs --offset 2000 --limit 2000  # Stage sync (2001-4000)
+ *   node scripts/sync-clawhub.mjs --offset 6000 --limit 2367 --skip-existing  # Retry failed only
  */
 
 import dotenv from "dotenv";
@@ -162,20 +164,45 @@ async function fetchSkillFiles() {
 async function main() {
   const args = process.argv.slice(2);
   const dryRun = args.includes("--dry-run");
+  const skipExisting = args.includes("--skip-existing");
   const limitIdx = args.indexOf("--limit");
   const limit = limitIdx !== -1 ? Number(args[limitIdx + 1]) : Infinity;
+  const offsetIdx = args.indexOf("--offset");
+  const offset = offsetIdx !== -1 ? Number(args[offsetIdx + 1]) : 0;
 
   let supabase;
   if (!dryRun) {
     supabase = createAdminClient();
   }
 
-  const skillFiles = await fetchSkillFiles();
-  const filesToProcess = skillFiles.slice(0, limit);
+  const allSkillFiles = await fetchSkillFiles();
+  let filesToProcess = allSkillFiles.slice(offset, offset + limit);
+
+  // Skip files whose slugs already exist in DB
+  if (skipExisting && supabase) {
+    log.info("Fetching existing slugs from DB...");
+    const { data: rows, error } = await supabase.from("skills").select("slug");
+    if (error) throw error;
+    const existingSlugs = new Set(rows.map((r) => r.slug));
+    const before = filesToProcess.length;
+    filesToProcess = filesToProcess.filter((file) => {
+      const dirParts = file.path.split("/");
+      const pathAuthor = dirParts.length >= 3 ? dirParts[1] : null;
+      const dirName = dirParts.length >= 3 ? dirParts[2] : dirParts[dirParts.length - 2];
+      const slug = slugify(`${pathAuthor || "unknown"}--${dirName}`);
+      return !existingSlugs.has(slug);
+    });
+    log.info(`Skipped ${before - filesToProcess.length} existing, ${filesToProcess.length} remaining`);
+  }
+
+  const total = filesToProcess.length;
+  log.info(`Processing range: ${offset} → ${offset + Math.min(limit, allSkillFiles.length - offset)} (of ${allSkillFiles.length} total)`);
+
   const skills = [];
   let errors = 0;
 
-  for (const file of filesToProcess) {
+  for (let idx = 0; idx < filesToProcess.length; idx++) {
+    const file = filesToProcess[idx];
     try {
       const content = await githubFetchRaw(
         REPO_OWNER,
@@ -185,7 +212,6 @@ async function main() {
 
       const parsed = parseSkillMd(content);
       if (!parsed) {
-        log.warn(`No frontmatter: ${file.path}`);
         errors++;
         continue;
       }
@@ -194,7 +220,8 @@ async function main() {
       const dirParts = file.path.split("/");
       const pathAuthor = dirParts.length >= 3 ? dirParts[1] : null;
       const dirName = dirParts.length >= 3 ? dirParts[2] : dirParts[dirParts.length - 2];
-      const slug = slugify(dirName);
+      const author = parsed.author || pathAuthor || "unknown";
+      const slug = slugify(`${author}--${dirName}`);
       const tags = Array.isArray(parsed.tags)
         ? parsed.tags
         : typeof parsed.tags === "string"
@@ -205,7 +232,7 @@ async function main() {
         slug,
         name: parsed.name || dirName,
         description: parsed.description || "",
-        author: parsed.author || pathAuthor || "unknown",
+        author,
         category: inferCategory(parsed.name || dirName, tags),
         tags,
         source: "clawhub",
@@ -222,8 +249,11 @@ async function main() {
       log.warn(`Error processing ${file.path}: ${e.message}`);
       errors++;
     }
+
+    log.progress(idx + 1, total, errors, file.path.split("/").slice(1, 3).join("/"));
   }
 
+  log.progressEnd();
   log.info(`Parsed ${skills.length} skills (${errors} errors)`);
 
   if (dryRun) {
@@ -236,24 +266,44 @@ async function main() {
     return;
   }
 
-  // Batch upsert in chunks
+  // Deduplicate by slug AND (name, author) to satisfy both unique constraints
+  const slugMap = new Map();
+  const dedupMap = new Map();
+  const dedupedSkills = [];
+  for (const skill of skills) {
+    const dedupKey = `${skill.name.toLowerCase()}|${skill.author.toLowerCase()}|${skill.source}`;
+    if (slugMap.has(skill.slug) || dedupMap.has(dedupKey)) continue;
+    slugMap.set(skill.slug, true);
+    dedupMap.set(dedupKey, true);
+    dedupedSkills.push(skill);
+  }
+  const dupeCount = skills.length - dedupedSkills.length;
+  if (dupeCount > 0) {
+    log.info(`Deduplicated: ${skills.length} → ${dedupedSkills.length} (${dupeCount} duplicates removed)`);
+  }
+
+  // Batch upsert in chunks (ignoreDuplicates for cross-batch dedup conflicts)
   const BATCH_SIZE = 500;
   let upserted = 0;
 
-  for (let i = 0; i < skills.length; i += BATCH_SIZE) {
-    const batch = skills.slice(i, i + BATCH_SIZE);
+  for (let i = 0; i < dedupedSkills.length; i += BATCH_SIZE) {
+    const batch = dedupedSkills.slice(i, i + BATCH_SIZE);
     const { error } = await supabase
       .from("skills")
-      .upsert(batch, { onConflict: "slug", ignoreDuplicates: false });
+      .upsert(batch, { onConflict: "slug", ignoreDuplicates: true });
 
     if (error) {
       log.error(`Batch ${Math.floor(i / BATCH_SIZE) + 1} error: ${error.message}`);
     } else {
       upserted += batch.length;
+      log.info(`Upsert batch ${Math.floor(i / BATCH_SIZE) + 1}: +${batch.length} (total: ${upserted})`);
     }
   }
 
-  log.success(`Upserted ${upserted} skills, ${errors} errors`);
+  // Summary report
+  log.success("=== Sync Summary ===");
+  log.success(`Range: ${offset} → ${offset + total} of ${allSkillFiles.length}`);
+  log.success(`Parsed: ${skills.length} | Deduped: ${dedupedSkills.length} | Upserted: ${upserted} | Errors: ${errors}`);
   log.done();
 }
 
