@@ -1,14 +1,47 @@
 /**
  * Shared LLM utility module.
- * Wraps the Anthropic SDK for translation and classification tasks.
+ * Supports multiple providers via LLM_PROVIDER env var.
+ *
+ * Providers:
+ *   - deepseek (default): DEEPSEEK_API_KEY, model deepseek-chat
+ *   - gemini:             GEMINI_API_KEY, model gemini-2.0-flash
+ *   - anthropic:          ANTHROPIC_API_KEY, model claude-haiku-4-5-20251001
+ *   - openai:             OPENAI_API_KEY, model gpt-4o-mini
  */
-import Anthropic from "@anthropic-ai/sdk";
 
-const client = new Anthropic(); // auto-reads ANTHROPIC_API_KEY from env
+// ── Provider Configuration ───────────────────────────────────────────
 
-const DEFAULT_MODEL = "claude-haiku-4-5-20251001";
+const PROVIDERS = {
+  deepseek: {
+    name: "DeepSeek V3",
+    baseUrl: "https://api.deepseek.com/v1",
+    model: "deepseek-chat",
+    apiKeyEnv: "DEEPSEEK_API_KEY",
+    type: "openai-compatible",
+  },
+  gemini: {
+    name: "Gemini 2.0 Flash",
+    baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai",
+    model: "gemini-2.0-flash",
+    apiKeyEnv: "GEMINI_API_KEY",
+    type: "openai-compatible",
+  },
+  anthropic: {
+    name: "Claude Haiku",
+    model: "claude-haiku-4-5-20251001",
+    apiKeyEnv: "ANTHROPIC_API_KEY",
+    type: "anthropic",
+  },
+  openai: {
+    name: "GPT-4o-mini",
+    baseUrl: "https://api.openai.com/v1",
+    model: "gpt-4o-mini",
+    apiKeyEnv: "OPENAI_API_KEY",
+    type: "openai-compatible",
+  },
+};
 
-// Truncation limit for article content (~4K tokens, cost-efficient for Haiku)
+// Truncation limit for article content (~4K tokens)
 const MAX_CONTENT_LENGTH = 15000;
 
 const VALID_ARTICLE_TYPES = [
@@ -21,27 +54,100 @@ const VALID_ARTICLE_TYPES = [
   "weekly",
 ];
 
+// ── Provider Resolution ──────────────────────────────────────────────
+
+function getProvider() {
+  const name = process.env.LLM_PROVIDER || "deepseek";
+  const provider = PROVIDERS[name];
+  if (!provider) {
+    throw new Error(
+      `Unknown LLM_PROVIDER: "${name}". Available: ${Object.keys(PROVIDERS).join(", ")}`
+    );
+  }
+  const apiKey = process.env[provider.apiKeyEnv];
+  if (!apiKey) {
+    throw new Error(
+      `${provider.apiKeyEnv} is not set. Required for provider "${name}".`
+    );
+  }
+  return { ...provider, apiKey };
+}
+
 /**
- * Translate and classify an article in a single LLM call.
- * Returns structured JSON with Chinese translations + metadata.
- *
- * @param {{ title: string, summary: string, content: string }} article
- * @param {{ model?: string }} options
- * @returns {Promise<{ titleZh: string, summaryZh: string, contentZh: string, articleType: string, readingTime: number }>}
+ * Get current provider info (for logging).
+ * @returns {{ name: string, model: string, provider: string }}
  */
-export async function translateArticle(
-  { title, summary, content },
-  options = {}
-) {
-  const model = options.model || DEFAULT_MODEL;
+export function getProviderInfo() {
+  const name = process.env.LLM_PROVIDER || "deepseek";
+  const provider = PROVIDERS[name];
+  return provider
+    ? { provider: name, name: provider.name, model: provider.model }
+    : { provider: name, name: "unknown", model: "unknown" };
+}
 
-  // Truncate content if too long (Haiku context is 200K but we want cost efficiency)
-  const truncatedContent =
-    content.length > MAX_CONTENT_LENGTH
-      ? content.slice(0, MAX_CONTENT_LENGTH) + "\n\n[... content truncated ...]"
-      : content;
+// ── LLM Call Implementations ─────────────────────────────────────────
 
-  const systemPrompt = `You are a professional Chinese tech media translator. Your task is to translate English tech articles into natural, fluent Chinese suitable for a Chinese tech news site.
+/**
+ * Call an OpenAI-compatible API (DeepSeek, OpenAI, etc.)
+ */
+async function callOpenAICompatible(provider, systemPrompt, userPrompt, maxTokens) {
+  const res = await fetch(`${provider.baseUrl}/chat/completions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${provider.apiKey}`,
+    },
+    body: JSON.stringify({
+      model: provider.model,
+      max_tokens: maxTokens,
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+    }),
+  });
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`${provider.name} API error ${res.status}: ${body.slice(0, 300)}`);
+  }
+
+  const data = await res.json();
+  return data.choices[0].message.content;
+}
+
+/**
+ * Call the Anthropic API via SDK.
+ */
+async function callAnthropic(provider, systemPrompt, userPrompt, maxTokens) {
+  const { default: Anthropic } = await import("@anthropic-ai/sdk");
+  const client = new Anthropic({ apiKey: provider.apiKey });
+
+  const response = await client.messages.create({
+    model: provider.model,
+    max_tokens: maxTokens,
+    system: systemPrompt,
+    messages: [{ role: "user", content: userPrompt }],
+  });
+
+  return response.content[0].text;
+}
+
+/**
+ * Unified LLM call dispatcher.
+ */
+async function callLLM(systemPrompt, userPrompt, maxTokens = 8192) {
+  const provider = getProvider();
+  if (provider.type === "anthropic") {
+    return callAnthropic(provider, systemPrompt, userPrompt, maxTokens);
+  }
+  return callOpenAICompatible(provider, systemPrompt, userPrompt, maxTokens);
+}
+
+// ── Shared Prompts ───────────────────────────────────────────────────
+
+const SYSTEM_PROMPT = `You are a professional Chinese tech media translator. Your task is to translate English tech articles into natural, fluent Chinese suitable for a Chinese tech news site.
 
 Translation style:
 - Natural Chinese expression, NOT word-for-word translation
@@ -51,6 +157,21 @@ Translation style:
 - Preserve all code snippets, URLs, and technical references unchanged
 
 You must respond with valid JSON only, no markdown fences.`;
+
+// ── Public API ───────────────────────────────────────────────────────
+
+/**
+ * Translate and classify an article in a single LLM call.
+ * Returns structured JSON with Chinese translations + metadata.
+ *
+ * @param {{ title: string, summary: string, content: string }} article
+ * @returns {Promise<{ titleZh: string, summaryZh: string, contentZh: string, articleType: string, readingTime: number }>}
+ */
+export async function translateArticle({ title, summary, content }) {
+  const truncatedContent =
+    content.length > MAX_CONTENT_LENGTH
+      ? content.slice(0, MAX_CONTENT_LENGTH) + "\n\n[... content truncated ...]"
+      : content;
 
   const userPrompt = `Translate this article and classify it. Return JSON with these exact fields:
 
@@ -71,25 +192,36 @@ Summary: ${summary || "N/A"}
 Content:
 ${truncatedContent}`;
 
-  const response = await client.messages.create({
-    model,
-    max_tokens: 8192,
-    system: systemPrompt,
-    messages: [{ role: "user", content: userPrompt }],
-  });
-
-  const text = response.content[0].text;
+  const text = await callLLM(SYSTEM_PROMPT, userPrompt, 8192);
   return parseTranslationResponse(text);
 }
 
 /**
- * Parse and validate the LLM translation response JSON.
+ * Generic text translation.
  *
- * @param {string} text - Raw LLM response text
- * @returns {{ titleZh: string, summaryZh: string, contentZh: string, articleType: string, readingTime: number }}
+ * @param {string} text - Text to translate
+ * @param {{ from?: string, to?: string }} options
+ * @returns {Promise<string>}
+ */
+export async function translate(text, options = {}) {
+  const { from = "English", to = "Chinese" } = options;
+
+  const result = await callLLM(
+    "You are a professional translator. Return only the translation, no explanations.",
+    `Translate the following ${from} text to ${to}:\n\n${text}`,
+    4096
+  );
+
+  return result.trim();
+}
+
+// ── Response Parsing ─────────────────────────────────────────────────
+
+/**
+ * Parse and validate the LLM translation response JSON.
  */
 function parseTranslationResponse(text) {
-  // Strip potential markdown fences the model may include despite instructions
+  // Strip potential markdown fences
   const jsonStr = text
     .replace(/^```json\s*\n?/, "")
     .replace(/\n?```\s*$/, "")
@@ -106,13 +238,7 @@ function parseTranslationResponse(text) {
   }
 
   // Validate required fields
-  const required = [
-    "titleZh",
-    "summaryZh",
-    "contentZh",
-    "articleType",
-    "readingTime",
-  ];
+  const required = ["titleZh", "summaryZh", "contentZh", "articleType", "readingTime"];
   for (const field of required) {
     if (result[field] === undefined) {
       throw new Error(
@@ -122,7 +248,7 @@ function parseTranslationResponse(text) {
     }
   }
 
-  // Normalize articleType — fallback to "news" if unrecognized
+  // Normalize articleType
   if (!VALID_ARTICLE_TYPES.includes(result.articleType)) {
     result.articleType = "news";
   }
@@ -134,30 +260,4 @@ function parseTranslationResponse(text) {
       : parseInt(result.readingTime, 10) || 5;
 
   return result;
-}
-
-/**
- * Generic text translation.
- *
- * @param {string} text - Text to translate
- * @param {{ from?: string, to?: string, model?: string }} options
- * @returns {Promise<string>}
- */
-export async function translate(text, options = {}) {
-  const { from = "English", to = "Chinese", model = DEFAULT_MODEL } = options;
-
-  const response = await client.messages.create({
-    model,
-    max_tokens: 4096,
-    messages: [
-      {
-        role: "user",
-        content:
-          `Translate the following ${from} text to ${to}. ` +
-          `Return only the translation, no explanations.\n\n${text}`,
-      },
-    ],
-  });
-
-  return response.content[0].text.trim();
 }

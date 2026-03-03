@@ -23,7 +23,7 @@ import { JSDOM } from "jsdom";
 import TurndownService from "turndown";
 import { createAdminClient } from "./lib/supabase-admin.mjs";
 import { createLogger } from "./lib/logger.mjs";
-import { translateArticle } from "./lib/llm.mjs";
+import { translateArticle, getProviderInfo } from "./lib/llm.mjs";
 
 const log = createLogger("articles");
 
@@ -114,6 +114,11 @@ async function main() {
   const limit = limitIdx !== -1 ? Number(args[limitIdx + 1]) : Infinity;
   const sourceIdx = args.indexOf("--source");
   const sourceFilter = sourceIdx !== -1 ? args[sourceIdx + 1] : null;
+
+  if (!dryRun) {
+    const { name, model } = getProviderInfo();
+    log.info(`LLM provider: ${name} (${model})`);
+  }
 
   let supabase;
   if (!dryRun) {
