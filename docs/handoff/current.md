@@ -35,9 +35,11 @@
 2. 删除 `idx_skills_dedup` 约束（Supabase Dashboard SQL Editor），slug 唯一性已足够
 3. 重跑 Batch 3 丢失的约 500 条记录
 
-### 优先级 2：部署管线
-4. Cloudflare Pages 配置 Supabase 环境变量（`NEXT_PUBLIC_SUPABASE_URL`、`NEXT_PUBLIC_SUPABASE_ANON_KEY`）
-5. 验证生产环境 `/skills` 分页和搜索正常工作
+### 优先级 2：部署管线（当前无任何 CI/CD 配置）
+4. 安装 `@opennextjs/cloudflare` 适配器，配置 `wrangler.toml`
+5. 创建 `.github/workflows/deploy.yml` — GitHub Actions 自动部署到 Cloudflare Workers
+6. Cloudflare Dashboard 配置环境变量（`NEXT_PUBLIC_SUPABASE_URL`、`NEXT_PUBLIC_SUPABASE_ANON_KEY`）
+7. 验证生产环境 `skillnav.dev` 页面正常工作
 
 ### 优先级 3：搜索体验优化
 6. `src/components/skills/skills-toolbar.tsx` — 搜索结果高亮匹配关键词
