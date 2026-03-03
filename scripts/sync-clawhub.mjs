@@ -18,49 +18,12 @@ dotenv.config();
 import { createAdminClient } from "./lib/supabase-admin.mjs";
 import { githubFetch, githubFetchRaw } from "./lib/github.mjs";
 import { createLogger } from "./lib/logger.mjs";
+import { categorize } from "./lib/categorize.mjs";
 
 const log = createLogger("clawhub");
 
 const REPO_OWNER = "openclaw";
 const REPO_NAME = "skills";
-
-// Category inference from tags/keywords
-const CATEGORY_MAP = {
-  search: "搜索",
-  web: "搜索",
-  code: "开发",
-  coding: "开发",
-  development: "开发",
-  debug: "开发",
-  test: "开发",
-  data: "数据",
-  analysis: "数据",
-  database: "数据",
-  file: "效率",
-  productivity: "效率",
-  email: "效率",
-  document: "效率",
-  api: "集成",
-  integration: "集成",
-  connect: "集成",
-  image: "创意",
-  design: "创意",
-  creative: "创意",
-  memory: "基础",
-  context: "基础",
-  security: "安全",
-};
-
-function inferCategory(name, tags) {
-  const words = [
-    ...tags.map((t) => t.toLowerCase()),
-    ...name.toLowerCase().split(/[\s-_]+/),
-  ];
-  for (const word of words) {
-    if (CATEGORY_MAP[word]) return CATEGORY_MAP[word];
-  }
-  return "其他";
-}
 
 function slugify(text) {
   return text
@@ -233,7 +196,7 @@ async function main() {
         name: parsed.name || dirName,
         description: parsed.description || "",
         author,
-        category: inferCategory(parsed.name || dirName, tags),
+        category: categorize(parsed.name || dirName, tags, parsed.description || ""),
         tags,
         source: "clawhub",
         source_url: `https://clawhub.com/skills/${pathAuthor || "unknown"}/${dirName}`,
