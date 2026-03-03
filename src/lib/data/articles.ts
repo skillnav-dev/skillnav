@@ -92,6 +92,91 @@ export async function getLatestArticles(limit = 4): Promise<Article[]> {
 }
 
 /**
+ * Get articles with total count (for paginated listing).
+ */
+export async function getArticlesWithCount(options?: {
+  limit?: number;
+  offset?: number;
+  category?: string;
+  search?: string;
+}): Promise<{ articles: Article[]; total: number }> {
+  if (!isSupabaseConfigured()) {
+    const { mockArticles } = await import("@/data/mock-articles");
+    let results = [...mockArticles];
+    if (options?.category) {
+      results = results.filter((a) => a.category === options.category);
+    }
+    if (options?.search) {
+      const q = options.search.toLowerCase();
+      results = results.filter(
+        (a) =>
+          a.title.toLowerCase().includes(q) ||
+          a.titleZh?.includes(q) ||
+          a.summary.toLowerCase().includes(q) ||
+          a.summaryZh?.includes(q),
+      );
+    }
+    const total = results.length;
+    const start = options?.offset ?? 0;
+    if (options?.limit) {
+      results = results.slice(start, start + options.limit);
+    }
+    return { articles: results, total };
+  }
+
+  const { createServerClient } = await import("@/lib/supabase/server");
+  const { mapArticleRow } = await import("@/lib/supabase/mappers");
+  const supabase = await createServerClient();
+
+  let query = supabase
+    .from("articles")
+    .select("*", { count: "exact" })
+    .order("published_at", { ascending: false });
+
+  if (options?.category) query = query.eq("article_type", options.category);
+  if (options?.search) {
+    query = query.or(
+      `title.ilike.%${options.search}%,title_zh.ilike.%${options.search}%`,
+    );
+  }
+  if (options?.limit) {
+    const start = options.offset ?? 0;
+    query = query.range(start, start + options.limit - 1);
+  }
+
+  const { data, count, error } = await query;
+  if (error) throw error;
+  return {
+    articles: (data ?? []).map(mapArticleRow),
+    total: count ?? 0,
+  };
+}
+
+/**
+ * Get distinct article categories.
+ */
+export async function getArticleCategories(): Promise<string[]> {
+  if (!isSupabaseConfigured()) {
+    const { mockArticles } = await import("@/data/mock-articles");
+    return [...new Set(mockArticles.map((a) => a.category))].sort();
+  }
+
+  const { createServerClient } = await import("@/lib/supabase/server");
+  const supabase = await createServerClient();
+
+  const { data, error } = (await supabase
+    .from("articles")
+    .select("article_type")) as {
+    data: { article_type: string }[] | null;
+    error: unknown;
+  };
+  if (error) throw error;
+  return [
+    ...new Set((data ?? []).map((r) => r.article_type).filter(Boolean)),
+  ].sort();
+}
+
+/**
  * Get all article slugs (for generateStaticParams).
  */
 export async function getAllArticleSlugs(): Promise<string[]> {
