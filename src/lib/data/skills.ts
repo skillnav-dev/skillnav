@@ -130,6 +130,92 @@ export async function getSkillsCount(): Promise<number> {
 }
 
 /**
+ * Get skills with total count (for paginated listing).
+ */
+export async function getSkillsWithCount(options?: {
+  limit?: number;
+  offset?: number;
+  category?: string;
+  source?: string;
+  search?: string;
+}): Promise<{ skills: Skill[]; total: number }> {
+  if (!isSupabaseConfigured()) {
+    const { mockSkills } = await import("@/data/mock-skills");
+    let results = [...mockSkills];
+    if (options?.category) {
+      results = results.filter((s) => s.category === options.category);
+    }
+    if (options?.search) {
+      const q = options.search.toLowerCase();
+      results = results.filter(
+        (s) =>
+          s.name.toLowerCase().includes(q) ||
+          s.nameZh?.includes(q) ||
+          s.description.toLowerCase().includes(q),
+      );
+    }
+    const total = results.length;
+    const start = options?.offset ?? 0;
+    if (options?.limit) {
+      results = results.slice(start, start + options.limit);
+    }
+    return { skills: results, total };
+  }
+
+  const { createServerClient } = await import("@/lib/supabase/server");
+  const { mapSkillRow } = await import("@/lib/supabase/mappers");
+  const supabase = await createServerClient();
+
+  let query = supabase
+    .from("skills")
+    .select("*", { count: "exact" })
+    .order("stars", { ascending: false });
+
+  if (options?.category) query = query.eq("category", options.category);
+  if (options?.source) query = query.eq("source", options.source);
+  if (options?.search) {
+    query = query.or(
+      `name.ilike.%${options.search}%,name_zh.ilike.%${options.search}%`,
+    );
+  }
+  if (options?.limit) {
+    const start = options.offset ?? 0;
+    query = query.range(start, start + options.limit - 1);
+  }
+
+  const { data, count, error } = await query;
+  if (error) throw error;
+  return {
+    skills: (data ?? []).map(mapSkillRow),
+    total: count ?? 0,
+  };
+}
+
+/**
+ * Get distinct skill categories.
+ */
+export async function getSkillCategories(): Promise<string[]> {
+  if (!isSupabaseConfigured()) {
+    const { mockSkills } = await import("@/data/mock-skills");
+    return [...new Set(mockSkills.map((s) => s.category))].sort();
+  }
+
+  const { createServerClient } = await import("@/lib/supabase/server");
+  const supabase = await createServerClient();
+
+  const { data, error } = (await supabase
+    .from("skills")
+    .select("category")) as {
+    data: { category: string }[] | null;
+    error: unknown;
+  };
+  if (error) throw error;
+  return [
+    ...new Set((data ?? []).map((r) => r.category).filter(Boolean)),
+  ].sort();
+}
+
+/**
  * Get all skill slugs (for generateStaticParams).
  */
 export async function getAllSkillSlugs(): Promise<string[]> {

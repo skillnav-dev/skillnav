@@ -1,5 +1,7 @@
 export {
   getSkills,
+  getSkillsWithCount,
+  getSkillCategories,
   getSkillBySlug,
   getFeaturedSkills,
   getSkillsCount,
