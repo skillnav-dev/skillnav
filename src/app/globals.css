@@ -196,6 +196,17 @@
   background: #78191b;
 }
 
+/* Code block: let CodeBlock container handle spacing, strip prose defaults on pre */
+.prose pre {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+}
+pre code.hljs {
+  background: transparent;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
