@@ -78,11 +78,17 @@ function isSpam(skill) {
 
 /**
  * Assess quality tier for a skill.
+ *
+ * Uses content length + description length as primary signals.
+ * Tags are nearly unused (95.7% have 0 tags) so not used as criteria.
+ *
  * Decision tree:
- *   1. Spam → Hidden
- *   2. Has content + description + tags → A (rich)
- *   3. Has description OR tags → B (basic)
- *   4. Nothing → C (stub)
+ *   1. Spam → Hidden (C-tier)
+ *   2. content > 2000 chars AND description > 50 chars → A (comprehensive)
+ *   3. content > 200 chars AND description > 20 chars → B (adequate)
+ *   4. Otherwise → C (stub)
+ *
+ * Target distribution: A ~35-40%, B ~45-50%, C ~10-15%
  *
  * @returns {{ qualityTier: 'A' | 'B' | 'C', isHidden: boolean, reason: string }}
  */
@@ -92,22 +98,21 @@ function assessQuality(skill) {
     return { qualityTier: "C", isHidden: true, reason: "spam pattern detected" };
   }
 
-  const hasContent = !!(skill.content && skill.content.trim().length > 50);
-  const hasDescription = !!(skill.description && skill.description.trim().length > 20);
-  const hasTags = !!(skill.tags && skill.tags.length >= 2);
+  const contentLen = (skill.content || "").trim().length;
+  const descLen = (skill.description || "").trim().length;
 
-  // Step 2: A-tier — rich content
-  if (hasContent && hasDescription) {
-    return { qualityTier: "A", isHidden: false, reason: "content + description" };
+  // Step 2: A-tier — comprehensive content
+  if (contentLen > 2000 && descLen > 50) {
+    return { qualityTier: "A", isHidden: false, reason: `content ${contentLen} + desc ${descLen}` };
   }
 
-  // Step 3: B-tier — basic info
-  if (hasDescription || hasTags) {
-    return { qualityTier: "B", isHidden: false, reason: hasDescription ? "has description" : "has tags" };
+  // Step 3: B-tier — adequate content
+  if (contentLen > 200 && descLen > 20) {
+    return { qualityTier: "B", isHidden: false, reason: `content ${contentLen} + desc ${descLen}` };
   }
 
   // Step 4: C-tier — stub
-  return { qualityTier: "C", isHidden: false, reason: "stub (no description or tags)" };
+  return { qualityTier: "C", isHidden: false, reason: `stub (content ${contentLen}, desc ${descLen})` };
 }
 
 // ── Fetch all skills ──────────────────────────────────────────────────
