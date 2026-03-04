@@ -1,3 +1,5 @@
+import { appendFileSync } from "node:fs";
+
 /**
  * Simple colored logger with timing and progress display.
  */
@@ -45,6 +47,13 @@ export function createLogger(prefix) {
     progressEnd: () => {
       if (process.stderr.isTTY) {
         process.stderr.write("\n");
+      }
+    },
+    /** Write summary to console and GitHub Actions Job Summary if in CI. */
+    summary: (msg) => {
+      console.log(msg);
+      if (process.env.GITHUB_STEP_SUMMARY) {
+        appendFileSync(process.env.GITHUB_STEP_SUMMARY, msg + "\n");
       }
     },
   };

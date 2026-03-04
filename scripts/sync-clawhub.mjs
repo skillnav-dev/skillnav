@@ -19,6 +19,7 @@ import { createAdminClient } from "./lib/supabase-admin.mjs";
 import { githubFetch, githubFetchRaw } from "./lib/github.mjs";
 import { createLogger } from "./lib/logger.mjs";
 import { categorize } from "./lib/categorize.mjs";
+import { validateEnv } from "./lib/validate-env.mjs";
 
 const log = createLogger("clawhub");
 
@@ -190,6 +191,7 @@ async function main() {
 
   let supabase;
   if (!dryRun) {
+    validateEnv(["NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"]);
     supabase = createAdminClient();
   }
 
@@ -266,8 +268,8 @@ async function main() {
         requires_bins: parsed.requiresBins || [],
       });
 
-      // Rate limit between fetches
-      await new Promise((r) => setTimeout(r, 100));
+      // Rate limit between fetches (faster in CI)
+      await new Promise((r) => setTimeout(r, process.env.CI ? 30 : 100));
     } catch (e) {
       log.warn(`Error processing ${file.path}: ${e.message}`);
       errors++;
@@ -327,7 +329,24 @@ async function main() {
   log.success("=== Sync Summary ===");
   log.success(`Range: ${offset} → ${offset + total} of ${allSkillFiles.length}`);
   log.success(`Parsed: ${skills.length} | Deduped: ${dedupedSkills.length} | Upserted: ${upserted} | Errors: ${errors}`);
+
+  const summaryLines = [
+    "## ClawHub Skills Sync Summary",
+    "",
+    `| Metric | Value |`,
+    `|--------|-------|`,
+    `| Total SKILL.md | ${allSkillFiles.length} |`,
+    `| Range | ${offset} → ${offset + total} |`,
+    `| Parsed | ${skills.length} |`,
+    `| Deduplicated | ${dedupedSkills.length} |`,
+    `| Upserted | ${upserted} |`,
+    `| Errors | ${errors} |`,
+  ];
+  log.summary(summaryLines.join("\n"));
+
   log.done();
+
+  if (errors > 0) process.exit(1);
 }
 
 main().catch((e) => {

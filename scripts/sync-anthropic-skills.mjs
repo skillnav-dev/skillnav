@@ -16,6 +16,7 @@ dotenv.config();
 import { createAdminClient } from "./lib/supabase-admin.mjs";
 import { githubFetch, githubFetchRaw } from "./lib/github.mjs";
 import { createLogger } from "./lib/logger.mjs";
+import { validateEnv } from "./lib/validate-env.mjs";
 
 const log = createLogger("anthropic");
 
@@ -109,6 +110,7 @@ async function main() {
 
   let supabase;
   if (!dryRun) {
+    validateEnv(["NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"]);
     supabase = createAdminClient();
   }
 
@@ -198,7 +200,22 @@ async function main() {
   }
 
   log.success(`Upserted ${upserted} skills, ${errors} errors`);
+
+  const summaryLines = [
+    "## Anthropic Skills Sync Summary",
+    "",
+    `| Metric | Value |`,
+    `|--------|-------|`,
+    `| Total SKILL.md | ${skillFiles.length} |`,
+    `| Parsed | ${skills.length} |`,
+    `| Upserted | ${upserted} |`,
+    `| Errors | ${errors} |`,
+  ];
+  log.summary(summaryLines.join("\n"));
+
   log.done();
+
+  if (errors > 0) process.exit(1);
 }
 
 main().catch((e) => {

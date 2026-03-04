@@ -24,6 +24,8 @@ import TurndownService from "turndown";
 import { createAdminClient } from "./lib/supabase-admin.mjs";
 import { createLogger } from "./lib/logger.mjs";
 import { translateArticle, getProviderInfo } from "./lib/llm.mjs";
+import { withRetry } from "./lib/retry.mjs";
+import { validateEnv } from "./lib/validate-env.mjs";
 
 const log = createLogger("articles");
 
@@ -134,6 +136,7 @@ async function main() {
   const sourceFilter = sourceIdx !== -1 ? args[sourceIdx + 1] : null;
 
   if (!dryRun) {
+    validateEnv(["NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"]);
     const { name, model } = getProviderInfo();
     log.info(`LLM provider: ${name} (${model})`);
   }
@@ -211,7 +214,10 @@ async function main() {
 
         if (item.link) {
           try {
-            const extracted = await extractContent(item.link);
+            const extracted = await withRetry(
+              () => extractContent(item.link),
+              { label: itemLabel }
+            );
             if (extracted) {
               contentMd = extracted.content;
               excerpt = extracted.excerpt || "";
@@ -244,11 +250,14 @@ async function main() {
         } else {
           try {
             await llmThrottle(); // enforce 10 req/min limit
-            translation = await translateArticle({
-              title: item.title || "",
-              summary: excerpt,
-              content: contentMd,
-            });
+            translation = await withRetry(
+              () => translateArticle({
+                title: item.title || "",
+                summary: excerpt,
+                content: contentMd,
+              }),
+              { label: itemLabel }
+            );
           } catch (e) {
             log.error(`Translation failed for "${itemLabel}": ${e.message}`);
             totalFailed++;
@@ -315,7 +324,25 @@ async function main() {
   if (dryRun) {
     log.info("[DRY RUN] No records were written to the database.");
   }
+
+  // Write Job Summary for GitHub Actions
+  const summaryLines = [
+    "## Articles Sync Summary",
+    "",
+    `| Metric | Value |`,
+    `|--------|-------|`,
+    `| Sources | ${sources.map((s) => s.name).join(", ")} |`,
+    `| Fetched | ${totalFetched} |`,
+    `| Skipped (dedup) | ${totalSkipped} |`,
+    `| Inserted | ${totalInserted} |`,
+    `| Failed | ${totalFailed} |`,
+    dryRun ? "\n> **DRY RUN** — no records written" : "",
+  ];
+  log.summary(summaryLines.join("\n"));
+
   log.done();
+
+  if (totalFailed > 0) process.exit(1);
 }
 
 main().catch((e) => {
