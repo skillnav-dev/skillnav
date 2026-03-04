@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { PageBreadcrumb } from "@/components/shared/page-breadcrumb";
 import { SkillCard } from "@/components/skills/skill-card";
 import { SkillContent } from "@/components/skills/skill-content";
 import { SkillInstall } from "@/components/skills/skill-install";
@@ -63,14 +62,13 @@ export default async function SkillDetailPage({ params }: PageProps) {
       />
 
       <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
-        {/* Back link */}
-        <Link
-          href="/skills"
-          className="mb-8 inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <ArrowLeft className="size-4" />
-          返回 Skills 列表
-        </Link>
+        <PageBreadcrumb
+          items={[
+            { label: "首页", href: "/" },
+            { label: "Skills", href: "/skills" },
+            { label: skill.nameZh ?? skill.name },
+          ]}
+        />
 
         {/* Hero section: full width */}
         <div className="mb-8">

@@ -1,5 +1,13 @@
 import Link from "next/link";
-import { ExternalLink, Github, Star, Download, Tag, Clock } from "lucide-react";
+import {
+  ExternalLink,
+  Github,
+  Star,
+  Download,
+  Tag,
+  Clock,
+  Calendar,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { SecurityBadge } from "@/components/shared/security-badge";
 import type { Skill } from "@/data/types";
@@ -104,6 +112,18 @@ export function SkillSidebar({ skill }: SkillSidebarProps) {
             </MetaRow>
           )}
 
+          {/* Created date */}
+          <MetaRow label="收录日期">
+            <span className="flex items-center gap-1">
+              <Calendar className="size-3 text-muted-foreground" />
+              {new Date(skill.createdAt).toLocaleDateString("zh-CN", {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+              })}
+            </span>
+          </MetaRow>
+
           {/* Last verified date (conditional) */}
           {skill.lastVerifiedAt && (
             <MetaRow label="最后验证">
@@ -129,9 +149,14 @@ export function SkillSidebar({ skill }: SkillSidebarProps) {
           </div>
           <div className="flex flex-wrap gap-1.5">
             {skill.tags.map((tag) => (
-              <Badge key={tag} variant="outline" className="text-xs">
-                {tag}
-              </Badge>
+              <Link key={tag} href={`/skills?q=${encodeURIComponent(tag)}`}>
+                <Badge
+                  variant="outline"
+                  className="text-xs transition-colors hover:bg-accent hover:text-accent-foreground"
+                >
+                  {tag}
+                </Badge>
+              </Link>
             ))}
           </div>
         </div>

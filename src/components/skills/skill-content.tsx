@@ -3,7 +3,18 @@
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import rehypeHighlight from "rehype-highlight";
 import { Button } from "@/components/ui/button";
+
+/** Strip leaked frontmatter and detect empty/trivial content */
+function cleanContent(raw: string | undefined): string | null {
+  if (!raw) return null;
+  // Strip YAML frontmatter
+  const stripped = raw.replace(/^---[\s\S]*?---\s*/, "").trim();
+  // Too short to be useful
+  if (stripped.length < 20) return null;
+  return stripped;
+}
 
 interface SkillContentProps {
   content?: string;
@@ -14,16 +25,19 @@ export function SkillContent({ content, contentZh }: SkillContentProps) {
   // Default to Chinese if available
   const [showZh, setShowZh] = useState(true);
 
-  const hasZh = Boolean(contentZh);
-  const hasEn = Boolean(content);
+  const cleanedZh = cleanContent(contentZh);
+  const cleanedEn = cleanContent(content);
+
+  const hasZh = Boolean(cleanedZh);
+  const hasEn = Boolean(cleanedEn);
   const hasBoth = hasZh && hasEn;
 
   // Determine which text to display
   const displayText = hasBoth
     ? showZh
-      ? contentZh
-      : content
-    : (contentZh ?? content);
+      ? cleanedZh
+      : cleanedEn
+    : (cleanedZh ?? cleanedEn);
 
   if (!displayText) {
     return (
@@ -63,7 +77,12 @@ export function SkillContent({ content, contentZh }: SkillContentProps) {
 
       {/* Markdown content */}
       <div className="prose prose-neutral dark:prose-invert max-w-none text-sm leading-relaxed">
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>{displayText}</ReactMarkdown>
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          rehypePlugins={[rehypeHighlight]}
+        >
+          {displayText}
+        </ReactMarkdown>
       </div>
     </div>
   );

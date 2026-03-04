@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { PageBreadcrumb } from "@/components/shared/page-breadcrumb";
 import { ArticleMeta } from "@/components/articles/article-meta";
 import { ArticleContent } from "@/components/articles/article-content";
 import { ArticleCard } from "@/components/articles/article-card";
@@ -68,13 +67,13 @@ export default async function ArticlePage({ params }: PageProps) {
         ]}
       />
       <article className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
-        <Link
-          href="/articles"
-          className="mb-6 inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <ArrowLeft className="size-4" />
-          返回资讯列表
-        </Link>
+        <PageBreadcrumb
+          items={[
+            { label: "首页", href: "/" },
+            { label: "资讯", href: "/articles" },
+            { label: article.titleZh ?? article.title },
+          ]}
+        />
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
           {article.titleZh ?? article.title}
         </h1>
