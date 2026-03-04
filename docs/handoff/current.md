@@ -1,82 +1,93 @@
-# Handoff — Content Governance Implementation
+# Handoff — Strategic Pivot: Skills → AI Agent Tools Directory
 
 ## Objective
 
-Build a unified content governance system for SkillNav: DB schema extensions, category taxonomy rebuild (16→10), quality tiers, spam detection, and article relevance filtering.
+Expand SkillNav from a Claude Code Skills-only directory to a curated AI Agent tools directory (MCP Servers + Skills), pivoting from quantity (6,400 low-quality) to quality (~300-500 community-validated tools).
 
 ## Current State
 
-### Completed
-- DB migration applied to prod: `quality_tier`, `is_hidden` on skills; `analysis` added to articles `article_type`
-- Category taxonomy rebuilt: 16→10 scenario-based categories (编码开发, AI 智能体, 数据处理, 搜索研究, 运维部署, 内容创作, 效率工具, 安全监控, 平台集成, 其他)
-- Quality tier assessment: content-length thresholds (A: content>2000+desc>50, B: content>200+desc>20, C: rest)
-- Governance script created and **executed on all 6,447 skills** (0 errors)
-- DAL `excludeHidden()` applied to 6 listing functions; featured skills restricted to A/B tier
-- Article sync: relevance keyword filter for non-Anthropic sources; `analysis` type supported
-- `release` removed from `ArticleType` (never in DB)
-- Build passes (1037 pages generated)
+### Completed (prior sessions)
+- Content governance system shipped: quality_tier, is_hidden, 10 categories, spam detection
+- 6,447 skills ingested from ClawHub, 98.9% content backfilled
+- Article pipeline live (29 articles synced via LLM translation)
+- Skill detail page with two-column layout
+- **10 unpushed commits on main** (content governance work)
 
-### Governance Results
-- A tier: 4,152 (64.4%) — comprehensive content
-- B tier: 1,494 (23.2%) — adequate content
-- C tier: 799 (12.4%) — stubs
-- Hidden: 2 (0.03%) — spam detected
-- "其他" category: 1,924 (29.8%) — mostly pre-existing, +181 from removed categories
+### Completed (this session — strategic planning)
+- **Data quality audit**: confirmed ClawHub data is low-value (99.95% zero stars/downloads)
+- **Skills quality scoring simulation**: tested V1 (content-length only) and V2 (multi-dimensional) — both fail because underlying data has no community signals
+- **MCP ecosystem research**: mapped all major registries (Smithery, Glama, PulseMCP, mcp.so, official registry, 6+ Chinese competitors)
+- **Smithery API deep analysis**: 3,717 entries → 1,412 unique (62% duplicates!) → 296 with useCount ≥ 100
+- **Strategic decision**: abandon complex auto-scoring for low-quality Skills, pivot to curated MCP + Skills directory
+
+### Key Data Findings
+
+**Smithery MCP servers (go-to data source):**
+- API: `GET https://registry.smithery.ai/servers?q=&pageSize=100&page=N` (free, no auth)
+- 1,412 unique servers after dedup
+- useCount ≥ 100: **296 servers** (ideal curated set)
+- useCount ≥ 1000: **138 servers** (head tools)
+- 24 verified (Exa 1.5M uses, Slack 20K, GitHub 6.2K, Notion 5.4K...)
+- Detail endpoint: `GET https://registry.smithery.ai/servers/{qualifiedName}` — returns tools[] with full schemas
+
+**Official MCP Registry:**
+- API: `GET https://registry.modelcontextprotocol.io/v0.1/servers` (free, no auth)
+- Bare-bones: name, description, repository, remotes — no usage data
+- Useful as supplementary/authority source
+
+**Chinese MCP competitors:** MCPMarket.cn (22K+), mcp.so (18K, open-source Next.js+Supabase), MCPWorld, MCPZone — all doing quantity-based aggregation, no editorial curation
 
 ### In Progress
-- None — implementation complete
+- None — this was a strategy session, no code changes
 
 ## Next Actions
 
-1. **Push to remote** and verify CI/CD deploys successfully to Cloudflare Workers
-2. **Manual QA** on `skillnav.dev`:
-   - `/skills` — verify new category names display in toolbar dropdown
-   - `/` homepage — verify featured skills section shows A/B-tier only (check count >= 6)
-   - `/skills/[slug]` — verify hidden skills (2) are still accessible via direct URL
-3. **Run article sync** `npm run sync:articles -- --dry-run` to verify relevance filter in practice
-4. **Optional tuning**: If A-tier at 64% is too high, raise content threshold from 2000→4000 in `scripts/govern-skills.mjs:assessQuality()`
-5. **Optional tuning**: If "其他" at 30% needs reducing, add domain-specific keywords to `scripts/lib/categorize.mjs` (top candidates: crypto/trading/finance terms)
+### Phase 1: Data Layer (3-5 days)
+1. **DB migration** `supabase/migrations/004-mcp-expansion.sql`:
+   - Add `tool_type TEXT DEFAULT 'skill' CHECK (tool_type IN ('skill','mcp_server','prompt','framework'))` to skills table
+   - Add `quality_score INTEGER DEFAULT 0` (0-100)
+   - Expand `quality_tier` CHECK to include `'S'`
+   - Add MCP fields: `transport TEXT[]`, `capabilities TEXT[]`, `registry_downloads INTEGER`, `registry_source TEXT`
+   - Expand `source` CHECK to include `'smithery','glama','pulsemcp','mcp_official'`
+2. **Type updates** `src/data/types.ts`: add `ToolType`, expand `SkillSource`, add MCP-specific fields to `Skill` interface
+3. **Mapper updates** `src/lib/supabase/mappers.ts`: map new snake_case → camelCase fields
+4. **DAL updates** `src/lib/data/skills.ts`: add `tool_type` filter parameter to listing functions
+
+### Phase 2: MCP Data Sync (3-5 days)
+1. **Create `scripts/sync-mcp.mjs`**: Smithery API → filter(useCount ≥ 50) → dedup → LLM translate(name_zh, description_zh) → upsert(tool_type='mcp_server')
+2. **Quality scoring**: for MCP servers, use `useCount` directly (log-scale → 0-100 score). Simple and based on real data
+3. **Tier assignment**: S = verified OR useCount ≥ 5000; A = useCount ≥ 500; B = useCount ≥ 50; C = rest
+
+### Phase 3: Frontend (3-5 days)
+1. **Navigation**: add MCP Servers section (or unified "Tools" with type filter)
+2. **Toolbar**: add `tool_type` param to `skills-search-params.ts`
+3. **Card adaptation**: show transport/capabilities for MCP, install_command for Skills
+4. **Detail page**: MCP config snippet, capabilities list, real download count
+
+### Phase 4: Existing Skills Cleanup
+1. **Simplify tier logic**: S = manual featured; A = has real stars/downloads; B = has content; C = stub
+2. **Stop investing** in `govern-skills.mjs` complexity
+3. **Keep pages** for SEO, but deprioritize from featured/homepage
 
 ## Risks & Decisions
 
-- **Featured section could be empty**: If `is_featured=true AND quality_tier IN ('A','B')` returns < 6, fallback needed. Currently using `IN ('A','B')` as safety net.
-- **"其他" at 30%**: Acceptable — 82.8% were already "其他" before migration. Most have no tags and generic names.
-- **A-tier at 64%**: Higher than original target (30-40%) because content backfill gave 98.9% of skills substantial content. Still differentiates from C-tier stubs.
-- **Spam patterns conservative**: Only 2 detected. Can expand patterns in future iterations.
+- **Brand tension**: skillnav.dev has "skill" in domain — acceptable short-term (skill = agent capability), revisit if MCP > 70% of content
+- **Smithery API stability**: startup, API may change — build with abstraction layer, consider Glama/PulseMCP as backup
+- **Chinese competitor lead**: MCPMarket.cn has 22K+ entries — but they do quantity, we do quality+editorial, different value prop
+- **Unpushed commits**: 10 commits on main need pushing before starting new work
+- **Product plan conflict**: original plan says "MCP导航已是红海，不碰" — this pivot contradicts that, user has approved the direction change
 
 ## Verification
 
-- `node scripts/govern-skills.mjs --audit` — verify quality distribution
-- `npm run build` — full build passes (confirmed)
-- `npm run dev` — manual check /skills with new categories
-- `npm run sync:articles -- --dry-run` — verify relevance filter
-
-## Commits (this session)
-
-```
-286ec12 scripts(govern): use content-length thresholds for quality tiers
-04cba1d scripts(articles): add relevance filter and analysis article type
-d3fb0e2 data(skills): filter hidden skills and restrict featured to A/B-tier
-204cd8e scripts(govern): add content governance script with quality assessment
-1b9815e data(categorize): rewrite 16 categories to 10 scenario-based categories
-9201df0 data(migration): add quality_tier, is_hidden and expand article_type
-```
-
-## Modified Files
-
-- `supabase/migrations/20260305_content_governance.sql` (new — applied to prod)
-- `scripts/lib/categorize.mjs` (rewrite — 16→10 categories)
-- `scripts/govern-skills.mjs` (new — audit/dry-run/apply governance)
-- `src/lib/supabase/types.ts` (add quality_tier, is_hidden, analysis)
-- `src/lib/supabase/mappers.ts` (add qualityTier, isHidden mapping)
-- `src/data/types.ts` (add qualityTier, isHidden; remove release)
-- `src/lib/data/skills.ts` (add excludeHidden to 6 functions; featured A/B filter)
-- `scripts/sync-articles.mjs` (add relevanceFilter, isRelevant, analysis type)
-- `src/components/articles/article-card.tsx` (remove release)
-- `src/components/articles/article-meta.tsx` (remove release)
-- `src/components/articles/articles-toolbar.tsx` (remove release)
+- `git log --oneline -10` — confirm 10 unpushed governance commits
+- `npm run build` — should pass (last confirmed working)
+- `curl -s "https://registry.smithery.ai/servers?pageSize=1" | python3 -m json.tool` — verify Smithery API accessible
+- `curl -s "https://registry.modelcontextprotocol.io/v0.1/servers?limit=1" | python3 -m json.tool` — verify official registry API
 
 ## Reference Documents
 
-- Governance plan: `docs/plans/content-governance.md`
 - Product plan: `/Users/apple/WeChatProjects/tishici/docs/playbook/skillnav-product-plan.md`
+- Content governance plan: `docs/plans/content-governance.md`
+- Smithery API: `https://registry.smithery.ai/servers` (no auth, paginated)
+- Official MCP Registry API: `https://registry.modelcontextprotocol.io/v0.1/servers`
+- PulseMCP API: `https://api.pulsemcp.com/v0.1/servers` (needs API key)
