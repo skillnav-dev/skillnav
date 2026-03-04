@@ -1,93 +1,77 @@
-# Handoff — Strategic Pivot: Skills → AI Agent Tools Directory
+# Handoff — Content-First Strategy + RSS Source Expansion
 
 ## Objective
 
-Expand SkillNav from a Claude Code Skills-only directory to a curated AI Agent tools directory (MCP Servers + Skills), pivoting from quantity (6,400 low-quality) to quality (~300-500 community-validated tools).
+将 SkillNav 定位为中文 AI 工具生态的资讯 + 导航站（Skills / MCP / Agent 工具），核心模式：日常学习/试用的副产品系统化沉淀和发布，边际成本≈0。
 
 ## Current State
 
 ### Completed (prior sessions)
-- Content governance system shipped: quality_tier, is_hidden, 10 categories, spam detection
+- Content governance system shipped: quality_tier, is_hidden, 10 categories
 - 6,447 skills ingested from ClawHub, 98.9% content backfilled
 - Article pipeline live (29 articles synced via LLM translation)
 - Skill detail page with two-column layout
-- **10 unpushed commits on main** (content governance work)
+- All commits pushed to remote (clean state)
 
-### Completed (this session — strategic planning)
-- **Data quality audit**: confirmed ClawHub data is low-value (99.95% zero stars/downloads)
-- **Skills quality scoring simulation**: tested V1 (content-length only) and V2 (multi-dimensional) — both fail because underlying data has no community signals
-- **MCP ecosystem research**: mapped all major registries (Smithery, Glama, PulseMCP, mcp.so, official registry, 6+ Chinese competitors)
-- **Smithery API deep analysis**: 3,717 entries → 1,412 unique (62% duplicates!) → 296 with useCount ≥ 100
-- **Strategic decision**: abandon complex auto-scoring for low-quality Skills, pivot to curated MCP + Skills directory
+### Completed (this session)
+- **Strategic direction finalized**: content-first + quick-launch capability
+  - MCP directory pivot **cancelled** (red ocean: mcp.so 15K+, Glama 9K+, 阿里云百炼 etc.)
+  - Original instinct "MCP导航已是红海，不碰" validated by market research
+  - Positioning: NOT a media company, but "making daily learning visible" with Claude as co-pilot
+  - Flywheel: daily learning/trial → content → traffic → data accumulation → better tool discovery
+- **RSS sources expanded from 4 to 9** (`scripts/sync-articles.mjs`):
+  - Existing: Anthropic, OpenAI, LangChain, Simon Willison
+  - Added: Google AI, GitHub, Hugging Face, CrewAI, TechCrunch AI
+  - Cursor & Vercel feeds unavailable (no valid RSS), noted in code comments
+- **Relevance keywords expanded** from 14 to 27 (added cursor, copilot, codex, gemini, a2a, crewai, etc.)
+- **Feed parsing hardened**: switched from `parseURL` to `fetch+parseString` with XML sanitization (fixes unescaped `&`)
+- **GitHub Actions workflow updated**: source filter description expanded
+- **11 prior commits pushed** to remote (content governance + strategic planning work)
+- **Memory updated**: strategic direction, market context, deferred arsenal items
 
-### Key Data Findings
-
-**Smithery MCP servers (go-to data source):**
-- API: `GET https://registry.smithery.ai/servers?q=&pageSize=100&page=N` (free, no auth)
-- 1,412 unique servers after dedup
-- useCount ≥ 100: **296 servers** (ideal curated set)
-- useCount ≥ 1000: **138 servers** (head tools)
-- 24 verified (Exa 1.5M uses, Slack 20K, GitHub 6.2K, Notion 5.4K...)
-- Detail endpoint: `GET https://registry.smithery.ai/servers/{qualifiedName}` — returns tools[] with full schemas
-
-**Official MCP Registry:**
-- API: `GET https://registry.modelcontextprotocol.io/v0.1/servers` (free, no auth)
-- Bare-bones: name, description, repository, remotes — no usage data
-- Useful as supplementary/authority source
-
-**Chinese MCP competitors:** MCPMarket.cn (22K+), mcp.so (18K, open-source Next.js+Supabase), MCPWorld, MCPZone — all doing quantity-based aggregation, no editorial curation
-
-### In Progress
-- None — this was a strategy session, no code changes
+### Key Strategic Context
+- **mcp.so case study**: built by idoubi in 2h from gpts.works template, now 1M+ monthly visits. Success = timing + reuse + distribution, not tech. Code open-source. ShipAny ($199-299) is his template SaaS.
+- **Market data**: MCP is industry standard (AAIF/Linux Foundation), 10K+ public servers, 97M+ SDK downloads/month. Claude Code = 4% of GitHub commits → 20%+ projected.
+- **Core insight**: SkillNav already has quick-launch capability comparable to ShipAny. Keep ready to seize next "MCP moment" while building content on skillnav.dev.
 
 ## Next Actions
 
-### Phase 1: Data Layer (3-5 days)
-1. **DB migration** `supabase/migrations/004-mcp-expansion.sql`:
-   - Add `tool_type TEXT DEFAULT 'skill' CHECK (tool_type IN ('skill','mcp_server','prompt','framework'))` to skills table
-   - Add `quality_score INTEGER DEFAULT 0` (0-100)
-   - Expand `quality_tier` CHECK to include `'S'`
-   - Add MCP fields: `transport TEXT[]`, `capabilities TEXT[]`, `registry_downloads INTEGER`, `registry_source TEXT`
-   - Expand `source` CHECK to include `'smithery','glama','pulsemcp','mcp_official'`
-2. **Type updates** `src/data/types.ts`: add `ToolType`, expand `SkillSource`, add MCP-specific fields to `Skill` interface
-3. **Mapper updates** `src/lib/supabase/mappers.ts`: map new snake_case → camelCase fields
-4. **DAL updates** `src/lib/data/skills.ts`: add `tool_type` filter parameter to listing functions
+### 1. Content pipeline quality upgrade
+- Optimize translation prompts in `scripts/lib/llm.mjs` — add editorial perspective, not just translation
+- Add "editor comment" field to articles schema — 2-3 sentence take per article
+- Consider adding more RSS sources as they become available (Cursor, Vercel)
 
-### Phase 2: MCP Data Sync (3-5 days)
-1. **Create `scripts/sync-mcp.mjs`**: Smithery API → filter(useCount ≥ 50) → dedup → LLM translate(name_zh, description_zh) → upsert(tool_type='mcp_server')
-2. **Quality scoring**: for MCP servers, use `useCount` directly (log-scale → 0-100 score). Simple and based on real data
-3. **Tier assignment**: S = verified OR useCount ≥ 5000; A = useCount ≥ 500; B = useCount ≥ 50; C = rest
+### 2. Content validation (before investing more dev time)
+- Manually publish 5 articles to 知乎/掘金, measure: views, engagement, referral to skillnav.dev
+- Determine which content type performs best (news vs tutorial vs review)
+- Set sustainable publishing cadence based on results
 
-### Phase 3: Frontend (3-5 days)
-1. **Navigation**: add MCP Servers section (or unified "Tools" with type filter)
-2. **Toolbar**: add `tool_type` param to `skills-search-params.ts`
-3. **Card adaptation**: show transport/capabilities for MCP, install_command for Skills
-4. **Detail page**: MCP config snippet, capabilities list, real download count
+### 3. Distribution channels setup
+- 知乎 account + column for AI tools content
+- 掘金/CSDN for technical tutorials
+- 公众号 for weekly digest
+- 即刻/Twitter for quick news
 
-### Phase 4: Existing Skills Cleanup
-1. **Simplify tier logic**: S = manual featured; A = has real stars/downloads; B = has content; C = stub
-2. **Stop investing** in `govern-skills.mjs` complexity
-3. **Keep pages** for SEO, but deprioritize from featured/homepage
+### 4. Quick-launch arsenal (deferred — do when opportunity arises)
+- Abstract skillnav.dev architecture into reusable site template
+- Template-ize sync scripts (API → translate → upsert pattern)
+- Domain name reservation for future verticals
+- Watch signals: A2A protocol, AAIF new standards, new agent platforms, Claude Code Skills marketplace
 
 ## Risks & Decisions
 
-- **Brand tension**: skillnav.dev has "skill" in domain — acceptable short-term (skill = agent capability), revisit if MCP > 70% of content
-- **Smithery API stability**: startup, API may change — build with abstraction layer, consider Glama/PulseMCP as backup
-- **Chinese competitor lead**: MCPMarket.cn has 22K+ entries — but they do quantity, we do quality+editorial, different value prop
-- **Unpushed commits**: 10 commits on main need pushing before starting new work
-- **Product plan conflict**: original plan says "MCP导航已是红海，不碰" — this pivot contradicts that, user has approved the direction change
+- **Content quality vs speed**: LLM translation + fast publishing can become low-quality scraping site. Editorial judgment is the real product
+- **Solo developer sustainability**: start weekly cadence, not daily. Burning out is worse than being slow
+- **Platform dependency**: if Anthropic/OpenClaw launch official Chinese Skills docs, translation content value drops. Original reviews/tutorials are irreplaceable
+- **ClawHub data**: 6,447 skills with 99.95% zero engagement — keep for SEO long tail, don't invest further
 
 ## Verification
 
-- `git log --oneline -10` — confirm 10 unpushed governance commits
-- `npm run build` — should pass (last confirmed working)
-- `curl -s "https://registry.smithery.ai/servers?pageSize=1" | python3 -m json.tool` — verify Smithery API accessible
-- `curl -s "https://registry.modelcontextprotocol.io/v0.1/servers?limit=1" | python3 -m json.tool` — verify official registry API
+- `npm run build` — should pass
+- `node scripts/sync-articles.mjs --dry-run --limit 3` — verify all 9 RSS sources fetch successfully (expect ~21 articles, 0 failures)
+- `git status` — clean working tree, up to date with origin
 
-## Reference Documents
+## Modified Files (this session)
 
-- Product plan: `/Users/apple/WeChatProjects/tishici/docs/playbook/skillnav-product-plan.md`
-- Content governance plan: `docs/plans/content-governance.md`
-- Smithery API: `https://registry.smithery.ai/servers` (no auth, paginated)
-- Official MCP Registry API: `https://registry.modelcontextprotocol.io/v0.1/servers`
-- PulseMCP API: `https://api.pulsemcp.com/v0.1/servers` (needs API key)
+- `scripts/sync-articles.mjs` — RSS sources 4→9, keywords 14→27, feed parsing hardened
+- `.github/workflows/sync-articles.yml` — source filter description updated
