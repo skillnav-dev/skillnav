@@ -27,8 +27,8 @@ jobs:
     env:
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-      LLM_PROVIDER: openai
+      GPT_API_KEY: ${{ secrets.GPT_API_KEY }}
+      LLM_PROVIDER: gpt
     steps:
       - uses: actions/checkout@v4
 
