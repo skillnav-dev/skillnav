@@ -30,32 +30,54 @@ import { validateEnv } from "./lib/validate-env.mjs";
 const log = createLogger("articles");
 
 // ── RSS Sources ──────────────────────────────────────────────────────
+// Relevance keywords for filtering non-Anthropic sources
+const RELEVANCE_KEYWORDS = [
+  "claude", "anthropic", "mcp", "skill", "agent", "llm", "ai",
+  "prompt", "tool-use", "function-calling", "agentic",
+  "computer-use", "model-context", "rag", "embedding",
+];
+
 const SOURCES = [
   {
     name: "anthropic",
     label: "Anthropic News",
     feedUrl: "https://raw.githubusercontent.com/taobojlen/anthropic-rss-feed/main/anthropic_news_rss.xml",
     defaultType: "news",
+    relevanceFilter: null, // Accept all Anthropic articles
   },
   {
     name: "openai",
     label: "OpenAI Blog",
     feedUrl: "https://openai.com/blog/rss.xml",
     defaultType: "news",
+    relevanceFilter: RELEVANCE_KEYWORDS,
   },
   {
     name: "langchain",
     label: "LangChain Blog",
     feedUrl: "https://blog.langchain.dev/rss/",
     defaultType: "tutorial",
+    relevanceFilter: RELEVANCE_KEYWORDS,
   },
   {
     name: "simonw",
     label: "Simon Willison's Weblog",
     feedUrl: "https://simonwillison.net/atom/everything/",
     defaultType: "analysis",
+    relevanceFilter: RELEVANCE_KEYWORDS,
   },
 ];
+
+/**
+ * Check if an RSS item is relevant to our site's focus.
+ * Returns true if no filter is set (e.g. Anthropic) or if title/snippet
+ * contains at least one relevance keyword.
+ */
+function isRelevant(item, source) {
+  if (!source.relevanceFilter) return true;
+  const text = `${item.title || ""} ${item.contentSnippet || ""}`.toLowerCase();
+  return source.relevanceFilter.some((kw) => text.includes(kw));
+}
 
 // ── Helpers ──────────────────────────────────────────────────────────
 const rssParser = new RssParser();
@@ -200,6 +222,14 @@ async function main() {
       }
     }
 
+    // Step 2.5: Relevance filter (non-Anthropic sources)
+    const beforeFilter = newItems.length;
+    newItems = newItems.filter((item) => isRelevant(item, source));
+    const filtered = beforeFilter - newItems.length;
+    if (filtered > 0) {
+      log.info(`Filtered ${filtered} irrelevant articles`);
+    }
+
     log.info(`Processing ${newItems.length} new articles...`);
 
     // Step 3: Process each new item sequentially
@@ -266,11 +296,10 @@ async function main() {
         }
 
         // Normalize articleType to DB-valid values
-        // DB allows: news, review, comparison, tutorial, weekly
-        const validDbTypes = ["news", "review", "comparison", "tutorial", "weekly"];
+        const validDbTypes = ["news", "review", "comparison", "tutorial", "analysis", "weekly"];
         const articleType = validDbTypes.includes(translation.articleType)
           ? translation.articleType
-          : source.defaultType === "analysis" ? "news" : (source.defaultType || "news");
+          : (source.defaultType || "news");
 
         // 3c: Build DB record
         const record = {
