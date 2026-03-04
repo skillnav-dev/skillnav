@@ -181,6 +181,118 @@ async function fetchSkillFiles() {
   return skillFiles;
 }
 
+/**
+ * Backfill NULL content by querying DB for github_url, fetching SKILL.md,
+ * and updating only content-related fields. Avoids slug mismatch issues.
+ */
+async function backfillContentFromDb(supabase, { dryRun, limit }) {
+  if (!supabase) {
+    log.info("[DRY RUN] Backfill requires DB connection, skipping");
+    log.done();
+    return;
+  }
+
+  // Fetch all NULL-content clawhub skills with github_url
+  log.info("Fetching NULL-content skills with github_url from DB...");
+  const skillsToBackfill = [];
+  let from = 0;
+  const pageSize = 1000;
+  while (true) {
+    const { data: rows, error } = await supabase
+      .from("skills")
+      .select("slug, github_url")
+      .is("content", null)
+      .eq("source", "clawhub")
+      .not("github_url", "is", null)
+      .range(from, from + pageSize - 1);
+    if (error) throw error;
+    skillsToBackfill.push(...rows);
+    if (rows.length < pageSize) break;
+    from += pageSize;
+  }
+
+  let toProcess = skillsToBackfill;
+  if (limit !== Infinity) toProcess = toProcess.slice(0, limit);
+  const total = toProcess.length;
+  log.info(`Found ${skillsToBackfill.length} skills to backfill, processing ${total}`);
+
+  const CONCURRENCY = process.env.CI ? 10 : 3;
+  let updated = 0;
+  let errors = 0;
+
+  for (let idx = 0; idx < toProcess.length; idx += CONCURRENCY) {
+    const chunk = toProcess.slice(idx, idx + CONCURRENCY);
+    const results = await Promise.allSettled(
+      chunk.map(async ({ slug, github_url }) => {
+        // Extract path: .../tree/main/skills/author/name → skills/author/name/SKILL.md
+        const pathMatch = github_url.match(/tree\/main\/(.+)/);
+        if (!pathMatch) throw new Error(`Bad github_url: ${github_url}`);
+        const filePath = `${pathMatch[1]}/SKILL.md`;
+
+        const content = await githubFetchRaw("openclaw", "skills", filePath);
+        const parsed = parseSkillMd(content);
+        if (!parsed) throw new Error(`Failed to parse ${filePath}`);
+
+        return {
+          slug,
+          content: parsed.body || "",
+          install_command: parsed.install || null,
+          requires_env: parsed.requiresEnv || [],
+          requires_bins: parsed.requiresBins || [],
+        };
+      })
+    );
+
+    for (const result of results) {
+      if (result.status === "rejected") {
+        log.warn(`Fetch error: ${result.reason.message}`);
+        errors++;
+        continue;
+      }
+
+      const { slug, ...contentFields } = result.value;
+      if (dryRun) {
+        updated++;
+        continue;
+      }
+
+      const { error } = await supabase
+        .from("skills")
+        .update(contentFields)
+        .eq("slug", slug);
+
+      if (error) {
+        log.warn(`Update error for ${slug}: ${error.message}`);
+        errors++;
+      } else {
+        updated++;
+      }
+    }
+
+    await new Promise((r) => setTimeout(r, process.env.CI ? 20 : 50));
+    const processed = Math.min(idx + CONCURRENCY, toProcess.length);
+    log.progress(processed, total, errors, chunk[chunk.length - 1].slug);
+  }
+
+  log.progressEnd();
+
+  const summaryLines = [
+    "## Content Backfill Summary",
+    "",
+    "| Metric | Value |",
+    "|--------|-------|",
+    `| Candidates | ${skillsToBackfill.length} |`,
+    `| Processed | ${total} |`,
+    `| Updated | ${updated} |`,
+    `| Errors | ${errors} |`,
+  ];
+  log.summary(summaryLines.join("\n"));
+  log.success(`Updated: ${updated} | Errors: ${errors}`);
+  log.done();
+
+  if (errors > total * 0.1) process.exit(1);
+}
+
 async function main() {
   const args = process.argv.slice(2);
   const dryRun = args.includes("--dry-run");
@@ -197,41 +309,18 @@ async function main() {
     supabase = createAdminClient();
   }
 
+  // Backfill mode: query DB for NULL-content skills with github_url,
+  // fetch SKILL.md by path, and UPDATE only content fields
+  if (backfillContent) {
+    await backfillContentFromDb(supabase, { dryRun, limit });
+    return;
+  }
+
   const allSkillFiles = await fetchSkillFiles();
   let filesToProcess = allSkillFiles.slice(offset, offset + limit);
 
-  // Backfill mode: only process files whose slugs have NULL content in DB
-  if (backfillContent && supabase) {
-    log.info("Fetching slugs with NULL content from DB...");
-    const nullContentSlugs = new Set();
-    // Paginate to fetch all NULL-content slugs (Supabase default limit is 1000)
-    let from = 0;
-    const pageSize = 1000;
-    while (true) {
-      const { data: rows, error } = await supabase
-        .from("skills")
-        .select("slug")
-        .is("content", null)
-        .range(from, from + pageSize - 1);
-      if (error) throw error;
-      for (const r of rows) nullContentSlugs.add(r.slug);
-      if (rows.length < pageSize) break;
-      from += pageSize;
-    }
-    log.info(`Found ${nullContentSlugs.size} skills with NULL content`);
-    const before = filesToProcess.length;
-    filesToProcess = filesToProcess.filter((file) => {
-      const dirParts = file.path.split("/");
-      const pathAuthor = dirParts.length >= 3 ? dirParts[1] : null;
-      const dirName = dirParts.length >= 3 ? dirParts[2] : dirParts[dirParts.length - 2];
-      const slug = slugify(`${pathAuthor || "unknown"}--${dirName}`);
-      return nullContentSlugs.has(slug);
-    });
-    log.info(`Filtered: ${before} → ${filesToProcess.length} files needing content`);
-  }
-
   // Skip files whose slugs already exist in DB
-  if (skipExisting && !backfillContent && supabase) {
+  if (skipExisting && supabase) {
     log.info("Fetching existing slugs from DB...");
     const { data: rows, error } = await supabase.from("skills").select("slug");
     if (error) throw error;
