@@ -7,13 +7,19 @@ export type SkillSource =
   | "agentskill"
   | "manual";
 export type PricingType = "free" | "freemium" | "paid";
-export type ArticleType =
-  | "news"
-  | "tutorial"
-  | "analysis"
-  | "review"
-  | "comparison"
-  | "weekly";
+export type ArticleType = "news" | "tutorial" | "analysis";
+
+export type ArticleSource =
+  | "anthropic"
+  | "openai"
+  | "google-ai"
+  | "github"
+  | "langchain"
+  | "huggingface"
+  | "crewai"
+  | "simonw"
+  | "techcrunch-ai"
+  | "other";
 export type SubmissionStatus = "pending" | "approved" | "rejected";
 
 export interface Skill {
@@ -72,6 +78,7 @@ export interface Article {
   summaryZh?: string;
   content: string;
   contentZh?: string;
+  source?: ArticleSource;
   sourceUrl?: string;
   category: ArticleType;
   coverImage?: string;

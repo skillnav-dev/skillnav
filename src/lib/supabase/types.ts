@@ -79,16 +79,11 @@ export interface Database {
           summary_zh: string | null;
           content: string | null;
           content_zh: string | null;
+          source: string | null;
           source_url: string | null;
           cover_image: string | null;
           reading_time: number;
-          article_type:
-            | "news"
-            | "review"
-            | "comparison"
-            | "tutorial"
-            | "analysis"
-            | "weekly";
+          article_type: "news" | "tutorial" | "analysis";
           published_at: string | null;
           created_at: string;
         };

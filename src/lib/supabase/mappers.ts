@@ -57,6 +57,7 @@ export function mapArticleRow(row: ArticleRow): Article {
     summaryZh: row.summary_zh ?? undefined,
     content: row.content ?? "",
     contentZh: row.content_zh ?? undefined,
+    source: (row.source as Article["source"]) ?? undefined,
     sourceUrl: row.source_url ?? undefined,
     coverImage: row.cover_image ?? undefined,
     readingTime: row.reading_time,
