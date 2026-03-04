@@ -26,7 +26,13 @@ export interface Database {
           author: string | null;
           category: string | null;
           tags: string[];
-          source: "clawhub" | "skills_sh" | "anthropic" | "skillsmp" | "agentskill" | "manual";
+          source:
+            | "clawhub"
+            | "skills_sh"
+            | "anthropic"
+            | "skillsmp"
+            | "agentskill"
+            | "manual";
           source_url: string | null;
           github_url: string | null;
           stars: number;
@@ -40,6 +46,13 @@ export interface Database {
           version: string | null;
           screenshot_urls: string[];
           similar_skills: string[];
+          content: string | null;
+          content_zh: string | null;
+          install_command: string | null;
+          requires_env: string[];
+          requires_bins: string[];
+          editor_rating: string | null;
+          editor_review_zh: string | null;
           last_verified_at: string | null;
           created_at: string;
           updated_at: string;
@@ -67,7 +80,12 @@ export interface Database {
           source_url: string | null;
           cover_image: string | null;
           reading_time: number;
-          article_type: "news" | "review" | "comparison" | "tutorial" | "weekly";
+          article_type:
+            | "news"
+            | "review"
+            | "comparison"
+            | "tutorial"
+            | "weekly";
           published_at: string | null;
           created_at: string;
         };

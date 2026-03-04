@@ -83,7 +83,62 @@ function parseSkillMd(content) {
     }
   }
 
-  const body = content.slice(fmMatch[0].length).trim();
+  // Extract openclaw metadata block (nested YAML under metadata > openclaw)
+  // Handles: requires.env, requires.bins, install
+  const openclawBlockMatch = yamlStr.match(/openclaw:\s*\n((?:[ \t]+.+\n?)*)/);
+  if (openclawBlockMatch) {
+    const blockLines = openclawBlockMatch[1];
+
+    // Extract install command
+    const installMatch = blockLines.match(/[ \t]+install:\s*(.+)/);
+    if (installMatch) {
+      fields.install = installMatch[1].trim().replace(/^["']|["']$/g, "");
+    }
+
+    // Extract requires.env array (inline or multiline)
+    const requiresEnvInlineMatch = blockLines.match(/[ \t]+env:\s*\[([^\]]*)\]/);
+    if (requiresEnvInlineMatch) {
+      fields.requiresEnv = requiresEnvInlineMatch[1]
+        .split(",")
+        .map((v) => v.trim().replace(/^["']|["']$/g, ""))
+        .filter(Boolean);
+    } else {
+      // Multiline list items under env:
+      const requiresEnvSectionMatch = blockLines.match(/[ \t]+env:\s*\n((?:[ \t]+-[ \t]+.+\n?)*)/);
+      if (requiresEnvSectionMatch) {
+        fields.requiresEnv = requiresEnvSectionMatch[1]
+          .split("\n")
+          .map((l) => l.replace(/^[ \t]+-[ \t]+/, "").trim().replace(/^["']|["']$/g, ""))
+          .filter(Boolean);
+      }
+    }
+
+    // Extract requires.bins array (inline or multiline)
+    const requiresBinsInlineMatch = blockLines.match(/[ \t]+bins:\s*\[([^\]]*)\]/);
+    if (requiresBinsInlineMatch) {
+      fields.requiresBins = requiresBinsInlineMatch[1]
+        .split(",")
+        .map((v) => v.trim().replace(/^["']|["']$/g, ""))
+        .filter(Boolean);
+    } else {
+      // Multiline list items under bins:
+      const requiresBinsSectionMatch = blockLines.match(/[ \t]+bins:\s*\n((?:[ \t]+-[ \t]+.+\n?)*)/);
+      if (requiresBinsSectionMatch) {
+        fields.requiresBins = requiresBinsSectionMatch[1]
+          .split("\n")
+          .map((l) => l.replace(/^[ \t]+-[ \t]+/, "").trim().replace(/^["']|["']$/g, ""))
+          .filter(Boolean);
+      }
+    }
+  }
+
+  const rawBody = content.slice(fmMatch[0].length).trim();
+
+  // Truncate body if it exceeds 50000 characters to avoid DB payload limits
+  const body =
+    rawBody.length > 50000
+      ? rawBody.slice(0, 50000) + "\n\n<!-- truncated -->"
+      : rawBody;
 
   return { ...fields, body };
 }
@@ -204,6 +259,11 @@ async function main() {
         stars: 0,
         downloads: 0,
         security_score: "unscanned",
+        // Content fields extracted from SKILL.md body and openclaw metadata
+        content: parsed.body || "",
+        install_command: parsed.install || null,
+        requires_env: parsed.requiresEnv || [],
+        requires_bins: parsed.requiresBins || [],
       });
 
       // Rate limit between fetches

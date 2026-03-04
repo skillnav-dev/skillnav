@@ -7,7 +7,14 @@ export type SkillSource =
   | "agentskill"
   | "manual";
 export type PricingType = "free" | "freemium" | "paid";
-export type ArticleType = "news" | "tutorial" | "analysis" | "release" | "review" | "comparison" | "weekly";
+export type ArticleType =
+  | "news"
+  | "tutorial"
+  | "analysis"
+  | "release"
+  | "review"
+  | "comparison"
+  | "weekly";
 export type SubmissionStatus = "pending" | "approved" | "rejected";
 
 export interface Skill {
@@ -32,6 +39,16 @@ export interface Skill {
   securityScore: SecurityScore;
   isVerified?: boolean;
   isFeatured?: boolean;
+  // Content (SKILL.md body)
+  content?: string;
+  contentZh?: string;
+  // Install & requirements
+  installCommand?: string;
+  requiresEnv?: string[];
+  requiresBins?: string[];
+  // Editorial review
+  editorRating?: string;
+  editorReviewZh?: string;
   // Enrichment
   pricingType?: PricingType;
   platform?: string[];
