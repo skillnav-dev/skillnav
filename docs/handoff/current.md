@@ -1,63 +1,67 @@
-# Handoff — Skill Content 回填完成
+# Handoff — Skill 详情页体验升级
 
 ## Objective
-将 6447 条 skill 的 SKILL.md 原始内容（content 字段）从 GitHub 回填到 Supabase，为 skill 详情页提供完整内容展示。
+提升 Skill 详情页的 Markdown 渲染质量和交互体验，对标竞品 skill4agent.com，通过精准改动打磨已有框架。
 
 ## Current State
 
 ### Completed
-- **Content 回填达到 98.9%**：6378/6447 skills 有 content
-- **`--backfill-content` 模式**：`sync-clawhub.mjs` 新增独立回填流程
-  - `backfillContentFromDb()`: 从 DB 查 NULL-content skills 的 `{slug, github_url}` → 提取 GitHub 路径 → fetch SKILL.md → `.update()` content 字段
-  - 避免了 slug 格式不一致问题（旧 `name-only` vs 新 `author--name`）
-  - 避免了 upsert 唯一约束冲突（只更新 content 字段，不触碰 name/author/source）
-- **并发 fetch**：CI 10 并发 / 本地 3 并发（`Promise.allSettled` 分块）
-- **Workflow 支持**：`sync-skills.yml` 新增 `backfill_content` 手动触发输入
-- **两轮回填**：
-  - 第一轮：基于 slug 过滤，upsert 5191 条（507 → 5232，81.2%）
-  - 第二轮：基于 DB github_url，update 1146 条（5232 → 6378，98.9%）
-- **自动化系统**（上一会话完成）：3 个 cron workflow + health check + Slack 通知
-
-### Remaining NULL Content (69 条)
-- 49 条 — GitHub 仓库已删除 SKILL.md（404 孤儿数据）
-- 16 条 — anthropic 源，不走 ClawHub 同步
-- 3 条 — 无 `github_url` 的手工录入
-- 1 条 — 边界情况
+- **Typography 排版**：安装 `@tailwindcss/typography`，6378 条 skill 文档获得正确标题/列表/表格/引用排版
+- **代码语法高亮**：启用 `rehype-highlight`，亮色 github / 暗色 github-dark-dimmed 主题
+- **代码块复制按钮**：新建 `CodeBlock` 组件，顶部工具栏含语言标签 + 一键复制
+- **可见面包屑导航**：shadcn Breadcrumb + `PageBreadcrumb` 封装，skills 和 articles 详情页均已替换
+- **标签可点击**：sidebar 标签 Badge 外包 `<Link href="/skills?q=tag">`，支持 hover 样式
+- **内容 fallback**：`cleanContent()` 剥离泄漏 frontmatter + 短内容过滤，空/无效内容显示「暂无文档」
+- **收录日期**：sidebar 新增 Calendar icon + `createdAt` 展示
+- **两次提交均已推送至 main**，CI 部署成功
 
 ### Not Started (后续任务)
-- T4: `scripts/translate-skill-content.mjs` — content_zh 批量翻译（content 回填已完成，可启动）
-- T5: `scripts/enrich-skills.mjs` — GPT 丰富化（有流量数据后启用）
-- T7: `scripts/check-links.mjs` — 死链检测（数据稳定后启用）
-- 清理 49 条 404 孤儿 skill 记录（可选）
+- T4: `scripts/translate-skill-content.mjs` — content_zh 批量翻译
+- T5: `scripts/enrich-skills.mjs` — GPT 丰富化
+- T7: `scripts/check-links.mjs` — 死链检测
+- 文章详情页代码块也迁移到 ReactMarkdown + CodeBlock（当前用正则 + dangerouslySetInnerHTML）
 
 ## Next Actions
-1. 启动 T4：`scripts/translate-skill-content.mjs` — 用 LLM 批量翻译 skill content 为 content_zh
-2. 监控 Slack 通知确认 cron 稳定运行
-3. 可选：清理 49 条 GitHub 已删除的孤儿 skill 记录
-4. 可选：为 16 条 anthropic 源 skill 补充 content（需单独抓取 anthropic docs）
+1. 考虑将 `src/components/articles/article-content.tsx` 迁移为 ReactMarkdown 渲染（复用 CodeBlock + rehype-highlight）
+2. 启动 T4：`scripts/translate-skill-content.mjs` — 批量翻译 skill content 为 content_zh
+3. 可选：代码块添加行号显示（`rehype-prism-plus` 或自定义）
+4. 可选：长代码块折叠/展开功能
 
 ## Risks & Decisions
-- **数据同步应跑 GitHub Actions**：本地到 GitHub/Supabase 的网络延迟高（国内），CI 同网络快 30x+
-- **slug 格式不一致是历史债务**：DB 中存在 `name-only`、`author-name`、`author--name` 三种格式，回填通过 DB github_url 绕过了此问题
-- **upsert ignoreDuplicates 陷阱**：`true` 时不更新已有记录，需 `false` 才能更新；但 `false` 可能触发 (name,author,source) 唯一约束冲突，因此回填改用 `.update()` 只更新 content 字段
-- **GPT 代理已验证可用于 CI**：`LLM_PROVIDER=gpt`，访问 `gmn.chuangzuori.com` 正常
+- **prose 样式覆写**：`globals.css` 中 `.prose pre { margin:0; padding:0; background:transparent }` 将 pre 样式交由 CodeBlock 容器管理
+- **React 19 类型变更**：`ReactElement.props` 类型为 `{}`，CodeBlock 中用自定义 `AnyElement` 类型绕过
+- **highlight.js CSS import**：`globals.css` 顶部 `@import "highlight.js/styles/github.css"` 全局生效
 
 ## Verification
-- `npm run lint` — 零错误
-- `npm run build` — 构建通过（本地可能因 Supabase 网络失败，CI 正常）
-- `node scripts/sync-clawhub.mjs --backfill-content --dry-run` — 回填 dry-run（需 DB 连接）
-- `node scripts/sync-clawhub.mjs --dry-run --limit 3` — ClawHub 常规同步
-- GitHub Actions: `gh workflow run "Sync Skills" --field backfill_content=true` — 远程回填
+- `npm run build` — 零错误（1037 页生成正常）
+- `npm run dev` → 打开含代码块的 Skill 详情页：
+  - Markdown 排版正确（标题/列表/表格/引用/链接）
+  - 代码块有语法高亮 + 语言标签 + 复制按钮
+  - 面包屑可见可点击：「首页 > Skills > Skill名」
+  - 标签可点击跳转到 `/skills?q=tagName`
+  - 侧边栏有「收录日期」
+- 打开空内容 Skill → 显示「暂无文档」
+- 打开文章详情页 → 面包屑可见
 
 ## Modified Files (本次会话)
-- `scripts/sync-clawhub.mjs` — +backfillContentFromDb() +concurrent fetch +--backfill-content flag
-- `.github/workflows/sync-skills.yml` — +backfill_content input +GITHUB_TOKEN +timeout 90min
+### Commit 1: `8838b27` — 详情页体验升级（6 项改动）
+- `package.json` / `package-lock.json` — +@tailwindcss/typography
+- `src/app/globals.css` — +plugin +highlight.js import +dark mode overrides
+- `src/components/skills/skill-content.tsx` — +rehype-highlight +cleanContent
+- `src/components/skills/skill-sidebar.tsx` — +可点击标签 +收录日期
+- `src/app/skills/[slug]/page.tsx` — 面包屑替换返回链接
+- `src/app/articles/[slug]/page.tsx` — 面包屑替换返回链接
+- `src/components/shared/page-breadcrumb.tsx` — 新建
+- `src/components/ui/breadcrumb.tsx` — shadcn 生成
+
+### Commit 2: `dce66e8` — 代码块复制按钮
+- `src/components/shared/code-block.tsx` — 新建（CodeBlock + CopyButton）
+- `src/components/skills/skill-content.tsx` — 引入 CodeBlock 自定义 pre 渲染
+- `src/app/globals.css` — prose pre 样式覆写 + hljs 背景透明
 
 ## Key References
-- 自动化方案：`docs/plans/automation-tasks.md`
-- 内容管线方案：`docs/plans/content-pipeline.md`
-- 同步脚本：`scripts/sync-clawhub.mjs`（backfill 核心）
-- LLM 模块：`scripts/lib/llm.mjs`（5 providers）
-- Supabase 项目：`caapclmylemgbrtgfszd`
-- Worker URL：`skillnav.wh759705.workers.dev`
-- 域名：`skillnav.dev`
+- 代码块组件：`src/components/shared/code-block.tsx`
+- 面包屑组件：`src/components/shared/page-breadcrumb.tsx`
+- Skill 详情页：`src/app/skills/[slug]/page.tsx`
+- 文章详情页：`src/app/articles/[slug]/page.tsx`
+- 全局样式：`src/app/globals.css`
