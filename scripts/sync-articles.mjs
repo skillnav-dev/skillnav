@@ -156,8 +156,47 @@ function createRateLimiter(maxPerMinute) {
 const llmThrottle = createRateLimiter(10); // 10 req/min max
 
 /**
+ * Extract cover image from HTML document.
+ * Priority: og:image → twitter:image → first wide image in article/main.
+ */
+function extractCoverImage(doc, baseUrl) {
+  // og:image
+  const ogImage = doc.querySelector('meta[property="og:image"]');
+  if (ogImage?.content) return resolveUrl(ogImage.content, baseUrl);
+
+  // twitter:image
+  const twImage = doc.querySelector('meta[name="twitter:image"]');
+  if (twImage?.content) return resolveUrl(twImage.content, baseUrl);
+
+  // First image in article/main content
+  const container = doc.querySelector("article") || doc.querySelector("main") || doc.body;
+  if (container) {
+    const imgs = container.querySelectorAll("img[src]");
+    for (const img of imgs) {
+      const w = parseInt(img.getAttribute("width") || "0", 10);
+      // Accept if width >= 400 or no width attribute (likely a content image)
+      if (w >= 400 || !img.getAttribute("width")) {
+        const src = img.getAttribute("src");
+        if (src && !src.includes("avatar") && !src.includes("icon") && !src.includes("logo")) {
+          return resolveUrl(src, baseUrl);
+        }
+      }
+    }
+  }
+  return null;
+}
+
+function resolveUrl(url, baseUrl) {
+  try {
+    return new URL(url, baseUrl).href;
+  } catch {
+    return url;
+  }
+}
+
+/**
  * Extract full article content from a URL using Readability + Turndown.
- * Returns Markdown content and excerpt, or null on failure.
+ * Returns Markdown content, excerpt, and cover image, or null on failure.
  */
 async function extractContent(url) {
   const res = await fetch(url, {
@@ -166,12 +205,18 @@ async function extractContent(url) {
   });
   const html = await res.text();
   const dom = new JSDOM(html, { url });
-  const reader = new Readability(dom.window.document);
+  const doc = dom.window.document;
+
+  // Extract cover image before Readability modifies the DOM
+  const coverImage = extractCoverImage(doc, url);
+
+  const reader = new Readability(doc);
   const article = reader.parse();
   if (!article) return null;
   return {
     content: turndown.turndown(article.content),
     excerpt: article.excerpt,
+    coverImage,
   };
 }
 
@@ -291,6 +336,7 @@ async function main() {
         // 3a: Extract full content from source URL
         let contentMd = "";
         let excerpt = "";
+        let coverImage = null;
 
         if (item.link) {
           try {
@@ -301,6 +347,7 @@ async function main() {
             if (extracted) {
               contentMd = extracted.content;
               excerpt = extracted.excerpt || "";
+              coverImage = extracted.coverImage || null;
             }
             await delay(500); // polite delay between fetches
           } catch (e) {
@@ -346,10 +393,15 @@ async function main() {
         }
 
         // Normalize articleType to DB-valid values
-        const validDbTypes = ["news", "review", "comparison", "tutorial", "analysis", "weekly"];
+        const validDbTypes = ["news", "tutorial", "analysis"];
         const articleType = validDbTypes.includes(translation.articleType)
           ? translation.articleType
           : (source.defaultType || "news");
+
+        // Fallback: RSS enclosure as cover image (e.g. GitHub Blog)
+        if (!coverImage && item.enclosure?.url) {
+          coverImage = item.enclosure.url;
+        }
 
         // 3c: Build DB record
         const record = {
@@ -361,6 +413,8 @@ async function main() {
           content: contentMd,
           content_zh: translation.contentZh,
           source_url: item.link,
+          cover_image: coverImage,
+          source: source.name,
           article_type: articleType,
           reading_time: translation.readingTime,
           published_at: item.pubDate

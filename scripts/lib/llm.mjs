@@ -53,15 +53,7 @@ const PROVIDERS = {
 // Truncation limit for article content (~4K tokens)
 const MAX_CONTENT_LENGTH = 15000;
 
-const VALID_ARTICLE_TYPES = [
-  "news",
-  "tutorial",
-  "analysis",
-  "release",
-  "review",
-  "comparison",
-  "weekly",
-];
+const VALID_ARTICLE_TYPES = ["news", "tutorial", "analysis"];
 
 // ── Provider Resolution ──────────────────────────────────────────────
 
@@ -237,7 +229,7 @@ export async function translateArticle({ title, summary, content }) {
   "titleZh": "Chinese title (concise, news-headline style)",
   "summaryZh": "Chinese summary (2-3 sentences, capture key points)",
   "contentZh": "Full Chinese translation (preserve markdown formatting)",
-  "articleType": "one of: news, tutorial, analysis, release, review, comparison, weekly",
+  "articleType": "one of: news, tutorial, analysis",
   "readingTime": <estimated minutes to read the Chinese version>
 }
 
