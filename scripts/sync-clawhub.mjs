@@ -10,6 +10,7 @@
  *   node scripts/sync-clawhub.mjs --limit 50               # Limit items
  *   node scripts/sync-clawhub.mjs --offset 2000 --limit 2000  # Stage sync (2001-4000)
  *   node scripts/sync-clawhub.mjs --offset 6000 --limit 2367 --skip-existing  # Retry failed only
+ *   node scripts/sync-clawhub.mjs --backfill-content                         # Fill NULL content from GitHub
  */
 
 import dotenv from "dotenv";
@@ -184,6 +185,7 @@ async function main() {
   const args = process.argv.slice(2);
   const dryRun = args.includes("--dry-run");
   const skipExisting = args.includes("--skip-existing");
+  const backfillContent = args.includes("--backfill-content");
   const limitIdx = args.indexOf("--limit");
   const limit = limitIdx !== -1 ? Number(args[limitIdx + 1]) : Infinity;
   const offsetIdx = args.indexOf("--offset");
@@ -198,8 +200,38 @@ async function main() {
   const allSkillFiles = await fetchSkillFiles();
   let filesToProcess = allSkillFiles.slice(offset, offset + limit);
 
+  // Backfill mode: only process files whose slugs have NULL content in DB
+  if (backfillContent && supabase) {
+    log.info("Fetching slugs with NULL content from DB...");
+    const nullContentSlugs = new Set();
+    // Paginate to fetch all NULL-content slugs (Supabase default limit is 1000)
+    let from = 0;
+    const pageSize = 1000;
+    while (true) {
+      const { data: rows, error } = await supabase
+        .from("skills")
+        .select("slug")
+        .is("content", null)
+        .range(from, from + pageSize - 1);
+      if (error) throw error;
+      for (const r of rows) nullContentSlugs.add(r.slug);
+      if (rows.length < pageSize) break;
+      from += pageSize;
+    }
+    log.info(`Found ${nullContentSlugs.size} skills with NULL content`);
+    const before = filesToProcess.length;
+    filesToProcess = filesToProcess.filter((file) => {
+      const dirParts = file.path.split("/");
+      const pathAuthor = dirParts.length >= 3 ? dirParts[1] : null;
+      const dirName = dirParts.length >= 3 ? dirParts[2] : dirParts[dirParts.length - 2];
+      const slug = slugify(`${pathAuthor || "unknown"}--${dirName}`);
+      return nullContentSlugs.has(slug);
+    });
+    log.info(`Filtered: ${before} → ${filesToProcess.length} files needing content`);
+  }
+
   // Skip files whose slugs already exist in DB
-  if (skipExisting && supabase) {
+  if (skipExisting && !backfillContent && supabase) {
     log.info("Fetching existing slugs from DB...");
     const { data: rows, error } = await supabase.from("skills").select("slug");
     if (error) throw error;
@@ -221,61 +253,80 @@ async function main() {
   const skills = [];
   let errors = 0;
 
-  for (let idx = 0; idx < filesToProcess.length; idx++) {
-    const file = filesToProcess[idx];
-    try {
-      const content = await githubFetchRaw(
-        REPO_OWNER,
-        REPO_NAME,
-        file.path
-      );
+  // Concurrent fetch for faster processing (especially in CI)
+  const CONCURRENCY = process.env.CI ? 10 : 3;
 
-      const parsed = parseSkillMd(content);
-      if (!parsed) {
+  for (let idx = 0; idx < filesToProcess.length; idx += CONCURRENCY) {
+    const chunk = filesToProcess.slice(idx, idx + CONCURRENCY);
+    const results = await Promise.allSettled(
+      chunk.map(async (file) => {
+        const content = await githubFetchRaw(
+          REPO_OWNER,
+          REPO_NAME,
+          file.path
+        );
+        return { file, content };
+      })
+    );
+
+    for (const result of results) {
+      if (result.status === "rejected") {
+        log.warn(`Error fetching: ${result.reason.message}`);
         errors++;
         continue;
       }
 
-      // Path: skills/<author>/<skill-name>/SKILL.md
-      const dirParts = file.path.split("/");
-      const pathAuthor = dirParts.length >= 3 ? dirParts[1] : null;
-      const dirName = dirParts.length >= 3 ? dirParts[2] : dirParts[dirParts.length - 2];
-      const author = parsed.author || pathAuthor || "unknown";
-      const slug = slugify(`${author}--${dirName}`);
-      const tags = Array.isArray(parsed.tags)
-        ? parsed.tags
-        : typeof parsed.tags === "string"
-          ? parsed.tags.split(",").map((t) => t.trim()).filter(Boolean)
-          : [];
+      const { file, content } = result.value;
+      try {
+        const parsed = parseSkillMd(content);
+        if (!parsed) {
+          errors++;
+          continue;
+        }
 
-      skills.push({
-        slug,
-        name: parsed.name || dirName,
-        description: parsed.description || "",
-        author,
-        category: categorize(parsed.name || dirName, tags, parsed.description || ""),
-        tags,
-        source: "clawhub",
-        source_url: `https://clawhub.com/skills/${pathAuthor || "unknown"}/${dirName}`,
-        github_url: `https://github.com/${REPO_OWNER}/${REPO_NAME}/tree/main/${file.path.replace("/SKILL.md", "")}`,
-        stars: 0,
-        downloads: 0,
-        security_score: "unscanned",
-        // Content fields extracted from SKILL.md body and openclaw metadata
-        content: parsed.body || "",
-        install_command: parsed.install || null,
-        requires_env: parsed.requiresEnv || [],
-        requires_bins: parsed.requiresBins || [],
-      });
+        // Path: skills/<author>/<skill-name>/SKILL.md
+        const dirParts = file.path.split("/");
+        const pathAuthor = dirParts.length >= 3 ? dirParts[1] : null;
+        const dirName = dirParts.length >= 3 ? dirParts[2] : dirParts[dirParts.length - 2];
+        const author = parsed.author || pathAuthor || "unknown";
+        const slug = slugify(`${author}--${dirName}`);
+        const tags = Array.isArray(parsed.tags)
+          ? parsed.tags
+          : typeof parsed.tags === "string"
+            ? parsed.tags.split(",").map((t) => t.trim()).filter(Boolean)
+            : [];
 
-      // Rate limit between fetches (faster in CI)
-      await new Promise((r) => setTimeout(r, process.env.CI ? 30 : 100));
-    } catch (e) {
-      log.warn(`Error processing ${file.path}: ${e.message}`);
-      errors++;
+        skills.push({
+          slug,
+          name: parsed.name || dirName,
+          description: parsed.description || "",
+          author,
+          category: categorize(parsed.name || dirName, tags, parsed.description || ""),
+          tags,
+          source: "clawhub",
+          source_url: `https://clawhub.com/skills/${pathAuthor || "unknown"}/${dirName}`,
+          github_url: `https://github.com/${REPO_OWNER}/${REPO_NAME}/tree/main/${file.path.replace("/SKILL.md", "")}`,
+          stars: 0,
+          downloads: 0,
+          security_score: "unscanned",
+          // Content fields extracted from SKILL.md body and openclaw metadata
+          content: parsed.body || "",
+          install_command: parsed.install || null,
+          requires_env: parsed.requiresEnv || [],
+          requires_bins: parsed.requiresBins || [],
+        });
+      } catch (e) {
+        log.warn(`Error processing ${file.path}: ${e.message}`);
+        errors++;
+      }
     }
 
-    log.progress(idx + 1, total, errors, file.path.split("/").slice(1, 3).join("/"));
+    // Rate limit between batches
+    await new Promise((r) => setTimeout(r, process.env.CI ? 20 : 50));
+
+    const processed = Math.min(idx + CONCURRENCY, filesToProcess.length);
+    const lastFile = chunk[chunk.length - 1];
+    log.progress(processed, total, errors, lastFile.path.split("/").slice(1, 3).join("/"));
   }
 
   log.progressEnd();
@@ -315,7 +366,7 @@ async function main() {
     const batch = dedupedSkills.slice(i, i + BATCH_SIZE);
     const { error } = await supabase
       .from("skills")
-      .upsert(batch, { onConflict: "slug", ignoreDuplicates: true });
+      .upsert(batch, { onConflict: "slug", ignoreDuplicates: !backfillContent });
 
     if (error) {
       log.error(`Batch ${Math.floor(i / BATCH_SIZE) + 1} error: ${error.message}`);

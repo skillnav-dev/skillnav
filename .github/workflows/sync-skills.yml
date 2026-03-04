@@ -9,6 +9,10 @@ on:
         description: "Skip existing skills (incremental)"
         type: boolean
         default: true
+      backfill_content:
+        description: "Backfill NULL content from GitHub"
+        type: boolean
+        default: false
       limit:
         description: "Max items to process"
         required: false
@@ -24,10 +28,11 @@ concurrency:
 jobs:
   clawhub:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
     env:
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v4
 
@@ -41,7 +46,11 @@ jobs:
       - name: Sync ClawHub skills
         run: |
           ARGS=""
-          if [ "${{ inputs.skip_existing }}" != "false" ]; then ARGS="$ARGS --skip-existing"; fi
+          if [ "${{ inputs.backfill_content }}" = "true" ]; then
+            ARGS="$ARGS --backfill-content"
+          elif [ "${{ inputs.skip_existing }}" != "false" ]; then
+            ARGS="$ARGS --skip-existing"
+          fi
           if [ "${{ inputs.limit }}" ]; then ARGS="$ARGS --limit ${{ inputs.limit }}"; fi
           if [ "${{ inputs.dry_run }}" = "true" ]; then ARGS="$ARGS --dry-run"; fi
           node scripts/sync-clawhub.mjs $ARGS
