@@ -7,6 +7,7 @@ import {
 export const articlesSearchParams = {
   q: parseAsString.withDefault(""),
   category: parseAsString.withDefault(""),
+  source: parseAsString.withDefault(""),
   page: parseAsInteger.withDefault(1),
 };
 

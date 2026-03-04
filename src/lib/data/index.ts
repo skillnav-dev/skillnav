@@ -11,6 +11,8 @@ export {
 export {
   getArticles,
   getArticleBySlug,
+  getArticlesWithCount,
+  getArticleSources,
   getLatestArticles,
   getAllArticleSlugs,
 } from "./articles";

@@ -98,6 +98,7 @@ export async function getArticlesWithCount(options?: {
   limit?: number;
   offset?: number;
   category?: string;
+  source?: string;
   search?: string;
 }): Promise<{ articles: Article[]; total: number }> {
   if (!isSupabaseConfigured()) {
@@ -105,6 +106,9 @@ export async function getArticlesWithCount(options?: {
     let results = [...mockArticles];
     if (options?.category) {
       results = results.filter((a) => a.category === options.category);
+    }
+    if (options?.source) {
+      results = results.filter((a) => a.source === options.source);
     }
     if (options?.search) {
       const q = options.search.toLowerCase();
@@ -134,6 +138,7 @@ export async function getArticlesWithCount(options?: {
     .order("published_at", { ascending: false });
 
   if (options?.category) query = query.eq("article_type", options.category);
+  if (options?.source) query = query.eq("source", options.source);
   if (options?.search) {
     query = query.or(
       `title.ilike.%${options.search}%,title_zh.ilike.%${options.search}%`,
@@ -150,6 +155,30 @@ export async function getArticlesWithCount(options?: {
     articles: (data ?? []).map(mapArticleRow),
     total: count ?? 0,
   };
+}
+
+/**
+ * Get distinct article sources for filter UI.
+ */
+export async function getArticleSources(): Promise<string[]> {
+  if (!isSupabaseConfigured()) {
+    const { mockArticles } = await import("@/data/mock-articles");
+    return [
+      ...new Set(mockArticles.map((a) => a.source).filter(Boolean) as string[]),
+    ].sort();
+  }
+
+  const { createServerClient } = await import("@/lib/supabase/server");
+  const supabase = await createServerClient();
+
+  const { data, error } = (await supabase
+    .from("articles")
+    .select("source")) as {
+    data: { source: string }[] | null;
+    error: unknown;
+  };
+  if (error) throw error;
+  return [...new Set((data ?? []).map((r) => r.source).filter(Boolean))].sort();
 }
 
 /**
