@@ -11,7 +11,6 @@ export type ArticleType =
   | "news"
   | "tutorial"
   | "analysis"
-  | "release"
   | "review"
   | "comparison"
   | "weekly";
@@ -49,6 +48,9 @@ export interface Skill {
   // Editorial review
   editorRating?: string;
   editorReviewZh?: string;
+  // Content governance
+  qualityTier?: "A" | "B" | "C";
+  isHidden?: boolean;
   // Enrichment
   pricingType?: PricingType;
   platform?: string[];

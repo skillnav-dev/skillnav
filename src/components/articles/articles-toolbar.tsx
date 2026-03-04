@@ -13,7 +13,6 @@ const CATEGORY_LABELS: Record<string, string> = {
   news: "新闻",
   tutorial: "教程",
   analysis: "分析",
-  release: "发布",
   review: "评测",
   comparison: "对比",
   weekly: "周刊",

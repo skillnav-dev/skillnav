@@ -6,7 +6,6 @@ const categoryLabels: Record<Article["category"], string> = {
   news: "资讯",
   tutorial: "教程",
   analysis: "深度",
-  release: "发布",
   review: "评测",
   comparison: "对比",
   weekly: "周刊",

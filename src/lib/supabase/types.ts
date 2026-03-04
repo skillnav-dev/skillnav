@@ -53,6 +53,8 @@ export interface Database {
           requires_bins: string[];
           editor_rating: string | null;
           editor_review_zh: string | null;
+          quality_tier: "A" | "B" | "C" | null;
+          is_hidden: boolean;
           last_verified_at: string | null;
           created_at: string;
           updated_at: string;
@@ -85,6 +87,7 @@ export interface Database {
             | "review"
             | "comparison"
             | "tutorial"
+            | "analysis"
             | "weekly";
           published_at: string | null;
           created_at: string;

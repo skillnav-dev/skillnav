@@ -36,6 +36,8 @@ export function mapSkillRow(row: SkillRow): Skill {
     requiresBins: row.requires_bins,
     editorRating: row.editor_rating ?? undefined,
     editorReviewZh: row.editor_review_zh ?? undefined,
+    qualityTier: row.quality_tier ?? undefined,
+    isHidden: row.is_hidden ?? undefined,
     lastVerifiedAt: row.last_verified_at ?? undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,

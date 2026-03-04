@@ -5,6 +5,15 @@ const isSupabaseConfigured = () =>
   !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 /**
+ * Exclude hidden skills from a Supabase query.
+ * Handles NULL (legacy rows without is_hidden) and explicit false.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function excludeHidden<T extends { or: (...args: any[]) => any }>(query: T): T {
+  return query.or("is_hidden.is.null,is_hidden.eq.false");
+}
+
+/**
  * Get all skills, sorted by stars descending.
  */
 export async function getSkills(options?: {
@@ -44,6 +53,8 @@ export async function getSkills(options?: {
     .from("skills")
     .select("*")
     .order("stars", { ascending: false });
+
+  query = excludeHidden(query);
 
   if (options?.category) query = query.eq("category", options.category);
   if (options?.source) query = query.eq("source", options.source);
@@ -98,13 +109,17 @@ export async function getFeaturedSkills(limit = 6): Promise<Skill[]> {
   const { mapSkillRow } = await import("@/lib/supabase/mappers");
   const supabase = await createServerClient();
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("skills")
     .select("*")
     .eq("is_featured", true)
     .order("stars", { ascending: false })
     .limit(limit);
 
+  query = excludeHidden(query);
+  query = query.in("quality_tier", ["A", "B"]);
+
+  const { data, error } = await query;
   if (error) throw error;
   return (data ?? []).map(mapSkillRow);
 }
@@ -121,10 +136,13 @@ export async function getSkillsCount(): Promise<number> {
   const { createServerClient } = await import("@/lib/supabase/server");
   const supabase = await createServerClient();
 
-  const { count, error } = await supabase
+  let query = supabase
     .from("skills")
     .select("*", { count: "exact", head: true });
 
+  query = excludeHidden(query);
+
+  const { count, error } = await query;
   if (error) throw error;
   return count ?? 0;
 }
@@ -171,6 +189,8 @@ export async function getSkillsWithCount(options?: {
     .select("*", { count: "exact" })
     .order("stars", { ascending: false });
 
+  query = excludeHidden(query);
+
   if (options?.category) query = query.eq("category", options.category);
   if (options?.source) query = query.eq("source", options.source);
   if (options?.search) {
@@ -203,9 +223,11 @@ export async function getSkillCategories(): Promise<string[]> {
   const { createServerClient } = await import("@/lib/supabase/server");
   const supabase = await createServerClient();
 
-  const { data, error } = (await supabase
-    .from("skills")
-    .select("category")) as {
+  let query = supabase.from("skills").select("category");
+
+  query = excludeHidden(query);
+
+  const { data, error } = (await query) as {
     data: { category: string }[] | null;
     error: unknown;
   };
@@ -227,7 +249,11 @@ export async function getAllSkillSlugs(): Promise<string[]> {
   const { createStaticClient } = await import("@/lib/supabase/static");
   const supabase = createStaticClient();
 
-  const { data, error } = (await supabase.from("skills").select("slug")) as {
+  let query = supabase.from("skills").select("slug");
+
+  query = excludeHidden(query);
+
+  const { data, error } = (await query) as {
     data: { slug: string }[] | null;
     error: unknown;
   };
