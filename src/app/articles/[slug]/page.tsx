@@ -36,6 +36,9 @@ export async function generateMetadata({
       type: "article",
       publishedTime: article.publishedAt,
       url: `${siteConfig.url}/articles/${article.slug}`,
+      ...(article.coverImage && {
+        images: [{ url: article.coverImage }],
+      }),
     },
   };
 }
@@ -55,6 +58,7 @@ export default async function ArticlePage({ params }: PageProps) {
         description={article.summaryZh ?? article.summary}
         url={`${siteConfig.url}/articles/${article.slug}`}
         publishedAt={article.publishedAt}
+        image={article.coverImage}
       />
       <BreadcrumbJsonLd
         items={[
@@ -80,6 +84,17 @@ export default async function ArticlePage({ params }: PageProps) {
         <div className="mt-4">
           <ArticleMeta article={article} />
         </div>
+        {/* Hero image */}
+        {article.coverImage && (
+          <div className="mt-6 overflow-hidden rounded-lg">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={article.coverImage}
+              alt={article.titleZh ?? article.title}
+              className="aspect-[2/1] w-full object-cover"
+            />
+          </div>
+        )}
         <div className="mt-8">
           <ArticleContent content={article.contentZh ?? article.content} />
         </div>

@@ -33,12 +33,14 @@ export function ArticleJsonLd({
   url,
   publishedAt,
   author,
+  image,
 }: {
   title: string;
   description: string;
   url: string;
   publishedAt: string;
   author?: string;
+  image?: string;
 }) {
   return (
     <JsonLd
@@ -49,6 +51,7 @@ export function ArticleJsonLd({
         description,
         url,
         datePublished: publishedAt,
+        ...(image && { image }),
         author: {
           "@type": "Organization",
           name: author ?? siteConfig.name,
