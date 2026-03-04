@@ -35,6 +35,10 @@ const RELEVANCE_KEYWORDS = [
   "claude", "anthropic", "mcp", "skill", "agent", "llm", "ai",
   "prompt", "tool-use", "function-calling", "agentic",
   "computer-use", "model-context", "rag", "embedding",
+  "cursor", "copilot", "codex", "gemini", "openai",
+  "a2a", "agent-to-agent", "multi-agent", "crewai", "autogen",
+  "langchain", "langgraph", "vercel", "next.js", "ai-sdk",
+  "hugging-face", "transformers", "diffusion",
 ];
 
 const SOURCES = [
@@ -64,6 +68,43 @@ const SOURCES = [
     label: "Simon Willison's Weblog",
     feedUrl: "https://simonwillison.net/atom/everything/",
     defaultType: "analysis",
+    relevanceFilter: RELEVANCE_KEYWORDS,
+  },
+  {
+    name: "google-ai",
+    label: "Google AI Blog",
+    feedUrl: "https://blog.google/technology/ai/rss/",
+    defaultType: "news",
+    relevanceFilter: RELEVANCE_KEYWORDS,
+  },
+  // NOTE: Cursor (changelog.cursor.com/feed.xml) returns HTML, not XML — no RSS feed available
+  // NOTE: Vercel (vercel.com/atom) has date format incompatible with rss-parser — revisit later
+  {
+    name: "github",
+    label: "GitHub Blog",
+    feedUrl: "https://github.blog/feed/",
+    defaultType: "news",
+    relevanceFilter: RELEVANCE_KEYWORDS,
+  },
+  {
+    name: "huggingface",
+    label: "Hugging Face Blog",
+    feedUrl: "https://huggingface.co/blog/feed.xml",
+    defaultType: "tutorial",
+    relevanceFilter: RELEVANCE_KEYWORDS,
+  },
+  {
+    name: "crewai",
+    label: "CrewAI Blog",
+    feedUrl: "https://blog.crewai.com/rss/",
+    defaultType: "tutorial",
+    relevanceFilter: null, // Accept all — Agent framework is core topic
+  },
+  {
+    name: "techcrunch-ai",
+    label: "TechCrunch AI",
+    feedUrl: "https://techcrunch.com/category/artificial-intelligence/feed/",
+    defaultType: "news",
     relevanceFilter: RELEVANCE_KEYWORDS,
   },
 ];
@@ -190,7 +231,16 @@ async function main() {
     // Step 1: Fetch RSS feed
     let feed;
     try {
-      feed = await rssParser.parseURL(source.feedUrl);
+      // Some feeds have malformed XML (unescaped &, invalid dates).
+      // Fetch raw text first, sanitize, then parse as string.
+      const feedRes = await fetch(source.feedUrl, {
+        headers: { "User-Agent": "SkillNav-Bot/1.0 (+https://skillnav.dev)" },
+        signal: AbortSignal.timeout(15000),
+      });
+      let feedText = await feedRes.text();
+      // Fix unescaped ampersands in XML (e.g. Cursor changelog)
+      feedText = feedText.replace(/&(?!amp;|lt;|gt;|quot;|apos;|#)/g, "&amp;");
+      feed = await rssParser.parseString(feedText);
     } catch (e) {
       log.warn(`Failed to fetch RSS from ${source.feedUrl}: ${e.message}`);
       continue;

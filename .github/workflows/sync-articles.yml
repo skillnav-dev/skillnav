@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       source:
-        description: "Source filter (anthropic/openai/langchain/simonw)"
+        description: "Source filter (anthropic/openai/langchain/simonw/google-ai/github/huggingface/crewai/techcrunch-ai)"
         required: false
       limit:
         description: "Max items per source"
