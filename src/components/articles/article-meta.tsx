@@ -1,15 +1,11 @@
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock } from "lucide-react";
 import type { Article } from "@/data/types";
-
-const categoryLabels: Record<Article["category"], string> = {
-  news: "资讯",
-  tutorial: "教程",
-  analysis: "深度",
-  review: "评测",
-  comparison: "对比",
-  weekly: "周刊",
-};
+import {
+  ARTICLE_TYPE_LABELS,
+  ARTICLE_TYPE_COLORS,
+  ARTICLE_SOURCE_LABELS,
+} from "@/lib/article-constants";
 
 interface ArticleMetaProps {
   article: Article;
@@ -18,7 +14,15 @@ interface ArticleMetaProps {
 export function ArticleMeta({ article }: ArticleMetaProps) {
   return (
     <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-      <Badge variant="secondary">{categoryLabels[article.category]}</Badge>
+      <Badge
+        variant="secondary"
+        className={ARTICLE_TYPE_COLORS[article.category]}
+      >
+        {ARTICLE_TYPE_LABELS[article.category]}
+      </Badge>
+      {article.source && ARTICLE_SOURCE_LABELS[article.source] && (
+        <span>{ARTICLE_SOURCE_LABELS[article.source]}</span>
+      )}
       <span className="flex items-center gap-1">
         <Calendar className="size-3.5" />
         {article.publishedAt}

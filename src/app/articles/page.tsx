@@ -8,6 +8,7 @@ import { ArticlesSkeleton } from "@/components/articles/articles-skeleton";
 import {
   getArticleCategories,
   getArticlesWithCount,
+  getArticleSources,
 } from "@/lib/data/articles";
 import {
   articlesParamsCache,
@@ -34,15 +35,18 @@ export async function generateMetadata({
 }
 
 export default async function ArticlesPage({ searchParams }: PageProps) {
-  const { q, category, page } = await articlesParamsCache.parse(searchParams);
+  const { q, category, source, page } =
+    await articlesParamsCache.parse(searchParams);
 
-  // Parallel fetch: categories (lightweight) + count for toolbar display
-  const [categories, { total }] = await Promise.all([
+  // Parallel fetch: categories + sources + count for toolbar
+  const [categories, sources, { total }] = await Promise.all([
     getArticleCategories(),
+    getArticleSources(),
     getArticlesWithCount({
       limit: ARTICLES_PAGE_SIZE,
       offset: (Math.max(1, page) - 1) * ARTICLES_PAGE_SIZE,
       category: category || undefined,
+      source: source || undefined,
       search: q || undefined,
     }),
   ]);
@@ -61,13 +65,17 @@ export default async function ArticlesPage({ searchParams }: PageProps) {
           description="AI Agent Skills 生态的最新动态、教程和深度分析"
         />
         <div className="mt-6">
-          <ArticlesToolbar categories={categories} totalCount={total} />
+          <ArticlesToolbar
+            categories={categories}
+            sources={sources}
+            totalCount={total}
+          />
         </div>
         <Suspense
-          key={`${q}-${category}-${page}`}
+          key={`${q}-${category}-${source}-${page}`}
           fallback={<ArticlesSkeleton />}
         >
-          <ArticlesGrid q={q} category={category} page={page} />
+          <ArticlesGrid q={q} category={category} source={source} page={page} />
         </Suspense>
       </div>
     </>

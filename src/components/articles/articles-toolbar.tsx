@@ -6,25 +6,21 @@ import { Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { articlesSearchParams } from "@/lib/articles-search-params";
+import {
+  ARTICLE_TYPE_LABELS,
+  ARTICLE_SOURCE_LABELS,
+} from "@/lib/article-constants";
 import { cn } from "@/lib/utils";
-
-// Category Chinese display labels
-const CATEGORY_LABELS: Record<string, string> = {
-  news: "新闻",
-  tutorial: "教程",
-  analysis: "分析",
-  review: "评测",
-  comparison: "对比",
-  weekly: "周刊",
-};
 
 interface ArticlesToolbarProps {
   categories: string[];
+  sources: string[];
   totalCount: number;
 }
 
 export function ArticlesToolbar({
   categories,
+  sources,
   totalCount,
 }: ArticlesToolbarProps) {
   const [isPending, startTransition] = useTransition();
@@ -46,6 +42,14 @@ export function ArticlesToolbar({
     }),
   );
 
+  const [source, setSource] = useQueryState(
+    "source",
+    articlesSearchParams.source.withOptions({
+      shallow: false,
+      startTransition,
+    }),
+  );
+
   const [, setPage] = useQueryState(
     "page",
     articlesSearchParams.page.withOptions({
@@ -61,6 +65,11 @@ export function ArticlesToolbar({
 
   function handleCategory(cat: string) {
     setCategory(cat === category ? null : cat || null);
+    setPage(1);
+  }
+
+  function handleSource(src: string) {
+    setSource(src === source ? null : src || null);
     setPage(1);
   }
 
@@ -109,10 +118,36 @@ export function ArticlesToolbar({
             onClick={() => handleCategory(cat)}
             className="shrink-0"
           >
-            {CATEGORY_LABELS[cat] ?? cat}
+            {ARTICLE_TYPE_LABELS[cat as keyof typeof ARTICLE_TYPE_LABELS] ??
+              cat}
           </Button>
         ))}
       </div>
+
+      {/* Source filters */}
+      {sources.length > 0 && (
+        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
+          <Button
+            variant={!source ? "default" : "outline"}
+            size="sm"
+            onClick={() => handleSource("")}
+            className="shrink-0"
+          >
+            全部来源
+          </Button>
+          {sources.map((src) => (
+            <Button
+              key={src}
+              variant={src === source ? "default" : "outline"}
+              size="sm"
+              onClick={() => handleSource(src)}
+              className="shrink-0"
+            >
+              {ARTICLE_SOURCE_LABELS[src] ?? src}
+            </Button>
+          ))}
+        </div>
+      )}
 
       {/* Results count */}
       <p
@@ -121,7 +156,7 @@ export function ArticlesToolbar({
           isPending && "opacity-50",
         )}
       >
-        {q || category
+        {q || category || source
           ? `找到 ${totalCount} 篇文章`
           : `共 ${totalCount} 篇文章`}
       </p>

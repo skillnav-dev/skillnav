@@ -7,21 +7,28 @@ import { ArticlesPagination } from "./articles-pagination";
 interface ArticlesGridProps {
   q: string;
   category: string;
+  source: string;
   page: number;
 }
 
-function buildPageUrl(q: string, category: string) {
+function buildPageUrl(q: string, category: string, source: string) {
   return (page: number) => {
     const params = new URLSearchParams();
     if (q) params.set("q", q);
     if (category) params.set("category", category);
+    if (source) params.set("source", source);
     if (page > 1) params.set("page", String(page));
     const qs = params.toString();
     return qs ? `/articles?${qs}` : "/articles";
   };
 }
 
-export async function ArticlesGrid({ q, category, page }: ArticlesGridProps) {
+export async function ArticlesGrid({
+  q,
+  category,
+  source,
+  page,
+}: ArticlesGridProps) {
   const validPage = Math.max(1, page);
   const offset = (validPage - 1) * ARTICLES_PAGE_SIZE;
 
@@ -29,6 +36,7 @@ export async function ArticlesGrid({ q, category, page }: ArticlesGridProps) {
     limit: ARTICLES_PAGE_SIZE,
     offset,
     category: category || undefined,
+    source: source || undefined,
     search: q || undefined,
   });
 
@@ -51,7 +59,7 @@ export async function ArticlesGrid({ q, category, page }: ArticlesGridProps) {
         <ArticlesPagination
           currentPage={validPage}
           totalPages={totalPages}
-          buildPageUrl={buildPageUrl(q, category)}
+          buildPageUrl={buildPageUrl(q, category, source)}
         />
       </div>
     </div>
