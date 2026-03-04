@@ -6,7 +6,8 @@
  *   - deepseek (default): DEEPSEEK_API_KEY, model deepseek-chat
  *   - gemini:             GEMINI_API_KEY, model gemini-2.0-flash
  *   - anthropic:          ANTHROPIC_API_KEY, model claude-haiku-4-5-20251001
- *   - openai:             OPENAI_API_KEY, model gpt-4o-mini
+ *   - openai:             OPENAI_API_KEY, model gpt-4o-mini (OPENAI_BASE_URL for proxy)
+ *   - gpt:                GPT_API_KEY, model gpt-5 (OpenAI Responses API via proxy)
  */
 
 // ── Provider Configuration ───────────────────────────────────────────
@@ -35,9 +36,17 @@ const PROVIDERS = {
   openai: {
     name: "GPT-4o-mini",
     baseUrl: "https://api.openai.com/v1",
+    baseUrlEnv: "OPENAI_BASE_URL",
     model: "gpt-4o-mini",
     apiKeyEnv: "OPENAI_API_KEY",
     type: "openai-compatible",
+  },
+  gpt: {
+    name: "GPT-5.3 Codex",
+    baseUrl: "https://gmn.chuangzuoli.com/v1",
+    model: "gpt-5.3-codex",
+    apiKeyEnv: "GPT_API_KEY",
+    type: "openai-responses",
   },
 };
 
@@ -70,7 +79,10 @@ function getProvider() {
       `${provider.apiKeyEnv} is not set. Required for provider "${name}".`
     );
   }
-  return { ...provider, apiKey };
+  // Allow base URL override via env var (e.g. OPENAI_BASE_URL for proxies)
+  const baseUrl =
+    (provider.baseUrlEnv && process.env[provider.baseUrlEnv]) || provider.baseUrl;
+  return { ...provider, apiKey, baseUrl };
 }
 
 /**
@@ -118,6 +130,49 @@ async function callOpenAICompatible(provider, systemPrompt, userPrompt, maxToken
 }
 
 /**
+ * Call OpenAI Responses API (e.g. GPT-5 via proxy).
+ */
+async function callOpenAIResponses(provider, systemPrompt, userPrompt, maxTokens) {
+  const res = await fetch(`${provider.baseUrl}/responses`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${provider.apiKey}`,
+    },
+    body: JSON.stringify({
+      model: provider.model,
+      max_output_tokens: maxTokens,
+      input: [
+        {
+          type: "message",
+          role: "developer",
+          content: [{ type: "input_text", text: systemPrompt }],
+        },
+        {
+          type: "message",
+          role: "user",
+          content: [{ type: "input_text", text: userPrompt }],
+        },
+      ],
+    }),
+  });
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`${provider.name} API error ${res.status}: ${body.slice(0, 300)}`);
+  }
+
+  const data = await res.json();
+  // Responses API returns output[].content[].text
+  const message = data.output?.find((o) => o.type === "message");
+  const text = message?.content?.find((c) => c.type === "output_text")?.text;
+  if (!text) {
+    throw new Error(`${provider.name}: unexpected response structure: ${JSON.stringify(data).slice(0, 300)}`);
+  }
+  return text;
+}
+
+/**
  * Call the Anthropic API via SDK.
  */
 async function callAnthropic(provider, systemPrompt, userPrompt, maxTokens) {
@@ -141,6 +196,9 @@ async function callLLM(systemPrompt, userPrompt, maxTokens = 8192) {
   const provider = getProvider();
   if (provider.type === "anthropic") {
     return callAnthropic(provider, systemPrompt, userPrompt, maxTokens);
+  }
+  if (provider.type === "openai-responses") {
+    return callOpenAIResponses(provider, systemPrompt, userPrompt, maxTokens);
   }
   return callOpenAICompatible(provider, systemPrompt, userPrompt, maxTokens);
 }

@@ -73,6 +73,24 @@ function generateSlug(title) {
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /**
+ * Simple rate limiter: ensures minimum interval between calls.
+ * Accounts for time already spent (e.g. in the LLM call itself).
+ */
+function createRateLimiter(maxPerMinute) {
+  const minInterval = 60_000 / maxPerMinute;
+  let lastCallTime = 0;
+  return async function throttle() {
+    const elapsed = Date.now() - lastCallTime;
+    if (lastCallTime && elapsed < minInterval) {
+      await delay(minInterval - elapsed);
+    }
+    lastCallTime = Date.now();
+  };
+}
+
+const llmThrottle = createRateLimiter(10); // 10 req/min max
+
+/**
  * Extract full article content from a URL using Readability + Turndown.
  * Returns Markdown content and excerpt, or null on failure.
  */
@@ -225,12 +243,12 @@ async function main() {
           };
         } else {
           try {
+            await llmThrottle(); // enforce 10 req/min limit
             translation = await translateArticle({
               title: item.title || "",
               summary: excerpt,
               content: contentMd,
             });
-            await delay(200); // rate limit between LLM calls
           } catch (e) {
             log.error(`Translation failed for "${itemLabel}": ${e.message}`);
             totalFailed++;

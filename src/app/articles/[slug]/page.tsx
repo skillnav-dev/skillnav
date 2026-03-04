@@ -82,7 +82,7 @@ export default async function ArticlePage({ params }: PageProps) {
           <ArticleMeta article={article} />
         </div>
         <div className="mt-8">
-          <ArticleContent content={article.content} />
+          <ArticleContent content={article.contentZh ?? article.content} />
         </div>
         {article.sourceUrl && (
           <p className="mt-8 text-sm text-muted-foreground">
