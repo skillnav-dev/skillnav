@@ -2,8 +2,9 @@
  * Shared skill categorization module.
  * Weighted keyword scoring across tags, name, and description.
  *
- * Categories: 16 (expanded from original 9)
- * Keywords: ~400+ (expanded from original 23)
+ * Categories: 10 scenario-based (consolidated from 16)
+ * Merge rules: 写作+创意→内容创作, 效率+自动化→效率工具,
+ *   金融/教育/通讯/基础→redistributed or 其他
  */
 
 // Weights for each text source
@@ -13,12 +14,24 @@ const WEIGHTS = { tags: 3, name: 2, description: 1 };
 const MIN_SCORE = 2;
 
 /**
- * Category keyword mapping.
+ * Category keyword mapping — 10 scenario-based categories.
  * Order matters for tie-breaking: earlier categories win on equal score.
+ *
+ * Consolidation from 16:
+ *   开发 → 编码开发 (kept)
+ *   AI → AI 智能体 (expanded with agent keywords)
+ *   数据 → 数据处理 (kept)
+ *   搜索 → 搜索研究 (kept)
+ *   DevOps → 运维部署 (kept, absorbed 基础 infra keywords)
+ *   写作 + 创意 → 内容创作 (merged)
+ *   效率 + 自动化 → 效率工具 (merged)
+ *   安全 → 安全监控 (kept, absorbed monitoring keywords)
+ *   集成 + 通讯 → 平台集成 (merged)
+ *   金融/教育/基础 → redistributed or 其他
  */
 export const CATEGORY_KEYWORDS = {
-  // --- 开发 (Development & Programming) ---
-  "开发": [
+  // --- 编码开发 (Coding & Development) ---
+  "编码开发": [
     "code", "coding", "development", "developer", "programming",
     "debug", "debugger", "debugging", "test", "testing", "unittest",
     "lint", "linter", "format", "formatter", "refactor", "compile",
@@ -32,20 +45,21 @@ export const CATEGORY_KEYWORDS = {
     "prototype", "sdk-builder", "sourcemap",
   ],
 
-  // --- AI (AI & Machine Learning) ---
-  "AI": [
+  // --- AI 智能体 (AI & Agents) ---
+  "AI 智能体": [
     "ai", "llm", "gpt", "claude", "openai", "anthropic",
     "gemini", "mistral", "llama", "ollama", "huggingface",
     "model", "inference", "embedding", "vector", "rag",
-    "prompt", "agent", "copilot",
+    "prompt", "agent", "copilot", "assistant",
     "nlp", "ml", "machine-learning", "deep-learning",
     "neural", "transformer", "fine-tune", "finetune",
     "chatgpt", "langchain", "llamaindex", "semantic",
     "perplexity", "groq", "replicate", "cohere",
+    "chatbot", "conversational", "agentic",
   ],
 
-  // --- 数据 (Data & Analytics) ---
-  "数据": [
+  // --- 数据处理 (Data Processing) ---
+  "数据处理": [
     "data", "dataset", "database", "sql", "postgres", "postgresql",
     "mysql", "sqlite", "mongodb", "redis", "supabase", "firebase",
     "analytics", "analysis", "visualization", "chart", "graph",
@@ -55,19 +69,8 @@ export const CATEGORY_KEYWORDS = {
     "analyzer", "analyse", "analyze",
   ],
 
-  // --- 安全 (Security & Privacy) ---
-  "安全": [
-    "security", "secure", "encrypt", "encryption", "decrypt",
-    "password", "credential", "vault", "secret",
-    "audit", "scan", "scanner", "vulnerability", "malware",
-    "firewall", "permission", "access-control", "rbac",
-    "privacy", "anonymize", "sanitize", "verification",
-    "certificate", "ssl", "tls", "2fa", "mfa", "otp",
-    "pentest", "exploit", "threat", "vpn", "guard",
-  ],
-
-  // --- 搜索 (Search & Browsing) ---
-  "搜索": [
+  // --- 搜索研究 (Search & Research) ---
+  "搜索研究": [
     "search", "browse", "browsing", "browser", "crawler", "scrape", "scraping",
     "spider", "web-search", "google", "bing", "duckduckgo", "serp",
     "fetch", "indexing", "lookup", "finder", "discovery",
@@ -75,8 +78,26 @@ export const CATEGORY_KEYWORDS = {
     "research", "researcher", "investigate",
   ],
 
-  // --- 写作 (Writing & Content) ---
-  "写作": [
+  // --- 运维部署 (DevOps & Infrastructure) ---
+  "运维部署": [
+    "docker", "container", "kubernetes", "k8s", "helm",
+    "deploy", "deployment", "cicd", "ci-cd",
+    "jenkins", "circleci", "terraform", "ansible",
+    "cloudflare", "aws", "azure", "gcp", "vercel", "netlify",
+    "heroku", "railway", "digitalocean",
+    "nginx", "caddy", "load-balancer", "cdn",
+    "devops", "infra", "infrastructure", "cloud",
+    "serverless", "lambda", "worker", "edge",
+    "ssh", "ops", "operations",
+    // Absorbed from 基础
+    "config", "configuration", "settings", "env", "environment",
+    "init", "setup", "bootstrap", "daemon",
+    "router", "routing", "runtime", "process",
+  ],
+
+  // --- 内容创作 (Content Creation) — merged 写作 + 创意 ---
+  "内容创作": [
+    // Writing
     "write", "writer", "writing", "blog", "blogger", "article",
     "content", "copywriting", "copy", "editor", "editing",
     "markdown", "mdx", "readme", "documentation", "docs",
@@ -86,24 +107,21 @@ export const CATEGORY_KEYWORDS = {
     "i18n", "l10n", "paragraph", "journal",
     "publish", "publisher", "publishing", "news", "digest",
     "book", "ebook", "newsletter", "report-writer",
+    // Creative & design
+    "image", "photo", "video", "audio", "music", "sound",
+    "design", "creative", "art", "draw", "drawing", "paint",
+    "illustration", "icon", "logo", "banner", "thumbnail",
+    "figma", "canva", "photoshop", "midjourney", "dalle",
+    "stable-diffusion", "diffusion", "tts",
+    "speech", "voice", "podcast", "animation", "3d", "render",
+    "color", "palette", "font", "typography",
+    "youtube", "tiktok", "bilibili", "instagram", "svg",
+    "media", "camera", "screenshot", "wallpaper",
   ],
 
-  // --- DevOps (DevOps & Cloud) ---
-  "DevOps": [
-    "docker", "container", "kubernetes", "k8s", "helm",
-    "deploy", "deployment", "cicd", "ci-cd",
-    "jenkins", "circleci", "terraform", "ansible",
-    "cloudflare", "aws", "azure", "gcp", "vercel", "netlify",
-    "heroku", "railway", "digitalocean",
-    "nginx", "caddy", "load-balancer", "cdn",
-    "devops", "infra", "infrastructure", "cloud",
-    "serverless", "lambda", "worker", "edge",
-    "sentry", "datadog", "newrelic", "grafana", "prometheus",
-    "ssh", "ops", "operations",
-  ],
-
-  // --- 效率 (Productivity & Tools) ---
-  "效率": [
+  // --- 效率工具 (Productivity) — merged 效率 + 自动化 ---
+  "效率工具": [
+    // Productivity
     "productivity", "file", "files", "pdf", "word",
     "notion", "obsidian", "todoist", "trello", "jira", "asana",
     "calendar", "schedule", "reminder", "bookmark", "clipboard",
@@ -113,10 +131,7 @@ export const CATEGORY_KEYWORDS = {
     "rename", "batch", "utility", "tool", "toolkit",
     "manager", "management", "tracker", "tracking",
     "optimizer", "optimize", "cleanup", "sorter",
-  ],
-
-  // --- 自动化 (Automation & Workflow) ---
-  "自动化": [
+    // Automation
     "automation", "automate", "automated", "workflow", "flow",
     "orchestrate", "orchestration", "scheduler",
     "cron", "trigger", "event", "hook", "listener",
@@ -125,68 +140,39 @@ export const CATEGORY_KEYWORDS = {
     "pipe", "chain", "sequence", "queue", "job",
   ],
 
-  // --- 集成 (Integration & API) ---
-  "集成": [
+  // --- 安全监控 (Security & Monitoring) ---
+  "安全监控": [
+    "security", "secure", "encrypt", "encryption", "decrypt",
+    "password", "credential", "vault", "secret",
+    "audit", "scan", "scanner", "vulnerability", "malware",
+    "firewall", "permission", "access-control", "rbac",
+    "privacy", "anonymize", "sanitize", "verification",
+    "certificate", "ssl", "tls", "2fa", "mfa", "otp",
+    "pentest", "exploit", "threat", "vpn", "guard",
+    // Monitoring (absorbed from 基础)
+    "logging", "log", "logger", "monitor", "monitoring",
+    "health", "ping", "sentry", "datadog", "newrelic",
+    "grafana", "prometheus", "alert", "alerting",
+  ],
+
+  // --- 平台集成 (Platform Integration) — merged 集成 + 通讯 ---
+  "平台集成": [
+    // API & integration
     "api", "rest", "graphql", "webhook", "integration", "connect",
     "connector", "oauth", "zapier", "ifttt",
     "n8n", "make", "middleware", "bridge", "gateway", "proxy",
     "sdk", "client", "wrapper", "adapter", "plugin", "extension",
     "mcp", "server", "sync", "import", "export",
-  ],
-
-  // --- 创意 (Creative & Design) ---
-  "创意": [
-    "image", "photo", "video", "audio", "music", "sound",
-    "design", "creative", "art", "draw", "drawing", "paint",
-    "illustration", "icon", "logo", "banner", "thumbnail",
-    "figma", "canva", "photoshop", "midjourney", "dalle",
-    "stable-diffusion", "diffusion", "tts",
-    "speech", "voice", "podcast", "animation", "3d", "render",
-    "color", "palette", "font", "typography", "ui", "ux",
-    "youtube", "tiktok", "bilibili", "instagram", "svg",
-    "media", "camera", "screenshot", "wallpaper",
-  ],
-
-  // --- 通讯 (Communication & Messaging) ---
-  "通讯": [
+    // Communication & messaging
     "email", "mail", "gmail", "outlook", "smtp", "imap",
-    "message", "messaging", "chat", "chatbot",
+    "message", "messaging", "chat",
     "slack", "discord", "telegram", "whatsapp", "wechat",
     "teams", "signal", "notification", "notify", "push",
     "sms", "twilio", "sendgrid", "resend", "mailgun",
     "comment", "reply", "thread", "conversation", "inbox",
     "feishu", "lark", "dingtalk", "social", "twitter",
-  ],
-
-  // --- 金融 (Finance & Crypto) ---
-  "金融": [
-    "crypto", "bitcoin", "btc", "ethereum", "eth", "solana", "sol",
-    "defi", "nft", "token", "wallet", "blockchain", "web3",
-    "trading", "trade", "trader", "exchange", "swap", "dex",
-    "finance", "financial", "fintech", "payment", "invoice",
-    "accounting", "budget", "expense", "stock", "market",
-    "portfolio", "invest", "investment", "bank", "stripe",
-    "paypal", "ledger", "binance", "coinbase", "uniswap",
-    "revenue", "pricing", "cost", "shopify", "ecommerce",
-  ],
-
-  // --- 教育 (Education & Learning) ---
-  "教育": [
-    "learn", "learning", "education", "teach", "teaching",
-    "tutorial", "course", "lesson", "quiz", "flashcard",
-    "study", "student", "school", "university", "academic",
-    "exam", "homework", "textbook", "lecture",
-    "mentor", "tutor", "training", "certification",
-  ],
-
-  // --- 基础 (Core & Infrastructure) ---
-  "基础": [
-    "memory", "context", "session", "state", "cache",
-    "config", "configuration", "settings", "env", "environment",
-    "logging", "log", "logger", "monitor", "health", "ping",
-    "router", "routing", "daemon",
-    "init", "setup", "bootstrap", "core", "base", "foundation",
-    "framework", "system", "runtime", "process",
+    // Finance (absorbed: payment/ecommerce platform integrations)
+    "stripe", "paypal", "shopify", "ecommerce",
   ],
 };
 
