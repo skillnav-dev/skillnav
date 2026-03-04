@@ -1,65 +1,67 @@
-# Handoff — 自动化任务系统规划
+# Handoff — 自动化任务系统实施
 
 ## Objective
-将所有数据同步脚本从本地手动执行迁移到 GitHub Actions 定时运行，解决国内网络不稳定问题，并规划 GPT 驱动的内容丰富化管线。
+将所有数据同步脚本从本地手动执行迁移到 GitHub Actions 定时运行，解决国内网络不稳定问题。
 
 ## Current State
 
 ### Completed
-- **自动化方案设计完成**：7 个定时任务（T1-T7）全部规划，含 cron 时间、脚本、workflow 设计
-- **方案文档保存**：`docs/plans/automation-tasks.md`
-- **速度策略确定**：CI 用 openai 直连（不走国内代理）、GitHub fetch 间隔 CI 下降到 30ms
-- **前序工作完好**：详情页双栏布局、507/6447 content 回填、29 篇文章同步、内容管线均正常
+- **公共基础设施**：`scripts/lib/retry.mjs`（指数退避重试）、`scripts/lib/validate-env.mjs`（环境变量校验）
+- **Logger 增强**：`scripts/lib/logger.mjs` 新增 `summary()` 方法，支持 GitHub Actions Job Summary
+- **3 个同步脚本增强**：sync-articles/sync-clawhub/sync-anthropic-skills 全部添加了 validateEnv、retry、退出码、Job Summary
+- **Health Check 脚本**：`scripts/health-check.mjs`，7 项数据健康指标 + 分类分布
+- **3 个 GitHub Actions Workflow**：
+  - `sync-articles.yml` — 每天 UTC 00:00，GPT 代理翻译
+  - `sync-skills.yml` — 每周一 UTC 02:00，ClawHub → Anthropic 串行
+  - `health-check.yml` — 每天 UTC 06:00，数据健康报告
+- **Slack 失败通知**：3 个 workflow 均添加 `if: failure()` 通知
+- **README 状态徽章**：Deploy / Sync Articles / Sync Skills / Health Check 四个徽章
+- **GitHub Secrets 配置完成**：SUPABASE_SERVICE_ROLE_KEY、GPT_API_KEY、SLACK_WEBHOOK_URL
+- **全部 CI 测试通过**：Health Check ✅、Sync Articles (dry-run) ✅、Sync Skills (dry-run) ✅、Sync Articles (GPT 代理真实运行) ✅
 
-### In Progress
-- **自动化系统未实施**：方案已定，代码未写
+### Not Started (后续任务)
+- T4: `scripts/translate-skill-content.mjs` — content_zh 翻译（content 回填完成后启用）
+- T5: `scripts/enrich-skills.mjs` — GPT 丰富化（有流量数据后启用）
+- T7: `scripts/check-links.mjs` — 死链检测（数据稳定后启用）
 
 ## Next Actions
-
-### 优先级 1：公共基础设施
-1. 创建 `scripts/lib/retry.mjs` — `withRetry()` 指数退避重试
-2. 创建 `scripts/lib/validate-env.mjs` — 环境变量早期校验
-3. 增强 `scripts/lib/logger.mjs` — 添加 `summary()` 方法写 `$GITHUB_STEP_SUMMARY`
-
-### 优先级 2：现有脚本增强
-4. `scripts/sync-articles.mjs` — 引入 retry + validateEnv + 退出码 + summary
-5. `scripts/sync-clawhub.mjs` — validateEnv + CI 加速（30ms 间隔）+ 退出码
-6. `scripts/sync-anthropic-skills.mjs` — validateEnv + 退出码
-
-### 优先级 3：Workflow 文件
-7. `.github/workflows/sync-articles.yml` — 每天 UTC 00:00，LLM_PROVIDER=openai
-8. `.github/workflows/sync-skills.yml` — 每周一 UTC 02:00，两个 job（ClawHub + Anthropic）
-9. `.github/workflows/health-check.yml` — 每天 UTC 06:00 + `scripts/health-check.mjs`
-
-### 优先级 4：后续按需
-10. `scripts/translate-skill-content.mjs` + workflow — content 回填完成后启用
-11. `scripts/enrich-skills.mjs` + workflow — 有流量数据后启用
-12. `scripts/check-links.mjs` + workflow — 数据稳定后启用
-
-### 遗留：数据回填
-13. content 回填仍需完成（507/6447），可通过 sync-skills workflow 自动增量补齐
+1. 添加 `OPENAI_API_KEY` 到 GitHub Secrets（如需切换回 openai 直连 provider）
+2. content 回填继续（507/6447），可通过 sync-skills workflow `--skip-existing=false` 增量补齐
+3. 实施 T4：`scripts/translate-skill-content.mjs` — 批量翻译 skill content 为中文
+4. 监控 Slack 通知确认 cron 稳定运行
 
 ## Risks & Decisions
-- **GPT 代理不可用于 CI**：`gmn.chuangzuoli.com` 在国内，从 GitHub Actions（美国）访问延迟高。CI 必须用 openai/deepseek 直连
-- **GitHub Secrets 需添加**：`SUPABASE_SERVICE_ROLE_KEY` 和 `OPENAI_API_KEY` 尚未配置到 GitHub
-- **LLM 速度是不可压缩瓶颈**：翻译 10-30s/次，10 req/min 已接近上限，只能通过每天定时分摊
-- **GitHub Actions cron 精度**：+/- 5-15 分钟延迟，对我们场景可接受
+- **GPT 代理已验证可用于 CI**：从 GitHub Actions 访问 `gmn.chuangzuoli.com` 正常，workflow 使用 `LLM_PROVIDER=gpt`
+- **LLM 速度是不可压缩瓶颈**：翻译 10-30s/次，10 req/min 已接近上限，通过每天定时分摊
+- **GitHub Actions cron 精度**：+/- 5-15 分钟延迟，对本场景可接受
+- **OPENAI_API_KEY 未配置**：暂不需要，当前使用 GPT 代理
 
 ## Verification
 - `npm run lint` — 零错误
-- `cat docs/plans/automation-tasks.md` — 方案文档完整
-- `node scripts/sync-articles.mjs --dry-run` — 文章同步脚本可运行
-- `node scripts/sync-clawhub.mjs --dry-run --limit 3` — ClawHub 同步脚本可运行
+- `npm run build` — 构建通过
+- `node scripts/sync-articles.mjs --dry-run --limit 2` — 文章同步
+- `node scripts/sync-clawhub.mjs --dry-run --limit 3` — ClawHub 同步
+- `node scripts/sync-anthropic-skills.mjs --dry-run --limit 3` — Anthropic 同步
+- `node scripts/health-check.mjs` — 健康检查（需 Supabase 连接）
 
 ## Modified Files (本次会话)
-- `docs/plans/automation-tasks.md` — 新增，自动化任务系统完整方案
+- `scripts/lib/retry.mjs` — 新增，指数退避重试
+- `scripts/lib/validate-env.mjs` — 新增，环境变量校验
+- `scripts/lib/logger.mjs` — 新增 summary() 方法
+- `scripts/sync-articles.mjs` — +validateEnv +retry +summary +exitCode
+- `scripts/sync-clawhub.mjs` — +validateEnv +CI加速 +summary +exitCode
+- `scripts/sync-anthropic-skills.mjs` — +validateEnv +summary +exitCode
+- `scripts/health-check.mjs` — 新增，数据健康检查脚本
+- `.github/workflows/sync-articles.yml` — 新增，每日文章同步
+- `.github/workflows/sync-skills.yml` — 新增，每周技能同步
+- `.github/workflows/health-check.yml` — 新增，每日健康检查
+- `README.md` — 新增状态徽章
 
 ## Key References
 - 自动化方案：`docs/plans/automation-tasks.md`
 - 内容管线方案：`docs/plans/content-pipeline.md`
 - 同步脚本：`scripts/sync-articles.mjs`、`scripts/sync-clawhub.mjs`、`scripts/sync-anthropic-skills.mjs`
 - LLM 模块：`scripts/lib/llm.mjs`（5 providers: deepseek/gemini/anthropic/openai/gpt）
-- DAL：`src/lib/data/skills.ts`、`src/lib/data/articles.ts`
 - Supabase 项目：`caapclmylemgbrtgfszd`
 - Worker URL：`skillnav.wh759705.workers.dev`
 - 域名：`skillnav.dev`
