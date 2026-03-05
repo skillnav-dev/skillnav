@@ -1,46 +1,51 @@
-# Handoff — Skills 2.0: Curated Gallery (Deployed)
+# Handoff — Content Pipeline Expansion & Skills 2.0 Sources
 
 ## Objective
-Transform SkillNav's Skills module from a ClawHub mirror (6,447 low-quality skills) into a curated cross-platform gallery, positioning as "Wirecutter for AI Agent Skills".
+Expand SkillNav's content pipeline (RSS sources + curated skill repos) to build sufficient content depth for SEO and distribution readiness.
 
 ## Current State
 ### Completed
-- **DB migration applied** — `20260306_skills_curated.sql` executed in production Supabase
-  - `repo_source`, `editor_comment_zh` columns added
-  - `skills_source_check` constraint updated (supports `curated`)
-  - GIN index on `platform`, B-tree index on `repo_source`
-  - 6,430 ClawHub skills set to `is_hidden=TRUE`
-- **Data synced** — 85 curated skills upserted (0 errors)
-  - anthropics/skills: 17 (claude)
-  - openai/codex: 2 (codex)
-  - daymade/claude-code-skills: 41 (claude)
-  - levnikolaevich/claude-code-skills: 25 (claude)
-- **Adapter fixes** — levnikolaevich branch `main` → `master`, LEVN_PICKS corrected to real directory names
-- **Lint clean** — removed unused `dryRun` param in `syncAdapter()`
-- **Frontend deployed** — listing (tabs/platform filter/sort), card (badges/editor comment), detail (install tabs/comments/JSON-LD)
-- **CI deployment** — all commits pushed, Cloudflare Workers deploy successful
+- **Skills 2.0 expanded**: 7 source repos, 168 curated skills (was 85)
+  - Added: `alirezarezvani/claude-skills` (46), `developer-kit` (35), `neondatabase/agent-skills` (2)
+  - All adapters in `scripts/lib/curated-adapters.mjs`, live synced to Supabase
+- **RSS sources expanded**: 9 → 13 sources
+  - Added: Vercel Blog, Latent Space, MS Semantic Kernel, Ars Technica AI
+  - Fixed: OpenAI feed URL `/blog/rss.xml` → `/news/rss.xml`
+  - Fixed: Vercel Atom feed date parse error (truncate >100 entries)
+  - Fixed: RSS `<item>` feed truncation (OpenAI 868 items → capped at 100)
+- **Articles bulk synced**: ~273 articles in database (was 29)
+  - Vercel: 96, OpenAI: ~100+, Latent Space: 20, Ars Technica: 18, Semantic Kernel: 10
+  - OpenAI backfill partial (network timeouts from China) — daily cron will incrementally catch up
+- **All commits pushed** to `origin/main`, CI/CD deployed
 
 ### In Progress
 - Nothing — all work complete and deployed
 
 ## Next Actions
-1. **Setup Giscus comments**: create `skillnav-dev/discussions` public repo, enable Discussions, install giscus app, fill `repoId`/`categoryId` in `src/components/skills/skill-comments.tsx:GISCUS_CONFIG`
-2. **Add editor comments**: populate `editor_comment_zh` for curated skills (manual or LLM-assisted batch)
-3. **Homepage refresh**: update featured skills section to pull from curated source instead of ClawHub
-4. **Add more sources**: consider `alirezarezvani/claude-skills` (2.3K★, ~15 skills), `developer-kit` (132★), `neon` (32★)
+1. **Write 1 original article**: "2026年值得装的10个Claude Code Skills实测" — pick 10 skills user has actually used, write 3-5 sentence review each, link to skillnav.dev detail pages
+2. **Distribute first article**: post on 知乎, 掘金, 即刻, Twitter/X — this is the traffic ignition point
+3. **Add `editor_comment_zh`**: populate for 5-10 top skills via `scripts/govern-skills.mjs` or direct Supabase update
+4. **Setup Giscus comments**: create `skillnav-dev/discussions` public repo, fill `repoId`/`categoryId` in `src/components/skills/skill-comments.tsx:GISCUS_CONFIG`
+5. **Homepage refresh**: update featured skills section to pull from curated source
 
 ## Risks & Decisions
-- **Giscus not configured**: `skill-comments.tsx` renders nothing until `repoId`/`categoryId` are filled
-- **ClawHub hidden**: 6,430 skills hidden from listings, detail pages still accessible via direct URL
-- **Anthropic source overlap**: 17 skills from `anthropic` source (old) coexist with 17 from `curated` source (new anthropics/skills adapter) — may have slug conflicts if not deduplicated
+- **OpenAI backfill incomplete**: ~576 remaining articles from OpenAI historical feed — will fill incrementally via daily cron on GitHub Actions (no action needed)
+- **Giscus not configured**: `skill-comments.tsx` renders nothing until repo is created
+- **Content quality**: bulk-translated articles use RSS fallback content (no full-page extraction for OpenAI) — quality is lower than Readability-extracted articles
+- **Traffic = 0**: all infrastructure built but no distribution channels activated yet — this is the #1 bottleneck
 
 ## Verification
-- `npm run build` — 0 errors (verified)
-- `npm run lint` — 0 warnings (verified)
-- `node scripts/sync-curated-skills.mjs --dry-run` — 85 skills, 0 errors (verified)
-- Production: skillnav.dev/skills — curated gallery live
+- `npm run build` — 0 errors (verified 2026-03-05)
+- `node scripts/sync-curated-skills.mjs --dry-run` — 168 skills, 0 errors
+- `node scripts/sync-articles.mjs --dry-run --limit 2` — 13/13 sources pass
+- Production: skillnav.dev/skills — 168 curated skills live
+- Production: skillnav.dev/articles — ~273 articles live
 
-## Key Commits
-- `3515b7b` — wip: skills 2.0 curated gallery — full implementation
-- `c7a6e4a` — fix(skills): correct levnikolaevich adapter branch and pick list
-- `6b818bd` — fix(scripts): remove unused dryRun param in syncAdapter
+## Key Commits (this session)
+- `6e86b55` — feat(skills): add 3 curated skill source adapters (+83 skills)
+- `9f5da6b` — feat(articles): expand RSS sources from 9 to 13 + fix Vercel feed
+- `3b64523` — fix(articles): truncate oversized RSS feeds to prevent backlog and parse errors
+
+## Modified Files
+- `scripts/lib/curated-adapters.mjs` — added alirezarezvani, developer-kit, neon adapters
+- `scripts/sync-articles.mjs` — added 4 RSS sources, OpenAI URL fix, RSS+Atom feed truncation
