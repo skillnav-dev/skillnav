@@ -120,12 +120,12 @@ export async function getFeaturedSkills(limit = 6): Promise<Skill[]> {
   let query = supabase
     .from("skills")
     .select("*")
-    .eq("is_featured", true)
+    .eq("source", "curated")
     .order("stars", { ascending: false })
+    .order("name", { ascending: true })
     .limit(limit);
 
   query = excludeHidden(query);
-  query = query.in("quality_tier", ["A", "B"]);
 
   const { data, error } = await query;
   if (error) throw error;
