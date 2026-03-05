@@ -1,0 +1,59 @@
+name: Sync Curated Skills
+
+on:
+  schedule:
+    - cron: "0 3 * * 3" # UTC 03:00 Wednesday = Beijing 11:00
+  workflow_dispatch:
+    inputs:
+      repo:
+        description: "Sync specific repo (e.g. anthropics/skills)"
+        required: false
+      skip_existing:
+        description: "Skip existing skills (incremental)"
+        type: boolean
+        default: true
+      limit:
+        description: "Max items per repo"
+        required: false
+      dry_run:
+        description: "Dry run mode"
+        type: boolean
+        default: false
+
+concurrency:
+  group: sync-curated-skills
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - run: npm ci
+
+      - name: Sync curated skills
+        run: |
+          ARGS=""
+          if [ "${{ inputs.repo }}" ]; then ARGS="$ARGS --repo ${{ inputs.repo }}"; fi
+          if [ "${{ inputs.skip_existing }}" != "false" ]; then ARGS="$ARGS --skip-existing"; fi
+          if [ "${{ inputs.limit }}" ]; then ARGS="$ARGS --limit ${{ inputs.limit }}"; fi
+          if [ "${{ inputs.dry_run }}" = "true" ]; then ARGS="$ARGS --dry-run"; fi
+          node scripts/sync-curated-skills.mjs $ARGS
+
+      - name: Notify Slack on failure
+        if: failure()
+        run: |
+          curl -sS -X POST -H 'Content-type: application/json' \
+            --data "{\"text\":\"❌ *Sync Curated Skills* failed\\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>\"}" \
+            ${{ secrets.SLACK_WEBHOOK_URL }}

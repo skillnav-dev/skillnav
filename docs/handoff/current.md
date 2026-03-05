@@ -1,96 +1,61 @@
-# Handoff — Articles Module Upgrade: Categories + Cover Images + Source Filter
+# Handoff — Skills 2.0: Curated Gallery
 
 ## Objective
-
-将 SkillNav 资讯模块从"RSS 翻译聚合器"升级为有视觉层级的资讯站：分类精简（6→3）、封面图提取与展示、来源维度筛选。
+Transform SkillNav's Skills module from a ClawHub mirror (6,447 low-quality skills) into a curated cross-platform gallery (~80-90 quality skills from 4 repos), positioning as "Wirecutter for AI Agent Skills".
 
 ## Current State
-
 ### Completed
-- **DB migration applied** (`20260306_articles_upgrade.sql`):
-  - `source` 字段添加 + 29 篇回填（anthropic 9, simonw 9, openai 5, langchain 4, other 2）
-  - `article_type` 从 6 值精简为 3（news/tutorial/analysis），review/comparison/weekly 合并到 news
-  - `idx_articles_source` 索引创建
-- **类型系统更新**: `ArticleType` 3 值 + `ArticleSource` 联合类型 + Supabase types/mapper 同步
-- **共享常量文件** `src/lib/article-constants.ts`: 统一标签/颜色，根除"分析"vs"深度"不一致
-- **同步管线改造** `scripts/sync-articles.mjs`:
-  - `extractCoverImage()`: og:image → twitter:image → content img → RSS enclosure
-  - 新增 `cover_image` + `source` 字段写入
-  - `VALID_ARTICLE_TYPES` 缩减为 3（sync + llm.mjs 都已更新）
-- **DAL 升级**: `getArticlesWithCount` 支持 `source` 过滤 + 新增 `getArticleSources()`
-- **前端全面升级**:
-  - Toolbar: 分类 3 项 + 来源 filter 行 + 统一 constants 标签
-  - Card: 封面图（aspect-[2/1] + hover zoom）+ 来源标签 + 精简日期格式
-  - Skeleton: 图片占位区域
-  - Grid/Page: source 参数传递完整链路
-- **详情页增强**: og:image meta + hero image + ArticleJsonLd image prop
-- **Mock 数据适配**: source 字段 + coverImage 示例
-- **封面图回填完成**: 18/28 篇成功提取 og:image，0 失败
-- **回填脚本**: `scripts/backfill-article-images.mjs`（支持 --dry-run）
-- **8 个 commit 已提交**，build 通过，working tree clean
+- **Phase 1.1**: DB migration SQL (`supabase/migrations/20260306_skills_curated.sql`) — expands source enum, adds `repo_source`/`editor_comment_zh` columns, GIN index on platform, hides ClawHub skills
+- **Phase 1.2**: Sync pipeline — `scripts/sync-curated-skills.mjs` (main script) + `scripts/lib/curated-adapters.mjs` (4 adapters: anthropics/skills, openai/codex, daymade/claude-code-skills, levnikolaevich/claude-code-skills)
+- **Phase 1.3**: Types updated — `curated` added to `SkillSource`, `repoSource`/`editorCommentZh` added to `Skill` interface, Supabase types and mappers updated
+- **Phase 1.4**: DAL extended — `getSkillsWithCount()`/`getSkills()` support `platform`/`tab`/`sort` filters; new `getSkillPlatforms()`/`getSkillRepoSources()` functions; search params updated
+- **Phase 1.5**: npm script `sync:curated` added; CI workflow `.github/workflows/sync-curated-skills.yml` (weekly Wed UTC 03:00)
+- **Phase 2.1**: New components — `platform-badge.tsx` (Claude/Codex/Universal badges), `skill-install-tabs.tsx` (multi-client install tabs), `skill-comments.tsx` (giscus widget, pending config)
+- **Phase 2.2**: Listing page redesigned — toolbar with tabs (精选/最新/全部), platform filter, sort toggle; grid passes new params
+- **Phase 2.3**: Card redesigned — platform badges, quality "精选" tag, editor comment one-liner, repo source label
+- **Phase 2.4**: Detail page updated — PlatformBadge in hero, editor comment callout, SkillInstallTabs, SkillComments, SoftwareApplicationJsonLd; sidebar shows platform/repo_source
+- **Build verification**: `npm run build` passes with 0 errors
 
-### Unpushed Commits (main ahead of origin by 10)
-```
-b8644d7 scripts(articles): add backfill script for existing article images
-d9af0a2 articles(data): update mock data for new schema
-cecc067 articles(seo): add og:image and hero image to detail page
-445da93 articles(ui): add source filter, cover images, and unified labels
-792f3c0 articles(dal): add source filter and getArticleSources query
-f8d4859 articles(sync): extract cover images and record source in pipeline
-507b3ca articles(types): update type system and create shared constants
-7ec61ed articles(db): add source column and simplify article types to 3
-e436d50 wip: checkpoint — Skills 2.0 curated gallery plan
-971cf8b wip: checkpoint — content-first strategy and RSS expansion
-```
+### In Progress
+- Nothing — all code changes complete, pending commit and deployment steps
 
 ## Next Actions
-
-1. **`git push origin main`** — 推送 10 个本地 commit 到远程，触发 CI/CD 部署
-2. **本地验证** `npm run dev` → `/articles` 页面检查：
-   - 分类 filter 只有 3 个 + "全部"
-   - 来源 filter 正确显示
-   - 卡片有封面图（回填后的 18 篇）
-   - 标签一致（不再有"分析"vs"深度"问题）
-3. **`/articles/[任意slug]`** → 检查 hero image 和 og:image meta tag
-4. **Skills 2.0 策展计划** — 见前一个 handoff，Phase 1 数据层重建待启动：
-   - `scripts/sync-curated-skills.mjs` adapter 模式
-   - 7 个源 repo 适配器
-   - ClawHub 数据 `is_hidden=true`
+1. Apply DB migration: execute `supabase/migrations/20260306_skills_curated.sql` in Supabase SQL Editor
+2. Run sync: `node scripts/sync-curated-skills.mjs --dry-run` to verify parsing, then live sync
+3. Setup Giscus: create `skillnav-dev/discussions` repo, enable Discussions, install giscus app, fill `repoId`/`categoryId` in `src/components/skills/skill-comments.tsx:GISCUS_CONFIG`
+4. Review levnikolaevich pick list: verify `LEVN_PICKS` set in `scripts/lib/curated-adapters.mjs` matches actual directory names in the repo (may need adjustment after dry-run)
+5. Push to main and verify CI deployment
 
 ## Risks & Decisions
-
-- **10 篇文章无封面图**: 来源页面无 og:image（OpenAI 部分页面、Simon Willison 部分文章）——card 退化为纯文字样式，不影响功能
-- **`<img>` vs `next/image`**: 选择原生 `<img>` 因 Cloudflare Workers + OpenNext 不支持 Next.js 图片优化
-- **来源 filter 空值**: 有 2 篇 `source='other'`，来源匹配失败的兜底值
+- **Giscus not configured**: `skill-comments.tsx` has empty `repoId`/`categoryId` — component renders nothing until filled
+- **levnikolaevich pick list**: The 25 directory names in `LEVN_PICKS` are estimated — actual repo may have different naming; `--dry-run` will reveal mismatches
+- **ClawHub hidden**: Migration sets `is_hidden=TRUE` for all clawhub source skills — detail pages still accessible via direct URL but won't appear in listings
+- **No downloads column in card**: Replaced with `repoSource` label since curated skills have 0 downloads
 
 ## Verification
-
-- `npm run build` — 通过（1037 pages，TypeScript 0 errors）
-- `node scripts/sync-articles.mjs --dry-run --limit 2` — 确认新字段出现在 record 中
-- `node scripts/backfill-article-images.mjs --dry-run` — 确认能提取到 og:image
-- `git status` — clean working tree
+- `npm run build` — 0 errors (verified)
+- `npm run lint` — check for lint issues
+- `node scripts/sync-curated-skills.mjs --dry-run` — verify adapter parsing (requires GITHUB_TOKEN)
 
 ## Modified Files
-
-| File | Change |
-|------|--------|
-| `supabase/migrations/20260306_articles_upgrade.sql` | **新建** — source + type 精简 |
-| `src/data/types.ts` | ArticleType 3 值 + ArticleSource |
-| `src/lib/supabase/types.ts` | DB 类型同步 |
-| `src/lib/supabase/mappers.ts` | source 映射 |
-| `src/lib/article-constants.ts` | **新建** — 统一标签/颜色 |
-| `scripts/sync-articles.mjs` | 封面图提取 + source 记录 |
-| `scripts/lib/llm.mjs` | articleType 3 值 |
-| `src/lib/data/articles.ts` | source 过滤 + getArticleSources |
-| `src/lib/data/index.ts` | 导出新函数 |
-| `src/lib/articles-search-params.ts` | source URL 参数 |
-| `src/components/articles/articles-toolbar.tsx` | 来源 filter + 统一标签 |
-| `src/components/articles/article-card.tsx` | 封面图 + 来源 + 统一标签 |
-| `src/components/articles/article-meta.tsx` | 统一标签 |
-| `src/components/articles/articles-skeleton.tsx` | 图片占位 |
-| `src/components/articles/articles-grid.tsx` | source 参数 |
-| `src/app/articles/page.tsx` | source 传递 + sources fetch |
-| `src/app/articles/[slug]/page.tsx` | og:image + hero image |
-| `src/components/shared/json-ld.tsx` | image prop |
-| `src/data/mock-articles.ts` | 新 schema 适配 |
-| `scripts/backfill-article-images.mjs` | **新建** — 回填脚本 |
+- `supabase/migrations/20260306_skills_curated.sql` (new)
+- `scripts/sync-curated-skills.mjs` (new)
+- `scripts/lib/curated-adapters.mjs` (new)
+- `.github/workflows/sync-curated-skills.yml` (new)
+- `src/components/skills/platform-badge.tsx` (new)
+- `src/components/skills/skill-install-tabs.tsx` (new)
+- `src/components/skills/skill-comments.tsx` (new)
+- `package.json` — +sync:curated script
+- `src/data/types.ts` — +curated source, +repoSource, +editorCommentZh
+- `src/lib/supabase/types.ts` — +curated source, +repo_source, +editor_comment_zh
+- `src/lib/supabase/mappers.ts` — map new fields
+- `src/lib/data/skills.ts` — platform/tab/sort filters, getSkillPlatforms, getSkillRepoSources
+- `src/lib/data/index.ts` — export new functions
+- `src/lib/skills-search-params.ts` — +platform, tab, sort params
+- `src/app/skills/page.tsx` — pass new params to toolbar/grid
+- `src/components/skills/skills-toolbar.tsx` — tabs + platform filter + sort toggle
+- `src/components/skills/skills-grid.tsx` — pass new params
+- `src/components/skills/skill-card.tsx` — platform badge, quality tag, editor comment, repo source
+- `src/app/skills/[slug]/page.tsx` — install tabs, comments, SoftwareApplication JSON-LD
+- `src/components/skills/skill-sidebar.tsx` — platform, repo source, updated labels
+- `src/components/shared/json-ld.tsx` — +SoftwareApplicationJsonLd

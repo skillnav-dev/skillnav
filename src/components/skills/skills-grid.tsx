@@ -7,21 +7,40 @@ import { SkillsPagination } from "./skills-pagination";
 interface SkillsGridProps {
   q: string;
   category: string;
+  platform: string;
+  tab: string;
+  sort: string;
   page: number;
 }
 
-function buildPageUrl(q: string, category: string) {
+function buildPageUrl(
+  q: string,
+  category: string,
+  platform: string,
+  tab: string,
+  sort: string,
+) {
   return (page: number) => {
     const params = new URLSearchParams();
     if (q) params.set("q", q);
     if (category) params.set("category", category);
+    if (platform) params.set("platform", platform);
+    if (tab) params.set("tab", tab);
+    if (sort) params.set("sort", sort);
     if (page > 1) params.set("page", String(page));
     const qs = params.toString();
     return qs ? `/skills?${qs}` : "/skills";
   };
 }
 
-export async function SkillsGrid({ q, category, page }: SkillsGridProps) {
+export async function SkillsGrid({
+  q,
+  category,
+  platform,
+  tab,
+  sort,
+  page,
+}: SkillsGridProps) {
   const validPage = Math.max(1, page);
   const offset = (validPage - 1) * PAGE_SIZE;
 
@@ -30,6 +49,9 @@ export async function SkillsGrid({ q, category, page }: SkillsGridProps) {
     offset,
     category: category || undefined,
     search: q || undefined,
+    platform: platform || undefined,
+    tab: tab || undefined,
+    sort: sort || undefined,
   });
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
@@ -51,7 +73,7 @@ export async function SkillsGrid({ q, category, page }: SkillsGridProps) {
         <SkillsPagination
           currentPage={validPage}
           totalPages={totalPages}
-          buildPageUrl={buildPageUrl(q, category)}
+          buildPageUrl={buildPageUrl(q, category, platform, tab, sort)}
         />
       </div>
     </div>

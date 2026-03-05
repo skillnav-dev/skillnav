@@ -3,13 +3,14 @@ import {
   ExternalLink,
   Github,
   Star,
-  Download,
   Tag,
   Clock,
   Calendar,
+  GitFork,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { SecurityBadge } from "@/components/shared/security-badge";
+import { PlatformBadge } from "@/components/skills/platform-badge";
 import type { Skill } from "@/data/types";
 
 function formatNumber(n: number): string {
@@ -24,6 +25,7 @@ const sourceLabels: Record<string, string> = {
   skillsmp: "SkillsMP",
   agentskill: "AgentSkill",
   manual: "手动收录",
+  curated: "精选收录",
 };
 
 const pricingLabels: Record<string, string> = {
@@ -59,6 +61,13 @@ export function SkillSidebar({ skill }: SkillSidebarProps) {
       <div className="rounded-lg border border-border/50 bg-card p-5">
         <h3 className="mb-3 text-sm font-semibold">详情</h3>
         <div className="divide-y divide-border/40">
+          {/* Platform */}
+          {skill.platform && skill.platform.length > 0 && (
+            <MetaRow label="平台">
+              <PlatformBadge platform={skill.platform} />
+            </MetaRow>
+          )}
+
           {/* Category with link */}
           <MetaRow label="分类">
             <Link
@@ -74,6 +83,21 @@ export function SkillSidebar({ skill }: SkillSidebarProps) {
             {sourceLabels[skill.source] ?? skill.source}
           </MetaRow>
 
+          {/* Repo source */}
+          {skill.repoSource && (
+            <MetaRow label="源仓库">
+              <a
+                href={`https://github.com/${skill.repoSource}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 text-primary hover:underline"
+              >
+                <GitFork className="size-3" />
+                {skill.repoSource}
+              </a>
+            </MetaRow>
+          )}
+
           {/* Security score */}
           <div className="flex items-start justify-between gap-2 py-2">
             <span className="text-xs text-muted-foreground">安全评分</span>
@@ -81,20 +105,14 @@ export function SkillSidebar({ skill }: SkillSidebarProps) {
           </div>
 
           {/* Stars */}
-          <MetaRow label="Stars">
-            <span className="flex items-center gap-1">
-              <Star className="size-3 text-muted-foreground" />
-              {formatNumber(skill.stars)}
-            </span>
-          </MetaRow>
-
-          {/* Downloads */}
-          <MetaRow label="下载量">
-            <span className="flex items-center gap-1">
-              <Download className="size-3 text-muted-foreground" />
-              {formatNumber(skill.downloads)}
-            </span>
-          </MetaRow>
+          {skill.stars > 0 && (
+            <MetaRow label="Stars">
+              <span className="flex items-center gap-1">
+                <Star className="size-3 text-muted-foreground" />
+                {formatNumber(skill.stars)}
+              </span>
+            </MetaRow>
+          )}
 
           {/* Version (conditional) */}
           {skill.version && (

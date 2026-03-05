@@ -4,9 +4,14 @@ import { Badge } from "@/components/ui/badge";
 import { PageBreadcrumb } from "@/components/shared/page-breadcrumb";
 import { SkillCard } from "@/components/skills/skill-card";
 import { SkillContent } from "@/components/skills/skill-content";
-import { SkillInstall } from "@/components/skills/skill-install";
+import { SkillInstallTabs } from "@/components/skills/skill-install-tabs";
 import { SkillSidebar } from "@/components/skills/skill-sidebar";
-import { BreadcrumbJsonLd } from "@/components/shared/json-ld";
+import { SkillComments } from "@/components/skills/skill-comments";
+import { PlatformBadge } from "@/components/skills/platform-badge";
+import {
+  BreadcrumbJsonLd,
+  SoftwareApplicationJsonLd,
+} from "@/components/shared/json-ld";
 import { siteConfig } from "@/lib/constants";
 import { getSkillBySlug, getSkills, getAllSkillSlugs } from "@/lib/data";
 
@@ -60,6 +65,14 @@ export default async function SkillDetailPage({ params }: PageProps) {
           { name: skill.nameZh ?? skill.name, href: `/skills/${skill.slug}` },
         ]}
       />
+      <SoftwareApplicationJsonLd
+        name={skill.nameZh ?? skill.name}
+        description={skill.descriptionZh ?? skill.description}
+        url={`${siteConfig.url}/skills/${skill.slug}`}
+        author={skill.author}
+        platform={skill.platform}
+        category={skill.category}
+      />
 
       <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
         <PageBreadcrumb
@@ -72,9 +85,12 @@ export default async function SkillDetailPage({ params }: PageProps) {
 
         {/* Hero section: full width */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            {skill.nameZh ?? skill.name}
-          </h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+              {skill.nameZh ?? skill.name}
+            </h1>
+            <PlatformBadge platform={skill.platform} />
+          </div>
           {skill.nameZh && skill.name && (
             <p className="mt-1 text-lg text-muted-foreground">{skill.name}</p>
           )}
@@ -85,7 +101,15 @@ export default async function SkillDetailPage({ params }: PageProps) {
           <p className="mt-4 text-base leading-relaxed text-foreground/85">
             {skill.descriptionZh ?? skill.description}
           </p>
-          {/* Verification badge (optional) */}
+          {/* Editor one-liner comment */}
+          {skill.editorCommentZh && (
+            <div className="mt-4 rounded-lg border-l-4 border-primary/50 bg-primary/5 px-4 py-3">
+              <p className="text-sm italic text-foreground/80">
+                {skill.editorCommentZh}
+              </p>
+            </div>
+          )}
+          {/* Verification badge */}
           {skill.isVerified && (
             <div className="mt-3">
               <Badge variant="secondary" className="text-xs">
@@ -99,12 +123,14 @@ export default async function SkillDetailPage({ params }: PageProps) {
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_280px]">
           {/* Left: main content */}
           <div className="min-w-0 space-y-6">
-            {/* Install block */}
-            <SkillInstall
+            {/* Install block with multi-client tabs */}
+            <SkillInstallTabs
               installCommand={skill.installCommand}
               requiresEnv={skill.requiresEnv}
               requiresBins={skill.requiresBins}
               githubUrl={skill.githubUrl}
+              platform={skill.platform}
+              skillName={skill.name}
             />
 
             {/* Full SKILL.md documentation */}
@@ -126,6 +152,9 @@ export default async function SkillDetailPage({ params }: PageProps) {
                 </p>
               </div>
             )}
+
+            {/* Comments (giscus) */}
+            <SkillComments />
           </div>
 
           {/* Right: sidebar */}

@@ -32,7 +32,8 @@ export interface Database {
             | "anthropic"
             | "skillsmp"
             | "agentskill"
-            | "manual";
+            | "manual"
+            | "curated";
           source_url: string | null;
           github_url: string | null;
           stars: number;
@@ -53,6 +54,8 @@ export interface Database {
           requires_bins: string[];
           editor_rating: string | null;
           editor_review_zh: string | null;
+          editor_comment_zh: string | null;
+          repo_source: string | null;
           quality_tier: "A" | "B" | "C" | null;
           is_hidden: boolean;
           last_verified_at: string | null;

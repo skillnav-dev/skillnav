@@ -66,6 +66,52 @@ export function ArticleJsonLd({
   );
 }
 
+export function SoftwareApplicationJsonLd({
+  name,
+  description,
+  url,
+  author,
+  platform,
+  category,
+}: {
+  name: string;
+  description: string;
+  url: string;
+  author?: string;
+  platform?: string[];
+  category?: string;
+}) {
+  return (
+    <JsonLd
+      data={{
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        name,
+        description,
+        url,
+        applicationCategory: category ?? "DeveloperApplication",
+        operatingSystem: platform?.join(", ") ?? "Cross-platform",
+        ...(author && {
+          author: {
+            "@type": "Person",
+            name: author,
+          },
+        }),
+        offers: {
+          "@type": "Offer",
+          price: "0",
+          priceCurrency: "USD",
+        },
+        publisher: {
+          "@type": "Organization",
+          name: siteConfig.name,
+          url: siteConfig.url,
+        },
+      }}
+    />
+  );
+}
+
 export function BreadcrumbJsonLd({
   items,
 }: {

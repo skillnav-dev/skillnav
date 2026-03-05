@@ -22,6 +22,9 @@ export async function getSkills(options?: {
   category?: string;
   source?: string;
   search?: string;
+  platform?: string;
+  tab?: string;
+  sort?: string;
 }): Promise<Skill[]> {
   if (!isSupabaseConfigured()) {
     const { mockSkills } = await import("@/data/mock-skills");
@@ -49,15 +52,20 @@ export async function getSkills(options?: {
   const { mapSkillRow } = await import("@/lib/supabase/mappers");
   const supabase = await createServerClient();
 
+  const sortField = options?.sort === "latest" ? "created_at" : "stars";
   let query = supabase
     .from("skills")
     .select("*")
-    .order("stars", { ascending: false });
+    .order(sortField, { ascending: false });
 
   query = excludeHidden(query);
 
   if (options?.category) query = query.eq("category", options.category);
   if (options?.source) query = query.eq("source", options.source);
+  if (options?.platform) query = query.contains("platform", [options.platform]);
+  if (options?.tab === "featured") {
+    query = query.eq("is_featured", true).in("quality_tier", ["A", "B"]);
+  }
   if (options?.search) {
     query = query.or(
       `name.ilike.%${options.search}%,name_zh.ilike.%${options.search}%`,
@@ -156,6 +164,9 @@ export async function getSkillsWithCount(options?: {
   category?: string;
   source?: string;
   search?: string;
+  platform?: string;
+  tab?: string;
+  sort?: string;
 }): Promise<{ skills: Skill[]; total: number }> {
   if (!isSupabaseConfigured()) {
     const { mockSkills } = await import("@/data/mock-skills");
@@ -184,15 +195,20 @@ export async function getSkillsWithCount(options?: {
   const { mapSkillRow } = await import("@/lib/supabase/mappers");
   const supabase = await createServerClient();
 
+  const sortField = options?.sort === "latest" ? "created_at" : "stars";
   let query = supabase
     .from("skills")
     .select("*", { count: "exact" })
-    .order("stars", { ascending: false });
+    .order(sortField, { ascending: false });
 
   query = excludeHidden(query);
 
   if (options?.category) query = query.eq("category", options.category);
   if (options?.source) query = query.eq("source", options.source);
+  if (options?.platform) query = query.contains("platform", [options.platform]);
+  if (options?.tab === "featured") {
+    query = query.eq("is_featured", true).in("quality_tier", ["A", "B"]);
+  }
   if (options?.search) {
     query = query.or(
       `name.ilike.%${options.search}%,name_zh.ilike.%${options.search}%`,
@@ -234,6 +250,58 @@ export async function getSkillCategories(): Promise<string[]> {
   if (error) throw error;
   return [
     ...new Set((data ?? []).map((r) => r.category).filter(Boolean)),
+  ].sort();
+}
+
+/**
+ * Get distinct platform values from visible skills.
+ */
+export async function getSkillPlatforms(): Promise<string[]> {
+  if (!isSupabaseConfigured()) return ["claude"];
+
+  const { createServerClient } = await import("@/lib/supabase/server");
+  const supabase = await createServerClient();
+
+  let query = supabase.from("skills").select("platform");
+  query = excludeHidden(query);
+
+  const { data, error } = (await query) as {
+    data: { platform: string[] }[] | null;
+    error: unknown;
+  };
+  if (error) throw error;
+
+  const platforms = new Set<string>();
+  for (const row of data ?? []) {
+    for (const p of row.platform ?? []) {
+      if (p) platforms.add(p);
+    }
+  }
+  return [...platforms].sort();
+}
+
+/**
+ * Get distinct repo_source values from visible skills.
+ */
+export async function getSkillRepoSources(): Promise<string[]> {
+  if (!isSupabaseConfigured()) return [];
+
+  const { createServerClient } = await import("@/lib/supabase/server");
+  const supabase = await createServerClient();
+
+  let query = supabase.from("skills").select("repo_source");
+  query = excludeHidden(query);
+
+  const { data, error } = (await query) as {
+    data: { repo_source: string | null }[] | null;
+    error: unknown;
+  };
+  if (error) throw error;
+
+  return [
+    ...new Set(
+      (data ?? []).map((r) => r.repo_source).filter(Boolean) as string[],
+    ),
   ].sort();
 }
 

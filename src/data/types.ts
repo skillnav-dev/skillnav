@@ -5,7 +5,8 @@ export type SkillSource =
   | "anthropic"
   | "skillsmp"
   | "agentskill"
-  | "manual";
+  | "manual"
+  | "curated";
 export type PricingType = "free" | "freemium" | "paid";
 export type ArticleType = "news" | "tutorial" | "analysis";
 
@@ -54,6 +55,9 @@ export interface Skill {
   // Editorial review
   editorRating?: string;
   editorReviewZh?: string;
+  editorCommentZh?: string;
+  // Repo source tracking
+  repoSource?: string;
   // Content governance
   qualityTier?: "A" | "B" | "C";
   isHidden?: boolean;
