@@ -126,7 +126,7 @@ function parseMarkdownOnly(content) {
 
 // ─── Sync a single adapter ──────────────────────────────────────────
 
-async function syncAdapter(adapter, { dryRun, limit, skipExisting, existingSlugs }) {
+async function syncAdapter(adapter, { limit, skipExisting, existingSlugs }) {
   const repoLabel = `${adapter.owner}/${adapter.repo}`;
   log.info(`\n${"═".repeat(60)}`);
   log.info(`Syncing: ${repoLabel} (platform: ${adapter.platform.join(", ")})`);
