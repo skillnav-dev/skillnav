@@ -5,6 +5,7 @@ import { ArticleMeta } from "@/components/articles/article-meta";
 import { ArticleContent } from "@/components/articles/article-content";
 import { ArticleCard } from "@/components/articles/article-card";
 import { ArticleJsonLd, BreadcrumbJsonLd } from "@/components/shared/json-ld";
+import { FallbackImage } from "@/components/shared/fallback-image";
 import { siteConfig } from "@/lib/constants";
 import { getArticleBySlug, getArticles, getAllArticleSlugs } from "@/lib/data";
 
@@ -90,8 +91,7 @@ export default async function ArticlePage({ params }: PageProps) {
         {/* Hero image */}
         {article.coverImage && (
           <div className="mt-6 overflow-hidden rounded-lg">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <FallbackImage
               src={article.coverImage}
               alt={article.titleZh ?? article.title}
               className="aspect-[2/1] w-full object-cover"

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { inter, geistMono } from "@/lib/fonts";
 import { siteConfig } from "@/lib/constants";
 import { Providers } from "@/components/providers";
@@ -30,6 +31,10 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+  // Google Search Console verification
+  verification: {
+    google: process.env.NEXT_PUBLIC_GSC_VERIFICATION,
+  },
 };
 
 export default function RootLayout({
@@ -49,6 +54,14 @@ export default function RootLayout({
             <SiteFooter />
           </div>
         </Providers>
+        {/* Umami analytics — only loads when env var is set */}
+        {process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID && (
+          <Script
+            src="https://cloud.umami.is/script.js"
+            data-website-id={process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID}
+            strategy="afterInteractive"
+          />
+        )}
       </body>
     </html>
   );

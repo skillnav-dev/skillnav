@@ -8,6 +8,7 @@ import {
   ARTICLE_TYPE_COLORS,
   ARTICLE_SOURCE_LABELS,
 } from "@/lib/article-constants";
+import { FallbackImage } from "@/components/shared/fallback-image";
 
 interface ArticleCardProps {
   article: Article;
@@ -27,8 +28,7 @@ export function ArticleCard({ article }: ArticleCardProps) {
       {article.coverImage && (
         <Link href={`/articles/${article.slug}`}>
           <div className="aspect-[2/1] overflow-hidden">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <FallbackImage
               src={article.coverImage}
               alt={article.titleZh ?? article.title}
               className="size-full object-cover transition-transform group-hover:scale-105"
