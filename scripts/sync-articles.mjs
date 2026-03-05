@@ -312,14 +312,21 @@ async function main() {
       let feedText = await feedRes.text();
       // Fix unescaped ampersands in XML (e.g. Cursor changelog)
       feedText = feedText.replace(/&(?!amp;|lt;|gt;|quot;|apos;|#)/g, "&amp;");
-      // Truncate massive feeds to first 100 entries to avoid date parsing errors
+      // Truncate massive feeds to first 100 items to avoid date parsing errors and excessive backfill
       const entryCount = (feedText.match(/<entry>/g) || []).length;
+      const itemCount = (feedText.match(/<item>/g) || []).length;
       if (entryCount > 100) {
         let kept = 0;
         feedText = feedText.replace(/<entry>[\s\S]*?<\/entry>/g, (match) =>
           kept++ < 100 ? match : ""
         );
-        log.info(`Truncated feed from ${entryCount} to 100 entries`);
+        log.info(`Truncated Atom feed from ${entryCount} to 100 entries`);
+      } else if (itemCount > 100) {
+        let kept = 0;
+        feedText = feedText.replace(/<item>[\s\S]*?<\/item>/g, (match) =>
+          kept++ < 100 ? match : ""
+        );
+        log.info(`Truncated RSS feed from ${itemCount} to 100 items`);
       }
       feed = await rssParser.parseString(feedText);
     } catch (e) {
