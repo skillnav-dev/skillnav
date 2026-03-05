@@ -52,7 +52,7 @@ const SOURCES = [
   {
     name: "openai",
     label: "OpenAI Blog",
-    feedUrl: "https://openai.com/blog/rss.xml",
+    feedUrl: "https://openai.com/news/rss.xml",
     defaultType: "news",
     relevanceFilter: RELEVANCE_KEYWORDS,
   },
@@ -77,8 +77,14 @@ const SOURCES = [
     defaultType: "news",
     relevanceFilter: RELEVANCE_KEYWORDS,
   },
-  // NOTE: Cursor (changelog.cursor.com/feed.xml) returns HTML, not XML — no RSS feed available
-  // NOTE: Vercel (vercel.com/atom) has date format incompatible with rss-parser — revisit later
+  {
+    name: "vercel",
+    label: "Vercel Blog",
+    feedUrl: "https://vercel.com/atom",
+    defaultType: "news",
+    relevanceFilter: RELEVANCE_KEYWORDS,
+  },
+  // NOTE: Cursor (changelog.cursor.com) has no RSS feed available
   {
     name: "github",
     label: "GitHub Blog",
@@ -104,6 +110,27 @@ const SOURCES = [
     name: "techcrunch-ai",
     label: "TechCrunch AI",
     feedUrl: "https://techcrunch.com/category/artificial-intelligence/feed/",
+    defaultType: "news",
+    relevanceFilter: RELEVANCE_KEYWORDS,
+  },
+  {
+    name: "latent-space",
+    label: "Latent Space",
+    feedUrl: "https://www.latent.space/feed",
+    defaultType: "analysis",
+    relevanceFilter: null, // Accept all — AI Engineering deep content
+  },
+  {
+    name: "semantic-kernel",
+    label: "Microsoft Semantic Kernel",
+    feedUrl: "https://devblogs.microsoft.com/semantic-kernel/feed/",
+    defaultType: "tutorial",
+    relevanceFilter: null, // Accept all — Agent framework core blog
+  },
+  {
+    name: "arstechnica-ai",
+    label: "Ars Technica AI",
+    feedUrl: "https://arstechnica.com/ai/feed/",
     defaultType: "news",
     relevanceFilter: RELEVANCE_KEYWORDS,
   },
@@ -285,6 +312,15 @@ async function main() {
       let feedText = await feedRes.text();
       // Fix unescaped ampersands in XML (e.g. Cursor changelog)
       feedText = feedText.replace(/&(?!amp;|lt;|gt;|quot;|apos;|#)/g, "&amp;");
+      // Truncate massive feeds to first 100 entries to avoid date parsing errors
+      const entryCount = (feedText.match(/<entry>/g) || []).length;
+      if (entryCount > 100) {
+        let kept = 0;
+        feedText = feedText.replace(/<entry>[\s\S]*?<\/entry>/g, (match) =>
+          kept++ < 100 ? match : ""
+        );
+        log.info(`Truncated feed from ${entryCount} to 100 entries`);
+      }
       feed = await rssParser.parseString(feedText);
     } catch (e) {
       log.warn(`Failed to fetch RSS from ${source.feedUrl}: ${e.message}`);
