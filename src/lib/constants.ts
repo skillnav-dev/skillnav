@@ -24,15 +24,6 @@ export const footerLinks = {
     links: [
       { title: "Skills 导航", href: "/skills" },
       { title: "资讯", href: "/articles" },
-      { title: "提交 Skill", href: "/submit" },
-    ],
-  },
-  resources: {
-    title: "资源",
-    links: [
-      { title: "使用指南", href: "/guide" },
-      { title: "API 文档", href: "/docs" },
-      { title: "更新日志", href: "/changelog" },
     ],
   },
   community: {
@@ -40,7 +31,6 @@ export const footerLinks = {
     links: [
       { title: "GitHub", href: "https://github.com/skillnav-dev" },
       { title: "Twitter", href: "https://x.com/skillnav_dev" },
-      { title: "Discord", href: "#" },
     ],
   },
 } as const;
