@@ -48,8 +48,11 @@ export default async function ArticlePage({ params }: PageProps) {
   const article = await getArticleBySlug(slug);
   if (!article) notFound();
 
-  const allArticles = await getArticles();
-  const related = allArticles.filter((a) => a.id !== article.id).slice(0, 2);
+  const candidates = await getArticles({
+    limit: 3,
+    category: article.category,
+  });
+  const related = candidates.filter((a) => a.id !== article.id).slice(0, 2);
 
   return (
     <>
@@ -100,14 +103,13 @@ export default async function ArticlePage({ params }: PageProps) {
         </div>
         {article.sourceUrl && (
           <p className="mt-8 text-sm text-muted-foreground">
-            原文链接：
             <a
               href={article.sourceUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-primary hover:underline"
+              className="inline-flex items-center gap-1 text-primary hover:underline"
             >
-              {article.sourceUrl}
+              查看原文 ↗
             </a>
           </p>
         )}
