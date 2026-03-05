@@ -50,8 +50,10 @@ const PROVIDERS = {
   },
 };
 
-// Truncation limit for article content (~4K tokens)
-const MAX_CONTENT_LENGTH = 15000;
+// Thresholds for translation strategy
+const CHUNK_THRESHOLD = 15000; // Below this: single-call translation
+const SUMMARIZE_THRESHOLD = 50000; // Above this: structured summary instead of full translation
+const CHUNK_SIZE = 12000; // Target size per chunk
 
 const VALID_ARTICLE_TYPES = ["news", "tutorial", "analysis"];
 
@@ -184,7 +186,7 @@ async function callAnthropic(provider, systemPrompt, userPrompt, maxTokens) {
 /**
  * Unified LLM call dispatcher.
  */
-async function callLLM(systemPrompt, userPrompt, maxTokens = 8192) {
+async function callLLM(systemPrompt, userPrompt, maxTokens = 16384) {
   const provider = getProvider();
   if (provider.type === "anthropic") {
     return callAnthropic(provider, systemPrompt, userPrompt, maxTokens);
@@ -208,21 +210,104 @@ Translation style:
 
 You must respond with valid JSON only, no markdown fences.`;
 
+// ── Chunking Utilities ───────────────────────────────────────────────
+
+/**
+ * Split markdown content into chunks at natural boundaries.
+ * Preserves code blocks — never splits inside fenced code.
+ *
+ * Strategy:
+ * 1. Split by ## / ### headings
+ * 2. If a section > maxSize, split by paragraphs (\n\n)
+ * 3. If a paragraph > maxSize, split by sentences (last resort)
+ * 4. Greedy merge: combine adjacent pieces without exceeding maxSize
+ */
+function splitIntoChunks(content, maxSize = CHUNK_SIZE) {
+  if (content.length <= maxSize) return [content];
+
+  // Protect code blocks: replace with placeholders, restore after splitting
+  const codeBlocks = [];
+  const withPlaceholders = content.replace(
+    /```[\s\S]*?```/g,
+    (match) => {
+      const idx = codeBlocks.length;
+      codeBlocks.push(match);
+      return `__CODE_BLOCK_${idx}__`;
+    }
+  );
+
+  // Split by markdown headings (## or ###)
+  const sections = withPlaceholders.split(/(?=\n#{2,3}\s)/);
+
+  // Further split large sections by paragraphs
+  const pieces = [];
+  for (const section of sections) {
+    if (section.length <= maxSize) {
+      pieces.push(section);
+    } else {
+      const paragraphs = section.split(/\n\n/);
+      for (const para of paragraphs) {
+        if (para.length <= maxSize) {
+          pieces.push(para);
+        } else {
+          // Last resort: split by sentence boundaries (Chinese or English)
+          const sentences = para.split(/(?<=[。！？.!?])\s*/);
+          pieces.push(...sentences);
+        }
+      }
+    }
+  }
+
+  // Greedy merge: combine pieces into chunks up to maxSize
+  const chunks = [];
+  let current = "";
+  for (const piece of pieces) {
+    if (!current) {
+      current = piece;
+    } else if (current.length + piece.length + 2 <= maxSize) {
+      current += "\n\n" + piece;
+    } else {
+      chunks.push(current);
+      current = piece;
+    }
+  }
+  if (current) chunks.push(current);
+
+  // Restore code blocks in all chunks
+  return chunks.map((chunk) =>
+    chunk.replace(/__CODE_BLOCK_(\d+)__/g, (_, idx) => codeBlocks[Number(idx)])
+  );
+}
+
 // ── Public API ───────────────────────────────────────────────────────
 
 /**
- * Translate and classify an article in a single LLM call.
- * Returns structured JSON with Chinese translations + metadata.
+ * Translate and classify an article.
+ * Routes to the appropriate strategy based on content length:
+ *   - ≤15K chars: single-call translation
+ *   - 15K–50K chars: chunked full translation
+ *   - >50K chars: structured summary
  *
  * @param {{ title: string, summary: string, content: string }} article
  * @returns {Promise<{ titleZh: string, summaryZh: string, contentZh: string, articleType: string, readingTime: number }>}
  */
 export async function translateArticle({ title, summary, content }) {
-  const truncatedContent =
-    content.length > MAX_CONTENT_LENGTH
-      ? content.slice(0, MAX_CONTENT_LENGTH) + "\n\n[... content truncated ...]"
-      : content;
+  const len = content.length;
 
+  if (len > SUMMARIZE_THRESHOLD) {
+    return summarizeArticle({ title, summary, content });
+  }
+  if (len > CHUNK_THRESHOLD) {
+    return translateArticleChunked({ title, summary, content });
+  }
+  return translateArticleSingle({ title, summary, content });
+}
+
+/**
+ * Single-call translation for short articles (≤15K chars).
+ * Original logic, no truncation.
+ */
+async function translateArticleSingle({ title, summary, content }) {
   const userPrompt = `Translate this article and classify it. Return JSON with these exact fields:
 
 {
@@ -240,9 +325,103 @@ Title: ${title}
 Summary: ${summary || "N/A"}
 
 Content:
-${truncatedContent}`;
+${content}`;
 
-  const text = await callLLM(SYSTEM_PROMPT, userPrompt, 8192);
+  const text = await callLLM(SYSTEM_PROMPT, userPrompt, 16384);
+  return parseTranslationResponse(text);
+}
+
+/**
+ * Chunked translation for medium-length articles (15K–50K chars).
+ * Splits content into chunks, translates each, concatenates contentZh.
+ */
+async function translateArticleChunked({ title, summary, content }) {
+  const chunks = splitIntoChunks(content, CHUNK_SIZE);
+
+  // Chunk 0: full translation prompt (returns all fields)
+  const firstPrompt = `Translate this article and classify it. Return JSON with these exact fields:
+
+{
+  "titleZh": "Chinese title (concise, news-headline style)",
+  "summaryZh": "Chinese summary (2-3 sentences, capture key points)",
+  "contentZh": "Full Chinese translation (preserve markdown formatting)",
+  "articleType": "one of: news, tutorial, analysis",
+  "readingTime": <estimated minutes to read the FULL Chinese version, not just this part>
+}
+
+Note: This is part 1 of ${chunks.length} of a multi-part article. Translate this portion completely.
+
+Article to translate:
+
+Title: ${title}
+
+Summary: ${summary || "N/A"}
+
+Content (Part 1/${chunks.length}):
+${chunks[0]}`;
+
+  const firstText = await callLLM(SYSTEM_PROMPT, firstPrompt, 16384);
+  const result = parseTranslationResponse(firstText);
+  const contentParts = [result.contentZh];
+
+  // Chunks 1..N: continuation prompts (only contentZh)
+  for (let i = 1; i < chunks.length; i++) {
+    const contPrompt = `Continue translating the following article content into Chinese. This is part ${i + 1} of ${chunks.length} of the article titled "${title}".
+
+Return JSON with only one field:
+{ "contentZh": "Chinese translation of this part (preserve markdown formatting)" }
+
+Content (Part ${i + 1}/${chunks.length}):
+${chunks[i]}`;
+
+    const contText = await callLLM(SYSTEM_PROMPT, contPrompt, 16384);
+    const parsed = parseJsonResponse(contText);
+    if (parsed.contentZh) {
+      contentParts.push(parsed.contentZh);
+    }
+  }
+
+  result.contentZh = contentParts.join("\n\n");
+  return result;
+}
+
+/**
+ * Structured summary for very long articles (>50K chars).
+ * Sends beginning + ending to produce a Chinese summary.
+ */
+async function summarizeArticle({ title, summary, content }) {
+  // Take first 12K + last 5K to give LLM a sense of full arc
+  const head = content.slice(0, 12000);
+  const tail = content.slice(-5000);
+  const excerpt = head + "\n\n[... middle content omitted ...]\n\n" + tail;
+
+  const userPrompt = `Summarize this long-form article (possibly a podcast transcript or deep-dive).
+Extract and translate the key insights into a structured Chinese summary.
+
+Return JSON with these exact fields:
+{
+  "titleZh": "Chinese title (concise, news-headline style)",
+  "summaryZh": "Chinese summary (2-3 sentences, capture key points)",
+  "contentZh": "Structured Chinese summary using ## headings for each key topic, include direct quotes where impactful",
+  "articleType": "one of: news, tutorial, analysis",
+  "readingTime": <estimated minutes to read the Chinese summary>
+}
+
+Important: Start contentZh with this notice line:
+> 本文为长文精华摘要，完整内容请查看原文。
+
+Then use ## headings for each major topic/insight.
+
+Article to summarize:
+
+Title: ${title}
+
+Summary: ${summary || "N/A"}
+
+Content (beginning + ending, ~${Math.round(content.length / 1000)}K chars total):
+${excerpt}`;
+
+  const text = await callLLM(SYSTEM_PROMPT, userPrompt, 16384);
   return parseTranslationResponse(text);
 }
 
@@ -310,4 +489,23 @@ function parseTranslationResponse(text) {
       : parseInt(result.readingTime, 10) || 5;
 
   return result;
+}
+
+/**
+ * Parse a JSON response without full validation (for continuation chunks).
+ */
+function parseJsonResponse(text) {
+  const jsonStr = text
+    .replace(/^```json\s*\n?/, "")
+    .replace(/\n?```\s*$/, "")
+    .trim();
+
+  try {
+    return JSON.parse(jsonStr);
+  } catch (err) {
+    throw new Error(
+      `Failed to parse LLM continuation response as JSON: ${err.message}\n` +
+        `Raw response (first 500 chars): ${text.slice(0, 500)}`
+    );
+  }
 }

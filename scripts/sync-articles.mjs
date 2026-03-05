@@ -5,10 +5,11 @@
  * Fetches RSS → extracts full content → translates via LLM → upserts to DB.
  *
  * Usage:
- *   node scripts/sync-articles.mjs                    # Full sync (all sources)
- *   node scripts/sync-articles.mjs --dry-run           # Preview only
- *   node scripts/sync-articles.mjs --limit 5           # Limit items per source
- *   node scripts/sync-articles.mjs --source anthropic  # Single source only
+ *   node scripts/sync-articles.mjs                           # Full sync (all sources)
+ *   node scripts/sync-articles.mjs --dry-run                  # Preview only
+ *   node scripts/sync-articles.mjs --limit 5                  # Limit items per source
+ *   node scripts/sync-articles.mjs --source anthropic         # Single source only
+ *   node scripts/sync-articles.mjs --retranslate-truncated    # Re-translate truncated articles
  *
  * NOTE: The `articles.source_url` column must have a UNIQUE constraint
  *       for the upsert (onConflict: "source_url") to work correctly.
@@ -265,6 +266,7 @@ async function main() {
   // Parse CLI args (same pattern as sync-clawhub.mjs)
   const args = process.argv.slice(2);
   const dryRun = args.includes("--dry-run");
+  const retranslateTruncated = args.includes("--retranslate-truncated");
   const limitIdx = args.indexOf("--limit");
   const limit = limitIdx !== -1 ? Number(args[limitIdx + 1]) : Infinity;
   const sourceIdx = args.indexOf("--source");
@@ -289,6 +291,95 @@ async function main() {
   if (sources.length === 0) {
     log.error(`Unknown source: "${sourceFilter}". Available: ${SOURCES.map((s) => s.name).join(", ")}`);
     process.exit(1);
+  }
+
+  // ── Retranslate truncated articles mode ───────────────────────────
+  if (retranslateTruncated) {
+    validateEnv(["NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"]);
+    const { name, model } = getProviderInfo();
+    log.info(`LLM provider: ${name} (${model})`);
+    const sb = createAdminClient();
+
+    // Find articles with truncation markers in content_zh
+    const { data: truncated, error: queryErr } = await sb
+      .from("articles")
+      .select("id, slug, title, summary, content, content_zh")
+      .or("content_zh.ilike.%truncated%,content_zh.ilike.%截断%,content_zh.ilike.%content truncated%")
+      .order("published_at", { ascending: false });
+
+    if (queryErr) {
+      log.error(`Query failed: ${queryErr.message}`);
+      process.exit(1);
+    }
+
+    // Filter to articles that actually have English content to retranslate
+    const candidates = (truncated || []).filter((a) => a.content && a.content.length > 100);
+    log.info(`Found ${candidates.length} truncated articles to retranslate`);
+
+    if (candidates.length === 0) {
+      log.success("No truncated articles found. All good!");
+      log.done();
+      return;
+    }
+
+    let retranslated = 0;
+    let failed = 0;
+
+    for (let i = 0; i < candidates.length; i++) {
+      const article = candidates[i];
+      const label = (article.title || article.slug).slice(0, 60);
+      const strategy = article.content.length > 50000 ? "summarize"
+        : article.content.length > 15000 ? "chunked" : "single";
+
+      if (dryRun) {
+        log.info(`[DRY RUN] Would retranslate (${strategy}, ${Math.round(article.content.length / 1000)}K): ${label}`);
+        retranslated++;
+      } else {
+        try {
+          await llmThrottle();
+          log.info(`Retranslating (${strategy}, ${Math.round(article.content.length / 1000)}K): ${label}`);
+          const result = await withRetry(
+            () => translateArticle({
+              title: article.title || "",
+              summary: article.summary || "",
+              content: article.content,
+            }),
+            { label }
+          );
+
+          const { error: updateErr } = await sb
+            .from("articles")
+            .update({
+              title_zh: result.titleZh,
+              summary_zh: result.summaryZh,
+              content_zh: result.contentZh,
+              article_type: result.articleType,
+              reading_time: result.readingTime,
+            })
+            .eq("id", article.id);
+
+          if (updateErr) {
+            log.error(`Update failed for "${label}": ${updateErr.message}`);
+            failed++;
+          } else {
+            log.success(`Retranslated: ${result.titleZh}`);
+            retranslated++;
+          }
+        } catch (e) {
+          log.error(`Retranslation failed for "${label}": ${e.message}`);
+          failed++;
+        }
+      }
+      log.progress(i + 1, candidates.length, failed, label);
+    }
+
+    log.progressEnd();
+    log.success(`\n=== Retranslation Summary ===`);
+    log.success(`Total: ${candidates.length} | Retranslated: ${retranslated} | Failed: ${failed}`);
+    if (dryRun) log.info("[DRY RUN] No records were updated.");
+    log.done();
+    if (failed > 0) process.exit(1);
+    return;
   }
 
   // Summary counters
