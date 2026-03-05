@@ -171,12 +171,120 @@ const levnikolaevichAdapter = {
   },
 };
 
+// ─── alirezarezvani/claude-skills ────────────────────────────────────
+// Structure: <category>/<name>/SKILL.md (depth=3, only engineering dirs)
+const ALIREZA_INCLUDE_DIRS = new Set(["engineering", "engineering-team"]);
+
+const alirezarezvaniAdapter = {
+  owner: "alirezarezvani",
+  repo: "claude-skills",
+  ref: "main",
+  platform: ["claude"],
+
+  findSkillPaths(entries) {
+    return entries
+      .filter(
+        (e) =>
+          e.type === "blob" &&
+          e.path.endsWith("/SKILL.md") &&
+          e.path.split("/").length === 3
+      )
+      .map((e) => e.path);
+  },
+
+  makeSlug(path) {
+    // <category>/<name>/SKILL.md → alireza--<name>
+    const parts = path.split("/");
+    const name = parts[parts.length - 2];
+    return `alireza--${slugify(name)}`;
+  },
+
+  shouldInclude(path) {
+    const topDir = path.split("/")[0];
+    if (!ALIREZA_INCLUDE_DIRS.has(topDir)) return false;
+    // Exclude sample skill
+    if (path.includes("/assets/sample-skill/")) return false;
+    return true;
+  },
+};
+
+// ─── giuseppe-trisciuoglio/developer-kit ─────────────────────────────
+// Structure: plugins/<group>/skills/<name>/SKILL.md
+const DEVKIT_INCLUDE_GROUPS = new Set([
+  "developer-kit-ai",
+  "developer-kit-core",
+  "developer-kit-typescript",
+  "developer-kit-tools",
+]);
+
+const developerKitAdapter = {
+  owner: "giuseppe-trisciuoglio",
+  repo: "developer-kit",
+  ref: "main",
+  platform: ["claude"],
+
+  findSkillPaths(entries) {
+    return entries
+      .filter(
+        (e) =>
+          e.type === "blob" &&
+          e.path.startsWith("plugins/") &&
+          e.path.endsWith("/SKILL.md") &&
+          e.path.split("/").length === 5
+      )
+      .map((e) => e.path);
+  },
+
+  makeSlug(path) {
+    // plugins/<group>/skills/<name>/SKILL.md → devkit--<name>
+    const parts = path.split("/");
+    const name = parts[parts.length - 2];
+    return `devkit--${slugify(name)}`;
+  },
+
+  shouldInclude(path) {
+    // plugins/<group>/skills/...
+    const group = path.split("/")[1];
+    return DEVKIT_INCLUDE_GROUPS.has(group);
+  },
+};
+
+// ─── neondatabase/agent-skills ──────────────────────────────────────
+// Structure: skills/<name>/SKILL.md
+const neonAdapter = {
+  owner: "neondatabase",
+  repo: "agent-skills",
+  ref: "main",
+  platform: ["claude"],
+
+  findSkillPaths(entries) {
+    return entries
+      .filter(
+        (e) =>
+          e.type === "blob" &&
+          e.path.startsWith("skills/") &&
+          e.path.endsWith("/SKILL.md")
+      )
+      .map((e) => e.path);
+  },
+
+  makeSlug(path) {
+    // skills/<name>/SKILL.md → neon--<name>
+    const parts = path.split("/");
+    const name = parts[parts.length - 2];
+    return `neon--${slugify(name)}`;
+  },
+};
+
 // ─── Export all adapters ─────────────────────────────────────────────
 export const CURATED_ADAPTERS = [
   anthropicsAdapter,
   openaiCodexAdapter,
   daymadeAdapter,
   levnikolaevichAdapter,
+  alirezarezvaniAdapter,
+  developerKitAdapter,
+  neonAdapter,
 ];
 
 /**
