@@ -562,7 +562,7 @@ async function main() {
           article_type: articleType,
           reading_time: translation.readingTime,
           relevance_score: relevanceScore,
-          status: relevanceScore >= 3 ? "published" : relevanceScore === 2 ? "draft" : "hidden",
+          status: "draft",
           published_at: item.pubDate
             ? new Date(item.pubDate).toISOString()
             : new Date().toISOString(),
@@ -573,9 +573,10 @@ async function main() {
           log.info(`[DRY RUN] Would insert: ${record.title_zh || record.title}`);
           totalInserted++;
         } else {
+          // ignoreDuplicates: true ensures existing articles keep their status
           const { error } = await supabase
             .from("articles")
-            .upsert(record, { onConflict: "source_url" });
+            .upsert(record, { onConflict: "source_url", ignoreDuplicates: true });
 
           if (error) {
             log.error(`Failed to insert "${record.title}": ${error.message}`);

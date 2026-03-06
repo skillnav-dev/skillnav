@@ -101,17 +101,20 @@ export default async function ArticlePage({ params }: PageProps) {
         <div className="mt-8">
           <ArticleContent content={article.contentZh ?? article.content} />
         </div>
+        {/* Copyright attribution for translated articles */}
         {article.sourceUrl && (
-          <p className="mt-8 text-sm text-muted-foreground">
+          <div className="mt-10 rounded-md border border-border/60 bg-muted/30 px-4 py-3 text-xs text-muted-foreground">
+            本文编译自{" "}
             <a
               href={article.sourceUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-primary hover:underline"
+              className="text-primary hover:underline"
             >
-              查看原文 ↗
+              {article.title}
             </a>
-          </p>
+            ，版权归原作者所有。
+          </div>
         )}
       </article>
       {related.length > 0 && (
