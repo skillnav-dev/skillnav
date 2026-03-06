@@ -87,6 +87,8 @@ export interface Database {
           cover_image: string | null;
           reading_time: number;
           article_type: "news" | "tutorial" | "analysis";
+          status: "published" | "draft" | "hidden";
+          relevance_score: number | null;
           published_at: string | null;
           created_at: string;
         };

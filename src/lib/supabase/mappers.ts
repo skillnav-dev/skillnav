@@ -1,5 +1,5 @@
 import type { SkillRow, ArticleRow } from "./types";
-import type { Skill, Article } from "@/data/types";
+import type { Skill, Article, ArticleStatus } from "@/data/types";
 
 /**
  * Map Supabase skill row (snake_case) to app Skill (camelCase).
@@ -64,6 +64,8 @@ export function mapArticleRow(row: ArticleRow): Article {
     coverImage: row.cover_image ?? undefined,
     readingTime: row.reading_time,
     category: row.article_type,
+    status: (row.status as ArticleStatus) ?? "published",
+    relevanceScore: row.relevance_score ?? undefined,
     publishedAt: row.published_at ?? "",
     createdAt: row.created_at,
   };

@@ -21,6 +21,7 @@ export type ArticleSource =
   | "simonw"
   | "techcrunch-ai"
   | "other";
+export type ArticleStatus = "published" | "draft" | "hidden";
 export type SubmissionStatus = "pending" | "approved" | "rejected";
 
 export interface Skill {
@@ -87,6 +88,8 @@ export interface Article {
   category: ArticleType;
   coverImage?: string;
   readingTime: number;
+  status: ArticleStatus;
+  relevanceScore?: number;
   publishedAt: string;
   createdAt: string;
 }

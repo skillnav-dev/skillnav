@@ -32,6 +32,7 @@ export async function getArticles(options?: {
   let query = supabase
     .from("articles")
     .select("*")
+    .eq("status", "published")
     .order("published_at", { ascending: false });
 
   if (options?.category) query = query.eq("article_type", options.category);
@@ -84,6 +85,7 @@ export async function getLatestArticles(limit = 4): Promise<Article[]> {
   const { data, error } = await supabase
     .from("articles")
     .select("*")
+    .eq("status", "published")
     .order("published_at", { ascending: false })
     .limit(limit);
 
@@ -135,6 +137,7 @@ export async function getArticlesWithCount(options?: {
   let query = supabase
     .from("articles")
     .select("*", { count: "exact" })
+    .eq("status", "published")
     .order("published_at", { ascending: false });
 
   if (options?.category) query = query.eq("article_type", options.category);
@@ -173,7 +176,8 @@ export async function getArticleSources(): Promise<string[]> {
 
   const { data, error } = (await supabase
     .from("articles")
-    .select("source")) as {
+    .select("source")
+    .eq("status", "published")) as {
     data: { source: string }[] | null;
     error: unknown;
   };
@@ -195,7 +199,8 @@ export async function getArticleCategories(): Promise<string[]> {
 
   const { data, error } = (await supabase
     .from("articles")
-    .select("article_type")) as {
+    .select("article_type")
+    .eq("status", "published")) as {
     data: { article_type: string }[] | null;
     error: unknown;
   };
@@ -217,7 +222,10 @@ export async function getAllArticleSlugs(): Promise<string[]> {
   const { createStaticClient } = await import("@/lib/supabase/static");
   const supabase = createStaticClient();
 
-  const { data, error } = (await supabase.from("articles").select("slug")) as {
+  const { data, error } = (await supabase
+    .from("articles")
+    .select("slug")
+    .eq("status", "published")) as {
     data: { slug: string }[] | null;
     error: unknown;
   };

@@ -315,8 +315,16 @@ async function translateArticleSingle({ title, summary, content }) {
   "summaryZh": "Chinese summary (2-3 sentences, capture key points)",
   "contentZh": "Full Chinese translation (preserve markdown formatting)",
   "articleType": "one of: news, tutorial, analysis",
-  "readingTime": <estimated minutes to read the Chinese version>
+  "readingTime": <estimated minutes to read the Chinese version>,
+  "relevanceScore": <1-5 integer, see criteria below>
 }
+
+Relevance scoring criteria:
+5 = Core AI Agent/Skills/MCP content (tutorials, deep analysis)
+4 = AI dev tools (Claude Code, Cursor, Codex practices)
+3 = AI industry trends (insightful analysis articles)
+2 = Generic AI news (product announcements, brief updates)
+1 = Not related to AI Agent ecosystem (company PR, hiring, policy)
 
 Article to translate:
 
@@ -346,8 +354,16 @@ async function translateArticleChunked({ title, summary, content }) {
   "summaryZh": "Chinese summary (2-3 sentences, capture key points)",
   "contentZh": "Full Chinese translation (preserve markdown formatting)",
   "articleType": "one of: news, tutorial, analysis",
-  "readingTime": <estimated minutes to read the FULL Chinese version, not just this part>
+  "readingTime": <estimated minutes to read the FULL Chinese version, not just this part>,
+  "relevanceScore": <1-5 integer, see criteria below>
 }
+
+Relevance scoring criteria:
+5 = Core AI Agent/Skills/MCP content (tutorials, deep analysis)
+4 = AI dev tools (Claude Code, Cursor, Codex practices)
+3 = AI industry trends (insightful analysis articles)
+2 = Generic AI news (product announcements, brief updates)
+1 = Not related to AI Agent ecosystem (company PR, hiring, policy)
 
 Note: This is part 1 of ${chunks.length} of a multi-part article. Translate this portion completely.
 
@@ -404,8 +420,16 @@ Return JSON with these exact fields:
   "summaryZh": "Chinese summary (2-3 sentences, capture key points)",
   "contentZh": "Structured Chinese summary using ## headings for each key topic, include direct quotes where impactful",
   "articleType": "one of: news, tutorial, analysis",
-  "readingTime": <estimated minutes to read the Chinese summary>
+  "readingTime": <estimated minutes to read the Chinese summary>,
+  "relevanceScore": <1-5 integer, see criteria below>
 }
+
+Relevance scoring criteria:
+5 = Core AI Agent/Skills/MCP content (tutorials, deep analysis)
+4 = AI dev tools (Claude Code, Cursor, Codex practices)
+3 = AI industry trends (insightful analysis articles)
+2 = Generic AI news (product announcements, brief updates)
+1 = Not related to AI Agent ecosystem (company PR, hiring, policy)
 
 Important: Start contentZh with this notice line:
 > 本文为长文精华摘要，完整内容请查看原文。
@@ -442,6 +466,46 @@ export async function translate(text, options = {}) {
   );
 
   return result.trim();
+}
+
+/**
+ * Score an article's relevance to AI Agent ecosystem (1-5).
+ * Lightweight call — only sends title + summary + content preview.
+ *
+ * @param {{ title: string, summary: string, content: string }} article
+ * @returns {Promise<{ relevanceScore: number, reason: string }>}
+ */
+export async function scoreArticleRelevance({ title, summary, content }) {
+  const contentPreview = content.slice(0, 500);
+
+  const systemPrompt = `You are an AI content relevance scorer for a site focused on AI Agent Skills, MCP, and AI developer tools. Respond with valid JSON only.`;
+
+  const userPrompt = `Score this article's relevance to the AI Agent ecosystem. Return JSON:
+
+{
+  "relevanceScore": <1-5 integer>,
+  "reason": "brief explanation in English"
+}
+
+Scoring criteria:
+5 = Core AI Agent/Skills/MCP content (tutorials, deep analysis)
+4 = AI dev tools (Claude Code, Cursor, Codex practices)
+3 = AI industry trends (insightful analysis articles)
+2 = Generic AI news (product announcements, brief updates)
+1 = Not related to AI Agent ecosystem (company PR, hiring, policy)
+
+Title: ${title}
+Summary: ${summary || "N/A"}
+Content preview: ${contentPreview}`;
+
+  const text = await callLLM(systemPrompt, userPrompt, 256);
+  const parsed = parseJsonResponse(text);
+
+  const score = typeof parsed.relevanceScore === "number"
+    ? Math.max(1, Math.min(5, Math.round(parsed.relevanceScore)))
+    : 3;
+
+  return { relevanceScore: score, reason: parsed.reason || "" };
 }
 
 // ── Response Parsing ─────────────────────────────────────────────────
@@ -487,6 +551,14 @@ function parseTranslationResponse(text) {
     typeof result.readingTime === "number"
       ? Math.max(1, Math.round(result.readingTime))
       : parseInt(result.readingTime, 10) || 5;
+
+  // Normalize relevanceScore (optional, 1-5)
+  if (result.relevanceScore !== undefined) {
+    const score = typeof result.relevanceScore === "number"
+      ? result.relevanceScore
+      : parseInt(result.relevanceScore, 10);
+    result.relevanceScore = Number.isNaN(score) ? undefined : Math.max(1, Math.min(5, Math.round(score)));
+  }
 
   return result;
 }

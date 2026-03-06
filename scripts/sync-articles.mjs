@@ -498,6 +498,13 @@ async function main() {
           excerpt = item.contentSnippet || "";
         }
 
+        // Content length gate: skip articles shorter than 500 chars
+        if (contentMd.length < 500) {
+          log.info(`Skipped (too short: ${contentMd.length} chars): "${itemLabel}"`);
+          totalSkipped++;
+          continue;
+        }
+
         // 3b: Translate via LLM (skip in dry-run to avoid requiring API key)
         let translation;
         if (dryRun) {
@@ -532,6 +539,9 @@ async function main() {
           ? translation.articleType
           : (source.defaultType || "news");
 
+        // Extract relevance score from LLM response
+        const relevanceScore = translation.relevanceScore || 3;
+
         // Fallback: RSS enclosure as cover image (e.g. GitHub Blog)
         if (!coverImage && item.enclosure?.url) {
           coverImage = item.enclosure.url;
@@ -551,6 +561,8 @@ async function main() {
           source: source.name,
           article_type: articleType,
           reading_time: translation.readingTime,
+          relevance_score: relevanceScore,
+          status: relevanceScore >= 3 ? "published" : relevanceScore === 2 ? "draft" : "hidden",
           published_at: item.pubDate
             ? new Date(item.pubDate).toISOString()
             : new Date().toISOString(),
