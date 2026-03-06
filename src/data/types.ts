@@ -8,18 +8,20 @@ export type SkillSource =
   | "manual"
   | "curated";
 export type PricingType = "free" | "freemium" | "paid";
-export type ArticleType = "news" | "tutorial" | "analysis";
+export type ArticleType = "news" | "tutorial" | "analysis" | "review";
 
 export type ArticleSource =
   | "anthropic"
   | "openai"
-  | "google-ai"
   | "github"
   | "langchain"
   | "huggingface"
   | "crewai"
   | "simonw"
-  | "techcrunch-ai"
+  | "latent-space"
+  | "ai-coding-daily"
+  | "thenewstack"
+  | "manual"
   | "other";
 export type ArticleStatus = "published" | "draft" | "hidden";
 export type SubmissionStatus = "pending" | "approved" | "rejected";

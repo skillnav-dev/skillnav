@@ -1,0 +1,279 @@
+export interface MCPServer {
+  slug: string;
+  name: string;
+  nameZh: string;
+  description: string;
+  descriptionZh: string;
+  category: string;
+  author: string;
+  githubUrl: string;
+  installCommand: string;
+  stars?: number;
+  isFeatured?: boolean;
+}
+
+// Curated MCP Server categories
+export const MCP_CATEGORIES = [
+  "全部",
+  "文件系统",
+  "数据库",
+  "Web & API",
+  "AI & LLM",
+  "开发工具",
+  "数据处理",
+  "效率工具",
+] as const;
+
+export type MCPCategory = (typeof MCP_CATEGORIES)[number];
+
+// Hand-picked high-quality MCP Servers
+export const mcpServers: MCPServer[] = [
+  {
+    slug: "filesystem",
+    name: "Filesystem",
+    nameZh: "文件系统",
+    description:
+      "Read, write, and manage files and directories on your local filesystem.",
+    descriptionZh: "读写和管理本地文件系统中的文件和目录。",
+    category: "文件系统",
+    author: "Anthropic",
+    githubUrl:
+      "https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem",
+    installCommand: "npx -y @modelcontextprotocol/server-filesystem",
+    stars: 15000,
+    isFeatured: true,
+  },
+  {
+    slug: "github",
+    name: "GitHub",
+    nameZh: "GitHub",
+    description:
+      "Interact with GitHub repositories, issues, pull requests, and more.",
+    descriptionZh: "与 GitHub 仓库、Issue、PR 等进行交互操作。",
+    category: "开发工具",
+    author: "GitHub",
+    githubUrl:
+      "https://github.com/modelcontextprotocol/servers/tree/main/src/github",
+    installCommand: "npx -y @modelcontextprotocol/server-github",
+    stars: 15000,
+    isFeatured: true,
+  },
+  {
+    slug: "postgres",
+    name: "PostgreSQL",
+    nameZh: "PostgreSQL 数据库",
+    description:
+      "Query and manage PostgreSQL databases with schema inspection.",
+    descriptionZh: "查询和管理 PostgreSQL 数据库，支持 Schema 检查。",
+    category: "数据库",
+    author: "Anthropic",
+    githubUrl:
+      "https://github.com/modelcontextprotocol/servers/tree/main/src/postgres",
+    installCommand: "npx -y @modelcontextprotocol/server-postgres",
+    stars: 15000,
+    isFeatured: true,
+  },
+  {
+    slug: "sqlite",
+    name: "SQLite",
+    nameZh: "SQLite 数据库",
+    description: "Read and query SQLite databases for data analysis tasks.",
+    descriptionZh: "读取和查询 SQLite 数据库，用于数据分析任务。",
+    category: "数据库",
+    author: "Anthropic",
+    githubUrl:
+      "https://github.com/modelcontextprotocol/servers/tree/main/src/sqlite",
+    installCommand: "npx -y @modelcontextprotocol/server-sqlite",
+    stars: 15000,
+  },
+  {
+    slug: "brave-search",
+    name: "Brave Search",
+    nameZh: "Brave 搜索",
+    description: "Web and local search using the Brave Search API.",
+    descriptionZh: "使用 Brave Search API 进行网页和本地搜索。",
+    category: "Web & API",
+    author: "Anthropic",
+    githubUrl:
+      "https://github.com/modelcontextprotocol/servers/tree/main/src/brave-search",
+    installCommand: "npx -y @modelcontextprotocol/server-brave-search",
+    stars: 15000,
+    isFeatured: true,
+  },
+  {
+    slug: "fetch",
+    name: "Fetch",
+    nameZh: "网页抓取",
+    description:
+      "Fetch and convert web pages to markdown for AI-friendly consumption.",
+    descriptionZh: "抓取网页并转换为 Markdown，便于 AI 处理。",
+    category: "Web & API",
+    author: "Anthropic",
+    githubUrl:
+      "https://github.com/modelcontextprotocol/servers/tree/main/src/fetch",
+    installCommand: "npx -y @modelcontextprotocol/server-fetch",
+    stars: 15000,
+  },
+  {
+    slug: "puppeteer",
+    name: "Puppeteer",
+    nameZh: "Puppeteer 浏览器控制",
+    description:
+      "Browser automation with Puppeteer for web scraping and testing.",
+    descriptionZh: "使用 Puppeteer 进行浏览器自动化、网页抓取和测试。",
+    category: "Web & API",
+    author: "Anthropic",
+    githubUrl:
+      "https://github.com/modelcontextprotocol/servers/tree/main/src/puppeteer",
+    installCommand: "npx -y @modelcontextprotocol/server-puppeteer",
+    stars: 15000,
+    isFeatured: true,
+  },
+  {
+    slug: "slack",
+    name: "Slack",
+    nameZh: "Slack 消息",
+    description: "Send messages, read channels, and manage Slack workspaces.",
+    descriptionZh: "发送消息、读取频道、管理 Slack 工作区。",
+    category: "效率工具",
+    author: "Anthropic",
+    githubUrl:
+      "https://github.com/modelcontextprotocol/servers/tree/main/src/slack",
+    installCommand: "npx -y @modelcontextprotocol/server-slack",
+    stars: 15000,
+  },
+  {
+    slug: "memory",
+    name: "Memory",
+    nameZh: "知识图谱记忆",
+    description:
+      "Persistent memory using a local knowledge graph for long-term context.",
+    descriptionZh: "使用本地知识图谱实现持久化记忆，提供长期上下文。",
+    category: "AI & LLM",
+    author: "Anthropic",
+    githubUrl:
+      "https://github.com/modelcontextprotocol/servers/tree/main/src/memory",
+    installCommand: "npx -y @modelcontextprotocol/server-memory",
+    stars: 15000,
+    isFeatured: true,
+  },
+  {
+    slug: "sequential-thinking",
+    name: "Sequential Thinking",
+    nameZh: "顺序思维",
+    description:
+      "Dynamic problem-solving through sequential thought processes.",
+    descriptionZh: "通过顺序化思维过程实现动态问题求解。",
+    category: "AI & LLM",
+    author: "Anthropic",
+    githubUrl:
+      "https://github.com/modelcontextprotocol/servers/tree/main/src/sequentialthinking",
+    installCommand: "npx -y @modelcontextprotocol/server-sequential-thinking",
+    stars: 15000,
+  },
+  {
+    slug: "supabase",
+    name: "Supabase",
+    nameZh: "Supabase",
+    description:
+      "Manage Supabase projects, run SQL, and interact with database and auth.",
+    descriptionZh: "管理 Supabase 项目，运行 SQL，操作数据库和认证。",
+    category: "数据库",
+    author: "Supabase",
+    githubUrl: "https://github.com/supabase-community/supabase-mcp",
+    installCommand: "npx -y @supabase/mcp-server-supabase",
+    stars: 800,
+    isFeatured: true,
+  },
+  {
+    slug: "sentry",
+    name: "Sentry",
+    nameZh: "Sentry 错误监控",
+    description: "Search and analyze error reports from Sentry for debugging.",
+    descriptionZh: "搜索和分析 Sentry 错误报告，辅助调试。",
+    category: "开发工具",
+    author: "Sentry",
+    githubUrl: "https://github.com/getsentry/sentry-mcp",
+    installCommand: "npx -y @sentry/mcp-server-sentry",
+    stars: 400,
+  },
+  {
+    slug: "linear",
+    name: "Linear",
+    nameZh: "Linear 项目管理",
+    description:
+      "Manage Linear issues, projects, and teams for project tracking.",
+    descriptionZh: "管理 Linear 的 Issue、项目和团队，用于项目跟踪。",
+    category: "效率工具",
+    author: "Linear",
+    githubUrl: "https://github.com/linear/linear-mcp-server",
+    installCommand: "npx -y @linear/mcp-server-linear",
+    stars: 300,
+  },
+  {
+    slug: "context7",
+    name: "Context7",
+    nameZh: "Context7 文档查询",
+    description:
+      "Pull up-to-date documentation and code examples from any library.",
+    descriptionZh: "拉取任意库的最新文档和代码示例。",
+    category: "开发工具",
+    author: "Context7",
+    githubUrl: "https://github.com/upstash/context7",
+    installCommand: "npx -y @upstash/context7-mcp",
+    stars: 5000,
+    isFeatured: true,
+  },
+  {
+    slug: "neon",
+    name: "Neon",
+    nameZh: "Neon Serverless Postgres",
+    description:
+      "Manage Neon serverless Postgres databases, branches, and queries.",
+    descriptionZh: "管理 Neon 无服务器 Postgres 数据库、分支和查询。",
+    category: "数据库",
+    author: "Neon",
+    githubUrl: "https://github.com/neondatabase/mcp-server-neon",
+    installCommand: "npx -y @neondatabase/mcp-server-neon",
+    stars: 600,
+  },
+  {
+    slug: "cloudflare",
+    name: "Cloudflare",
+    nameZh: "Cloudflare",
+    description: "Manage Cloudflare Workers, KV, R2, and D1 resources.",
+    descriptionZh: "管理 Cloudflare Workers、KV、R2 和 D1 资源。",
+    category: "开发工具",
+    author: "Cloudflare",
+    githubUrl: "https://github.com/cloudflare/mcp-server-cloudflare",
+    installCommand: "npx -y @cloudflare/mcp-server-cloudflare",
+    stars: 1500,
+    isFeatured: true,
+  },
+  {
+    slug: "firecrawl",
+    name: "Firecrawl",
+    nameZh: "Firecrawl 智能爬虫",
+    description:
+      "Advanced web scraping with JavaScript rendering and structured data extraction.",
+    descriptionZh: "高级网页爬取，支持 JavaScript 渲染和结构化数据提取。",
+    category: "数据处理",
+    author: "Firecrawl",
+    githubUrl: "https://github.com/mendableai/firecrawl-mcp-server",
+    installCommand: "npx -y firecrawl-mcp",
+    stars: 500,
+  },
+  {
+    slug: "exa",
+    name: "Exa",
+    nameZh: "Exa AI 搜索",
+    description:
+      "AI-powered search engine with semantic understanding and content retrieval.",
+    descriptionZh: "AI 驱动的搜索引擎，支持语义理解和内容检索。",
+    category: "Web & API",
+    author: "Exa",
+    githubUrl: "https://github.com/exa-labs/exa-mcp-server",
+    installCommand: "npx -y exa-mcp-server",
+    stars: 1000,
+  },
+];

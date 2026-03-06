@@ -11,16 +11,16 @@ export function HeroSection() {
         <div className="mx-auto max-w-2xl text-center">
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border/60 bg-muted/50 px-4 py-1.5 text-sm text-muted-foreground">
             <Compass className="size-4 text-primary" />
-            中文世界的 AI Skills 导航
+            中文开发者的 AI 智能体工具站
           </div>
           <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
             发现最好用的
             <br />
-            <span className="text-primary">AI Agent Skills</span>
+            <span className="text-primary">AI Agent 工具</span>
           </h1>
           <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
-            探索、评估、管理 AI Agent
-            技能。帮你找到最安全、最高效的 Skills，让 AI 真正为你所用。
+            Skills · MCP · 实战资讯 — 探索、评估最好用的 AI Agent 工具，让 AI
+            真正为你所用。
           </p>
           <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
             <Button size="lg" className="w-full sm:w-auto" asChild>
@@ -35,7 +35,7 @@ export function HeroSection() {
               className="w-full sm:w-auto"
               asChild
             >
-              <Link href="/articles">最新资讯</Link>
+              <Link href="/mcp">MCP 导航</Link>
             </Button>
           </div>
         </div>

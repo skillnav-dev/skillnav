@@ -2,9 +2,9 @@
 
 ## Project Overview
 
-**SkillNav** -- 中文世界的 AI Agent Skills 导航 + 资讯站 (skillnav.dev)
+**SkillNav** -- 中文开发者的 AI 智能体工具站（Skills · MCP · 实战资讯）(skillnav.dev)
 
-Core flywheel: 资讯翻译(引流) → 导航站(留存) → Skill 套件(变现)
+Core flywheel: 资讯翻译(引流) → 工具导航(留存) → Skill 套件(变现)
 
 GitHub org: `skillnav-dev` | Domain: `skillnav.dev` (Cloudflare Registrar)
 
@@ -55,7 +55,8 @@ src/
 ├── app/                        # Pages & routing (App Router)
 │   ├── page.tsx                # Homepage (5 sections assembled)
 │   ├── articles/               # Article list + [slug] detail (SSG)
-│   ├── skills/                 # Skills listing (TODO: [slug] detail)
+│   ├── skills/                 # Skills listing + [slug] detail
+│   ├── mcp/                    # MCP Server 精选导航 (static curated data)
 │   ├── layout.tsx              # Root layout (zh lang, fonts, Header/Footer)
 │   ├── globals.css             # Brand color variables (deep indigo theme)
 │   ├── robots.ts / sitemap.ts  # SEO

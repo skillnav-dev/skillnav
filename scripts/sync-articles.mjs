@@ -33,13 +33,15 @@ const log = createLogger("articles");
 // ── RSS Sources ──────────────────────────────────────────────────────
 // Relevance keywords for filtering non-Anthropic sources
 const RELEVANCE_KEYWORDS = [
-  "claude", "anthropic", "mcp", "skill", "agent", "llm", "ai",
-  "prompt", "tool-use", "function-calling", "agentic",
+  "claude", "anthropic", "mcp", "skill", "agent", "agentic",
+  "tool-use", "function-calling",
   "computer-use", "model-context", "rag", "embedding",
   "cursor", "copilot", "codex", "gemini", "openai",
   "a2a", "agent-to-agent", "multi-agent", "crewai", "autogen",
-  "langchain", "langgraph", "vercel", "next.js", "ai-sdk",
-  "hugging-face", "transformers", "diffusion",
+  "langchain", "langgraph",
+  "claude-code", "ai-coding", "ai-programming", "vibe-coding",
+  "agentic-engineering", "model-context-protocol", "code-execution",
+  "smolagents", "openai-agents-sdk", "claude-md", "context-engineering",
 ];
 
 const SOURCES = [
@@ -72,21 +74,6 @@ const SOURCES = [
     relevanceFilter: RELEVANCE_KEYWORDS,
   },
   {
-    name: "google-ai",
-    label: "Google AI Blog",
-    feedUrl: "https://blog.google/technology/ai/rss/",
-    defaultType: "news",
-    relevanceFilter: RELEVANCE_KEYWORDS,
-  },
-  {
-    name: "vercel",
-    label: "Vercel Blog",
-    feedUrl: "https://vercel.com/atom",
-    defaultType: "news",
-    relevanceFilter: RELEVANCE_KEYWORDS,
-  },
-  // NOTE: Cursor (changelog.cursor.com) has no RSS feed available
-  {
     name: "github",
     label: "GitHub Blog",
     feedUrl: "https://github.blog/feed/",
@@ -108,31 +95,25 @@ const SOURCES = [
     relevanceFilter: null, // Accept all — Agent framework is core topic
   },
   {
-    name: "techcrunch-ai",
-    label: "TechCrunch AI",
-    feedUrl: "https://techcrunch.com/category/artificial-intelligence/feed/",
-    defaultType: "news",
-    relevanceFilter: RELEVANCE_KEYWORDS,
-  },
-  {
     name: "latent-space",
     label: "Latent Space",
     feedUrl: "https://www.latent.space/feed",
     defaultType: "analysis",
-    relevanceFilter: null, // Accept all — AI Engineering deep content
+    relevanceFilter: RELEVANCE_KEYWORDS, // Filter out AI News daily roundups
   },
   {
-    name: "semantic-kernel",
-    label: "Microsoft Semantic Kernel",
-    feedUrl: "https://devblogs.microsoft.com/semantic-kernel/feed/",
+    name: "ai-coding-daily",
+    label: "AI Coding Daily",
+    feedUrl: "https://aicodingdaily.substack.com/feed",
     defaultType: "tutorial",
-    relevanceFilter: null, // Accept all — Agent framework core blog
+    relevanceFilter: null, // Accept all — core topic
   },
+  // NOTE: PulseMCP (pulsemcp.com) has no RSS feed available
   {
-    name: "arstechnica-ai",
-    label: "Ars Technica AI",
-    feedUrl: "https://arstechnica.com/ai/feed/",
-    defaultType: "news",
+    name: "thenewstack",
+    label: "The New Stack",
+    feedUrl: "https://thenewstack.io/feed/",
+    defaultType: "analysis",
     relevanceFilter: RELEVANCE_KEYWORDS,
   },
 ];
@@ -534,7 +515,7 @@ async function main() {
         }
 
         // Normalize articleType to DB-valid values
-        const validDbTypes = ["news", "tutorial", "analysis"];
+        const validDbTypes = ["news", "tutorial", "analysis", "review"];
         const articleType = validDbTypes.includes(translation.articleType)
           ? translation.articleType
           : (source.defaultType || "news");

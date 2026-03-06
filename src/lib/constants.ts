@@ -1,8 +1,8 @@
 export const siteConfig = {
   name: "SkillNav",
-  nameZh: "SkillNav - AI Agent Skills 导航",
+  nameZh: "SkillNav - 中文开发者的 AI 智能体工具站",
   description:
-    "中文世界的 AI Agent Skills 导航站，发现、评估和管理最好用的 AI Skills。",
+    "中文开发者的 AI 智能体工具站 — Skills · MCP · 实战资讯，发现最好用的 AI Agent 工具。",
   url: "https://skillnav.dev",
   ogImage: "https://skillnav.dev/og.png",
   links: {
@@ -14,6 +14,7 @@ export const siteConfig = {
 export const navItems = [
   { title: "首页", href: "/" },
   { title: "Skills", href: "/skills" },
+  { title: "MCP", href: "/mcp" },
   { title: "资讯", href: "/articles" },
   { title: "关于", href: "/about" },
 ] as const;
@@ -23,6 +24,7 @@ export const footerLinks = {
     title: "产品",
     links: [
       { title: "Skills 导航", href: "/skills" },
+      { title: "MCP 导航", href: "/mcp" },
       { title: "资讯", href: "/articles" },
     ],
   },

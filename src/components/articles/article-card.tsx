@@ -24,19 +24,26 @@ export function ArticleCard({ article }: ArticleCardProps) {
 
   return (
     <Card className="group overflow-hidden transition-shadow hover:shadow-md">
-      {/* Cover image */}
-      {article.coverImage && (
-        <Link href={`/articles/${article.slug}`}>
-          <div className="aspect-[2/1] overflow-hidden">
+      {/* Cover image or branded placeholder */}
+      <Link href={`/articles/${article.slug}`}>
+        <div className="aspect-[2/1] overflow-hidden">
+          {article.coverImage ? (
             <FallbackImage
               src={article.coverImage}
               alt={article.titleZh ?? article.title}
               className="size-full object-cover transition-transform group-hover:scale-105"
               loading="lazy"
             />
-          </div>
-        </Link>
-      )}
+          ) : (
+            <div className="flex size-full items-center justify-center bg-gradient-to-br from-primary/10 via-accent/10 to-primary/5">
+              <span className="text-lg font-semibold text-muted-foreground/40">
+                {(article.source && ARTICLE_SOURCE_LABELS[article.source]) ||
+                  "SkillNav"}
+              </span>
+            </div>
+          )}
+        </div>
+      </Link>
       <CardHeader className="pb-3">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <Badge
