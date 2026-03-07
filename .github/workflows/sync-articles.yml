@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       source:
-        description: "Source filter (anthropic/openai/langchain/simonw/google-ai/github/huggingface/crewai/techcrunch-ai)"
+        description: "Source filter (anthropic/openai/langchain/simonw/github/huggingface/crewai/latent-space/ai-coding-daily/thenewstack)"
         required: false
       limit:
         description: "Max items per source"
@@ -23,7 +23,7 @@ concurrency:
 jobs:
   sync:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     env:
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}

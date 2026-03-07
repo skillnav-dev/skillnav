@@ -511,6 +511,17 @@ Content preview: ${contentPreview}`;
 // ── Response Parsing ─────────────────────────────────────────────────
 
 /**
+ * Sanitize LLM-generated JSON string before parsing.
+ * Fixes common issues: invalid escape sequences (\: \- \# etc.)
+ * and unescaped control characters inside string values.
+ */
+function sanitizeJsonString(str) {
+  // Fix invalid escape sequences: \x where x is not a valid JSON escape char
+  // Valid JSON escapes: \" \\ \/ \b \f \n \r \t \uXXXX
+  return str.replace(/\\(?!["\\/bfnrtu])/g, "\\\\");
+}
+
+/**
  * Parse and validate the LLM translation response JSON.
  */
 function parseTranslationResponse(text) {
@@ -523,11 +534,16 @@ function parseTranslationResponse(text) {
   let result;
   try {
     result = JSON.parse(jsonStr);
-  } catch (err) {
-    throw new Error(
-      `Failed to parse LLM response as JSON: ${err.message}\n` +
-        `Raw response (first 500 chars): ${text.slice(0, 500)}`
-    );
+  } catch (firstErr) {
+    // Retry with sanitized JSON (fix bad escape characters)
+    try {
+      result = JSON.parse(sanitizeJsonString(jsonStr));
+    } catch (err) {
+      throw new Error(
+        `Failed to parse LLM response as JSON: ${firstErr.message}\n` +
+          `Raw response (first 500 chars): ${text.slice(0, 500)}`
+      );
+    }
   }
 
   // Validate required fields
@@ -574,10 +590,14 @@ function parseJsonResponse(text) {
 
   try {
     return JSON.parse(jsonStr);
-  } catch (err) {
-    throw new Error(
-      `Failed to parse LLM continuation response as JSON: ${err.message}\n` +
-        `Raw response (first 500 chars): ${text.slice(0, 500)}`
-    );
+  } catch (firstErr) {
+    try {
+      return JSON.parse(sanitizeJsonString(jsonStr));
+    } catch (err) {
+      throw new Error(
+        `Failed to parse LLM continuation response as JSON: ${firstErr.message}\n` +
+          `Raw response (first 500 chars): ${text.slice(0, 500)}`
+      );
+    }
   }
 }
