@@ -196,6 +196,20 @@
   background: #78191b;
 }
 
+/* Inline code: styled pill with subtle background */
+.prose :not(pre) > code {
+  padding: 0.15em 0.4em;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+  font-weight: 500;
+  background: var(--muted);
+  border: 1px solid var(--border);
+}
+.prose :not(pre) > code::before,
+.prose :not(pre) > code::after {
+  content: none;
+}
+
 /* Code block: let CodeBlock container handle spacing, strip prose defaults on pre */
 .prose pre {
   margin: 0;
@@ -205,6 +219,8 @@
 }
 pre code.hljs {
   background: transparent;
+  font-size: 0.875rem;
+  line-height: 1.625;
 }
 
 @layer base {

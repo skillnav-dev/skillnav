@@ -64,16 +64,19 @@ export function CodeBlock({ children, ...props }: React.ComponentProps<"pre">) {
   const rawText = extractText(children).replace(/\n$/, "");
 
   return (
-    <div className="group relative rounded-lg border border-border/50 bg-muted/50 dark:bg-muted/30">
+    <div className="not-prose group relative my-4 rounded-lg border border-border/50 bg-muted/50 dark:bg-muted/30">
       {/* Toolbar */}
       <div className="flex items-center justify-between border-b border-border/30 px-4 py-1.5">
-        <span className="text-xs text-muted-foreground">
+        <span className="font-mono text-xs text-muted-foreground">
           {language ?? "code"}
         </span>
         <CopyButton text={rawText} />
       </div>
       {/* Code area */}
-      <pre {...props} className="overflow-x-auto p-4 text-sm leading-relaxed">
+      <pre
+        {...props}
+        className="overflow-x-auto p-4 font-mono text-[13px] leading-6"
+      >
         {children}
       </pre>
     </div>
