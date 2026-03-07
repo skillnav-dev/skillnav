@@ -8,7 +8,6 @@ import {
   ARTICLE_TYPE_COLORS,
   ARTICLE_SOURCE_LABELS,
 } from "@/lib/article-constants";
-import { FallbackImage } from "@/components/shared/fallback-image";
 
 interface ArticleCardProps {
   article: Article;
@@ -23,29 +22,9 @@ export function ArticleCard({ article }: ArticleCardProps) {
     : "";
 
   return (
-    <Card className="group overflow-hidden transition-shadow hover:shadow-md">
-      {/* Cover image or branded placeholder */}
-      <Link href={`/articles/${article.slug}`}>
-        <div className="aspect-[2/1] overflow-hidden">
-          {article.coverImage ? (
-            <FallbackImage
-              src={article.coverImage}
-              alt={article.titleZh ?? article.title}
-              className="size-full object-cover transition-transform group-hover:scale-105"
-              loading="lazy"
-            />
-          ) : (
-            <div className="flex size-full items-center justify-center bg-gradient-to-br from-primary/10 via-accent/10 to-primary/5">
-              <span className="text-lg font-semibold text-muted-foreground/40">
-                {(article.source && ARTICLE_SOURCE_LABELS[article.source]) ||
-                  "SkillNav"}
-              </span>
-            </div>
-          )}
-        </div>
-      </Link>
-      <CardHeader className="pb-3">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+    <Card className="group transition-shadow hover:shadow-md">
+      <CardHeader className="pb-2">
+        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
           <Badge
             variant="secondary"
             className={ARTICLE_TYPE_COLORS[article.category]}
@@ -61,6 +40,15 @@ export function ArticleCard({ article }: ArticleCardProps) {
               <span>{formattedDate}</span>
             </>
           )}
+          {article.readingTime > 0 && (
+            <>
+              <span className="text-muted-foreground/50">·</span>
+              <span className="inline-flex items-center gap-1">
+                <Clock className="size-3" />
+                {article.readingTime} 分钟
+              </span>
+            </>
+          )}
         </div>
       </CardHeader>
       <CardContent className="space-y-2">
@@ -73,10 +61,6 @@ export function ArticleCard({ article }: ArticleCardProps) {
         <p className="line-clamp-2 text-sm text-muted-foreground">
           {article.summaryZh ?? article.summary}
         </p>
-        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-          <Clock className="size-3" />
-          <span>{article.readingTime} 分钟</span>
-        </div>
       </CardContent>
     </Card>
   );

@@ -8,15 +8,22 @@ interface ArticlesGridProps {
   q: string;
   category: string;
   source: string;
+  sort: string;
   page: number;
 }
 
-function buildPageUrl(q: string, category: string, source: string) {
+function buildPageUrl(
+  q: string,
+  category: string,
+  source: string,
+  sort: string,
+) {
   return (page: number) => {
     const params = new URLSearchParams();
     if (q) params.set("q", q);
     if (category) params.set("category", category);
     if (source) params.set("source", source);
+    if (sort && sort !== "latest") params.set("sort", sort);
     if (page > 1) params.set("page", String(page));
     const qs = params.toString();
     return qs ? `/articles?${qs}` : "/articles";
@@ -27,6 +34,7 @@ export async function ArticlesGrid({
   q,
   category,
   source,
+  sort,
   page,
 }: ArticlesGridProps) {
   const validPage = Math.max(1, page);
@@ -38,6 +46,7 @@ export async function ArticlesGrid({
     category: category || undefined,
     source: source || undefined,
     search: q || undefined,
+    sort: sort || undefined,
   });
 
   const totalPages = Math.ceil(total / ARTICLES_PAGE_SIZE);
@@ -50,7 +59,7 @@ export async function ArticlesGrid({
 
   return (
     <div className="mt-6">
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {articles.map((article) => (
           <ArticleCard key={article.id} article={article} />
         ))}
@@ -59,7 +68,7 @@ export async function ArticlesGrid({
         <ArticlesPagination
           currentPage={validPage}
           totalPages={totalPages}
-          buildPageUrl={buildPageUrl(q, category, source)}
+          buildPageUrl={buildPageUrl(q, category, source, sort)}
         />
       </div>
     </div>

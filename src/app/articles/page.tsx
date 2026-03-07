@@ -35,7 +35,7 @@ export async function generateMetadata({
 }
 
 export default async function ArticlesPage({ searchParams }: PageProps) {
-  const { q, category, source, page } =
+  const { q, category, source, sort, page } =
     await articlesParamsCache.parse(searchParams);
 
   // Parallel fetch: categories + sources + count for toolbar
@@ -48,6 +48,7 @@ export default async function ArticlesPage({ searchParams }: PageProps) {
       category: category || undefined,
       source: source || undefined,
       search: q || undefined,
+      sort: sort || undefined,
     }),
   ]);
 
@@ -72,10 +73,16 @@ export default async function ArticlesPage({ searchParams }: PageProps) {
           />
         </div>
         <Suspense
-          key={`${q}-${category}-${source}-${page}`}
+          key={`${q}-${category}-${source}-${sort}-${page}`}
           fallback={<ArticlesSkeleton />}
         >
-          <ArticlesGrid q={q} category={category} source={source} page={page} />
+          <ArticlesGrid
+            q={q}
+            category={category}
+            source={source}
+            sort={sort}
+            page={page}
+          />
         </Suspense>
       </div>
     </>

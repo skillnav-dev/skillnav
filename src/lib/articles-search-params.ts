@@ -8,10 +8,11 @@ export const articlesSearchParams = {
   q: parseAsString.withDefault(""),
   category: parseAsString.withDefault(""),
   source: parseAsString.withDefault(""),
+  sort: parseAsString.withDefault("latest"),
   page: parseAsInteger.withDefault(1),
 };
 
 export const articlesParamsCache =
   createSearchParamsCache(articlesSearchParams);
 
-export const ARTICLES_PAGE_SIZE = 12;
+export const ARTICLES_PAGE_SIZE = 18;

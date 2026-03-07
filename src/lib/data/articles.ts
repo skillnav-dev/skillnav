@@ -103,7 +103,10 @@ export async function getArticlesWithCount(options?: {
   category?: string;
   source?: string;
   search?: string;
+  sort?: string;
 }): Promise<{ articles: Article[]; total: number }> {
+  const ascending = options?.sort === "oldest";
+
   if (!isSupabaseConfigured()) {
     const { mockArticles } = await import("@/data/mock-articles");
     let results = [...mockArticles];
@@ -123,6 +126,7 @@ export async function getArticlesWithCount(options?: {
           a.summaryZh?.includes(q),
       );
     }
+    if (ascending) results.reverse();
     const total = results.length;
     const start = options?.offset ?? 0;
     if (options?.limit) {
@@ -139,7 +143,7 @@ export async function getArticlesWithCount(options?: {
     .from("articles")
     .select("*", { count: "exact" })
     .eq("status", "published")
-    .order("published_at", { ascending: false });
+    .order("published_at", { ascending });
 
   if (options?.category) query = query.eq("article_type", options.category);
   if (options?.source) query = query.eq("source", options.source);

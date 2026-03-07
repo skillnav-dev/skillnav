@@ -2,9 +2,16 @@
 
 import { useTransition } from "react";
 import { useQueryState } from "nuqs";
-import { Search, X } from "lucide-react";
+import { Search, X, ArrowUpDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { articlesSearchParams } from "@/lib/articles-search-params";
 import {
   ARTICLE_TYPE_LABELS,
@@ -50,6 +57,14 @@ export function ArticlesToolbar({
     }),
   );
 
+  const [sort, setSort] = useQueryState(
+    "sort",
+    articlesSearchParams.sort.withOptions({
+      shallow: false,
+      startTransition,
+    }),
+  );
+
   const [, setPage] = useQueryState(
     "page",
     articlesSearchParams.page.withOptions({
@@ -68,8 +83,13 @@ export function ArticlesToolbar({
     setPage(1);
   }
 
-  function handleSource(src: string) {
-    setSource(src === source ? null : src || null);
+  function handleSource(value: string) {
+    setSource(value === "all" ? null : value);
+    setPage(1);
+  }
+
+  function handleSort(value: string) {
+    setSort(value === "latest" ? null : value);
     setPage(1);
   }
 
@@ -80,24 +100,53 @@ export function ArticlesToolbar({
 
   return (
     <div className="space-y-4">
-      {/* Search input */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          type="search"
-          placeholder="搜索文章..."
-          value={q}
-          onChange={(e) => handleSearch(e.target.value)}
-          className="h-10 pl-9 pr-9"
-        />
-        {q && (
-          <button
-            onClick={handleClear}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-          >
-            <X className="size-4" />
-          </button>
-        )}
+      {/* Search + sort + source */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="搜索文章..."
+            value={q}
+            onChange={(e) => handleSearch(e.target.value)}
+            className="h-10 pl-9 pr-9"
+          />
+          {q && (
+            <button
+              onClick={handleClear}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="size-4" />
+            </button>
+          )}
+        </div>
+        <div className="flex gap-2">
+          {sources.length > 0 && (
+            <Select value={source || "all"} onValueChange={handleSource}>
+              <SelectTrigger className="h-10 w-[140px]">
+                <SelectValue placeholder="全部来源" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">全部来源</SelectItem>
+                {sources.map((src) => (
+                  <SelectItem key={src} value={src}>
+                    {ARTICLE_SOURCE_LABELS[src] ?? src}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          <Select value={sort || "latest"} onValueChange={handleSort}>
+            <SelectTrigger className="h-10 w-[120px]">
+              <ArrowUpDown className="mr-1 size-3.5" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="latest">最新优先</SelectItem>
+              <SelectItem value="oldest">最早优先</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Category filters */}
@@ -123,31 +172,6 @@ export function ArticlesToolbar({
           </Button>
         ))}
       </div>
-
-      {/* Source filters */}
-      {sources.length > 0 && (
-        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
-          <Button
-            variant={!source ? "default" : "outline"}
-            size="sm"
-            onClick={() => handleSource("")}
-            className="shrink-0"
-          >
-            全部来源
-          </Button>
-          {sources.map((src) => (
-            <Button
-              key={src}
-              variant={src === source ? "default" : "outline"}
-              size="sm"
-              onClick={() => handleSource(src)}
-              className="shrink-0"
-            >
-              {ARTICLE_SOURCE_LABELS[src] ?? src}
-            </Button>
-          ))}
-        </div>
-      )}
 
       {/* Results count */}
       <p
