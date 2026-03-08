@@ -6,8 +6,39 @@ import { ArticleContent } from "@/components/articles/article-content";
 import { ArticleCard } from "@/components/articles/article-card";
 import { ArticleJsonLd, BreadcrumbJsonLd } from "@/components/shared/json-ld";
 import { FallbackImage } from "@/components/shared/fallback-image";
+import { InlineNewsletterCta } from "@/components/shared/inline-newsletter-cta";
+import { ShareButtons } from "@/components/shared/share-buttons";
+import { SkillCard } from "@/components/skills/skill-card";
 import { siteConfig } from "@/lib/constants";
 import { getArticleBySlug, getArticles, getAllArticleSlugs } from "@/lib/data";
+import { getSkills } from "@/lib/data/skills";
+
+// Extract the most meaningful keyword from an article title for skill matching.
+// Picks the longest CJK segment or the longest word (>3 chars) from the title.
+function extractKeywords(title: string): string {
+  // Try CJK segments first (Chinese title)
+  const cjkSegments = title.match(/[\u4e00-\u9fff]{2,}/g);
+  if (cjkSegments && cjkSegments.length > 0) {
+    return cjkSegments.sort((a, b) => b.length - a.length)[0];
+  }
+  // Fallback: longest English word (skip common words)
+  const skip = new Set([
+    "the",
+    "and",
+    "for",
+    "with",
+    "how",
+    "what",
+    "your",
+    "from",
+    "this",
+    "that",
+  ]);
+  const words = title
+    .split(/\s+/)
+    .filter((w) => w.length > 3 && !skip.has(w.toLowerCase()));
+  return words[0] ?? title.slice(0, 20);
+}
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -49,10 +80,12 @@ export default async function ArticlePage({ params }: PageProps) {
   const article = await getArticleBySlug(slug);
   if (!article) notFound();
 
-  const candidates = await getArticles({
-    limit: 3,
-    category: article.category,
-  });
+  // Parallel fetch: related articles + related skills
+  const articleTitle = article.titleZh ?? article.title;
+  const [candidates, relatedSkills] = await Promise.all([
+    getArticles({ limit: 3, category: article.category }),
+    getSkills({ search: extractKeywords(articleTitle), limit: 3 }),
+  ]);
   const related = candidates.filter((a) => a.id !== article.id).slice(0, 2);
 
   return (
@@ -85,8 +118,12 @@ export default async function ArticlePage({ params }: PageProps) {
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
           {article.titleZh ?? article.title}
         </h1>
-        <div className="mt-4">
+        <div className="mt-4 flex items-center justify-between gap-4">
           <ArticleMeta article={article} />
+          <ShareButtons
+            url={`/articles/${article.slug}`}
+            title={articleTitle}
+          />
         </div>
         {/* Hero image */}
         {article.coverImage && (
@@ -116,7 +153,34 @@ export default async function ArticlePage({ params }: PageProps) {
             ，版权归原作者所有。
           </div>
         )}
+        {/* Bottom share buttons */}
+        <div className="mt-8 flex items-center justify-between border-t border-border/40 pt-6">
+          <p className="text-sm text-muted-foreground">
+            觉得有用？分享给更多人
+          </p>
+          <ShareButtons
+            url={`/articles/${article.slug}`}
+            title={articleTitle}
+          />
+        </div>
+        {/* Inline newsletter CTA */}
+        <div className="mt-8">
+          <InlineNewsletterCta />
+        </div>
       </article>
+      {/* Related tools mentioned in this article */}
+      {relatedSkills.length > 0 && (
+        <section className="border-t border-border/40">
+          <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
+            <h2 className="mb-6 text-xl font-bold">相关工具</h2>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {relatedSkills.map((s) => (
+                <SkillCard key={s.id} skill={s} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
       {related.length > 0 && (
         <section className="border-t border-border/40">
           <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6">

@@ -5,6 +5,7 @@ import { siteConfig } from "@/lib/constants";
 import { Providers } from "@/components/providers";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
+import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -53,6 +54,7 @@ export default function RootLayout({
             <main className="flex-1">{children}</main>
             <SiteFooter />
           </div>
+          <Toaster richColors position="top-center" />
         </Providers>
         {/* Umami analytics — only loads when env var is set */}
         {process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID && (

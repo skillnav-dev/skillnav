@@ -12,8 +12,10 @@ import {
   BreadcrumbJsonLd,
   SoftwareApplicationJsonLd,
 } from "@/components/shared/json-ld";
+import { ArticleCard } from "@/components/articles/article-card";
 import { siteConfig } from "@/lib/constants";
 import { getSkillBySlug, getSkills, getAllSkillSlugs } from "@/lib/data";
+import { getArticlesWithCount } from "@/lib/data/articles";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -52,8 +54,11 @@ export default async function SkillDetailPage({ params }: PageProps) {
   const skill = await getSkillBySlug(slug);
   if (!skill) notFound();
 
-  // Related skills: same category, exclude self, max 3
-  const allSkills = await getSkills({ category: skill.category, limit: 4 });
+  // Parallel fetch: related skills + related articles
+  const [allSkills, { articles: relatedArticles }] = await Promise.all([
+    getSkills({ category: skill.category, limit: 4 }),
+    getArticlesWithCount({ search: skill.name, limit: 3 }),
+  ]);
   const related = allSkills.filter((s) => s.id !== skill.id).slice(0, 3);
 
   return (
@@ -162,6 +167,19 @@ export default async function SkillDetailPage({ params }: PageProps) {
         </div>
       </div>
 
+      {/* Related articles */}
+      {relatedArticles.length > 0 && (
+        <section className="border-t border-border/40">
+          <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
+            <h2 className="mb-6 text-xl font-bold">相关资讯</h2>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {relatedArticles.map((a) => (
+                <ArticleCard key={a.id} article={a} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
       {/* Related Skills: full width section */}
       {related.length > 0 && (
         <section className="border-t border-border/40">
