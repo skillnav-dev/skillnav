@@ -5,6 +5,13 @@ import { useQueryState } from "nuqs";
 import { Search, X, ArrowUpDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { skillsSearchParams } from "@/lib/skills-search-params";
 import { cn } from "@/lib/utils";
 
@@ -20,11 +27,12 @@ const TAB_OPTIONS = [
   { value: "latest", label: "最新" },
 ];
 
-const PLATFORM_LABELS: Record<string, string> = {
-  claude: "Claude",
-  codex: "Codex",
-  universal: "Universal",
-};
+const PLATFORM_OPTIONS = [
+  { value: "all", label: "全部平台" },
+  { value: "claude", label: "Claude" },
+  { value: "codex", label: "Codex" },
+  { value: "universal", label: "Universal" },
+];
 
 export function SkillsToolbar({
   categories,
@@ -93,7 +101,7 @@ export function SkillsToolbar({
   }
 
   function handlePlatform(p: string) {
-    setPlatform(p === platform ? null : p || null);
+    setPlatform(p === "all" ? null : p);
     setPage(1);
   }
 
@@ -108,9 +116,8 @@ export function SkillsToolbar({
     setPage(1);
   }
 
-  function handleSort() {
-    const newSort = sort === "latest" ? null : "latest";
-    setSort(newSort);
+  function handleSort(value: string) {
+    setSort(value === "latest" ? "latest" : null);
     setPage(1);
   }
 
@@ -139,63 +146,58 @@ export function SkillsToolbar({
             </button>
           ))}
         </div>
-
-        {/* Sort toggle */}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleSort}
-          className="gap-1.5 text-xs"
-        >
-          <ArrowUpDown className="size-3.5" />
-          {sort === "latest" ? "最新" : "Stars"}
-        </Button>
       </div>
 
-      {/* Search input */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          type="search"
-          placeholder="搜索 Skills..."
-          value={q}
-          onChange={(e) => handleSearch(e.target.value)}
-          className="h-10 pl-9 pr-9"
-        />
-        {q && (
-          <button
-            onClick={handleClear}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-          >
-            <X className="size-4" />
-          </button>
-        )}
-      </div>
-
-      {/* Platform filter */}
-      {platforms.length > 0 && (
-        <div className="flex gap-2">
-          <Button
-            variant={!platform ? "default" : "outline"}
-            size="sm"
-            onClick={() => handlePlatform("")}
-            className="shrink-0"
-          >
-            全部平台
-          </Button>
-          {platforms.map((p) => (
-            <Button
-              key={p}
-              variant={p === platform ? "default" : "outline"}
-              size="sm"
-              onClick={() => handlePlatform(p)}
-              className="shrink-0"
+      {/* Search + platform + sort */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="搜索 Skills..."
+            value={q}
+            onChange={(e) => handleSearch(e.target.value)}
+            className="h-10 pl-9 pr-9"
+          />
+          {q && (
+            <button
+              onClick={handleClear}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
             >
-              {PLATFORM_LABELS[p] ?? p}
-            </Button>
-          ))}
+              <X className="size-4" />
+            </button>
+          )}
         </div>
-      )}
+        <div className="flex gap-2">
+          {platforms.length > 0 && (
+            <Select value={platform || "all"} onValueChange={handlePlatform}>
+              <SelectTrigger className="h-10 w-[140px]">
+                <SelectValue placeholder="全部平台" />
+              </SelectTrigger>
+              <SelectContent>
+                {PLATFORM_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          <Select
+            value={sort === "latest" ? "latest" : "stars"}
+            onValueChange={handleSort}
+          >
+            <SelectTrigger className="h-10 w-[120px]">
+              <ArrowUpDown className="mr-1 size-3.5" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="stars">Stars 排序</SelectItem>
+              <SelectItem value="latest">最新优先</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
 
       {/* Category filters */}
       <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">

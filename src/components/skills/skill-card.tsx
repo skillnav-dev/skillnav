@@ -25,7 +25,7 @@ interface SkillCardProps {
 export function SkillCard({ skill }: SkillCardProps) {
   return (
     <Card className="group transition-shadow hover:shadow-md">
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
             <Link
@@ -44,7 +44,7 @@ export function SkillCard({ skill }: SkillCardProps) {
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-2">
         <p className="line-clamp-2 text-sm text-muted-foreground">
           {skill.descriptionZh ?? skill.description}
         </p>
