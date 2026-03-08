@@ -20,7 +20,7 @@ export function SiteFooter() {
               </span>
             </Link>
             <p className="mt-3 text-sm text-muted-foreground">
-              中文世界的 AI Agent Skills 导航站
+              中文开发者的 AI 智能体工具站
             </p>
           </div>
           {linkGroups.map((group) => (

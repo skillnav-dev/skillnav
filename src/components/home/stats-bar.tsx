@@ -1,25 +1,30 @@
-import { Shield, Package, Users, TrendingUp } from "lucide-react";
+import Link from "next/link";
+import { Wrench, FileText, Rss, RefreshCw } from "lucide-react";
 
 const stats = [
   {
-    label: "Skills 收录",
-    value: "13,000+",
-    icon: Package,
+    label: "精选工具",
+    value: "168+",
+    icon: Wrench,
+    href: "/skills",
   },
   {
-    label: "安全已审计",
-    value: "8,500+",
-    icon: Shield,
+    label: "翻译资讯",
+    value: "270+",
+    icon: FileText,
+    href: "/articles",
   },
   {
-    label: "月活跃用户",
-    value: "25,000+",
-    icon: Users,
+    label: "一手信源",
+    value: "13",
+    icon: Rss,
+    href: "/about",
   },
   {
-    label: "周增长率",
-    value: "12%",
-    icon: TrendingUp,
+    label: "更新频率",
+    value: "每日",
+    icon: RefreshCw,
+    href: "/articles",
   },
 ];
 
@@ -28,7 +33,11 @@ export function StatsBar() {
     <section className="border-y border-border/40 bg-muted/30">
       <div className="mx-auto grid max-w-6xl grid-cols-2 gap-4 px-4 py-8 sm:px-6 md:grid-cols-4">
         {stats.map((stat) => (
-          <div key={stat.label} className="flex items-center gap-3">
+          <Link
+            key={stat.label}
+            href={stat.href}
+            className="flex items-center gap-3 rounded-lg transition-colors hover:bg-muted/50"
+          >
             <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
               <stat.icon className="size-5 text-primary" />
             </div>
@@ -36,7 +45,7 @@ export function StatsBar() {
               <p className="text-lg font-bold tracking-tight">{stat.value}</p>
               <p className="text-xs text-muted-foreground">{stat.label}</p>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     </section>

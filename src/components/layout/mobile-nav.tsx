@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,6 +15,7 @@ import { navItems, siteConfig } from "@/lib/constants";
 
 export function MobileNav() {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -38,7 +40,16 @@ export function MobileNav() {
             <Link
               key={item.href}
               href={item.href}
-              className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+              className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                (
+                  item.href === "/"
+                    ? pathname === "/"
+                    : pathname === item.href ||
+                      pathname.startsWith(item.href + "/")
+                )
+                  ? "bg-accent text-accent-foreground"
+                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+              }`}
               onClick={() => setOpen(false)}
             >
               {item.title}

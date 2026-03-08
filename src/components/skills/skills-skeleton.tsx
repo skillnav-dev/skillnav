@@ -1,5 +1,3 @@
-import { PAGE_SIZE } from "@/lib/skills-search-params";
-
 function CardSkeleton() {
   return (
     <div className="rounded-xl border bg-card p-4">
@@ -29,7 +27,7 @@ export function SkillsSkeleton() {
   return (
     <div className="mt-6">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {Array.from({ length: PAGE_SIZE }, (_, i) => (
+        {Array.from({ length: 6 }, (_, i) => (
           <CardSkeleton key={i} />
         ))}
       </div>

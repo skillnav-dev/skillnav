@@ -25,7 +25,11 @@ export function ArticleMeta({ article }: ArticleMetaProps) {
       )}
       <span className="flex items-center gap-1">
         <Calendar className="size-3.5" />
-        {article.publishedAt}
+        {new Date(article.publishedAt).toLocaleDateString("zh-CN", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        })}
       </span>
       <span className="flex items-center gap-1">
         <Clock className="size-3.5" />

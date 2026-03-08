@@ -52,7 +52,7 @@ export function SkillComments() {
   if (!GISCUS_CONFIG.repoId) return null;
 
   return (
-    <div className="rounded-lg border border-border/50 bg-card p-6">
+    <div className="rounded-lg border border-border/40 bg-card p-6">
       <h2 className="mb-4 text-lg font-semibold">评论</h2>
       <div ref={ref} />
     </div>

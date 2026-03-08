@@ -24,13 +24,13 @@ interface SkillCardProps {
 
 export function SkillCard({ skill }: SkillCardProps) {
   return (
-    <Card className="group transition-shadow hover:shadow-md">
+    <Card className="group relative transition-shadow hover:shadow-md">
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
             <Link
               href={`/skills/${skill.slug}`}
-              className="line-clamp-1 text-base font-semibold transition-colors group-hover:text-primary"
+              className="line-clamp-1 text-base font-semibold transition-colors after:absolute after:inset-0 group-hover:text-primary"
             >
               {skill.nameZh ?? skill.name}
             </Link>
@@ -48,12 +48,6 @@ export function SkillCard({ skill }: SkillCardProps) {
         <p className="line-clamp-2 text-sm text-muted-foreground">
           {skill.descriptionZh ?? skill.description}
         </p>
-        {/* Editor one-liner comment */}
-        {skill.editorCommentZh && (
-          <p className="line-clamp-1 text-xs italic text-muted-foreground/70">
-            {skill.editorCommentZh}
-          </p>
-        )}
         <div className="flex items-center justify-between">
           <div className="flex flex-wrap gap-1">
             <Badge variant="secondary" className="text-xs">

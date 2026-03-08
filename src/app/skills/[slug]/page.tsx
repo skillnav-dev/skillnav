@@ -74,7 +74,7 @@ export default async function SkillDetailPage({ params }: PageProps) {
         category={skill.category}
       />
 
-      <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
+      <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
         <PageBreadcrumb
           items={[
             { label: "首页", href: "/" },
@@ -138,7 +138,7 @@ export default async function SkillDetailPage({ params }: PageProps) {
 
             {/* Editorial review (only shown when data exists) */}
             {skill.editorReviewZh && (
-              <div className="rounded-lg border border-border/50 bg-card p-6">
+              <div className="rounded-lg border border-border/40 bg-card p-6">
                 <div className="mb-3 flex items-center gap-2">
                   <h2 className="text-lg font-semibold">编辑评测</h2>
                   {skill.editorRating && (
@@ -165,7 +165,7 @@ export default async function SkillDetailPage({ params }: PageProps) {
       {/* Related Skills: full width section */}
       {related.length > 0 && (
         <section className="border-t border-border/40">
-          <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
+          <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
             <h2 className="mb-6 text-xl font-bold">相关 Skills</h2>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {related.map((s) => (

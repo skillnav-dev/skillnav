@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { MCPCard } from "@/components/mcp/mcp-card";
 import { mcpServers, MCP_CATEGORIES } from "@/data/mcp-servers";
 
@@ -40,19 +40,19 @@ export function MCPGrid() {
             placeholder="搜索 MCP Server..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
+            className="h-10 pl-9"
           />
         </div>
         <div className="flex flex-wrap gap-1.5">
           {MCP_CATEGORIES.map((cat) => (
-            <Badge
+            <Button
               key={cat}
               variant={category === cat ? "default" : "outline"}
-              className="cursor-pointer"
+              size="sm"
               onClick={() => setCategory(cat)}
             >
               {cat}
-            </Badge>
+            </Button>
           ))}
         </div>
       </div>

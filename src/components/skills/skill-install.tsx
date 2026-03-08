@@ -56,7 +56,7 @@ export function SkillInstall({
   if (!command && !hasEnv && !hasBins) return null;
 
   return (
-    <div className="rounded-lg border border-border/50 bg-card p-6">
+    <div className="rounded-lg border border-border/40 bg-card p-6">
       <div className="mb-4 flex items-center gap-2">
         <Terminal className="size-4 text-muted-foreground" />
         <h2 className="text-lg font-semibold">安装</h2>

@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { navItems, siteConfig } from "@/lib/constants";
+import { siteConfig } from "@/lib/constants";
 import { ThemeToggle } from "./theme-toggle";
 import { MobileNav } from "./mobile-nav";
+import { NavLinks } from "./nav-links";
 
 export function SiteHeader() {
   return (
@@ -16,17 +17,7 @@ export function SiteHeader() {
             {siteConfig.name}
           </span>
         </Link>
-        <nav className="hidden items-center gap-1 md:flex">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              {item.title}
-            </Link>
-          ))}
-        </nav>
+        <NavLinks />
         <div className="ml-auto flex items-center gap-2">
           <ThemeToggle />
         </div>

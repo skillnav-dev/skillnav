@@ -42,7 +42,7 @@ export function SkillContent({ content, contentZh }: SkillContentProps) {
 
   if (!displayText) {
     return (
-      <div className="rounded-lg border border-border/50 bg-card p-6">
+      <div className="rounded-lg border border-border/40 bg-card p-6">
         <h2 className="mb-3 text-lg font-semibold">文档</h2>
         <p className="text-sm text-muted-foreground">暂无文档内容。</p>
       </div>
@@ -50,7 +50,7 @@ export function SkillContent({ content, contentZh }: SkillContentProps) {
   }
 
   return (
-    <div className="rounded-lg border border-border/50 bg-card p-6">
+    <div className="rounded-lg border border-border/40 bg-card p-6">
       {/* Header row: title + language toggle */}
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold">文档</h2>

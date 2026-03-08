@@ -22,7 +22,7 @@ export function ArticleCard({ article }: ArticleCardProps) {
     : "";
 
   return (
-    <Card className="group transition-shadow hover:shadow-md">
+    <Card className="group relative transition-shadow hover:shadow-md">
       <CardHeader className="pb-2">
         <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
           <Badge
@@ -54,7 +54,7 @@ export function ArticleCard({ article }: ArticleCardProps) {
       <CardContent className="space-y-2">
         <Link
           href={`/articles/${article.slug}`}
-          className="line-clamp-2 text-base font-semibold leading-snug transition-colors group-hover:text-primary"
+          className="line-clamp-2 text-base font-semibold leading-snug transition-colors after:absolute after:inset-0 group-hover:text-primary"
         >
           {article.titleZh ?? article.title}
         </Link>
