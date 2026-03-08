@@ -110,7 +110,7 @@ export function SkillInstallTabs({
             <p className="mb-2 text-xs text-muted-foreground">安装命令</p>
           )}
           <div className="flex items-center justify-between gap-2 rounded-md bg-muted px-4 py-3">
-            <code className="flex-1 overflow-x-auto font-mono text-sm">
+            <code className="flex-1 overflow-x-auto font-mono text-xs sm:text-sm">
               {activeCommand}
             </code>
             <CopyButton text={activeCommand} />

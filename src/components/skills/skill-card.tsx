@@ -20,7 +20,7 @@ interface SkillCardProps {
 
 export function SkillCard({ skill }: SkillCardProps) {
   return (
-    <Card className="group relative transition-shadow hover:shadow-md">
+    <Card className="group relative overflow-hidden transition-shadow hover:shadow-md">
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">

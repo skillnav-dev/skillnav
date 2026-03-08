@@ -280,6 +280,60 @@ CardFooter:  px-6 pt-3        (底部区，上间距 12px)
 | md | 768px | 4 列 Stats/Footer |
 | lg | 1024px | 3 列 Card Grid |
 
+### 7.4 移动端模式
+
+#### 模式 M1: 溢出防御
+
+所有 CSS Grid 的直接子项必须添加 `overflow-hidden`，防止内容撑宽 grid 列（CSS Grid 子项默认 `min-width: auto`，不会缩小到比内容小）。
+
+| 场景 | Class | 说明 |
+|------|-------|------|
+| Card 在 Grid 内 | `overflow-hidden` | 防止 monospace/长文本撑宽 |
+| Flex 子项有长文本 | `min-w-0` | 允许 flex 子项缩小 |
+| 页面根容器 | 不加 `overflow-x-hidden` | 溢出应该在源头修复，不掩盖 |
+
+#### 模式 M2: 横滚容器 + 渐变遮罩
+
+移动端分类/标签筛选栏使用横滚时，需要渐变遮罩提示可滚动：
+
+```
+结构: 外层容器 (relative) → 渐变伪层 (absolute, gradient) → 内层滚动区 (overflow-x-auto)
+行为: 根据滚动位置动态切换左/右/双侧渐变
+桌面端: sm:contents 使外层消失，子级 flex-wrap 折行，渐变隐藏
+```
+
+已提取为共享组件 `<ScrollFade>`（`src/components/shared/scroll-fade.tsx`）。
+
+#### 模式 M3: 触控目标最小尺寸
+
+```
+规则: 所有可交互元素的触控区域 ≥ 36px (h-9 w-9)
+参考: Apple HIG 44px / Material Design 48dp / 取中间值 36px
+实现: 小图标按钮通过 padding 扩大热区，而非放大图标本身
+```
+
+| 元素 | 最小尺寸 | 实现方式 |
+|------|---------|---------|
+| 图标按钮 (CopyButton 等) | `h-9 w-9` (36px) | 按钮尺寸，图标保持 `size-4` |
+| 内联清除按钮 | `p-2` (含图标 32px+) | 用 padding 扩大热区 |
+| Tab/Filter 按钮 | `h-8` (32px) min | Button size="sm" 默认值 |
+
+#### 模式 M4: 等宽文本溢出处理
+
+| 场景 | 策略 | Class |
+|------|------|-------|
+| 单行命令 | truncate | `overflow-hidden text-ellipsis whitespace-nowrap` |
+| 代码块 | 横滚 + 缩小字号 | `overflow-x-auto text-xs sm:text-sm` |
+| 内联代码 | 断词 | `break-all` 或 `max-w-full` |
+
+#### 模式 M5: 详情页双列响应式
+
+```
+规则: < lg 时 sidebar 信息自然堆叠在主内容下方
+不做: order 调换 / 移动端精简 sidebar
+原因: 安装命令已在顶部，sidebar 在下方是合理的阅读流
+```
+
 ---
 
 ## 八、组件模式

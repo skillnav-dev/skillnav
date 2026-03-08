@@ -22,7 +22,7 @@ export function ArticleCard({ article }: ArticleCardProps) {
     : "";
 
   return (
-    <Card className="group relative transition-shadow hover:shadow-md">
+    <Card className="group relative overflow-hidden transition-shadow hover:shadow-md">
       <CardHeader className="pb-2">
         <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
           <Badge

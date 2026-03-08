@@ -21,7 +21,7 @@ export function MCPCard({ server }: MCPCardProps) {
   };
 
   return (
-    <Card className="group transition-shadow hover:shadow-md">
+    <Card className="group overflow-hidden transition-shadow hover:shadow-md">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">

@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { skillsSearchParams } from "@/lib/skills-search-params";
+import { ScrollFade } from "@/components/shared/scroll-fade";
 import { cn } from "@/lib/utils";
 
 interface SkillsToolbarProps {
@@ -162,7 +163,7 @@ export function SkillsToolbar({
           {q && (
             <button
               onClick={handleClear}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              className="absolute right-1 top-1/2 -translate-y-1/2 p-2 text-muted-foreground hover:text-foreground"
             >
               <X className="size-4" />
             </button>
@@ -200,7 +201,7 @@ export function SkillsToolbar({
       </div>
 
       {/* Category filters */}
-      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
+      <ScrollFade>
         <Button
           variant={!category ? "default" : "outline"}
           size="sm"
@@ -220,7 +221,7 @@ export function SkillsToolbar({
             {cat}
           </Button>
         ))}
-      </div>
+      </ScrollFade>
 
       {/* Results count */}
       <p
