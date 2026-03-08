@@ -8,7 +8,7 @@ export type SkillSource =
   | "manual"
   | "curated";
 export type PricingType = "free" | "freemium" | "paid";
-export type ArticleType = "news" | "tutorial" | "analysis" | "review";
+export type ArticleType = "tutorial" | "analysis" | "guide";
 
 export type ArticleSource =
   | "anthropic"

@@ -49,14 +49,14 @@ const SOURCES = [
     name: "anthropic",
     label: "Anthropic News",
     feedUrl: "https://raw.githubusercontent.com/taobojlen/anthropic-rss-feed/main/anthropic_news_rss.xml",
-    defaultType: "news",
+    defaultType: "analysis",
     relevanceFilter: null, // Accept all Anthropic articles
   },
   {
     name: "openai",
     label: "OpenAI Blog",
     feedUrl: "https://openai.com/news/rss.xml",
-    defaultType: "news",
+    defaultType: "analysis",
     relevanceFilter: RELEVANCE_KEYWORDS,
   },
   {
@@ -77,7 +77,7 @@ const SOURCES = [
     name: "github",
     label: "GitHub Blog",
     feedUrl: "https://github.blog/feed/",
-    defaultType: "news",
+    defaultType: "analysis",
     relevanceFilter: RELEVANCE_KEYWORDS,
   },
   {
@@ -515,10 +515,10 @@ async function main() {
         }
 
         // Normalize articleType to DB-valid values
-        const validDbTypes = ["news", "tutorial", "analysis", "review"];
+        const validDbTypes = ["tutorial", "analysis", "guide"];
         const articleType = validDbTypes.includes(translation.articleType)
           ? translation.articleType
-          : (source.defaultType || "news");
+          : (source.defaultType || "analysis");
 
         // Extract relevance score from LLM response
         const relevanceScore = translation.relevanceScore || 3;

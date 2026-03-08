@@ -120,7 +120,7 @@ ${sections}
     content_zh: content,
     source: "manual",
     source_url: `https://skillnav.dev/articles/${slug}`,
-    article_type: "review",
+    article_type: "guide",
     reading_time: Math.max(1, Math.ceil(content.length / 1500)),
     relevance_score: 5,
     status: "draft",

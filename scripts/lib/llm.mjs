@@ -55,7 +55,7 @@ const CHUNK_THRESHOLD = 15000; // Below this: single-call translation
 const SUMMARIZE_THRESHOLD = 50000; // Above this: structured summary instead of full translation
 const CHUNK_SIZE = 12000; // Target size per chunk
 
-const VALID_ARTICLE_TYPES = ["news", "tutorial", "analysis"];
+const VALID_ARTICLE_TYPES = ["tutorial", "analysis", "guide"];
 
 // ── Provider Resolution ──────────────────────────────────────────────
 
@@ -314,10 +314,15 @@ async function translateArticleSingle({ title, summary, content }) {
   "titleZh": "Chinese title (concise, news-headline style)",
   "summaryZh": "Chinese summary (2-3 sentences, capture key points)",
   "contentZh": "Full Chinese translation (preserve markdown formatting)",
-  "articleType": "one of: news, tutorial, analysis",
+  "articleType": "one of: tutorial, analysis, guide (see definitions below)",
   "readingTime": <estimated minutes to read the Chinese version>,
   "relevanceScore": <1-5 integer, see criteria below>
 }
+
+Article type definitions:
+- tutorial: How-to guides, step-by-step instructions, best practices with code
+- analysis: Deep analysis, trend insights, technical commentary
+- guide: Tool reviews, comparisons, product introductions, buying/adoption guides
 
 Relevance scoring criteria:
 5 = Core AI Agent/Skills/MCP content (tutorials, deep analysis)
@@ -353,10 +358,15 @@ async function translateArticleChunked({ title, summary, content }) {
   "titleZh": "Chinese title (concise, news-headline style)",
   "summaryZh": "Chinese summary (2-3 sentences, capture key points)",
   "contentZh": "Full Chinese translation (preserve markdown formatting)",
-  "articleType": "one of: news, tutorial, analysis",
+  "articleType": "one of: tutorial, analysis, guide (see definitions below)",
   "readingTime": <estimated minutes to read the FULL Chinese version, not just this part>,
   "relevanceScore": <1-5 integer, see criteria below>
 }
+
+Article type definitions:
+- tutorial: How-to guides, step-by-step instructions, best practices with code
+- analysis: Deep analysis, trend insights, technical commentary
+- guide: Tool reviews, comparisons, product introductions, buying/adoption guides
 
 Relevance scoring criteria:
 5 = Core AI Agent/Skills/MCP content (tutorials, deep analysis)
@@ -419,10 +429,15 @@ Return JSON with these exact fields:
   "titleZh": "Chinese title (concise, news-headline style)",
   "summaryZh": "Chinese summary (2-3 sentences, capture key points)",
   "contentZh": "Structured Chinese summary using ## headings for each key topic, include direct quotes where impactful",
-  "articleType": "one of: news, tutorial, analysis",
+  "articleType": "one of: tutorial, analysis, guide (see definitions below)",
   "readingTime": <estimated minutes to read the Chinese summary>,
   "relevanceScore": <1-5 integer, see criteria below>
 }
+
+Article type definitions:
+- tutorial: How-to guides, step-by-step instructions, best practices with code
+- analysis: Deep analysis, trend insights, technical commentary
+- guide: Tool reviews, comparisons, product introductions, buying/adoption guides
 
 Relevance scoring criteria:
 5 = Core AI Agent/Skills/MCP content (tutorials, deep analysis)
@@ -559,7 +574,7 @@ function parseTranslationResponse(text) {
 
   // Normalize articleType
   if (!VALID_ARTICLE_TYPES.includes(result.articleType)) {
-    result.articleType = "news";
+    result.articleType = "analysis";
   }
 
   // Ensure readingTime is a positive integer

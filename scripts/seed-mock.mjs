@@ -92,7 +92,7 @@ const mockArticles = [
     summary_zh: "每月最受欢迎的 AI Agent 技能排行榜。",
     content: "# Top 10 Skills\n\nSample content for seeding.",
     content_zh: "# 技能 Top 10\n\n用于数据种子的示例内容。",
-    article_type: "news",
+    article_type: "analysis",
     reading_time: 5,
     published_at: "2026-02-01T00:00:00Z",
   },
