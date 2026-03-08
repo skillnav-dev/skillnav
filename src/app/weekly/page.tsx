@@ -22,6 +22,7 @@ export default function WeeklyPage() {
       />
       <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
         <SectionHeader
+          as="h1"
           title="周刊"
           description="每周精选 AI Agent 工具动态、实战技巧和生态洞察"
         />

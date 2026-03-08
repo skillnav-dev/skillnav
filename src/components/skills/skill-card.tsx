@@ -4,12 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { SecurityBadge } from "@/components/shared/security-badge";
 import { PlatformBadge } from "@/components/skills/platform-badge";
 import { Star, GitFork } from "lucide-react";
+import { formatNumber } from "@/lib/utils";
 import type { Skill } from "@/data/types";
-
-function formatNumber(n: number): string {
-  if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
-  return n.toString();
-}
 
 const repoSourceLabels: Record<string, string> = {
   "anthropics/skills": "Anthropic",

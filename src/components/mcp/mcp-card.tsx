@@ -4,12 +4,8 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Star, Copy, Check, ExternalLink } from "lucide-react";
+import { formatNumber } from "@/lib/utils";
 import type { MCPServer } from "@/data/mcp-servers";
-
-function formatStars(n: number): string {
-  if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
-  return n.toString();
-}
 
 interface MCPCardProps {
   server: MCPServer;
@@ -80,7 +76,7 @@ export function MCPCard({ server }: MCPCardProps) {
           {server.stars && server.stars > 0 && (
             <span className="flex items-center gap-1 text-xs text-muted-foreground">
               <Star className="size-3" />
-              {formatStars(server.stars)}
+              {formatNumber(server.stars)}
             </span>
           )}
         </div>

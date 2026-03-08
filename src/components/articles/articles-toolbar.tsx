@@ -123,7 +123,7 @@ export function ArticlesToolbar({
         <div className="flex gap-2">
           {sources.length > 0 && (
             <Select value={source || "all"} onValueChange={handleSource}>
-              <SelectTrigger className="h-10 w-[140px]">
+              <SelectTrigger className="h-10 w-full sm:w-[140px]">
                 <SelectValue placeholder="全部来源" />
               </SelectTrigger>
               <SelectContent>
@@ -137,7 +137,7 @@ export function ArticlesToolbar({
             </Select>
           )}
           <Select value={sort || "latest"} onValueChange={handleSort}>
-            <SelectTrigger className="h-10 w-[120px]">
+            <SelectTrigger className="h-10 w-full sm:w-[120px]">
               <ArrowUpDown className="mr-1 size-3.5" />
               <SelectValue />
             </SelectTrigger>

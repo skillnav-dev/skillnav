@@ -3,12 +3,11 @@
 import { useEffect, useRef } from "react";
 import { useTheme } from "next-themes";
 
-// Giscus configuration — update repoId and categoryId after setup
 const GISCUS_CONFIG = {
   repo: "skillnav-dev/discussions" as `${string}/${string}`,
-  repoId: "", // TODO: fill after creating repo
-  category: "Skills",
-  categoryId: "", // TODO: fill after creating repo
+  repoId: "R_kgDORhTuFw",
+  category: "General",
+  categoryId: "DIC_kwDORhTuF84C37gL",
 };
 
 export function SkillComments() {

@@ -62,6 +62,7 @@ export default async function ArticlesPage({ searchParams }: PageProps) {
       />
       <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
         <SectionHeader
+          as="h1"
           title="资讯"
           description="AI Agent Skills 生态的最新动态、教程和深度分析"
         />

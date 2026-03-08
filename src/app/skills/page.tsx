@@ -64,6 +64,7 @@ export default async function SkillsPage({ searchParams }: PageProps) {
       />
       <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
         <SectionHeader
+          as="h1"
           title="Skills 导航"
           description="浏览和发现最好用的 AI Agent Skills"
         />

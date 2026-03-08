@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Copy, Terminal } from "lucide-react";
+import { Terminal } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CopyButton } from "@/components/shared/copy-button";
 
 interface SkillInstallTabsProps {
   installCommand?: string;
@@ -11,34 +12,6 @@ interface SkillInstallTabsProps {
   githubUrl?: string;
   platform?: string[];
   skillName?: string;
-}
-
-function CopyButton({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false);
-
-  async function handleCopy() {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // Ignore clipboard errors
-    }
-  }
-
-  return (
-    <button
-      onClick={handleCopy}
-      aria-label="复制命令"
-      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-    >
-      {copied ? (
-        <Check className="size-3.5 text-green-500" />
-      ) : (
-        <Copy className="size-3.5" />
-      )}
-    </button>
-  );
 }
 
 interface TabDef {

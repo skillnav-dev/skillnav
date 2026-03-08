@@ -1,12 +1,8 @@
 import { Badge } from "@/components/ui/badge";
 import { SecurityBadge } from "@/components/shared/security-badge";
 import { Star, Download } from "lucide-react";
+import { formatNumber } from "@/lib/utils";
 import type { Skill } from "@/data/types";
-
-function formatNumber(n: number): string {
-  if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
-  return n.toString();
-}
 
 const sourceLabels: Record<string, string> = {
   clawhub: "ClawHub",

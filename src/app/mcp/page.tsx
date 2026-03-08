@@ -20,6 +20,7 @@ export default function MCPPage() {
       />
       <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
         <SectionHeader
+          as="h1"
           title="MCP Server 精选导航"
           description="精选高质量 Model Context Protocol Server，让 AI Agent 连接外部工具和数据源"
         />

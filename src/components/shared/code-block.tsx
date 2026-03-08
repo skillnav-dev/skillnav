@@ -1,35 +1,7 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
-import { Check, Copy } from "lucide-react";
-
-function CopyButton({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false);
-
-  async function handleCopy() {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // Fallback: ignore clipboard errors silently
-    }
-  }
-
-  return (
-    <button
-      onClick={handleCopy}
-      aria-label="复制代码"
-      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-    >
-      {copied ? (
-        <Check className="size-3.5 text-green-500" />
-      ) : (
-        <Copy className="size-3.5" />
-      )}
-    </button>
-  );
-}
+import { type ReactNode } from "react";
+import { CopyButton } from "@/components/shared/copy-button";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyElement = { props?: Record<string, any>; children?: ReactNode };

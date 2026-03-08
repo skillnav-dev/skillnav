@@ -171,7 +171,7 @@ export function SkillsToolbar({
         <div className="flex gap-2">
           {platforms.length > 0 && (
             <Select value={platform || "all"} onValueChange={handlePlatform}>
-              <SelectTrigger className="h-10 w-[140px]">
+              <SelectTrigger className="h-10 w-full sm:w-[140px]">
                 <SelectValue placeholder="全部平台" />
               </SelectTrigger>
               <SelectContent>
@@ -187,7 +187,7 @@ export function SkillsToolbar({
             value={sort === "latest" ? "latest" : "stars"}
             onValueChange={handleSort}
           >
-            <SelectTrigger className="h-10 w-[120px]">
+            <SelectTrigger className="h-10 w-full sm:w-[120px]">
               <ArrowUpDown className="mr-1 size-3.5" />
               <SelectValue />
             </SelectTrigger>
