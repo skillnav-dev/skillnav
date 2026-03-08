@@ -12,9 +12,9 @@ export const siteConfig = {
 } as const;
 
 export const navItems = [
-  { title: "首页", href: "/" },
   { title: "Skills", href: "/skills" },
   { title: "MCP", href: "/mcp" },
+  { title: "周刊", href: "/weekly" },
   { title: "资讯", href: "/articles" },
   { title: "关于", href: "/about" },
 ] as const;

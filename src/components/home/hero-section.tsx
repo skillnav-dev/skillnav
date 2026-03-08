@@ -38,6 +38,14 @@ export function HeroSection() {
               className="w-full sm:w-auto"
               asChild
             >
+              <Link href="/weekly">阅读周刊</Link>
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              className="w-full sm:w-auto"
+              asChild
+            >
               <Link href="/articles">最新资讯</Link>
             </Button>
           </div>
