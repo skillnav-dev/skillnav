@@ -186,7 +186,7 @@ async function callAnthropic(provider, systemPrompt, userPrompt, maxTokens) {
 /**
  * Unified LLM call dispatcher.
  */
-async function callLLM(systemPrompt, userPrompt, maxTokens = 16384) {
+export async function callLLM(systemPrompt, userPrompt, maxTokens = 16384) {
   const provider = getProvider();
   if (provider.type === "anthropic") {
     return callAnthropic(provider, systemPrompt, userPrompt, maxTokens);

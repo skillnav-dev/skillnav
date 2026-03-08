@@ -16,7 +16,8 @@
     "sync:articles": "node scripts/sync-articles.mjs",
     "sync:curated": "node scripts/sync-curated-skills.mjs",
     "sync:all": "node scripts/sync-clawhub.mjs && node scripts/sync-anthropic-skills.mjs && node scripts/sync-articles.mjs",
-    "translate": "node scripts/translate-batch.mjs"
+    "translate": "node scripts/translate-batch.mjs",
+    "generate:weekly": "node scripts/generate-weekly.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",

@@ -1,0 +1,60 @@
+name: Generate Weekly Newsletter
+
+on:
+  schedule:
+    - cron: "0 4 * * 1" # UTC 04:00 Monday = Beijing 12:00
+  workflow_dispatch:
+    inputs:
+      week_of:
+        description: "Week start date (YYYY-MM-DD, defaults to last Monday)"
+        required: false
+      limit:
+        description: "Max articles to include (default 15)"
+        required: false
+      dry_run:
+        description: "Dry run mode"
+        type: boolean
+        default: false
+      no_llm:
+        description: "Skip LLM editor's note"
+        type: boolean
+        default: false
+
+concurrency:
+  group: generate-weekly
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      GPT_API_KEY: ${{ secrets.GPT_API_KEY }}
+      LLM_PROVIDER: gpt
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - run: npm ci
+
+      - name: Generate weekly newsletter
+        run: |
+          ARGS=""
+          if [ "${{ inputs.week_of }}" ]; then ARGS="$ARGS --week-of ${{ inputs.week_of }}"; fi
+          if [ "${{ inputs.limit }}" ]; then ARGS="$ARGS --limit ${{ inputs.limit }}"; fi
+          if [ "${{ inputs.dry_run }}" = "true" ]; then ARGS="$ARGS --dry-run"; fi
+          if [ "${{ inputs.no_llm }}" = "true" ]; then ARGS="$ARGS --no-llm"; fi
+          node scripts/generate-weekly.mjs $ARGS
+
+      - name: Notify Slack on failure
+        if: failure()
+        run: |
+          curl -sS -X POST -H 'Content-type: application/json' \
+            --data "{\"text\":\"❌ *Generate Weekly* failed\\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>\"}" \
+            ${{ secrets.SLACK_WEBHOOK_URL }}
