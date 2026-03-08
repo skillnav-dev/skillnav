@@ -121,13 +121,16 @@
 - **npm script**: `generate:weekly` 添加到 package.json
 - **Dry-run 验证通过**: 14 篇文章成功组装为周刊第 1 期预览
 
-### 第 20 轮：GitHub 导航页方案设计 v2（session 21, Day 8）
-- **三路并行调研**: 现有文档分析 + 站点架构模式分析 + 竞品深度调研
-- **竞品覆盖**: HelloGitHub / GrowingGit / OSSInsight / Trendshift / skills.sh / SkillsMP / 码谱记录 / GitHub 中文社区
-- **竞品空白确认**: 无中文 + AI Agent 聚焦 + 编辑精选的交叉点
-- **设计方案 v2**: `docs/plans/github-nav-design.md`（233 行）
-- **4 个关键决策**: 静态 TS 数据（推翻 session 13 的 DB 方案）/ 场景导向 7 分类 / 不做详情页 / 不加导航入口
-- **方案已提交审阅，待确认后实施**
+### 第 20 轮：GitHub 导航页方案设计 + 实施（session 21, Day 8）
+- **三路并行调研**: 现有文档分析 + 站点架构模式分析 + 竞品深度调研（HelloGitHub / GrowingGit / OSSInsight / Trendshift / skills.sh / SkillsMP 等 8 个竞品）
+- **设计方案 v2**: `docs/plans/github-nav-design.md`（233 行），推翻 session 13 的 DB 方案
+- **4 个关键决策**: 静态 TS 数据 / 场景导向 7 分类 / 不做详情页 / 不加导航入口
+- **实施完成**: 4 个新文件，1,025 行代码
+  - `src/data/github-projects.ts` — 50 个精选项目 + 类型定义（Agent 框架 10 / AI 编码 8 / AI 应用平台 8 / RAG 6 / 模型推理 6 / 开发者工具 6 / 精选资源 6）
+  - `src/components/github/github-card.tsx` — 项目卡片（名称、stars、中文描述、编辑点评、标签）
+  - `src/components/github/github-grid.tsx` — 客户端搜索 + 分类过滤 + 网格布局
+  - `src/app/github/page.tsx` — 页面入口（Static 预渲染）
+- **构建验证通过**，`/github` 路由生成为静态页面
 
 ## In Progress
 无
@@ -135,13 +138,13 @@
 ## Next Actions
 
 ### 内容战略 2.0 继续
-1. **GitHub 导航页实施** — 方案已就绪（`docs/plans/github-nav-design.md`），确认后实施（4 个新文件）
-2. **首期周刊正式生成** — `npm run generate:weekly` 生成并审核发布
-3. **EditorialHighlights 接入** — 首页组件接入周刊数据
+1. **首期周刊正式生成** — `npm run generate:weekly` 生成并审核发布
+2. **EditorialHighlights 接入** — 首页组件接入周刊数据
 
 ### 后续优化
-4. **Newsletter 接入 Resend API** — 当前为"即将推出"占位
-5. **移动端深度优化** — 分类横滚渐变遮罩、Skill 详情页移动端元数据布局
+3. **Newsletter 接入 Resend API** — 当前为"即将推出"占位
+4. **移动端深度优化** — 分类横滚渐变遮罩、Skill 详情页移动端元数据布局
+5. **GitHub 页面内链引流** — 从首页/文章页引流到 `/github`
 
 ## Risks & Decisions
 - **UI/UX 重构方案 v1 全部完成**: Phase 0-5 已实施
@@ -159,19 +162,26 @@
 - **GitHub 导航页决策 v2**: 推翻 session 13 的 DB 方案，改用静态 TS 数据（同 MCP 模式）；场景导向 7 分类；不做详情页直链 GitHub；不加导航入口
 
 ## Verify
-- `test -f docs/plans/github-nav-design.md && echo OK` — OK
-- `wc -l docs/plans/github-nav-design.md | awk '{print $1}'` — 233
+- `test -f src/app/github/page.tsx && echo OK` — OK
+- `test -f src/data/github-projects.ts && echo OK` — OK
+- `test -f src/components/github/github-card.tsx && echo OK` — OK
+- `test -f src/components/github/github-grid.tsx && echo OK` — OK
+- `grep -c "slug:" src/data/github-projects.ts` — 50
 - `npm run build` — 构建通过
 
 ## Modified Files (Session 21)
-- `docs/plans/github-nav-design.md` — 新建，GitHub 导航页设计方案 v2
+- `docs/plans/github-nav-design.md` — 新建，设计方案 v2
+- `src/data/github-projects.ts` — 新建，50 个精选项目数据
+- `src/components/github/github-card.tsx` — 新建，项目卡片
+- `src/components/github/github-grid.tsx` — 新建，搜索+过滤+网格
+- `src/app/github/page.tsx` — 新建，页面入口
 
 ## Document Inventory
 | 文件 | 状态 | 行数 | 说明 |
 |------|------|------|------|
 | `HANDOFF.md` | 更新 | ~200 | 交接文档 |
 | `CLAUDE.md` | 未变 | ~150 | 项目规范 |
-| `docs/plans/github-nav-design.md` | 新建 | 233 | GitHub 导航页设计方案 v2（待确认） |
+| `docs/plans/github-nav-design.md` | 新建 | 233 | GitHub 导航页设计方案 v2（已实施） |
 | `docs/specs/design-system.md` | 未变 | 431 | 设计规范 v1（已生效） |
 | `docs/specs/ui-ux-redesign-v1.md` | 未变 | 338 | UI/UX 重构方案 v1（全部完成） |
 | `docs/specs/content-strategy-v2.md` | 未变 | 289 | 内容战略 2.0 最终方案（已确认） |
