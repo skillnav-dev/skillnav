@@ -23,7 +23,7 @@ export async function LatestArticles() {
             <ArrowRight className="size-4" />
           </Link>
         </div>
-        <div className="mt-8 grid gap-4 sm:grid-cols-2">
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {latest.map((article) => (
             <ArticleCard key={article.id} article={article} />
           ))}

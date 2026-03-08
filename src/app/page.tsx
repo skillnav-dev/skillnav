@@ -1,5 +1,6 @@
 import { HeroSection } from "@/components/home/hero-section";
 import { StatsBar } from "@/components/home/stats-bar";
+import { EditorialHighlights } from "@/components/home/editorial-highlights";
 import { FeaturedSkills } from "@/components/home/featured-skills";
 import { LatestArticles } from "@/components/home/latest-articles";
 import { NewsletterCta } from "@/components/home/newsletter-cta";
@@ -11,6 +12,7 @@ export default function Home() {
       <WebsiteJsonLd />
       <HeroSection />
       <StatsBar />
+      <EditorialHighlights />
       <FeaturedSkills />
       <LatestArticles />
       <NewsletterCta />
