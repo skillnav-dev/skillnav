@@ -543,6 +543,7 @@ async function main() {
           article_type: articleType,
           reading_time: translation.readingTime,
           relevance_score: relevanceScore,
+          content_tier: "translated",
           status: "draft",
           published_at: item.pubDate
             ? new Date(item.pubDate).toISOString()

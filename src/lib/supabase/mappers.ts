@@ -66,6 +66,9 @@ export function mapArticleRow(row: ArticleRow): Article {
     category: row.article_type,
     status: (row.status as ArticleStatus) ?? "published",
     relevanceScore: row.relevance_score ?? undefined,
+    contentTier: row.content_tier,
+    series: row.series ?? undefined,
+    seriesNumber: row.series_number ?? undefined,
     publishedAt: row.published_at ?? "",
     createdAt: row.created_at,
   };

@@ -23,6 +23,8 @@ export type ArticleSource =
   | "thenewstack"
   | "manual"
   | "other";
+export type ContentTier = "editorial" | "translated";
+export type ArticleSeries = "weekly" | "monthly-roundup";
 export type ArticleStatus = "published" | "draft" | "hidden";
 export type SubmissionStatus = "pending" | "approved" | "rejected";
 
@@ -92,6 +94,9 @@ export interface Article {
   readingTime: number;
   status: ArticleStatus;
   relevanceScore?: number;
+  contentTier: ContentTier;
+  series?: string;
+  seriesNumber?: number;
   publishedAt: string;
   createdAt: string;
 }

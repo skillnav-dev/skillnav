@@ -104,6 +104,7 @@ export async function getArticlesWithCount(options?: {
   source?: string;
   search?: string;
   sort?: string;
+  contentTier?: string;
 }): Promise<{ articles: Article[]; total: number }> {
   const ascending = options?.sort === "oldest";
 
@@ -115,6 +116,9 @@ export async function getArticlesWithCount(options?: {
     }
     if (options?.source) {
       results = results.filter((a) => a.source === options.source);
+    }
+    if (options?.contentTier) {
+      results = results.filter((a) => a.contentTier === options.contentTier);
     }
     if (options?.search) {
       const q = options.search.toLowerCase();
@@ -147,6 +151,8 @@ export async function getArticlesWithCount(options?: {
 
   if (options?.category) query = query.eq("article_type", options.category);
   if (options?.source) query = query.eq("source", options.source);
+  if (options?.contentTier)
+    query = query.eq("content_tier", options.contentTier);
   if (options?.search) {
     query = query.or(
       `title.ilike.%${options.search}%,title_zh.ilike.%${options.search}%`,
@@ -163,6 +169,88 @@ export async function getArticlesWithCount(options?: {
     articles: (data ?? []).map(mapArticleRow),
     total: count ?? 0,
   };
+}
+
+/**
+ * Get editorial (non-translated) articles.
+ */
+export async function getEditorialArticles(limit = 10): Promise<Article[]> {
+  if (!isSupabaseConfigured()) {
+    const { mockArticles } = await import("@/data/mock-articles");
+    return mockArticles
+      .filter((a) => a.contentTier === "editorial")
+      .slice(0, limit);
+  }
+
+  const { createServerClient } = await import("@/lib/supabase/server");
+  const { mapArticleRow } = await import("@/lib/supabase/mappers");
+  const supabase = await createServerClient();
+
+  const { data, error } = await supabase
+    .from("articles")
+    .select("*")
+    .eq("status", "published")
+    .eq("content_tier", "editorial")
+    .order("published_at", { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+  return (data ?? []).map(mapArticleRow);
+}
+
+/**
+ * Get weekly newsletter articles, ordered by series number.
+ */
+export async function getWeeklyArticles(limit = 10): Promise<Article[]> {
+  if (!isSupabaseConfigured()) {
+    const { mockArticles } = await import("@/data/mock-articles");
+    return mockArticles
+      .filter((a) => a.series === "weekly")
+      .sort((a, b) => (b.seriesNumber ?? 0) - (a.seriesNumber ?? 0))
+      .slice(0, limit);
+  }
+
+  const { createServerClient } = await import("@/lib/supabase/server");
+  const { mapArticleRow } = await import("@/lib/supabase/mappers");
+  const supabase = await createServerClient();
+
+  const { data, error } = await supabase
+    .from("articles")
+    .select("*")
+    .eq("status", "published")
+    .eq("series", "weekly")
+    .order("series_number", { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+  return (data ?? []).map(mapArticleRow);
+}
+
+/**
+ * Get a single weekly article by slug.
+ */
+export async function getWeeklyBySlug(slug: string): Promise<Article | null> {
+  if (!isSupabaseConfigured()) {
+    const { mockArticles } = await import("@/data/mock-articles");
+    return (
+      mockArticles.find((a) => a.slug === slug && a.series === "weekly") ?? null
+    );
+  }
+
+  const { createServerClient } = await import("@/lib/supabase/server");
+  const { mapArticleRow } = await import("@/lib/supabase/mappers");
+  const supabase = await createServerClient();
+
+  const { data, error } = await supabase
+    .from("articles")
+    .select("*")
+    .eq("slug", slug)
+    .eq("series", "weekly")
+    .eq("status", "published")
+    .single();
+
+  if (error) return null;
+  return mapArticleRow(data);
 }
 
 /**

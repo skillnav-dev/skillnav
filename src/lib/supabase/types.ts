@@ -89,15 +89,19 @@ export interface Database {
           article_type: "tutorial" | "analysis" | "guide";
           status: "published" | "draft" | "hidden";
           relevance_score: number | null;
+          content_tier: "editorial" | "translated";
+          series: string | null;
+          series_number: number | null;
           published_at: string | null;
           created_at: string;
         };
         Insert: Omit<
           Database["public"]["Tables"]["articles"]["Row"],
-          "id" | "created_at"
+          "id" | "created_at" | "content_tier"
         > & {
           id?: string;
           created_at?: string;
+          content_tier?: "editorial" | "translated";
         };
         Update: Partial<Database["public"]["Tables"]["articles"]["Insert"]>;
       };
