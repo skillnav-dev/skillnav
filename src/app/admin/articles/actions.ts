@@ -11,6 +11,13 @@ export async function changeArticleStatus(formData: FormData) {
     throw new Error("Missing id or newStatus");
   }
 
-  await updateArticleStatus(id, newStatus);
+  try {
+    await updateArticleStatus(id, newStatus);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Unknown error";
+    console.error(`[admin] changeArticleStatus failed: ${msg}`);
+    throw new Error(`状态切换失败: ${msg}`);
+  }
+
   revalidatePath("/admin/articles");
 }

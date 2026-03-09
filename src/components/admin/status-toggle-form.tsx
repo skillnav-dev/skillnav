@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ChevronDown } from "lucide-react";
+import { toast } from "sonner";
 import { changeArticleStatus } from "@/app/admin/articles/actions";
 
 interface StatusToggleFormProps {
@@ -35,8 +36,16 @@ export function StatusToggleForm({
     formData.set("id", articleId);
     formData.set("newStatus", newStatus);
 
+    const targetLabel =
+      STATUS_OPTIONS.find((o) => o.value === newStatus)?.label ?? newStatus;
+
     startTransition(async () => {
-      await changeArticleStatus(formData);
+      try {
+        await changeArticleStatus(formData);
+        toast.success(`已切换为「${targetLabel}」`);
+      } catch {
+        toast.error("状态切换失败，请重试");
+      }
     });
   }
 

@@ -61,6 +61,8 @@ const contentZh = `## 为什么这门课值得关注
 
 ## 逐课导读
 
+> 第 1-2 课为课程介绍和材料准备（共 3 分钟），以下从第 3 课的实质内容开始导读。
+
 ### 第 3 课：为什么用 Skills（上）
 
 **核心概念**——Skill 是一个文件夹，包含指令（Instructions）、脚本（Scripts）和资源（Assets），让 Agent 获得特定领域的专业能力。
@@ -246,6 +248,33 @@ my-skill/
 
 ---
 
+## 社区反馈与编辑补充
+
+课程上线后，DeepLearning.AI 社区论坛出现了一些有价值的讨论——有些问题课程本身没有讲透，我们在这里补充。
+
+### Skills vs 脚本：什么时候该用 Skill？
+
+社区里被问得最多的问题：销售分析这种确定性工作流，为什么不直接写批处理脚本？
+
+[论坛里最佳回答](https://community.deeplearning.ai/t/why-use-skills-rather-than-regular-scripts-code/888143)给出了务实的判断——确定性代码执行更快、成本更低；但 Skill 的优势在于处理**非结构化内容**，模型能理解上下文，让流程在模糊场景下继续运转。
+
+**编辑判断**：这两者不是替代关系。如果你的工作流输入输出完全确定，直接写脚本。如果涉及自然语言理解、格式不统一的数据、或需要灵活判断的步骤——那才是 Skill 的用武之地。实际项目中，最常见的模式是**脚本 + Skill 混合**：脚本做确定性的数据清洗和 IO，Skill 负责需要理解力的环节。
+
+### 课程没讲透的两个问题
+
+1. **Agent 和 Skill 的连接机制**——Skill 定义里没有显式引用子智能体或工具，[有学员困惑连接是否是隐式的](https://community.deeplearning.ai/t/how-do-agents-and-skills-interact-in-the-claude-code-agent-short-course/889763)。答案是：框架运行时根据 Skill 的 \`name\` 和 \`description\` 做语义匹配，Agent 判断当前任务与哪个 Skill 相关后自动加载，不需要硬编码路径。
+
+2. **自定义 Skill 的评估方法**——课程演示了用 JSON 文件做测试，但[有学员反馈讲得不够清楚](https://community.deeplearning.ai/t/evaluation-for-custom-skills/888043)。目前 Skills 生态还没有成熟的测试框架，实践中常见做法是：准备 3-5 个典型输入场景，对比 Agent 有 Skill 和无 Skill 时的输出质量差异。
+
+### 中文学习资源
+
+课程是英文授课。如果英文吃力，有两个替代方案：
+
+- [Datawhale 中文翻译项目](https://github.com/datawhalechina/agentic-ai)——社区驱动的中文翻译和知识梳理
+- [B站中文字幕版](https://www.bilibili.com/video/BV1qv6eBZErD/)——搬运版，带字幕
+
+---
+
 ## 学习路径建议
 
 根据你的背景，推荐不同的学习顺序：
@@ -288,7 +317,7 @@ my-skill/
 
 ---
 
-*本文由 SkillNav 编辑部撰写。我们不翻译课程内容，而是提供导读视角和实战资源推荐——帮你用最短时间判断是否值得学、怎么学最高效。*`;
+*本文由 SkillNav 编辑部撰写。我们不只是翻译课程内容——在结构化摘要之外，补充社区真实反馈、编辑判断和中文学习资源，帮你用最短时间判断是否值得学、怎么学最高效。*`;
 
 const content = `## Why This Course Matters
 
