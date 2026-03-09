@@ -131,11 +131,15 @@ export async function updateArticleStatus(
   const supabase = createAdminClient();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase.from("articles") as any)
+  const { data, error } = await (supabase.from("articles") as any)
     .update({ status: status as "published" | "draft" | "hidden" })
-    .eq("id", id);
+    .eq("id", id)
+    .select("id");
 
   if (error) throw error;
+  if (!data || data.length === 0) {
+    throw new Error("No rows updated — check RLS policy or article ID");
+  }
 }
 
 /**
