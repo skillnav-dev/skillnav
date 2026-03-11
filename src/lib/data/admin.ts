@@ -17,10 +17,17 @@ function getServiceRoleKey(): string | undefined {
   // so process.env won't have them. Access via getCloudflareContext() instead.
   try {
     const ctx = getCloudflareContext();
-    const key = (ctx.env as Record<string, string>).SUPABASE_SERVICE_ROLE_KEY;
-    if (key) return key;
-  } catch {
-    // Not in Cloudflare runtime (local dev), fall through
+    const envObj = ctx.env as Record<string, unknown>;
+    const key = envObj.SUPABASE_SERVICE_ROLE_KEY;
+    console.log(
+      `[admin] getCloudflareContext OK, env keys: ${Object.keys(envObj).join(",")}, hasKey: ${!!key}, type: ${typeof key}`,
+    );
+    if (typeof key === "string" && key) return key;
+  } catch (err) {
+    console.error(
+      `[admin] getCloudflareContext failed:`,
+      err instanceof Error ? err.message : err,
+    );
   }
   return process.env.SUPABASE_SERVICE_ROLE_KEY;
 }
