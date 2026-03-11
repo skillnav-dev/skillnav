@@ -1,5 +1,5 @@
 # Handoff — SkillNav
-<!-- Updated at 2026-03-11 session 28 -->
+<!-- Updated at 2026-03-11 session 29 -->
 
 ## Objective
 中文开发者的 AI 智能体工具站（Skills · MCP · 实战资讯），当前阶段：内容战略 2.0 实施中
@@ -231,40 +231,42 @@
   - 修复: `getCloudflareContext().env` 直接访问 secrets + server action 改返回值模式 `{ok, error}`
   - 重新 `wrangler secret put` 设置正确值
 - **编译模式试跑验证**: 5 篇 draft 回炉（4/5 成功，1 篇 GPT Proxy 502）
-  - 标题短且有编辑立场，导读 3-4 句含"对中国开发者"本地化视角
   - 质量达发布标准，确认可全量回炉
 - **数据清理**: 删除 162 篇 2025-11 之前的旧文章，保留 gpt-oss-safeguard（published）
   - DB 从 582 → 420 篇
 
+### 第 28 轮：编译模式全量回炉 + 数据清理 + prompt 修复（session 29, Day 11）
+- **全量回炉**: 48/48 篇 draft 编译成功，0 失败，耗时 ~48 分钟
+- **删除 hidden 文章**: 321 篇 hidden 从 DB 删除，DB 从 420 → 99 篇 (63 published + 36 draft)
+- **introZh prompt 修复**: 去掉 "why it matters to Chinese developers" 模板化描述，改为自然中文指引 + 负面约束（"不要用'对中国开发者来说'之类的泛化开头"），3 处替换（single/chunked/summarize）
+- **CrewAI 文章代码块修复**: `72413e64` 文章中裸露 Python 代码加 ````python` 围栏
+- **选稿进行中**: 用户通过 Admin 后台已发布部分文章（draft 48→36, published 51→63）
+
 ## In Progress
 
-### 编译模式全量回炉（待执行）
-- 试跑 5 篇验证通过（4/5 成功，1 篇 GPT Proxy 502），编译质量达发布标准
-- 删除 162 篇旧文章（2025-11 之前）后，剩余 420 篇，draft 数量待确认
-- 下一步：全量回炉剩余 draft → 选稿发布
+无
 
 ## Next Actions
 
-### 编译模式全量回炉 + 选稿（立即）
-1. **全量回炉** — `LLM_PROVIDER=gpt node scripts/sync-articles.mjs --retranslate-drafts`
-2. **选稿发布** — 批量审核，publish/hide，高价值文章人工精修
+### 选稿发布（继续）
+1. **审核剩余 36 篇 draft** — 通过 Admin 后台 publish/hide
 
 ### 内容运营管线 Phase 2
-3. **LLM Fallback**: scripts/lib/llm.mjs 增加 provider 降级链
-4. **Per-source timeout**: sync-articles.mjs 单源 10min 超时
-5. **Workflow 重试**: nick-fields/retry@v3
+2. **LLM Fallback**: scripts/lib/llm.mjs 增加 provider 降级链
+3. **Per-source timeout**: sync-articles.mjs 单源 10min 超时
+4. **Workflow 重试**: nick-fields/retry@v3
 
 ### 内容分发启动
-6. **蹭腾讯 SkillHub 热度** — 横评文章
-7. **注册 X / 公众号 / 知乎 / 即刻** — 冷启动
+5. **蹭腾讯 SkillHub 热度** — 横评文章
+6. **注册 X / 公众号 / 知乎 / 即刻** — 冷启动
 
 ### 内容战略 2.0 继续
-8. **首期周刊正式生成** — `npm run generate:weekly`
-9. **EditorialHighlights 接入** — 首页组件接入周刊/编辑文章数据
+7. **首期周刊正式生成** — `npm run generate:weekly`
+8. **EditorialHighlights 接入** — 首页组件接入周刊/编辑文章数据
 
 ### 后续优化
-10. **Newsletter 接入 Resend API** — 当前为"即将推出"占位
-11. **GitHub 页面内链引流** — 从首页/文章页引流到 `/github`
+9. **Newsletter 接入 Resend API** — 当前为"即将推出"占位
+10. **GitHub 页面内链引流** — 从首页/文章页引流到 `/github`
 
 ## Risks & Decisions
 - **UI/UX 重构方案 v1 全部完成**: Phase 0-5 已实施
@@ -298,21 +300,21 @@
 - **编译模式核心决策**: 修源头不补下游 — 升级 prompt 让翻译直接产出编译级质量，不加 polish 脚本/curated tier
 - **行业对标**: 走"编译"模式（36氪神译局/机器之心），不走纯翻译（掘金）或完全改写（品玩）
 - **SEO 蓝海**: Claude Code Skills / CLAUDE.md / Context Engineering 几乎无中文深度内容
+- **introZh prompt 去模板化**: 不再在 prompt 中写 "Chinese developers"，SYSTEM_PROMPT 已定义受众，避免重复导致八股输出
+- **DB 精简策略**: hidden 文章直接删除而非保留，减少噪音
 
 ## Verify
+- `grep '导读' scripts/lib/llm.mjs` — 存在（introZh prompt 已改为中文指引）
 - `grep 'getCloudflareContext' src/lib/data/admin.ts` — 存在（Worker secrets 访问修复）
-- `grep 'ok:' src/app/admin/articles/actions.ts` — 存在（返回值模式）
 - `npm run build` — 构建通过
 
-## Modified Files (Session 28)
-- `src/lib/data/admin.ts` — `getServiceRoleKey()` 用 `getCloudflareContext().env` 访问 secrets
-- `src/app/admin/articles/actions.ts` — server action 改返回 `{ok, error}` 模式
-- `src/components/admin/status-toggle-form.tsx` — 适配返回值模式，显示具体错误
+## Modified Files (Session 29)
+- `scripts/lib/llm.mjs` — introZh prompt 去模板化，3 处替换
 
 ## Document Inventory
 | 文件 | 状态 | 行数 | 说明 |
 |------|------|------|------|
-| `HANDOFF.md` | 更新 | ~340 | 交接文档 |
+| `HANDOFF.md` | 更新 | ~345 | 交接文档 |
 | `CLAUDE.md` | 未变 | ~150 | 项目规范 |
 | `docs/specs/content-operations-spec.md` | 未变 | 293 | 内容运营管线规范 v1（生效中） |
 | `docs/specs/content-distribution-spec.md` | 未变 | 373 | 内容分发规范 v1 |
