@@ -87,6 +87,7 @@ export function mapMcpServerRow(row: McpServerRow): McpServer {
     installCommand: row.install_command ?? undefined,
     installConfig: row.install_config ?? undefined,
     toolsCount: row.tools_count,
+    tools: row.tools ?? undefined,
     version: row.version ?? undefined,
     stars: row.stars,
     forksCount: row.forks_count,

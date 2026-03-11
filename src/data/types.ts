@@ -136,6 +136,11 @@ export interface McpServer {
   installCommand?: string;
   installConfig?: Record<string, unknown>;
   toolsCount: number;
+  tools?: {
+    name: string;
+    description?: string;
+    inputSchema?: Record<string, unknown>;
+  }[];
   version?: string;
   stars: number;
   forksCount: number;

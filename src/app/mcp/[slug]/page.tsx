@@ -247,8 +247,31 @@ export default async function McpDetailPage({ params }: PageProps) {
               </div>
             )}
 
-            {/* Tools count (when no detailed tools list is available) */}
-            {server.toolsCount > 0 && (
+            {/* Tools list */}
+            {server.tools && server.tools.length > 0 ? (
+              <div className="rounded-lg border border-border/40 bg-card p-6">
+                <h2 className="mb-3 text-lg font-semibold">
+                  提供的工具 ({server.tools.length})
+                </h2>
+                <div className="space-y-3">
+                  {server.tools.map((tool) => (
+                    <div
+                      key={tool.name}
+                      className="rounded-md border border-border/30 bg-muted/30 px-4 py-3"
+                    >
+                      <code className="text-sm font-semibold text-primary">
+                        {tool.name}
+                      </code>
+                      {tool.description && (
+                        <p className="mt-1 text-sm text-foreground/75">
+                          {tool.description}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : server.toolsCount > 0 ? (
               <div className="rounded-lg border border-border/40 bg-card p-6">
                 <h2 className="mb-3 text-lg font-semibold">提供的工具</h2>
                 <p className="text-sm text-foreground/85">
@@ -271,7 +294,7 @@ export default async function McpDetailPage({ params }: PageProps) {
                   )}
                 </p>
               </div>
-            )}
+            ) : null}
 
             {/* README from GitHub */}
             {readme && <McpReadme content={readme} />}

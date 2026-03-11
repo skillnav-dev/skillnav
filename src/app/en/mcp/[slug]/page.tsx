@@ -195,6 +195,56 @@ export default async function EnMcpDetailPage({ params }: PageProps) {
                 </pre>
               </div>
             )}
+
+            {/* Tools list */}
+            {server.tools && server.tools.length > 0 ? (
+              <div className="rounded-lg border border-border/40 bg-card p-6">
+                <h2 className="mb-3 text-lg font-semibold">
+                  Tools ({server.tools.length})
+                </h2>
+                <div className="space-y-3">
+                  {server.tools.map((tool) => (
+                    <div
+                      key={tool.name}
+                      className="rounded-md border border-border/30 bg-muted/30 px-4 py-3"
+                    >
+                      <code className="text-sm font-semibold text-primary">
+                        {tool.name}
+                      </code>
+                      {tool.description && (
+                        <p className="mt-1 text-sm text-foreground/75">
+                          {tool.description}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : server.toolsCount > 0 ? (
+              <div className="rounded-lg border border-border/40 bg-card p-6">
+                <h2 className="mb-3 text-lg font-semibold">Tools</h2>
+                <p className="text-sm text-foreground/85">
+                  This MCP Server provides{" "}
+                  <span className="font-semibold">{server.toolsCount}</span>{" "}
+                  tools.
+                  {server.githubUrl && (
+                    <>
+                      {" "}
+                      See the{" "}
+                      <a
+                        href={server.githubUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline"
+                      >
+                        GitHub repository
+                      </a>{" "}
+                      for the full tool list.
+                    </>
+                  )}
+                </p>
+              </div>
+            ) : null}
           </div>
 
           {/* Right: sidebar */}

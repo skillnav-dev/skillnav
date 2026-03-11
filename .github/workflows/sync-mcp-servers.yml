@@ -1,0 +1,60 @@
+name: Sync MCP Servers
+
+on:
+  schedule:
+    - cron: "0 5 * * 1" # UTC 05:00 Monday = Beijing 13:00, weekly discovery
+  workflow_dispatch:
+    inputs:
+      source:
+        description: "Source filter (mcp-registry, smithery)"
+        required: false
+      incremental:
+        description: "Only sync new servers"
+        type: boolean
+        default: true
+      limit:
+        description: "Max items per source"
+        required: false
+      dry_run:
+        description: "Dry run mode"
+        type: boolean
+        default: false
+
+concurrency:
+  group: sync-mcp-servers
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - run: npm ci
+
+      - name: Sync MCP servers
+        run: |
+          ARGS=""
+          if [ "${{ inputs.source }}" ]; then ARGS="$ARGS --source ${{ inputs.source }}"; fi
+          if [ "${{ github.event.schedule }}" = "0 5 * * 1" ] || [ "${{ inputs.incremental }}" != "false" ]; then
+            ARGS="$ARGS --incremental"
+          fi
+          if [ "${{ inputs.limit }}" ]; then ARGS="$ARGS --limit ${{ inputs.limit }}"; fi
+          if [ "${{ inputs.dry_run }}" = "true" ]; then ARGS="$ARGS --dry-run"; fi
+          node scripts/sync-mcp-servers.mjs $ARGS
+
+      - name: Notify Slack on failure
+        if: failure()
+        run: |
+          curl -sS -X POST -H 'Content-type: application/json' \
+            --data "{\"text\":\"❌ *Sync MCP Servers* failed\\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>\"}" \
+            ${{ secrets.SLACK_WEBHOOK_URL }}

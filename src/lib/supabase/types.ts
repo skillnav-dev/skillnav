@@ -136,6 +136,13 @@ export interface Database {
           install_command: string | null;
           install_config: Record<string, unknown> | null;
           tools_count: number;
+          tools:
+            | {
+                name: string;
+                description?: string;
+                inputSchema?: Record<string, unknown>;
+              }[]
+            | null;
           version: string | null;
           stars: number;
           forks_count: number;

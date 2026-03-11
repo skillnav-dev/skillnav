@@ -22,6 +22,7 @@ function mapStaticToMcpServer(s: StaticMCPServer): McpServer {
     githubUrl: s.githubUrl,
     installCommand: s.installCommand,
     toolsCount: 0,
+    tools: undefined,
     stars: s.stars ?? 0,
     forksCount: 0,
     weeklyDownloads: 0,
