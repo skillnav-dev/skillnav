@@ -4,6 +4,7 @@ import { Star, Github } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { PageBreadcrumb } from "@/components/shared/page-breadcrumb";
 import { CopyButton } from "@/components/shared/copy-button";
+import { GiscusComments } from "@/components/shared/giscus-comments";
 import {
   BreadcrumbJsonLd,
   SoftwareApplicationJsonLd,
@@ -11,8 +12,10 @@ import {
 } from "@/components/shared/json-ld";
 import { MCPCard } from "@/components/mcp/mcp-card";
 import { McpDetailSidebar } from "@/components/mcp/mcp-detail-sidebar";
+import { McpReadme } from "@/components/mcp/mcp-readme";
 import { siteConfig } from "@/lib/constants";
 import { getMcpServerBySlug, getMcpServers, getAllMcpSlugs } from "@/lib/data";
+import { fetchReadme } from "@/lib/github-readme";
 import { formatNumber } from "@/lib/utils";
 
 interface PageProps {
@@ -61,10 +64,13 @@ export default async function McpDetailPage({ params }: PageProps) {
   const server = await getMcpServerBySlug(slug);
   if (!server) notFound();
 
-  // Fetch related servers in the same category
-  const allInCategory = server.category
-    ? await getMcpServers({ category: server.category, limit: 4 })
-    : [];
+  // Parallel fetch: related servers + README
+  const [allInCategory, readme] = await Promise.all([
+    server.category
+      ? getMcpServers({ category: server.category, limit: 4 })
+      : Promise.resolve([]),
+    server.githubUrl ? fetchReadme(server.githubUrl) : Promise.resolve(null),
+  ]);
   const related = allInCategory.filter((s) => s.id !== server.id).slice(0, 3);
 
   return (
@@ -240,6 +246,38 @@ export default async function McpDetailPage({ params }: PageProps) {
                 )}
               </div>
             )}
+
+            {/* Tools count (when no detailed tools list is available) */}
+            {server.toolsCount > 0 && (
+              <div className="rounded-lg border border-border/40 bg-card p-6">
+                <h2 className="mb-3 text-lg font-semibold">提供的工具</h2>
+                <p className="text-sm text-foreground/85">
+                  该 MCP Server 提供{" "}
+                  <span className="font-semibold">{server.toolsCount}</span>{" "}
+                  个工具。
+                  {server.githubUrl && (
+                    <>
+                      查看{" "}
+                      <a
+                        href={server.githubUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline"
+                      >
+                        GitHub 仓库
+                      </a>{" "}
+                      了解详细工具列表。
+                    </>
+                  )}
+                </p>
+              </div>
+            )}
+
+            {/* README from GitHub */}
+            {readme && <McpReadme content={readme} />}
+
+            {/* Comments (giscus) */}
+            <GiscusComments />
           </div>
 
           {/* Right: sidebar */}

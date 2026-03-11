@@ -1,0 +1,55 @@
+name: Refresh Tool Metadata
+
+on:
+  schedule:
+    - cron: "0 2 * * *" # UTC 02:00 daily = Beijing 10:00, daily freshness
+    - cron: "0 3 * * 1" # UTC 03:00 Monday = Beijing 11:00, weekly snapshot
+  workflow_dispatch:
+    inputs:
+      snapshot:
+        description: "Run with --snapshot (weekly trending)"
+        type: boolean
+        default: false
+      dry_run:
+        description: "Dry run mode"
+        type: boolean
+        default: false
+
+concurrency:
+  group: refresh-tool-metadata
+  cancel-in-progress: true
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - run: npm ci
+
+      - name: Refresh tool metadata
+        run: |
+          ARGS=""
+          # Weekly snapshot: Monday 03:00 cron or manual snapshot input
+          if [ "${{ github.event.schedule }}" = "0 3 * * 1" ] || [ "${{ inputs.snapshot }}" = "true" ]; then
+            ARGS="$ARGS --snapshot"
+          fi
+          if [ "${{ inputs.dry_run }}" = "true" ]; then ARGS="$ARGS --dry-run"; fi
+          node scripts/refresh-tool-metadata.mjs $ARGS
+
+      - name: Notify Slack on failure
+        if: failure()
+        run: |
+          curl -sS -X POST -H 'Content-type: application/json' \
+            --data "{\"text\":\"❌ *Refresh Tool Metadata* failed\\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>\"}" \
+            ${{ secrets.SLACK_WEBHOOK_URL }}

@@ -2,16 +2,29 @@ name: Sync Curated Skills
 
 on:
   schedule:
-    - cron: "0 3 * * 3" # UTC 03:00 Wednesday = Beijing 11:00
+    - cron: "0 1 * * 1" # UTC 01:00 Monday = Beijing 09:00, before freshness refresh
   workflow_dispatch:
     inputs:
       repo:
         description: "Sync specific repo (e.g. anthropics/skills)"
         required: false
-      skip_existing:
-        description: "Skip existing skills (incremental)"
+      source:
+        description: "Source to sync"
+        type: choice
+        options:
+          - all
+          - curated
+          - awesome-list
+          - skills-sh
+        default: "all"
+      incremental:
+        description: "Incremental sync (skip existing)"
         type: boolean
         default: true
+      evaluate:
+        description: "Run LLM evaluation on new skills"
+        type: boolean
+        default: false
       limit:
         description: "Max items per repo"
         required: false
@@ -32,6 +45,8 @@ jobs:
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GPT_API_KEY: ${{ secrets.GPT_API_KEY }}
+      LLM_PROVIDER: gpt
     steps:
       - uses: actions/checkout@v4
 
@@ -44,9 +59,11 @@ jobs:
 
       - name: Sync curated skills
         run: |
-          ARGS=""
+          ARGS="--incremental"
           if [ "${{ inputs.repo }}" ]; then ARGS="$ARGS --repo ${{ inputs.repo }}"; fi
-          if [ "${{ inputs.skip_existing }}" != "false" ]; then ARGS="$ARGS --skip-existing"; fi
+          if [ "${{ inputs.incremental }}" = "false" ]; then ARGS="${ARGS/--incremental/}"; fi
+          if [ "${{ inputs.source }}" ] && [ "${{ inputs.source }}" != "all" ]; then ARGS="$ARGS --source ${{ inputs.source }}"; fi
+          if [ "${{ inputs.evaluate }}" = "true" ]; then ARGS="$ARGS --evaluate"; fi
           if [ "${{ inputs.limit }}" ]; then ARGS="$ARGS --limit ${{ inputs.limit }}"; fi
           if [ "${{ inputs.dry_run }}" = "true" ]; then ARGS="$ARGS --dry-run"; fi
           node scripts/sync-curated-skills.mjs $ARGS

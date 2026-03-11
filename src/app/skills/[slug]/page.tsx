@@ -6,7 +6,7 @@ import { SkillCard } from "@/components/skills/skill-card";
 import { SkillContent } from "@/components/skills/skill-content";
 import { SkillInstallTabs } from "@/components/skills/skill-install-tabs";
 import { SkillSidebar } from "@/components/skills/skill-sidebar";
-import { SkillComments } from "@/components/skills/skill-comments";
+import { GiscusComments } from "@/components/shared/giscus-comments";
 import { PlatformBadge } from "@/components/skills/platform-badge";
 import {
   BreadcrumbJsonLd,
@@ -193,7 +193,7 @@ export default async function SkillDetailPage({ params }: PageProps) {
             )}
 
             {/* Comments (giscus) */}
-            <SkillComments />
+            <GiscusComments />
           </div>
 
           {/* Right: sidebar */}

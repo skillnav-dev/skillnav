@@ -1,5 +1,5 @@
 # Handoff — SkillNav
-<!-- Updated at 2026-03-11 session 34 -->
+<!-- Updated at 2026-03-11 session 35 -->
 
 ## Completed
 
@@ -47,18 +47,38 @@
   - LLM prompt 整合三支柱上下文
 - **dry-run 验证全部通过**: awesome-list 651→127 / skills-sh 96→85 / GraphQL 16 repos 4s / build OK
 
+### 第 34 轮：管线运维首跑 + CI 编排 + MCP 详情页丰富（session 35, Day 11）
+- **DB 操作执行**:
+  - `stars_snapshots` 表已创建（通过 Supabase Management API + Keychain token 提取）
+  - `skills_source_check` 约束更新：新增 `awesome-list`/`skills-sh`/`openclaw` 值
+- **首次保鲜成功**: 168 Skills + 17 MCP 的 stars/freshness 写入 DB，0 错误
+  - 发现 `linear/linear-mcp-server` 仓库不可解析（可能改名/删除）
+- **首次增量同步成功**: awesome-list 124 个新 Skills 入库（status=draft），去重正常
+  - DB 现状：curated 168 pub + anthropic 17 pub + awesome-list 124 draft = 309 skills
+- **CI 编排完成**（子代理并行）:
+  - 新建 `refresh-tool-metadata.yml`：每日 UTC 02:00 保鲜 + 周一 UTC 03:00 快照
+  - 更新 `sync-curated-skills.yml`：周一 UTC 01:00 + 新增 source/incremental/evaluate 参数
+  - 更新 `generate-weekly.yml`：周一 UTC 04:00（在快照之后）
+- **MCP 详情页丰富**（子代理并行）:
+  - 新建 `src/lib/github-readme.ts`：GitHub API 获取 README + 24h ISR 缓存
+  - 新建 `src/components/mcp/mcp-readme.tsx`：ReactMarkdown 渲染 + 折叠/展开
+  - 新建 `src/components/shared/giscus-comments.tsx`：共享评论组件（MCP + Skills 页面）
+  - MCP 详情页新增：README 区块 + 工具数展示 + giscus 评论
+  - Skills 详情页：评论组件切换为共享 GiscusComments
+- **构建通过**: 488 页面全部成功
+
 ## In Progress
 
 无
 
 ## Next
 
-1. **DB 操作**: 在 Supabase 执行 `sql/create-stars-snapshots.sql` 建快照表
-2. **首次保鲜**: `node scripts/refresh-tool-metadata.mjs`（写入真实 stars 到 DB）
-3. **首次增量同步**: `node scripts/sync-curated-skills.mjs --incremental --source awesome-list`
-4. **Admin 审核**: 审核新入库的 draft Skills + 36 篇 draft 文章
-5. **CI 编排**: GitHub Actions cron（每日保鲜 + 每周同步 + 每周快照）
-6. **MCP 详情页丰富**: 接入 README 内容、工具列表、giscus 评论
+1. **Admin 审核**: 124 个 draft Skills + 36 篇 draft 文章待审核
+2. **部署**: push 代码到 GitHub，触发 CI/CD 部署
+3. **排查**: `linear/linear-mcp-server` MCP 服务器可能已改名，需更新或移除
+4. **清理**: 旧的 `src/components/skills/skill-comments.tsx` 可移除（已被共享组件替代）
+5. **MCP 工具列表**: DB 增加 `tools` JSONB 字段，展示每个 MCP Server 的具体工具列表
+6. **MCP 发现源**: 接入 Official MCP Registry + Smithery（方案已在 pipeline plan 中）
 
 ## Risks & Decisions
 
@@ -66,19 +86,22 @@
 - **OpenClaw 精选已决策**: 做，50-100 个带编辑点评，source='openclaw'
 - **编辑点评是护城河**: 竞品（mcp.so/SkillHub）都是量无观点，我们做"精+有观点"
 - **Skills DAL 迁移**: `is_hidden` → `status` 字段切换完成
-- **Supabase Management API**: 可靠的中国网络替代方案
-- **Worktree 并行开发**: 已验证可行，注意 worktree 可能基于旧 commit，需手动合并而非直接覆盖
+- **Supabase Management API**: Keychain token 提取方式已验证可用（go-keyring-base64 编码）
+- **DB 约束**: `skills_source_check` 已扩展支持 awesome-list/skills-sh/openclaw
+- **CI 时间线**: 周一 01:00→02:00→03:00→04:00 UTC 顺序编排（同步→保鲜→快照→周刊）
 
 ## Verify
 
-- `test -f scripts/lib/sources/awesome-skills.mjs && echo OK` — awesome-list 源存在
-- `test -f scripts/lib/sources/skills-sh.mjs && echo OK` — skills.sh 源存在
-- `grep "incremental" scripts/sync-curated-skills.mjs | head -1` — 增量同步支持
-- `grep "githubGraphQLBatch" scripts/lib/github.mjs | head -1` — GraphQL 批量查询
-- `test -f scripts/refresh-tool-metadata.mjs && echo OK` — 保鲜脚本存在
-- `test -f sql/create-stars-snapshots.sql && echo OK` — 快照表 SQL 存在
-- `test -f src/components/shared/freshness-badge.tsx && echo OK` — Freshness 角标组件
-- `grep "FreshnessBadge" src/components/skills/skill-card.tsx | head -1` — skill-card 用 FreshnessBadge
-- `grep "FreshnessBadge" src/components/mcp/mcp-card.tsx | head -1` — mcp-card 用 FreshnessBadge
-- `grep "queryNewSkills\|queryTrendingSkills" scripts/generate-weekly.mjs | head -1` — 周刊三支柱查询
+- `test -f .github/workflows/refresh-tool-metadata.yml && echo OK` — 保鲜 CI workflow 存在
+- `grep "0 2 \* \* \*" .github/workflows/refresh-tool-metadata.yml | head -1` — 每日保鲜 cron
+- `grep "0 3 \* \* 1" .github/workflows/refresh-tool-metadata.yml | head -1` — 周一快照 cron
+- `grep "0 1 \* \* 1" .github/workflows/sync-curated-skills.yml | head -1` — 周一同步 cron
+- `grep "0 4 \* \* 1" .github/workflows/generate-weekly.yml | head -1` — 周一周刊 cron
+- `grep "source" .github/workflows/sync-curated-skills.yml | head -1` — source 参数
+- `test -f src/lib/github-readme.ts && echo OK` — README 获取函数存在
+- `test -f src/components/mcp/mcp-readme.tsx && echo OK` — README 组件存在
+- `test -f src/components/shared/giscus-comments.tsx && echo OK` — 共享评论组件存在
+- `grep "GiscusComments" src/app/mcp/\[slug\]/page.tsx | head -1` — MCP 详情页用共享评论
+- `grep "GiscusComments" src/app/skills/\[slug\]/page.tsx | head -1` — Skills 详情页用共享评论
+- `grep "fetchReadme" src/app/mcp/\[slug\]/page.tsx | head -1` — MCP 详情页获取 README
 - `npm run build` — 构建通过
