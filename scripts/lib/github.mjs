@@ -58,6 +58,85 @@ export async function githubFetchRaw(owner, repo, path, ref = "main") {
   return response.text();
 }
 
+const GITHUB_GRAPHQL = "https://api.github.com/graphql";
+
+/**
+ * Batch query GitHub repos via GraphQL.
+ * Uses alias pattern to query up to 50 repos per request.
+ * @param {{ owner: string; repo: string }[]} repos
+ * @returns {Promise<Map<string, { stargazerCount: number; forkCount: number; pushedAt: string; isArchived: boolean; updatedAt: string; description: string | null }>>}
+ */
+export async function githubGraphQLBatch(repos) {
+  const BATCH_SIZE = 50;
+  const results = new Map();
+
+  for (let i = 0; i < repos.length; i += BATCH_SIZE) {
+    const batch = repos.slice(i, i + BATCH_SIZE);
+    const aliases = batch
+      .map(
+        (r, idx) =>
+          `r${idx}: repository(owner: "${r.owner}", name: "${r.repo}") {
+      stargazerCount
+      forkCount
+      pushedAt
+      isArchived
+      updatedAt
+      description
+    }`
+      )
+      .join("\n");
+
+    const query = `query { ${aliases} }`;
+
+    const response = await fetch(GITHUB_GRAPHQL, {
+      method: "POST",
+      headers: {
+        ...getHeaders(),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ query }),
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `GitHub GraphQL ${response.status}: ${await response.text()}`
+      );
+    }
+
+    const json = await response.json();
+
+    if (json.errors) {
+      // Partial errors are common (deleted repos, renamed repos).
+      for (const err of json.errors) {
+        console.warn(`  GraphQL warning: ${err.message}`);
+      }
+    }
+
+    const data = json.data ?? {};
+    for (let idx = 0; idx < batch.length; idx++) {
+      const key = `${batch[idx].owner}/${batch[idx].repo}`;
+      const node = data[`r${idx}`];
+      if (node) {
+        results.set(key, {
+          stargazerCount: node.stargazerCount,
+          forkCount: node.forkCount,
+          pushedAt: node.pushedAt,
+          isArchived: node.isArchived,
+          updatedAt: node.updatedAt,
+          description: node.description,
+        });
+      }
+    }
+
+    // Small delay between batches
+    if (i + BATCH_SIZE < repos.length) {
+      await new Promise((r) => setTimeout(r, 500));
+    }
+  }
+
+  return results;
+}
+
 /**
  * Fetch all items from a paginated GitHub endpoint.
  */

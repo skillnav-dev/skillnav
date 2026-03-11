@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { SecurityBadge } from "@/components/shared/security-badge";
+import { FreshnessBadge } from "@/components/shared/freshness-badge";
 import { PlatformBadge } from "@/components/skills/platform-badge";
 import { Star, GitFork } from "lucide-react";
 import { formatNumber } from "@/lib/utils";
@@ -36,7 +36,11 @@ export function SkillCard({ skill }: SkillCardProps) {
           </div>
           <div className="flex items-center gap-1.5">
             <PlatformBadge platform={skill.platform} />
-            <SecurityBadge score={skill.securityScore} />
+            <FreshnessBadge
+              freshness={skill.freshness}
+              isTrending={skill.isTrending}
+              discoveredAt={skill.discoveredAt}
+            />
           </div>
         </div>
       </CardHeader>
@@ -44,6 +48,11 @@ export function SkillCard({ skill }: SkillCardProps) {
         <p className="line-clamp-2 text-sm text-muted-foreground">
           {skill.descriptionZh ?? skill.description}
         </p>
+        {skill.editorCommentZh && (
+          <p className="line-clamp-1 text-xs italic text-muted-foreground/70">
+            {skill.editorCommentZh}
+          </p>
+        )}
         <div className="flex items-center justify-between">
           <div className="flex flex-wrap gap-1">
             <Badge variant="secondary" className="text-xs">

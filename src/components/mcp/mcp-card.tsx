@@ -4,7 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Star, Copy, Check, ExternalLink } from "lucide-react";
+import { Star, Copy, Check, ExternalLink, Wrench } from "lucide-react";
+import { FreshnessBadge } from "@/components/shared/freshness-badge";
 import { formatNumber } from "@/lib/utils";
 import type { McpServer } from "@/data/types";
 
@@ -51,23 +52,35 @@ export function MCPCard({ server }: MCPCardProps) {
               </p>
             )}
           </div>
-          {server.githubUrl && (
-            <a
-              href={server.githubUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-muted-foreground transition-colors hover:text-foreground"
-              aria-label={`${server.name} GitHub`}
-            >
-              <ExternalLink className="size-4" />
-            </a>
-          )}
+          <div className="flex items-center gap-1.5">
+            <FreshnessBadge
+              freshness={server.freshness}
+              isTrending={server.isTrending}
+              discoveredAt={server.discoveredAt}
+            />
+            {server.githubUrl && (
+              <a
+                href={server.githubUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground transition-colors hover:text-foreground"
+                aria-label={`${server.name} GitHub`}
+              >
+                <ExternalLink className="size-4" />
+              </a>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
         <p className="line-clamp-2 text-sm text-muted-foreground">
           {server.descriptionZh ?? server.description ?? ""}
         </p>
+        {server.editorCommentZh && (
+          <p className="line-clamp-1 text-xs italic text-muted-foreground/70">
+            {server.editorCommentZh}
+          </p>
+        )}
         {/* Install command */}
         {server.installCommand && (
           <button
@@ -85,11 +98,19 @@ export function MCPCard({ server }: MCPCardProps) {
           </button>
         )}
         <div className="flex items-center justify-between">
-          {server.category && (
-            <Badge variant="secondary" className="text-xs">
-              {server.category}
-            </Badge>
-          )}
+          <div className="flex flex-wrap gap-1">
+            {server.category && (
+              <Badge variant="secondary" className="text-xs">
+                {server.category}
+              </Badge>
+            )}
+            {server.toolsCount > 0 && (
+              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Wrench className="size-3" />
+                {server.toolsCount} 个工具
+              </span>
+            )}
+          </div>
           {server.stars > 0 && (
             <span className="flex items-center gap-1 text-xs text-muted-foreground">
               <Star className="size-3" />
