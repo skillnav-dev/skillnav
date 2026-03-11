@@ -199,14 +199,18 @@ export async function callLLM(systemPrompt, userPrompt, maxTokens = 16384) {
 
 // ── Shared Prompts ───────────────────────────────────────────────────
 
-const SYSTEM_PROMPT = `You are a professional Chinese tech media translator. Your task is to translate English tech articles into natural, fluent Chinese suitable for a Chinese tech news site.
+const SYSTEM_PROMPT = `You are a senior Chinese tech media editor. Your task is to compile (编译) English tech articles into polished, publication-ready Chinese content — not word-for-word translation, but editorial adaptation for Chinese developers.
 
-Translation style:
-- Natural Chinese expression, NOT word-for-word translation
-- Keep technical terms in English when they are commonly used as-is (e.g., API, SDK, LLM, Agent, Token)
-- Use established Chinese translations for well-known concepts (e.g., machine learning → 机器学习)
-- Maintain the original article's structure (headings, lists, code blocks)
+Editorial principles:
+- REWRITE titles to be compelling in Chinese (information hooks, concrete numbers, clear value proposition), not literal translations
+- Write a concise editor's intro (导读) that tells readers what this article covers and why it matters
+- Restructure content for Chinese reading habits: split long paragraphs (≤4 lines each), add sub-headings where the original lacks them, cut filler content
+- Eliminate translation artifacts: no "然而/此外/值得注意的是" padding, use natural Chinese transitions
+- Keep technical terms in English when commonly used as-is (API, SDK, LLM, Agent, MCP, Token)
+- Use established Chinese translations for well-known concepts (machine learning → 机器学习, large language model → 大语言模型)
+- First occurrence of a translated term should include English in parentheses: 大语言模型 (LLM)
 - Preserve all code snippets, URLs, and technical references unchanged
+- Preserve markdown formatting (headings, lists, code blocks)
 
 You must respond with valid JSON only, no markdown fences.`;
 
@@ -308,12 +312,13 @@ export async function translateArticle({ title, summary, content }) {
  * Original logic, no truncation.
  */
 async function translateArticleSingle({ title, summary, content }) {
-  const userPrompt = `Translate this article and classify it. Return JSON with these exact fields:
+  const userPrompt = `Compile (编译) this article into polished Chinese. Return JSON with these exact fields:
 
 {
-  "titleZh": "Chinese title (concise, news-headline style)",
+  "titleZh": "Rewritten Chinese title — compelling, specific, with information hooks (15-25 chars). NOT a literal translation.",
+  "introZh": "Editor's intro (导读) — 2-3 sentences: what this covers, why it matters to Chinese developers, key takeaway.",
   "summaryZh": "Chinese summary (2-3 sentences, capture key points)",
-  "contentZh": "Full Chinese translation (preserve markdown formatting)",
+  "contentZh": "Compiled Chinese content — restructured for readability, sub-headings added where needed, filler cut, natural Chinese flow (preserve markdown formatting)",
   "articleType": "one of: tutorial, analysis, guide (see definitions below)",
   "readingTime": <estimated minutes to read the Chinese version>,
   "relevanceScore": <1-5 integer, see criteria below>
@@ -331,7 +336,7 @@ Relevance scoring criteria:
 2 = Generic AI news (product announcements, brief updates)
 1 = Not related to AI Agent ecosystem (company PR, hiring, policy)
 
-Article to translate:
+Article to compile:
 
 Title: ${title}
 
@@ -351,13 +356,14 @@ ${content}`;
 async function translateArticleChunked({ title, summary, content }) {
   const chunks = splitIntoChunks(content, CHUNK_SIZE);
 
-  // Chunk 0: full translation prompt (returns all fields)
-  const firstPrompt = `Translate this article and classify it. Return JSON with these exact fields:
+  // Chunk 0: full compilation prompt (returns all fields)
+  const firstPrompt = `Compile (编译) this article into polished Chinese. Return JSON with these exact fields:
 
 {
-  "titleZh": "Chinese title (concise, news-headline style)",
+  "titleZh": "Rewritten Chinese title — compelling, specific, with information hooks (15-25 chars). NOT a literal translation.",
+  "introZh": "Editor's intro (导读) — 2-3 sentences: what this covers, why it matters to Chinese developers, key takeaway.",
   "summaryZh": "Chinese summary (2-3 sentences, capture key points)",
-  "contentZh": "Full Chinese translation (preserve markdown formatting)",
+  "contentZh": "Compiled Chinese content — restructured for readability, sub-headings added where needed, filler cut, natural Chinese flow (preserve markdown formatting)",
   "articleType": "one of: tutorial, analysis, guide (see definitions below)",
   "readingTime": <estimated minutes to read the FULL Chinese version, not just this part>,
   "relevanceScore": <1-5 integer, see criteria below>
@@ -375,9 +381,9 @@ Relevance scoring criteria:
 2 = Generic AI news (product announcements, brief updates)
 1 = Not related to AI Agent ecosystem (company PR, hiring, policy)
 
-Note: This is part 1 of ${chunks.length} of a multi-part article. Translate this portion completely.
+Note: This is part 1 of ${chunks.length} of a multi-part article. Compile this portion completely.
 
-Article to translate:
+Article to compile:
 
 Title: ${title}
 
@@ -392,10 +398,10 @@ ${chunks[0]}`;
 
   // Chunks 1..N: continuation prompts (only contentZh)
   for (let i = 1; i < chunks.length; i++) {
-    const contPrompt = `Continue translating the following article content into Chinese. This is part ${i + 1} of ${chunks.length} of the article titled "${title}".
+    const contPrompt = `Continue compiling the following article content into polished Chinese. This is part ${i + 1} of ${chunks.length} of the article titled "${title}".
 
 Return JSON with only one field:
-{ "contentZh": "Chinese translation of this part (preserve markdown formatting)" }
+{ "contentZh": "Compiled Chinese content of this part — natural flow, restructured for readability (preserve markdown formatting)" }
 
 Content (Part ${i + 1}/${chunks.length}):
 ${chunks[i]}`;
@@ -422,11 +428,12 @@ async function summarizeArticle({ title, summary, content }) {
   const excerpt = head + "\n\n[... middle content omitted ...]\n\n" + tail;
 
   const userPrompt = `Summarize this long-form article (possibly a podcast transcript or deep-dive).
-Extract and translate the key insights into a structured Chinese summary.
+Extract and compile the key insights into a structured Chinese summary.
 
 Return JSON with these exact fields:
 {
-  "titleZh": "Chinese title (concise, news-headline style)",
+  "titleZh": "Rewritten Chinese title — compelling, specific, with information hooks (15-25 chars). NOT a literal translation.",
+  "introZh": "Editor's intro (导读) — 2-3 sentences: what this covers, why it matters to Chinese developers, key takeaway.",
   "summaryZh": "Chinese summary (2-3 sentences, capture key points)",
   "contentZh": "Structured Chinese summary using ## headings for each key topic, include direct quotes where impactful",
   "articleType": "one of: tutorial, analysis, guide (see definitions below)",
@@ -561,7 +568,7 @@ function parseTranslationResponse(text) {
     }
   }
 
-  // Validate required fields
+  // Validate required fields (introZh is optional for backward compat with older responses)
   const required = ["titleZh", "summaryZh", "contentZh", "articleType", "readingTime"];
   for (const field of required) {
     if (result[field] === undefined) {

@@ -82,6 +82,7 @@ export interface Database {
           summary_zh: string | null;
           content: string | null;
           content_zh: string | null;
+          intro_zh: string | null;
           source: string | null;
           source_url: string | null;
           cover_image: string | null;

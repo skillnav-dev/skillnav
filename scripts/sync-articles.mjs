@@ -10,6 +10,7 @@
  *   node scripts/sync-articles.mjs --limit 5                  # Limit items per source
  *   node scripts/sync-articles.mjs --source anthropic         # Single source only
  *   node scripts/sync-articles.mjs --retranslate-truncated    # Re-translate truncated articles
+ *   node scripts/sync-articles.mjs --retranslate-drafts       # Re-compile all draft articles with upgraded prompt
  *
  * NOTE: The `articles.source_url` column must have a UNIQUE constraint
  *       for the upsert (onConflict: "source_url") to work correctly.
@@ -248,6 +249,7 @@ async function main() {
   const args = process.argv.slice(2);
   const dryRun = args.includes("--dry-run");
   const retranslateTruncated = args.includes("--retranslate-truncated");
+  const retranslateDrafts = args.includes("--retranslate-drafts");
   const limitIdx = args.indexOf("--limit");
   const limit = limitIdx !== -1 ? Number(args[limitIdx + 1]) : Infinity;
   const sourceIdx = args.indexOf("--source");
@@ -332,6 +334,7 @@ async function main() {
             .from("articles")
             .update({
               title_zh: result.titleZh,
+              intro_zh: result.introZh || null,
               summary_zh: result.summaryZh,
               content_zh: result.contentZh,
               article_type: result.articleType,
@@ -357,6 +360,104 @@ async function main() {
     log.progressEnd();
     log.success(`\n=== Retranslation Summary ===`);
     log.success(`Total: ${candidates.length} | Retranslated: ${retranslated} | Failed: ${failed}`);
+    if (dryRun) log.info("[DRY RUN] No records were updated.");
+    log.done();
+    if (failed > 0) process.exit(1);
+    return;
+  }
+
+  // ── Re-compile all draft articles with upgraded prompt ─────────────
+  if (retranslateDrafts) {
+    validateEnv(["NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"]);
+    const { name, model } = getProviderInfo();
+    log.info(`LLM provider: ${name} (${model})`);
+    const sb = createAdminClient();
+
+    // Query all draft articles that have English content
+    let query = sb
+      .from("articles")
+      .select("id, slug, title, summary, content, content_zh, source")
+      .eq("status", "draft")
+      .not("content", "is", null)
+      .order("relevance_score", { ascending: false });
+
+    // Respect --source filter
+    if (sourceFilter) {
+      query = query.eq("source", sourceFilter);
+    }
+
+    const { data: drafts, error: queryErr } = await query;
+
+    if (queryErr) {
+      log.error(`Query failed: ${queryErr.message}`);
+      process.exit(1);
+    }
+
+    const candidates = (drafts || []).filter((a) => a.content && a.content.length > 100);
+    const batch = limit !== Infinity ? candidates.slice(0, limit) : candidates;
+    log.info(`Found ${candidates.length} draft articles, processing ${batch.length}`);
+
+    if (batch.length === 0) {
+      log.success("No draft articles to re-compile.");
+      log.done();
+      return;
+    }
+
+    let recompiled = 0;
+    let failed = 0;
+
+    for (let i = 0; i < batch.length; i++) {
+      const article = batch[i];
+      const label = (article.title || article.slug).slice(0, 60);
+      const strategy = article.content.length > 50000 ? "summarize"
+        : article.content.length > 15000 ? "chunked" : "single";
+
+      if (dryRun) {
+        log.info(`[DRY RUN] Would re-compile (${strategy}, ${Math.round(article.content.length / 1000)}K): ${label}`);
+        recompiled++;
+      } else {
+        try {
+          await llmThrottle();
+          log.info(`Re-compiling (${strategy}, ${Math.round(article.content.length / 1000)}K): ${label}`);
+          const result = await withRetry(
+            () => translateArticle({
+              title: article.title || "",
+              summary: article.summary || "",
+              content: article.content,
+            }),
+            { label }
+          );
+
+          const { error: updateErr } = await sb
+            .from("articles")
+            .update({
+              title_zh: result.titleZh,
+              intro_zh: result.introZh || null,
+              summary_zh: result.summaryZh,
+              content_zh: result.contentZh,
+              article_type: result.articleType,
+              reading_time: result.readingTime,
+            })
+            .eq("id", article.id);
+
+          if (updateErr) {
+            log.error(`Update failed for "${label}": ${updateErr.message}`);
+            failed++;
+          } else {
+            log.success(`Re-compiled: ${result.titleZh}`);
+            recompiled++;
+          }
+        } catch (e) {
+          log.error(`Re-compilation failed for "${label}": ${e.message}`);
+          failed++;
+        }
+      }
+      log.progress(i + 1, batch.length, failed, label);
+    }
+
+    log.progressEnd();
+    log.success(`\n=== Re-compilation Summary ===`);
+    log.success(`Total: ${batch.length} | Re-compiled: ${recompiled} | Failed: ${failed}`);
     if (dryRun) log.info("[DRY RUN] No records were updated.");
     log.done();
     if (failed > 0) process.exit(1);
@@ -533,6 +634,7 @@ async function main() {
           slug: generateSlug(item.title || "untitled"),
           title: item.title || "",
           title_zh: translation.titleZh,
+          intro_zh: translation.introZh || null,
           summary: excerpt,
           summary_zh: translation.summaryZh,
           content: contentMd,

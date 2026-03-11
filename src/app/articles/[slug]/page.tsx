@@ -135,6 +135,11 @@ export default async function ArticlePage({ params }: PageProps) {
             />
           </div>
         )}
+        {article.introZh && (
+          <div className="mt-6 rounded-md border-l-4 border-primary/40 bg-muted/30 px-4 py-3 text-sm leading-relaxed text-muted-foreground">
+            {article.introZh}
+          </div>
+        )}
         <div className="mt-8">
           <ArticleContent content={article.contentZh ?? article.content} />
         </div>

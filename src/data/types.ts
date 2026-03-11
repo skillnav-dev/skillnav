@@ -87,6 +87,7 @@ export interface Article {
   summaryZh?: string;
   content: string;
   contentZh?: string;
+  introZh?: string;
   source?: ArticleSource;
   sourceUrl?: string;
   category: ArticleType;
