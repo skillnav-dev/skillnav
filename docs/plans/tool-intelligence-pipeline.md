@@ -150,6 +150,10 @@
 **MCP 卡片额外字段**：
 11. **工具数量** — "5 个工具"（从 tools schema 获取）
 12. **安装方式** — 图标提示支持哪些客户端
+13. **版本号** — "v1.2.3"（从 npm registry / Official Registry 同步）
+
+**Skills 卡片可选字段**：
+14. **安装量** — skills.sh 的 install count（比 stars 更真实的使用信号，排序权重高于 stars）
 
 ### 列表页筛选/排序
 
@@ -288,6 +292,7 @@ ALTER TABLE skills ADD COLUMN IF NOT EXISTS is_trending BOOLEAN DEFAULT false;
 ALTER TABLE skills ADD COLUMN IF NOT EXISTS weekly_stars_delta INTEGER DEFAULT 0;
 ALTER TABLE skills ADD COLUMN IF NOT EXISTS freshness TEXT DEFAULT 'active'
   CHECK (freshness IN ('fresh', 'active', 'stale', 'archived'));
+ALTER TABLE skills ADD COLUMN IF NOT EXISTS install_count INTEGER DEFAULT 0;  -- skills.sh 安装量（比 stars 更真实的使用信号）
 ALTER TABLE skills ADD COLUMN IF NOT EXISTS source_url TEXT;  -- awesome-list / skills.sh 原始链接
 ALTER TABLE skills ADD COLUMN IF NOT EXISTS last_synced_at TIMESTAMPTZ;
 ```
@@ -310,6 +315,7 @@ CREATE TABLE IF NOT EXISTS mcp_servers (
   install_command TEXT,
   install_config JSONB,           -- 多客户端安装配置 JSON
   tools_count INTEGER DEFAULT 0,  -- MCP 工具数量
+  version TEXT,                   -- npm/PyPI 版本号（用户安装时关心）
   stars INTEGER DEFAULT 0,
   forks_count INTEGER DEFAULT 0,
   weekly_downloads INTEGER DEFAULT 0,

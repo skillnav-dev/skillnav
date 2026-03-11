@@ -10,6 +10,10 @@ export type SkillSource =
 export type PricingType = "free" | "freemium" | "paid";
 export type ArticleType = "tutorial" | "analysis" | "guide";
 
+export type McpSource = "official-registry" | "smithery" | "glama" | "manual";
+export type McpStatus = "draft" | "published" | "hidden";
+export type FreshnessLevel = "fresh" | "active" | "stale" | "archived";
+
 export type ArticleSource =
   | "anthropic"
   | "openai"
@@ -100,6 +104,47 @@ export interface Article {
   seriesNumber?: number;
   publishedAt: string;
   createdAt: string;
+}
+
+export interface McpServer {
+  id: string;
+  slug: string;
+  name: string;
+  nameZh?: string;
+  author?: string;
+  description?: string;
+  descriptionZh?: string;
+  introZh?: string;
+  category?: string;
+  tags: string[];
+  githubUrl?: string;
+  npmPackage?: string;
+  installCommand?: string;
+  installConfig?: Record<string, unknown>;
+  toolsCount: number;
+  version?: string;
+  stars: number;
+  forksCount: number;
+  weeklyDownloads: number;
+  qualityScore?: number;
+  qualityTier: "A" | "B" | "C";
+  qualityReason?: string;
+  editorCommentZh?: string;
+  editorRating?: string;
+  status: McpStatus;
+  source?: McpSource;
+  sourceUrl?: string;
+  isVerified: boolean;
+  isFeatured: boolean;
+  isTrending: boolean;
+  isArchived: boolean;
+  weeklyStarsDelta: number;
+  freshness: FreshnessLevel;
+  pushedAt?: string;
+  discoveredAt: string;
+  lastSyncedAt?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Submission {

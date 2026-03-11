@@ -5,16 +5,17 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Star, Copy, Check, ExternalLink } from "lucide-react";
 import { formatNumber } from "@/lib/utils";
-import type { MCPServer } from "@/data/mcp-servers";
+import type { McpServer } from "@/data/types";
 
 interface MCPCardProps {
-  server: MCPServer;
+  server: McpServer;
 }
 
 export function MCPCard({ server }: MCPCardProps) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
+    if (!server.installCommand) return;
     await navigator.clipboard.writeText(server.installCommand);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -26,7 +27,9 @@ export function MCPCard({ server }: MCPCardProps) {
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <h3 className="text-base font-semibold">{server.nameZh}</h3>
+              <h3 className="text-base font-semibold">
+                {server.nameZh ?? server.name}
+              </h3>
               {server.isFeatured && (
                 <Badge
                   variant="secondary"
@@ -36,44 +39,52 @@ export function MCPCard({ server }: MCPCardProps) {
                 </Badge>
               )}
             </div>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              by {server.author}
-            </p>
+            {server.author && (
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                by {server.author}
+              </p>
+            )}
           </div>
-          <a
-            href={server.githubUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-muted-foreground transition-colors hover:text-foreground"
-            aria-label={`${server.name} GitHub`}
-          >
-            <ExternalLink className="size-4" />
-          </a>
+          {server.githubUrl && (
+            <a
+              href={server.githubUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-muted-foreground transition-colors hover:text-foreground"
+              aria-label={`${server.name} GitHub`}
+            >
+              <ExternalLink className="size-4" />
+            </a>
+          )}
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
         <p className="line-clamp-2 text-sm text-muted-foreground">
-          {server.descriptionZh}
+          {server.descriptionZh ?? server.description ?? ""}
         </p>
         {/* Install command */}
-        <button
-          onClick={handleCopy}
-          className="flex w-full items-center gap-2 rounded-md border bg-muted/50 px-3 py-2 text-left text-xs font-mono text-muted-foreground transition-colors hover:bg-muted"
-        >
-          <code className="min-w-0 flex-1 truncate">
-            {server.installCommand}
-          </code>
-          {copied ? (
-            <Check className="size-3.5 shrink-0 text-green-600" />
-          ) : (
-            <Copy className="size-3.5 shrink-0" />
-          )}
-        </button>
+        {server.installCommand && (
+          <button
+            onClick={handleCopy}
+            className="flex w-full items-center gap-2 rounded-md border bg-muted/50 px-3 py-2 text-left text-xs font-mono text-muted-foreground transition-colors hover:bg-muted"
+          >
+            <code className="min-w-0 flex-1 truncate">
+              {server.installCommand}
+            </code>
+            {copied ? (
+              <Check className="size-3.5 shrink-0 text-green-600" />
+            ) : (
+              <Copy className="size-3.5 shrink-0" />
+            )}
+          </button>
+        )}
         <div className="flex items-center justify-between">
-          <Badge variant="secondary" className="text-xs">
-            {server.category}
-          </Badge>
-          {server.stars && server.stars > 0 && (
+          {server.category && (
+            <Badge variant="secondary" className="text-xs">
+              {server.category}
+            </Badge>
+          )}
+          {server.stars > 0 && (
             <span className="flex items-center gap-1 text-xs text-muted-foreground">
               <Star className="size-3" />
               {formatNumber(server.stars)}

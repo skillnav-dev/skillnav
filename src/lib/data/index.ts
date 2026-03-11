@@ -12,6 +12,17 @@ export {
 } from "./skills";
 
 export {
+  getMcpServers,
+  getMcpServersWithCount,
+  getMcpServerBySlug,
+  getFeaturedMcpServers,
+  getMcpServersCount,
+  getMcpCategories,
+  getAllMcpSlugs,
+  getSitemapMcpServers,
+} from "./mcp";
+
+export {
   getArticles,
   getArticleBySlug,
   getArticlesWithCount,

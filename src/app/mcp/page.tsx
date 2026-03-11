@@ -1,8 +1,13 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { SectionHeader } from "@/components/shared/section-header";
 import { BreadcrumbJsonLd } from "@/components/shared/json-ld";
-import { MCPGrid } from "@/components/mcp/mcp-grid";
 import { siteConfig } from "@/lib/constants";
+import { mcpParamsCache, MCP_PAGE_SIZE } from "@/lib/mcp-search-params";
+import { getMcpServersWithCount, getMcpCategories } from "@/lib/data";
+import { MCPToolbar } from "@/components/mcp/mcp-toolbar";
+import { MCPGrid } from "@/components/mcp/mcp-grid";
+import { MCPGridSkeleton } from "@/components/mcp/mcp-grid-skeleton";
 
 export const metadata: Metadata = {
   title: "MCP Server 精选导航",
@@ -17,7 +22,25 @@ export const metadata: Metadata = {
   },
 };
 
-export default function MCPPage() {
+type PageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export default async function MCPPage({ searchParams }: PageProps) {
+  const { q, category, sort, page } = await mcpParamsCache.parse(searchParams);
+  const offset = (page - 1) * MCP_PAGE_SIZE;
+
+  const [categories, { total }] = await Promise.all([
+    getMcpCategories(),
+    getMcpServersWithCount({
+      limit: MCP_PAGE_SIZE,
+      offset,
+      category,
+      search: q,
+      sort,
+    }),
+  ]);
+
   return (
     <>
       <BreadcrumbJsonLd
@@ -32,7 +55,10 @@ export default function MCPPage() {
           title="MCP Server 精选导航"
           description="精选高质量 Model Context Protocol Server，让 AI Agent 连接外部工具和数据源"
         />
-        <MCPGrid />
+        <MCPToolbar categories={categories} totalCount={total} />
+        <Suspense fallback={<MCPGridSkeleton />}>
+          <MCPGrid q={q} category={category} sort={sort} page={page} />
+        </Suspense>
       </div>
     </>
   );

@@ -1,5 +1,13 @@
-import type { SkillRow, ArticleRow } from "./types";
-import type { Skill, Article, ArticleStatus } from "@/data/types";
+import type { SkillRow, ArticleRow, McpServerRow } from "./types";
+import type {
+  Skill,
+  Article,
+  ArticleStatus,
+  McpServer,
+  McpSource,
+  McpStatus,
+  FreshnessLevel,
+} from "@/data/types";
 
 /**
  * Map Supabase skill row (snake_case) to app Skill (camelCase).
@@ -41,6 +49,52 @@ export function mapSkillRow(row: SkillRow): Skill {
     qualityTier: row.quality_tier ?? undefined,
     isHidden: row.is_hidden ?? undefined,
     lastVerifiedAt: row.last_verified_at ?? undefined,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+/**
+ * Map Supabase mcp_servers row (snake_case) to app McpServer (camelCase).
+ */
+export function mapMcpServerRow(row: McpServerRow): McpServer {
+  return {
+    id: row.id,
+    slug: row.slug,
+    name: row.name,
+    nameZh: row.name_zh ?? undefined,
+    author: row.author ?? undefined,
+    description: row.description ?? undefined,
+    descriptionZh: row.description_zh ?? undefined,
+    introZh: row.intro_zh ?? undefined,
+    category: row.category ?? undefined,
+    tags: row.tags,
+    githubUrl: row.github_url ?? undefined,
+    npmPackage: row.npm_package ?? undefined,
+    installCommand: row.install_command ?? undefined,
+    installConfig: row.install_config ?? undefined,
+    toolsCount: row.tools_count,
+    version: row.version ?? undefined,
+    stars: row.stars,
+    forksCount: row.forks_count,
+    weeklyDownloads: row.weekly_downloads,
+    qualityScore: row.quality_score ?? undefined,
+    qualityTier: row.quality_tier,
+    qualityReason: row.quality_reason ?? undefined,
+    editorCommentZh: row.editor_comment_zh ?? undefined,
+    editorRating: row.editor_rating ?? undefined,
+    status: row.status as McpStatus,
+    source: (row.source as McpSource) ?? undefined,
+    sourceUrl: row.source_url ?? undefined,
+    isVerified: row.is_verified,
+    isFeatured: row.is_featured,
+    isTrending: row.is_trending,
+    isArchived: row.is_archived,
+    weeklyStarsDelta: row.weekly_stars_delta,
+    freshness: row.freshness as FreshnessLevel,
+    pushedAt: row.pushed_at ?? undefined,
+    discoveredAt: row.discovered_at,
+    lastSyncedAt: row.last_synced_at ?? undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };

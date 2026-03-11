@@ -106,6 +106,57 @@ export interface Database {
         };
         Update: Partial<Database["public"]["Tables"]["articles"]["Insert"]>;
       };
+      mcp_servers: {
+        Row: {
+          id: string;
+          slug: string;
+          name: string;
+          name_zh: string | null;
+          author: string | null;
+          description: string | null;
+          description_zh: string | null;
+          intro_zh: string | null;
+          category: string | null;
+          tags: string[];
+          github_url: string | null;
+          npm_package: string | null;
+          install_command: string | null;
+          install_config: Record<string, unknown> | null;
+          tools_count: number;
+          version: string | null;
+          stars: number;
+          forks_count: number;
+          weekly_downloads: number;
+          quality_score: number | null;
+          quality_tier: "A" | "B" | "C";
+          quality_reason: string | null;
+          editor_comment_zh: string | null;
+          editor_rating: string | null;
+          status: "draft" | "published" | "hidden";
+          source: string | null;
+          source_url: string | null;
+          is_verified: boolean;
+          is_featured: boolean;
+          is_trending: boolean;
+          is_archived: boolean;
+          weekly_stars_delta: number;
+          freshness: "fresh" | "active" | "stale" | "archived";
+          pushed_at: string | null;
+          discovered_at: string;
+          last_synced_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Omit<
+          Database["public"]["Tables"]["mcp_servers"]["Row"],
+          "id" | "created_at" | "updated_at"
+        > & {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["mcp_servers"]["Insert"]>;
+      };
       submissions: {
         Row: {
           id: string;
@@ -133,4 +184,5 @@ export interface Database {
 // Convenience aliases
 export type SkillRow = Database["public"]["Tables"]["skills"]["Row"];
 export type ArticleRow = Database["public"]["Tables"]["articles"]["Row"];
+export type McpServerRow = Database["public"]["Tables"]["mcp_servers"]["Row"];
 export type SubmissionRow = Database["public"]["Tables"]["submissions"]["Row"];

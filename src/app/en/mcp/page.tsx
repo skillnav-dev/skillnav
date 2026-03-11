@@ -4,7 +4,9 @@ import { Badge } from "@/components/ui/badge";
 import { BreadcrumbJsonLd } from "@/components/shared/json-ld";
 import { CopyButton } from "@/components/shared/copy-button";
 import { siteConfig } from "@/lib/constants";
-import { mcpServers } from "@/data/mcp-servers";
+import { getMcpServers } from "@/lib/data";
+import { formatNumber } from "@/lib/utils";
+import { Star } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "MCP Servers Directory",
@@ -19,7 +21,9 @@ export const metadata: Metadata = {
   },
 };
 
-export default function EnMCPPage() {
+export default async function EnMCPPage() {
+  const servers = await getMcpServers({ limit: 100 });
+
   return (
     <>
       <BreadcrumbJsonLd
@@ -33,14 +37,14 @@ export default function EnMCPPage() {
           MCP Servers Directory
         </h1>
         <p className="mt-2 text-muted-foreground">
-          {mcpServers.length} curated Model Context Protocol servers.{" "}
+          {servers.length} curated Model Context Protocol servers.{" "}
           <Link href="/mcp" className="text-primary hover:underline">
             View Chinese version
           </Link>
         </p>
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {mcpServers.map((server) => (
+          {servers.map((server) => (
             <div
               key={server.slug}
               id={server.slug}
@@ -48,31 +52,40 @@ export default function EnMCPPage() {
             >
               <div className="flex items-start justify-between gap-2">
                 <h2 className="font-semibold">{server.name}</h2>
-                <Badge variant="outline" className="shrink-0 text-xs">
-                  {server.category}
-                </Badge>
+                {server.category && (
+                  <Badge variant="outline" className="shrink-0 text-xs">
+                    {server.category}
+                  </Badge>
+                )}
               </div>
-              <p className="mt-1 text-xs text-muted-foreground">
-                by {server.author}
-              </p>
               <p className="mt-2 text-sm text-foreground/80">
-                {server.description}
+                {server.description ?? ""}
               </p>
-              <div className="mt-3 flex items-center gap-2">
-                <code className="flex-1 truncate rounded bg-muted px-2 py-1 text-xs">
-                  {server.installCommand}
-                </code>
-                <CopyButton text={server.installCommand} />
-              </div>
-              <div className="mt-2 flex gap-2">
-                <a
-                  href={server.githubUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-primary hover:underline"
-                >
-                  GitHub
-                </a>
+              {server.installCommand && (
+                <div className="mt-3 flex items-center gap-2">
+                  <code className="flex-1 truncate rounded bg-muted px-2 py-1 text-xs">
+                    {server.installCommand}
+                  </code>
+                  <CopyButton text={server.installCommand} />
+                </div>
+              )}
+              <div className="mt-2 flex items-center gap-2">
+                {server.githubUrl && (
+                  <a
+                    href={server.githubUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-primary hover:underline"
+                  >
+                    GitHub
+                  </a>
+                )}
+                {server.stars > 0 && (
+                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Star className="size-3" />
+                    {formatNumber(server.stars)}
+                  </span>
+                )}
               </div>
             </div>
           ))}
