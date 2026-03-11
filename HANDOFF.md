@@ -1,5 +1,5 @@
 # Handoff — SkillNav
-<!-- Updated at 2026-03-11 session 27 -->
+<!-- Updated at 2026-03-11 session 28 -->
 
 ## Objective
 中文开发者的 AI 智能体工具站（Skills · MCP · 实战资讯），当前阶段：内容战略 2.0 实施中
@@ -225,38 +225,46 @@
   - dry-run 验证通过（69 篇可查询，3 篇模拟成功）
 - **4 份调研报告 + 1 份 DB 迁移**: docs/research/content-editing-*.md
 
+### 第 27 轮：Admin 发布修复 + 编译模式验证 + 数据清理（session 28, Day 11）
+- **Admin 发布按钮修复（Cloudflare Worker secrets）**:
+  - 根因: `SUPABASE_SERVICE_ROLE_KEY` Worker secret 值为空字符串 + `process.env` 无法获取 Worker secrets
+  - 修复: `getCloudflareContext().env` 直接访问 secrets + server action 改返回值模式 `{ok, error}`
+  - 重新 `wrangler secret put` 设置正确值
+- **编译模式试跑验证**: 5 篇 draft 回炉（4/5 成功，1 篇 GPT Proxy 502）
+  - 标题短且有编辑立场，导读 3-4 句含"对中国开发者"本地化视角
+  - 质量达发布标准，确认可全量回炉
+- **数据清理**: 删除 162 篇 2025-11 之前的旧文章，保留 gpt-oss-safeguard（published）
+  - DB 从 582 → 420 篇
+
 ## In Progress
 
-### 编译模式回炉（已就绪，待执行）
-- `--retranslate-drafts` flag 已实现，69 篇 draft 待回炉
-- 推送部署后，先跑 5 篇验证效果，确认质量后全量跑
-- 回炉后用户选稿，高价值文章人工精修
+### 编译模式全量回炉（待执行）
+- 试跑 5 篇验证通过（4/5 成功，1 篇 GPT Proxy 502），编译质量达发布标准
+- 删除 162 篇旧文章（2025-11 之前）后，剩余 420 篇，draft 数量待确认
+- 下一步：全量回炉剩余 draft → 选稿发布
 
 ## Next Actions
 
-### 编译模式验证 + 文章发布（立即）
-1. **推送部署** — 让新编译 prompt 对自动采集生效
-2. **试跑 5 篇** — `node scripts/sync-articles.mjs --retranslate-drafts --limit 5`
-3. **验证质量** — 对比回炉前后的标题/导读/正文
-4. **全量回炉** — 确认后跑全部 69 篇 draft
-5. **选稿发布** — 批量审核，publish/hide，高价值文章人工精修
+### 编译模式全量回炉 + 选稿（立即）
+1. **全量回炉** — `LLM_PROVIDER=gpt node scripts/sync-articles.mjs --retranslate-drafts`
+2. **选稿发布** — 批量审核，publish/hide，高价值文章人工精修
 
 ### 内容运营管线 Phase 2
-6. **LLM Fallback**: scripts/lib/llm.mjs 增加 provider 降级链
-7. **Per-source timeout**: sync-articles.mjs 单源 10min 超时
-8. **Workflow 重试**: nick-fields/retry@v3
+3. **LLM Fallback**: scripts/lib/llm.mjs 增加 provider 降级链
+4. **Per-source timeout**: sync-articles.mjs 单源 10min 超时
+5. **Workflow 重试**: nick-fields/retry@v3
 
 ### 内容分发启动
-9. **蹭腾讯 SkillHub 热度** — 横评文章
-10. **注册 X / 公众号 / 知乎 / 即刻** — 冷启动
+6. **蹭腾讯 SkillHub 热度** — 横评文章
+7. **注册 X / 公众号 / 知乎 / 即刻** — 冷启动
 
 ### 内容战略 2.0 继续
-11. **首期周刊正式生成** — `npm run generate:weekly`
-12. **EditorialHighlights 接入** — 首页组件接入周刊/编辑文章数据
+8. **首期周刊正式生成** — `npm run generate:weekly`
+9. **EditorialHighlights 接入** — 首页组件接入周刊/编辑文章数据
 
 ### 后续优化
-13. **Newsletter 接入 Resend API** — 当前为"即将推出"占位
-14. **GitHub 页面内链引流** — 从首页/文章页引流到 `/github`
+10. **Newsletter 接入 Resend API** — 当前为"即将推出"占位
+11. **GitHub 页面内链引流** — 从首页/文章页引流到 `/github`
 
 ## Risks & Decisions
 - **UI/UX 重构方案 v1 全部完成**: Phase 0-5 已实施
@@ -273,7 +281,7 @@
 - **Supabase NULL 陷阱**: `.neq("col", "val")` 会排除 NULL 行，需用 `.or("col.is.null,col.neq.val")`
 - **GitHub 导航页决策 v2**: 推翻 session 13 的 DB 方案，改用静态 TS 数据（同 MCP 模式）；场景导向 7 分类；不做详情页直链 GitHub；不加导航入口
 - **内容路线**: "先做再精"节奏正确，但不模仿 datawhalechina 翻译路径；我们的差异化是 168 个真实 Skill 数据 + 实战视角
-- **Cloudflare Worker secrets 补全**: `SUPABASE_SERVICE_ROLE_KEY` 已添加（之前只有 `ADMIN_PASSWORD`）
+- **Cloudflare Worker secrets**: 用 `getCloudflareContext().env` 访问，不能依赖 `process.env`（详见 MEMORY.md）
 - **Supabase RLS 静默失败**: update 被 RLS 拦截时返回 `{data:[], error:null}`，不抛错。必须检查返回行数
 - **内容分发规范 v1 已确认**: 4 平台第一梯队 (X/公众号/知乎/即刻)，年成本 ~¥1,000，6-8h/周
 - **小红书暂不做**: 严禁外链 + 图片制作成本高，无法形成引流闭环
@@ -292,32 +300,21 @@
 - **SEO 蓝海**: Claude Code Skills / CLAUDE.md / Context Engineering 几乎无中文深度内容
 
 ## Verify
-- `node scripts/sync-articles.mjs --retranslate-drafts --dry-run --limit 3 2>&1 | grep "Found"` — Found 69 draft articles, processing 3
-- `grep 'senior Chinese tech media editor' scripts/lib/llm.mjs` — 存在（编译 prompt 已升级）
-- `grep 'intro_zh' src/lib/supabase/types.ts` — 存在（类型已更新）
+- `grep 'getCloudflareContext' src/lib/data/admin.ts` — 存在（Worker secrets 访问修复）
+- `grep 'ok:' src/app/admin/articles/actions.ts` — 存在（返回值模式）
 - `npm run build` — 构建通过
 
-## Modified Files (Session 27)
-- `scripts/lib/llm.mjs` — SYSTEM_PROMPT 升级为编译模式 + 3 个 user prompt 增加 introZh
-- `scripts/lib/logger.mjs` — 新增 `setOutput()` 方法
-- `scripts/sync-articles.mjs` — 写入 intro_zh + `--retranslate-drafts` flag + GITHUB_OUTPUT
-- `.github/workflows/sync-articles.yml` — 双 cron + Slack 成功通知
-- `.github/workflows/health-check.yml` — cron 改为 UTC 23:45
-- `.github/workflows/generate-weekly.yml` — cron 改为周一 UTC 00:00
-- `src/app/articles/[slug]/page.tsx` — 导读展示块
-- `src/data/types.ts` — Article 接口 +introZh
-- `src/lib/supabase/mappers.ts` — mapArticleRow +introZh
-- `src/lib/supabase/types.ts` — ArticleRow +intro_zh
-- `supabase/migrations/20260311_add_intro_zh.sql` — DB 迁移
-- `docs/specs/content-operations-spec.md` — status → 生效中
-- `docs/research/content-editing-*.md` — 4 份调研报告（新增）
+## Modified Files (Session 28)
+- `src/lib/data/admin.ts` — `getServiceRoleKey()` 用 `getCloudflareContext().env` 访问 secrets
+- `src/app/admin/articles/actions.ts` — server action 改返回 `{ok, error}` 模式
+- `src/components/admin/status-toggle-form.tsx` — 适配返回值模式，显示具体错误
 
 ## Document Inventory
 | 文件 | 状态 | 行数 | 说明 |
 |------|------|------|------|
-| `HANDOFF.md` | 更新 | ~320 | 交接文档 |
+| `HANDOFF.md` | 更新 | ~340 | 交接文档 |
 | `CLAUDE.md` | 未变 | ~150 | 项目规范 |
-| `docs/specs/content-operations-spec.md` | 更新 | 293 | 内容运营管线规范 v1（生效中） |
+| `docs/specs/content-operations-spec.md` | 未变 | 293 | 内容运营管线规范 v1（生效中） |
 | `docs/specs/content-distribution-spec.md` | 未变 | 373 | 内容分发规范 v1 |
 | `docs/specs/design-system.md` | 未变 | 485 | 设计规范 v1 + §7.4 移动端模式 |
 | `docs/specs/ui-ux-redesign-v1.md` | 未变 | 338 | UI/UX 重构方案 v1（全部完成） |
@@ -325,7 +322,7 @@
 | `docs/specs/content-pipeline-spec.md` | 未变 | 278 | 内容管道规范 v1（生效中） |
 | `docs/plans/github-nav-design.md` | 未变 | 233 | GitHub 导航页设计方案 v2（已实施） |
 | `docs/plans/weekly-pipeline.md` | 未变 | 184 | 周刊生成工具链操作文档 |
-| `docs/research/content-editing-*.md` | **新增** | ~290 | 4 份内容编辑调研报告 |
+| `docs/research/content-editing-*.md` | 未变 | ~290 | 4 份内容编辑调研报告 |
 | `docs/research/content-ops-*.md` | 未变 | 238 | 3 份运营调研报告 |
 | `docs/research/distribution/*.md` | 未变 | 612 | 4 份分发渠道调研报告 |
 | `docs/research/*.md` | 未变 | ~3.7K | 其他调研报告 |
