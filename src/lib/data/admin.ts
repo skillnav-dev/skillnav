@@ -17,17 +17,10 @@ function getServiceRoleKey(): string | undefined {
   // so process.env won't have them. Access via getCloudflareContext() instead.
   try {
     const ctx = getCloudflareContext();
-    const envObj = ctx.env as Record<string, unknown>;
-    const key = envObj.SUPABASE_SERVICE_ROLE_KEY;
-    console.log(
-      `[admin] getCloudflareContext OK, env keys: ${Object.keys(envObj).join(",")}, hasKey: ${!!key}, type: ${typeof key}`,
-    );
+    const key = (ctx.env as Record<string, unknown>).SUPABASE_SERVICE_ROLE_KEY;
     if (typeof key === "string" && key) return key;
-  } catch (err) {
-    console.error(
-      `[admin] getCloudflareContext failed:`,
-      err instanceof Error ? err.message : err,
-    );
+  } catch {
+    // Not in Cloudflare runtime (local dev), fall through
   }
   return process.env.SUPABASE_SERVICE_ROLE_KEY;
 }
@@ -148,11 +141,6 @@ export async function updateArticleStatus(
   id: string,
   status: string,
 ): Promise<void> {
-  const hasServiceKey = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
-  console.log(
-    `[admin] updateArticleStatus: id=${id}, status=${status}, hasServiceKey=${hasServiceKey}`,
-  );
-
   const supabase = createAdminClient();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -161,14 +149,9 @@ export async function updateArticleStatus(
     .eq("id", id)
     .select("id");
 
-  if (error) {
-    console.error(`[admin] Supabase error:`, error);
-    throw error;
-  }
+  if (error) throw error;
   if (!data || data.length === 0) {
-    throw new Error(
-      `No rows updated (hasServiceKey=${hasServiceKey}) — check RLS policy or article ID`,
-    );
+    throw new Error("No rows updated — check RLS policy or article ID");
   }
 }
 
