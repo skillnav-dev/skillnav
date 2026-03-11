@@ -332,7 +332,7 @@ export async function getAllSkillSlugs(): Promise<string[]> {
 
 /**
  * Get curated skill slugs with updated_at for sitemap.
- * Only includes quality_tier A/B skills to keep sitemap lean.
+ * Only includes curated (non-ClawHub) skills to keep sitemap lean.
  */
 export async function getSitemapSkills(): Promise<
   { slug: string; updatedAt: string }[]
@@ -348,7 +348,7 @@ export async function getSitemapSkills(): Promise<
   const { data, error } = (await supabase
     .from("skills")
     .select("slug, updated_at")
-    .in("quality_tier", ["A", "B"])
+    .eq("source", "curated")
     .or("is_hidden.is.null,is_hidden.eq.false")) as {
     data: { slug: string; updated_at: string }[] | null;
     error: unknown;
