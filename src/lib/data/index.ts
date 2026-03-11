@@ -8,6 +8,7 @@ export {
   getFeaturedSkills,
   getSkillsCount,
   getAllSkillSlugs,
+  getSitemapSkills,
 } from "./skills";
 
 export {
@@ -20,4 +21,5 @@ export {
   getWeeklyArticles,
   getWeeklyBySlug,
   getAllArticleSlugs,
+  getSitemapArticles,
 } from "./articles";

@@ -329,3 +329,34 @@ export async function getAllSkillSlugs(): Promise<string[]> {
   if (error) throw error;
   return (data ?? []).map((r) => r.slug);
 }
+
+/**
+ * Get curated skill slugs with updated_at for sitemap.
+ * Only includes quality_tier A/B skills to keep sitemap lean.
+ */
+export async function getSitemapSkills(): Promise<
+  { slug: string; updatedAt: string }[]
+> {
+  if (!isSupabaseConfigured()) {
+    const { mockSkills } = await import("@/data/mock-skills");
+    return mockSkills.map((s) => ({ slug: s.slug, updatedAt: s.createdAt }));
+  }
+
+  const { createStaticClient } = await import("@/lib/supabase/static");
+  const supabase = createStaticClient();
+
+  const { data, error } = (await supabase
+    .from("skills")
+    .select("slug, updated_at")
+    .in("quality_tier", ["A", "B"])
+    .or("is_hidden.is.null,is_hidden.eq.false")) as {
+    data: { slug: string; updated_at: string }[] | null;
+    error: unknown;
+  };
+
+  if (error) throw error;
+  return (data ?? []).map((r) => ({
+    slug: r.slug,
+    updatedAt: r.updated_at,
+  }));
+}

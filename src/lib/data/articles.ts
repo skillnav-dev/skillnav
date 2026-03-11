@@ -326,3 +326,35 @@ export async function getAllArticleSlugs(): Promise<string[]> {
   if (error) throw error;
   return (data ?? []).map((r) => r.slug);
 }
+
+/**
+ * Get published article slugs with updated_at for sitemap.
+ */
+export async function getSitemapArticles(): Promise<
+  { slug: string; updatedAt: string }[]
+> {
+  if (!isSupabaseConfigured()) {
+    const { mockArticles } = await import("@/data/mock-articles");
+    return mockArticles.map((a) => ({
+      slug: a.slug,
+      updatedAt: a.publishedAt,
+    }));
+  }
+
+  const { createStaticClient } = await import("@/lib/supabase/static");
+  const supabase = createStaticClient();
+
+  const { data, error } = (await supabase
+    .from("articles")
+    .select("slug, published_at")
+    .eq("status", "published")) as {
+    data: { slug: string; published_at: string }[] | null;
+    error: unknown;
+  };
+
+  if (error) throw error;
+  return (data ?? []).map((r) => ({
+    slug: r.slug,
+    updatedAt: r.published_at,
+  }));
+}
