@@ -316,7 +316,7 @@ async function translateArticleSingle({ title, summary, content }) {
 
 {
   "titleZh": "Rewritten Chinese title — compelling, specific, with information hooks (15-25 chars). NOT a literal translation.",
-  "introZh": "Editor's intro (导读) — 2-3 sentences: what this covers, why it matters to Chinese developers, key takeaway.",
+  "introZh": "导读 — 2-3 句：这篇讲什么、核心发现或结论、读完能获得什么。直接切入主题，不要用'对中国开发者来说'之类的泛化开头。",
   "summaryZh": "Chinese summary (2-3 sentences, capture key points)",
   "contentZh": "Compiled Chinese content — restructured for readability, sub-headings added where needed, filler cut, natural Chinese flow (preserve markdown formatting)",
   "articleType": "one of: tutorial, analysis, guide (see definitions below)",
@@ -361,7 +361,7 @@ async function translateArticleChunked({ title, summary, content }) {
 
 {
   "titleZh": "Rewritten Chinese title — compelling, specific, with information hooks (15-25 chars). NOT a literal translation.",
-  "introZh": "Editor's intro (导读) — 2-3 sentences: what this covers, why it matters to Chinese developers, key takeaway.",
+  "introZh": "导读 — 2-3 句：这篇讲什么、核心发现或结论、读完能获得什么。直接切入主题，不要用'对中国开发者来说'之类的泛化开头。",
   "summaryZh": "Chinese summary (2-3 sentences, capture key points)",
   "contentZh": "Compiled Chinese content — restructured for readability, sub-headings added where needed, filler cut, natural Chinese flow (preserve markdown formatting)",
   "articleType": "one of: tutorial, analysis, guide (see definitions below)",
@@ -433,7 +433,7 @@ Extract and compile the key insights into a structured Chinese summary.
 Return JSON with these exact fields:
 {
   "titleZh": "Rewritten Chinese title — compelling, specific, with information hooks (15-25 chars). NOT a literal translation.",
-  "introZh": "Editor's intro (导读) — 2-3 sentences: what this covers, why it matters to Chinese developers, key takeaway.",
+  "introZh": "导读 — 2-3 句：这篇讲什么、核心发现或结论、读完能获得什么。直接切入主题，不要用'对中国开发者来说'之类的泛化开头。",
   "summaryZh": "Chinese summary (2-3 sentences, capture key points)",
   "contentZh": "Structured Chinese summary using ## headings for each key topic, include direct quotes where impactful",
   "articleType": "one of: tutorial, analysis, guide (see definitions below)",
