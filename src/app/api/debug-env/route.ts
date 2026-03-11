@@ -21,9 +21,8 @@ export async function GET() {
     result.cfContext_serviceKeyType = typeof env.SUPABASE_SERVICE_ROLE_KEY;
     result.cfContext_hasAdminPw = !!env.ADMIN_PASSWORD;
 
-    // Try direct property access
-    result.cfContext_directAccess = typeof (env as any)
-      .SUPABASE_SERVICE_ROLE_KEY;
+    // Try direct property access via env already typed as Record
+    result.cfContext_directAccess = typeof env.SUPABASE_SERVICE_ROLE_KEY;
   } catch (err) {
     result.cfContext_ok = false;
     result.cfContext_error = err instanceof Error ? err.message : String(err);
