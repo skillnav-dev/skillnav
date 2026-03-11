@@ -1,5 +1,5 @@
 # Handoff — SkillNav
-<!-- Updated at 2026-03-11 session 26 -->
+<!-- Updated at 2026-03-11 session 27 -->
 
 ## Objective
 中文开发者的 AI 智能体工具站（Skills · MCP · 实战资讯），当前阶段：内容战略 2.0 实施中
@@ -202,37 +202,61 @@
 - **4 文件变更**: sitemap.ts + skills.ts + articles.ts + index.ts
 - **已部署 + GSC 已重新提交 sitemap**
 
+### 第 26 轮：内容运营 Phase 1 + 编译模式升级（session 27, Day 11）
+- **内容运营规范 v1 审批通过**: `content-operations-spec.md` status → 生效中
+- **Phase 1 实施**: 双时段采集 (UTC 22:15 + 10:15) + 健康检查/周刊时间调整 + Slack 成功通知
+  - `logger.mjs` 新增 `setOutput()` — step outputs 暴露给 workflow
+  - `sync-articles.mjs` 暴露 inserted/skipped/failed/fetched 到 GITHUB_OUTPUT
+  - Slack 通知区分晨间/午后采集（via `github.event.schedule`）
+  - 手动触发 sync 补数据，确认管线恢复正常
+- **内容二次加工体系调研**: 4 路并行 Agent
+  - 69 篇 draft 库存盘点（78% score=5, huggingface/thenewstack/crewai 为主）
+  - 编辑标准缺口分析（5 个关键缺口：无改写流程、无升级路径等）
+  - 竞品内容加工模式（机器之心/InfoQ/36氪/掘金/少数派）
+  - AI 内容 SEO 需求（10 个优先关键词方向 + 蓝海机会）
+- **编译模式升级（核心决策）**: 修源头不补下游
+  - 判断: 69 篇积压的根因是翻译质量不够发布级，不是缺加工环节
+  - 方案: 升级 LLM prompt 从"翻译"→"编译"，一次调用产出改写标题 + 导读 + 编译正文
+  - SYSTEM_PROMPT: "professional translator" → "senior tech media editor"
+  - 新增 `introZh` 字段: 2-3 句导读（文章讲什么、为什么值得读）
+  - DB 迁移: `intro_zh` 列已执行
+  - 前端: 文章详情页导读块（左侧边线样式）
+  - `--retranslate-drafts` flag: 批量回炉 draft，支持 --source/--limit
+  - dry-run 验证通过（69 篇可查询，3 篇模拟成功）
+- **4 份调研报告 + 1 份 DB 迁移**: docs/research/content-editing-*.md
+
 ## In Progress
-无（内容运营规范待审批，审批后进入 Phase 1 实施）
+
+### 编译模式回炉（已就绪，待执行）
+- `--retranslate-drafts` flag 已实现，69 篇 draft 待回炉
+- 推送部署后，先跑 5 篇验证效果，确认质量后全量跑
+- 回炉后用户选稿，高价值文章人工精修
 
 ## Next Actions
 
-### 内容运营管线 Phase 1（审批后立即执行）
-1. **改 cron 配置**: sync-articles 双时段 + health-check/weekly 联动调整
-2. **添加成功通知**: Slack success summary
-3. **手动触发一次 sync**: 补上 3/8-3/10 缺失内容
+### 编译模式验证 + 文章发布（立即）
+1. **推送部署** — 让新编译 prompt 对自动采集生效
+2. **试跑 5 篇** — `node scripts/sync-articles.mjs --retranslate-drafts --limit 5`
+3. **验证质量** — 对比回炉前后的标题/导读/正文
+4. **全量回炉** — 确认后跑全部 69 篇 draft
+5. **选稿发布** — 批量审核，publish/hide，高价值文章人工精修
 
-### 内容运营管线 Phase 2（下次会话）
-4. **LLM Fallback**: scripts/lib/llm.mjs 增加 provider 降级链
-5. **Per-source timeout**: sync-articles.mjs 单源 10min 超时
-6. **Workflow 重试**: nick-fields/retry@v3
+### 内容运营管线 Phase 2
+6. **LLM Fallback**: scripts/lib/llm.mjs 增加 provider 降级链
+7. **Per-source timeout**: sync-articles.mjs 单源 10min 超时
+8. **Workflow 重试**: nick-fields/retry@v3
 
 ### 内容分发启动
-7. **蹭腾讯 SkillHub 热度** — 横评文章 "腾讯入局 AI Skills，开发者该怎么选？"
-8. **注册 X 账号 + 开通 Premium** ($8/月)
-9. **注册微信公众号** — 企业订阅号 + 认证
-10. **注册知乎账号 + 即刻账号**
-11. **X 支柱 Thread x3** — 冷启动内容准备
+9. **蹭腾讯 SkillHub 热度** — 横评文章
+10. **注册 X / 公众号 / 知乎 / 即刻** — 冷启动
 
 ### 内容战略 2.0 继续
 11. **首期周刊正式生成** — `npm run generate:weekly`
 12. **EditorialHighlights 接入** — 首页组件接入周刊/编辑文章数据
-13. **文章发布**: 审核 12 篇 3 月 draft，选 3 篇 published
 
 ### 后续优化
-14. **Newsletter 接入 Resend API** — 当前为"即将推出"占位
-15. **GitHub 页面内链引流** — 从首页/文章页引流到 `/github`
-16. **n8n 自动化管线** — 文章 → X 推文草稿自动生成
+13. **Newsletter 接入 Resend API** — 当前为"即将推出"占位
+14. **GitHub 页面内链引流** — 从首页/文章页引流到 `/github`
 
 ## Risks & Decisions
 - **UI/UX 重构方案 v1 全部完成**: Phase 0-5 已实施
@@ -256,31 +280,44 @@
 - **B站不做**: 视频制作成本过高，1人团队不可持续
 - **不维护社群**: 参考阮一峰经验，社群维护成本远大于收益
 - **公众号发布规则**: 群发每天 1 次 + "发布"（关闭群发通知）不限次数，均可被算法推荐
-- **内容运营规范 v1 待审批**: 双同步 + LLM fallback + 每日编辑 SOP + 三阶段实施
+- **内容运营规范 v1 已生效**: Phase 1 已实施（双同步 + Slack 通知），Phase 2/3 待做
 - **腾讯 SkillHub 不改变我们战略**: 他们打企业/运营市场，我们打开发者编辑精选，不正面竞争
 - **SEO 策略: 少而精**: sitemap 只提交高质量页面，不追求 URL 数量；2 周后观察 GSC 索引率变化
 - **CI 故障连续 4 天 (3/5-3/8)**: 根因已确认 — timeout 旧设置 + GPT Proxy 503，3/9 恢复
 - **双同步理由**: US 源高峰 UTC 16:00-22:00 = CST 00:00-06:00，需 UTC 22:15 采集赶 08:00 早高峰
 - **GitHub Actions 月预算**: 双同步后 ~1,182 min/月，免费额度 2,000 min，安全
 - **编辑审核节奏**: 09:00 CST 固定窗口，2-3 篇/天 published，底线承诺周刊
+- **编译模式核心决策**: 修源头不补下游 — 升级 prompt 让翻译直接产出编译级质量，不加 polish 脚本/curated tier
+- **行业对标**: 走"编译"模式（36氪神译局/机器之心），不走纯翻译（掘金）或完全改写（品玩）
+- **SEO 蓝海**: Claude Code Skills / CLAUDE.md / Context Engineering 几乎无中文深度内容
 
 ## Verify
-- `test -f docs/specs/content-operations-spec.md && echo OK` — OK
-- `curl -s https://skillnav.dev/sitemap.xml | grep -o '<loc>' | wc -l | tr -d ' '` — 224
+- `node scripts/sync-articles.mjs --retranslate-drafts --dry-run --limit 3 2>&1 | grep "Found"` — Found 69 draft articles, processing 3
+- `grep 'senior Chinese tech media editor' scripts/lib/llm.mjs` — 存在（编译 prompt 已升级）
+- `grep 'intro_zh' src/lib/supabase/types.ts` — 存在（类型已更新）
 - `npm run build` — 构建通过
 
-## Modified Files (Session 26)
-- `src/app/sitemap.ts` — 重写，精选 skills + published articles + 6 静态页 + 真实时间戳
-- `src/lib/data/skills.ts` — 新增 `getSitemapSkills()`（source=curated 过滤）
-- `src/lib/data/articles.ts` — 新增 `getSitemapArticles()`（published + published_at 时间戳）
-- `src/lib/data/index.ts` — 导出两个新 sitemap 函数
+## Modified Files (Session 27)
+- `scripts/lib/llm.mjs` — SYSTEM_PROMPT 升级为编译模式 + 3 个 user prompt 增加 introZh
+- `scripts/lib/logger.mjs` — 新增 `setOutput()` 方法
+- `scripts/sync-articles.mjs` — 写入 intro_zh + `--retranslate-drafts` flag + GITHUB_OUTPUT
+- `.github/workflows/sync-articles.yml` — 双 cron + Slack 成功通知
+- `.github/workflows/health-check.yml` — cron 改为 UTC 23:45
+- `.github/workflows/generate-weekly.yml` — cron 改为周一 UTC 00:00
+- `src/app/articles/[slug]/page.tsx` — 导读展示块
+- `src/data/types.ts` — Article 接口 +introZh
+- `src/lib/supabase/mappers.ts` — mapArticleRow +introZh
+- `src/lib/supabase/types.ts` — ArticleRow +intro_zh
+- `supabase/migrations/20260311_add_intro_zh.sql` — DB 迁移
+- `docs/specs/content-operations-spec.md` — status → 生效中
+- `docs/research/content-editing-*.md` — 4 份调研报告（新增）
 
 ## Document Inventory
 | 文件 | 状态 | 行数 | 说明 |
 |------|------|------|------|
-| `HANDOFF.md` | 更新 | ~280 | 交接文档 |
+| `HANDOFF.md` | 更新 | ~320 | 交接文档 |
 | `CLAUDE.md` | 未变 | ~150 | 项目规范 |
-| `docs/specs/content-operations-spec.md` | **新增** | 293 | 内容运营管线规范 v1（待审批） |
+| `docs/specs/content-operations-spec.md` | 更新 | 293 | 内容运营管线规范 v1（生效中） |
 | `docs/specs/content-distribution-spec.md` | 未变 | 373 | 内容分发规范 v1 |
 | `docs/specs/design-system.md` | 未变 | 485 | 设计规范 v1 + §7.4 移动端模式 |
 | `docs/specs/ui-ux-redesign-v1.md` | 未变 | 338 | UI/UX 重构方案 v1（全部完成） |
@@ -288,8 +325,9 @@
 | `docs/specs/content-pipeline-spec.md` | 未变 | 278 | 内容管道规范 v1（生效中） |
 | `docs/plans/github-nav-design.md` | 未变 | 233 | GitHub 导航页设计方案 v2（已实施） |
 | `docs/plans/weekly-pipeline.md` | 未变 | 184 | 周刊生成工具链操作文档 |
-| `docs/research/content-ops-*.md` | **新增** | 238 | 3 份运营调研报告 |
+| `docs/research/content-editing-*.md` | **新增** | ~290 | 4 份内容编辑调研报告 |
+| `docs/research/content-ops-*.md` | 未变 | 238 | 3 份运营调研报告 |
 | `docs/research/distribution/*.md` | 未变 | 612 | 4 份分发渠道调研报告 |
-| `docs/research/*.md` | 未变 | ~3.7K | 11 份调研报告 |
+| `docs/research/*.md` | 未变 | ~3.7K | 其他调研报告 |
 | `docs/plans/content-sources-audit.md` | 未变 | 248 | 信息源终审决策 |
 | `docs/github/*.md` | 未变 | 877 | 4 个 GitHub 项目榜单源数据 |
