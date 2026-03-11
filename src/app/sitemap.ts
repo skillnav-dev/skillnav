@@ -1,11 +1,16 @@
 import type { MetadataRoute } from "next";
 import { siteConfig } from "@/lib/constants";
-import { getSitemapSkills, getSitemapArticles } from "@/lib/data";
+import {
+  getSitemapSkills,
+  getSitemapArticles,
+  getSitemapMcpServers,
+} from "@/lib/data";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [skills, articles] = await Promise.all([
+  const [skills, articles, mcpServers] = await Promise.all([
     getSitemapSkills(),
     getSitemapArticles(),
+    getSitemapMcpServers(),
   ]);
 
   const staticPages: MetadataRoute.Sitemap = [
@@ -74,6 +79,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ]);
 
+  const mcpPages: MetadataRoute.Sitemap = mcpServers.flatMap((m) => [
+    {
+      url: `${siteConfig.url}/mcp/${m.slug}`,
+      lastModified: new Date(m.updatedAt),
+      changeFrequency: "weekly" as const,
+      priority: 0.7,
+    },
+    {
+      url: `${siteConfig.url}/en/mcp/${m.slug}`,
+      lastModified: new Date(m.updatedAt),
+      changeFrequency: "weekly" as const,
+      priority: 0.6,
+    },
+  ]);
+
   const articlePages: MetadataRoute.Sitemap = articles.map((a) => ({
     url: `${siteConfig.url}/articles/${a.slug}`,
     lastModified: new Date(a.updatedAt),
@@ -81,5 +101,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  return [...staticPages, ...enStaticPages, ...skillPages, ...articlePages];
+  return [
+    ...staticPages,
+    ...enStaticPages,
+    ...skillPages,
+    ...mcpPages,
+    ...articlePages,
+  ];
 }

@@ -70,6 +70,20 @@ export interface Skill {
   // Content governance
   qualityTier?: "A" | "B" | "C";
   isHidden?: boolean;
+  status?: "draft" | "published" | "hidden";
+  introZh?: string;
+  qualityScore?: number;
+  qualityReason?: string;
+  // Repo metadata & freshness
+  discoveredAt?: string;
+  pushedAt?: string;
+  forksCount?: number;
+  isArchived?: boolean;
+  isTrending?: boolean;
+  weeklyStarsDelta?: number;
+  freshness?: FreshnessLevel;
+  installCount?: number;
+  lastSyncedAt?: string;
   // Enrichment
   pricingType?: PricingType;
   platform?: string[];

@@ -1,5 +1,5 @@
 # Handoff — SkillNav
-<!-- Updated at 2026-03-11 session 32 -->
+<!-- Updated at 2026-03-11 session 33 -->
 
 ## Completed
 
@@ -30,38 +30,51 @@
 - **审查修复**: RLS 安全漏洞（移除 USING(true) 全权限策略）、补全 `author` 字段全链路、移除冗余索引
 - **构建验证**: `npm run build` 通过，`/mcp` 和 `/en/mcp` 从 Static → Dynamic
 
+### 第 32 轮：M1 DB 完成 + MCP 详情页 + M2 Skills 补列（session 33, Day 11）
+- **M1 MCP DB 操作**: Supabase 建表 `mcp_servers`（39 字段）+ 迁移 18 条数据（9 featured），验证通过
+- **MCP 详情页**: `/mcp/[slug]` + `/en/mcp/[slug]` 全新页面
+  - 两栏布局（主内容+侧边栏）、安装命令复制、编辑点评高亮、配置示例
+  - 侧边栏：分类/来源/Stars/工具数/版本/验证/活跃度/收录日期/标签/外链
+  - JSON-LD (Breadcrumb + SoftwareApplication + FAQ)、中英双语 hreflang
+  - 相关 MCP Server 推荐（同分类 top 3）
+  - MCP 卡片加 Link 跳转详情页
+  - Sitemap 新增 MCP 详情页 URL（中英双语）
+- **M2 Skills DB 迁移**: 13 个新列（status, intro_zh, quality_score, quality_reason, discovered_at, pushed_at, forks_count, is_archived, is_trending, weekly_stars_delta, freshness, install_count, last_synced_at）
+  - 185 条 skills 全部 backfill status='published'
+  - DAL 从 `excludeHidden(is_hidden)` → `onlyPublished(status)`
+  - SkillRow 类型 + Skill 接口 + mapper 全部同步更新
+- **并行执行**: 两个 Agent 同时开发，文件范围无重叠，合并后构建通过
+- **Supabase API 技巧**: Management API (`api.supabase.com/v1/projects/{ref}/database/query`) 绕过中国网络 Postgres 直连限制
+
 ## In Progress
 
-**M1 待执行 DB 操作**（代码已就绪，等待用户在 Supabase 执行）：
-1. 在 Supabase SQL Editor 执行 `sql/create-mcp-servers.sql`
-2. 运行 `node scripts/migrate-mcp-to-db.mjs --dry-run` 预览
-3. 运行 `node scripts/migrate-mcp-to-db.mjs` 正式迁移
-4. 验证 `/mcp` 页面数据从 DB 正常加载
+无
 
 ## Next
 
-1. **完成 M1 DB 操作** — 建表 + 迁移 18 条 + 验证页面
-2. **M2: Skills 管线** — Skills 表补列 + 接入 awesome-agent-skills + skills.sh + OpenClaw 精选
-3. **M3: 保鲜层** — `refresh-tool-metadata.mjs` + GraphQL 批量 + freshness 角标
-4. **M4: 周刊枢纽** — 升级 `generate-weekly.mjs` 整合三支柱
-5. **审核 36 篇 draft** — Admin 后台 publish/hide
-6. **MCP 详情页** — `/mcp/[slug]` 页面（当前只有列表无详情）
-
-## Verify
-- `test -f sql/create-mcp-servers.sql && echo OK` — 建表 SQL 存在
-- `test -f scripts/migrate-mcp-to-db.mjs && echo OK` — 迁移脚本存在
-- `test -f src/lib/data/mcp.ts && echo OK` — MCP DAL 存在
-- `test -f src/components/mcp/mcp-toolbar.tsx && echo OK` — MCP 工具栏存在
-- `test -f src/components/mcp/mcp-grid-skeleton.tsx && echo OK` — 骨架屏存在
-- `test -f src/lib/mcp-search-params.ts && echo OK` — 搜索参数存在
-- `grep "McpServer" src/data/types.ts | head -1` — McpServer 接口已定义
-- `grep "mapMcpServerRow" src/lib/supabase/mappers.ts | head -1` — mapper 已定义
-- `grep "getMcpServers" src/lib/data/index.ts | head -1` — DAL 已导出
-- `npm run build` — 构建通过
+1. **M2 续: Skills 同步脚本** — 改造 `sync-curated-skills.mjs` 增量检测 + 新增 awesome-agent-skills/skills.sh 源
+2. **M3: 保鲜层** — `refresh-tool-metadata.mjs` + GraphQL 批量 + `stars_snapshots` 表 + freshness 角标
+3. **M4: 周刊枢纽** — 升级 `generate-weekly.mjs` 整合三支柱
+4. **审核 36 篇 draft** — Admin 后台 publish/hide
+5. **MCP 详情页内容丰富** — 接入 README 内容、工具列表、giscus 评论
 
 ## Risks & Decisions
+
 - **工具情报管线方案已审批**: 用户确认按计划执行
 - **OpenClaw 精选已决策**: 做，50-100 个带编辑点评，source='openclaw'
 - **编辑点评是护城河**: 竞品（mcp.so/SkillHub）都是量无观点，我们做"精+有观点"
-- **author 字段**: 原方案遗漏，已补全到 SQL/类型/mapper/DAL/迁移脚本全链路
-- **RLS 策略**: 仅公开 SELECT published 行，service_role 自动绕过 RLS（无额外策略）
+- **Skills DAL 迁移**: `is_hidden` → `status` 字段切换完成，旧列保留兼容
+- **Supabase Management API**: 可靠的中国网络替代方案（token 在 macOS keychain）
+
+## Verify
+
+- `test -f src/app/mcp/[slug]/page.tsx && echo OK` — MCP 详情页存在
+- `test -f src/app/en/mcp/[slug]/page.tsx && echo OK` — 英文 MCP 详情页存在
+- `test -f src/components/mcp/mcp-detail-sidebar.tsx && echo OK` — 侧边栏组件存在
+- `grep "Link" src/components/mcp/mcp-card.tsx | head -1` — MCP 卡片有 Link
+- `grep "mcpPages" src/app/sitemap.ts | head -1` — Sitemap 含 MCP 详情页
+- `test -f sql/skills-m2-columns.sql && echo OK` — Skills M2 迁移 SQL 存在
+- `grep "onlyPublished" src/lib/data/skills.ts | head -1` — Skills DAL 用 status 过滤
+- `grep "quality_score" src/lib/supabase/types.ts | head -1` — SkillRow 有新列
+- `grep "freshness" src/data/types.ts | head -1` — Skill 接口有 freshness
+- `npm run build` — 构建通过

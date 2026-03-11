@@ -5,12 +5,12 @@ const isSupabaseConfigured = () =>
   !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 /**
- * Exclude hidden skills from a Supabase query.
- * Handles NULL (legacy rows without is_hidden) and explicit false.
+ * Filter to only published skills using the status column.
+ * Replaces legacy excludeHidden() which used is_hidden.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function excludeHidden<T extends { or: (...args: any[]) => any }>(query: T): T {
-  return query.or("is_hidden.is.null,is_hidden.eq.false");
+function onlyPublished<T extends { eq: (...args: any[]) => any }>(query: T): T {
+  return query.eq("status", "published");
 }
 
 /**
@@ -58,7 +58,7 @@ export async function getSkills(options?: {
     .select("*")
     .order(sortField, { ascending: false });
 
-  query = excludeHidden(query);
+  query = onlyPublished(query);
 
   if (options?.category) query = query.eq("category", options.category);
   if (options?.source) query = query.eq("source", options.source);
@@ -125,7 +125,7 @@ export async function getFeaturedSkills(limit = 6): Promise<Skill[]> {
     .order("name", { ascending: true })
     .limit(limit);
 
-  query = excludeHidden(query);
+  query = onlyPublished(query);
 
   const { data, error } = await query;
   if (error) throw error;
@@ -148,7 +148,7 @@ export async function getSkillsCount(): Promise<number> {
     .from("skills")
     .select("*", { count: "exact", head: true });
 
-  query = excludeHidden(query);
+  query = onlyPublished(query);
 
   const { count, error } = await query;
   if (error) throw error;
@@ -201,7 +201,7 @@ export async function getSkillsWithCount(options?: {
     .select("*", { count: "exact" })
     .order(sortField, { ascending: false });
 
-  query = excludeHidden(query);
+  query = onlyPublished(query);
 
   if (options?.category) query = query.eq("category", options.category);
   if (options?.source) query = query.eq("source", options.source);
@@ -241,7 +241,7 @@ export async function getSkillCategories(): Promise<string[]> {
 
   let query = supabase.from("skills").select("category");
 
-  query = excludeHidden(query);
+  query = onlyPublished(query);
 
   const { data, error } = (await query) as {
     data: { category: string }[] | null;
@@ -263,7 +263,7 @@ export async function getSkillPlatforms(): Promise<string[]> {
   const supabase = await createServerClient();
 
   let query = supabase.from("skills").select("platform");
-  query = excludeHidden(query);
+  query = onlyPublished(query);
 
   const { data, error } = (await query) as {
     data: { platform: string[] }[] | null;
@@ -290,7 +290,7 @@ export async function getSkillRepoSources(): Promise<string[]> {
   const supabase = await createServerClient();
 
   let query = supabase.from("skills").select("repo_source");
-  query = excludeHidden(query);
+  query = onlyPublished(query);
 
   const { data, error } = (await query) as {
     data: { repo_source: string | null }[] | null;
@@ -319,7 +319,7 @@ export async function getAllSkillSlugs(): Promise<string[]> {
 
   let query = supabase.from("skills").select("slug");
 
-  query = excludeHidden(query);
+  query = onlyPublished(query);
 
   const { data, error } = (await query) as {
     data: { slug: string }[] | null;
@@ -349,7 +349,7 @@ export async function getSitemapSkills(): Promise<
     .from("skills")
     .select("slug, updated_at")
     .eq("source", "curated")
-    .or("is_hidden.is.null,is_hidden.eq.false")) as {
+    .eq("status", "published")) as {
     data: { slug: string; updated_at: string }[] | null;
     error: unknown;
   };

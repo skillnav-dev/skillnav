@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Star, Copy, Check, ExternalLink } from "lucide-react";
@@ -28,7 +29,12 @@ export function MCPCard({ server }: MCPCardProps) {
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <h3 className="text-base font-semibold">
-                {server.nameZh ?? server.name}
+                <Link
+                  href={`/mcp/${server.slug}`}
+                  className="hover:text-primary hover:underline"
+                >
+                  {server.nameZh ?? server.name}
+                </Link>
               </h3>
               {server.isFeatured && (
                 <Badge
