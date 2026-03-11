@@ -5,17 +5,30 @@
  */
 
 import { createClient } from "@supabase/supabase-js";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 import type { Database } from "@/lib/supabase/types";
 import type { Article } from "@/data/types";
 import { mapArticleRow } from "@/lib/supabase/mappers";
 
 type ArticleUpdate = Database["public"]["Tables"]["articles"]["Update"];
 
+function getServiceRoleKey(): string | undefined {
+  // In Cloudflare Workers, secrets are not enumerable via Object.entries()
+  // so process.env won't have them. Access via getCloudflareContext() instead.
+  try {
+    const ctx = getCloudflareContext();
+    const key = (ctx.env as Record<string, string>).SUPABASE_SERVICE_ROLE_KEY;
+    if (key) return key;
+  } catch {
+    // Not in Cloudflare runtime (local dev), fall through
+  }
+  return process.env.SUPABASE_SERVICE_ROLE_KEY;
+}
+
 function createAdminClient() {
   return createClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    getServiceRoleKey() || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
   );
 }
 
