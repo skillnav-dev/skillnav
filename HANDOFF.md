@@ -242,6 +242,23 @@
 - **CrewAI 文章代码块修复**: `72413e64` 文章中裸露 Python 代码加 ````python` 围栏
 - **选稿进行中**: 用户通过 Admin 后台已发布部分文章（draft 48→36, published 51→63）
 
+### 第 29 轮：内容可见性战略 — llms.txt + 英文路由 + GEO 优化（session 30, Day 11）
+- **战略决策**: 让知识说它自己的语言，让观点保持中文
+  - 英文文章不做（中文编辑视角是护城河）
+  - 工具页开英文（数据天然是英文，边际成本零）
+  - GEO 不是新体系，是 SEO 升级层
+- **llms.txt + llms-full.txt**: AI 爬虫站点知识声明（Route Handler, 24h revalidate）
+- **robots.txt 升级**: 允许 GPTBot/ClaudeBot/PerplexityBot/ChatGPT-User/Google-Extended
+- **JSON-LD 增强**: Article +citation/isBasedOn, Skill +aggregateRating/stars, 新增 FAQJsonLd
+- **英文路由**: `/en/skills`, `/en/skills/[slug]`, `/en/mcp` — 复用现有英文数据
+- **hreflang 互指**: 中英文 Skill 详情 + MCP 页面双向标注
+- **Sitemap 扩展**: 新增英文 URL（skills + mcp）
+- **编译 prompt GEO 优化**: 新增"首段即答案"约束
+- **ClawHub 全量删除**: 7,159 条从 DB 删除（发现 729 条 is_hidden 漏设导致 SSG 膨胀 1876 页）
+- **DB 现状**: 185 skills (168 curated + 17 anthropic hidden) + 99 articles (63 published + 36 draft)
+- **页面数**: 1876 → 418
+- **14 个文件变更，7 个新文件**，构建通过，已部署
+
 ## In Progress
 
 无
@@ -267,55 +284,54 @@
 ### 后续优化
 9. **Newsletter 接入 Resend API** — 当前为"即将推出"占位
 10. **GitHub 页面内链引流** — 从首页/文章页引流到 `/github`
+11. **GSC 重新提交 sitemap** — 英文 URL 已加入，观察索引变化
 
 ## Risks & Decisions
+- **内容可见性战略已确认 (2026-03-11)**: 知识双语 + 观点纯中文 + GEO 优化；方案文档 `docs/plans/content-visibility-strategy.md`
+- **ClawHub 全量删除**: 不再保留 hidden，直接清除 7,159 条。DB 从 7,344 → 185 skills
+- **英文路由不做文章**: 与原始源直接竞争无差异化，编辑观点是中文护城河
+- **AI 爬虫策略**: 允许主流 AI 爬虫索引，通过 llms.txt 声明站点结构
 - **UI/UX 重构方案 v1 全部完成**: Phase 0-5 已实施
 - **设计规范 v1 已生效 + 移动端模式补充**: §7.4 M1-M5
 - **导航决策变更**: 原方案 MCP 降至 Footer，用户决定保留 MCP 在主导航 → 5 项导航
 - **EditorialHighlights 占位**: 硬编码 `hasEditorial = false`，return null，待周刊数据层就绪后接入
 - **Newsletter 改为"即将推出"**: 不再欺骗用户，待 Resend API 接入后恢复表单
-- **Giscus 用 General 分类**: GraphQL API 不支持创建自定义分类，用默认 General
-- **文章↔Skills 交叉引流**: 基于关键词匹配，精度有限，未来可改为 mentioned_skills[] 标注
 - **内容战略 2.0 已确认**: 混合模式 + RSS 降级为素材库 + 内容策略先行
-- news 类型已完全移除，DB 约束锁定为 tutorial/analysis/guide
-- 周刊是底线承诺，评测是 bonus
-- **callLLM 已导出**: `scripts/lib/llm.mjs` 的 `callLLM` 从内部函数改为 `export`，供周刊脚本复用
-- **Supabase NULL 陷阱**: `.neq("col", "val")` 会排除 NULL 行，需用 `.or("col.is.null,col.neq.val")`
-- **GitHub 导航页决策 v2**: 推翻 session 13 的 DB 方案，改用静态 TS 数据（同 MCP 模式）；场景导向 7 分类；不做详情页直链 GitHub；不加导航入口
-- **内容路线**: "先做再精"节奏正确，但不模仿 datawhalechina 翻译路径；我们的差异化是 168 个真实 Skill 数据 + 实战视角
-- **Cloudflare Worker secrets**: 用 `getCloudflareContext().env` 访问，不能依赖 `process.env`（详见 MEMORY.md）
-- **Supabase RLS 静默失败**: update 被 RLS 拦截时返回 `{data:[], error:null}`，不抛错。必须检查返回行数
-- **内容分发规范 v1 已确认**: 4 平台第一梯队 (X/公众号/知乎/即刻)，年成本 ~¥1,000，6-8h/周
-- **小红书暂不做**: 严禁外链 + 图片制作成本高，无法形成引流闭环
-- **B站不做**: 视频制作成本过高，1人团队不可持续
-- **不维护社群**: 参考阮一峰经验，社群维护成本远大于收益
-- **公众号发布规则**: 群发每天 1 次 + "发布"（关闭群发通知）不限次数，均可被算法推荐
+- **编译模式核心决策**: 修源头不补下游 + 首段即答案（GEO）
+- **Cloudflare Worker secrets**: 用 `getCloudflareContext().env` 访问，不能依赖 `process.env`
 - **内容运营规范 v1 已生效**: Phase 1 已实施（双同步 + Slack 通知），Phase 2/3 待做
-- **腾讯 SkillHub 不改变我们战略**: 他们打企业/运营市场，我们打开发者编辑精选，不正面竞争
-- **SEO 策略: 少而精**: sitemap 只提交高质量页面，不追求 URL 数量；2 周后观察 GSC 索引率变化
-- **CI 故障连续 4 天 (3/5-3/8)**: 根因已确认 — timeout 旧设置 + GPT Proxy 503，3/9 恢复
-- **双同步理由**: US 源高峰 UTC 16:00-22:00 = CST 00:00-06:00，需 UTC 22:15 采集赶 08:00 早高峰
-- **GitHub Actions 月预算**: 双同步后 ~1,182 min/月，免费额度 2,000 min，安全
-- **编辑审核节奏**: 09:00 CST 固定窗口，2-3 篇/天 published，底线承诺周刊
-- **编译模式核心决策**: 修源头不补下游 — 升级 prompt 让翻译直接产出编译级质量，不加 polish 脚本/curated tier
-- **行业对标**: 走"编译"模式（36氪神译局/机器之心），不走纯翻译（掘金）或完全改写（品玩）
-- **SEO 蓝海**: Claude Code Skills / CLAUDE.md / Context Engineering 几乎无中文深度内容
-- **introZh prompt 去模板化**: 不再在 prompt 中写 "Chinese developers"，SYSTEM_PROMPT 已定义受众，避免重复导致八股输出
-- **DB 精简策略**: hidden 文章直接删除而非保留，减少噪音
+- **SEO 策略: 少而精**: sitemap 只提交高质量页面 + 英文工具页
 
 ## Verify
-- `grep '导读' scripts/lib/llm.mjs` — 存在（introZh prompt 已改为中文指引）
-- `grep 'getCloudflareContext' src/lib/data/admin.ts` — 存在（Worker secrets 访问修复）
-- `npm run build` — 构建通过
+- `test -f src/app/llms.txt/route.ts && echo OK` — OK（llms.txt 路由存在）
+- `test -f src/app/en/skills/page.tsx && echo OK` — OK（英文 Skills 列表存在）
+- `grep 'GPTBot' src/app/robots.ts` — 存在（AI 爬虫规则）
+- `grep 'FAQJsonLd' src/components/shared/json-ld.tsx` — 存在（FAQ Schema）
+- `grep 'first paragraph' scripts/lib/llm.mjs` — 存在（GEO prompt 约束）
+- `npm run build` — 构建通过，418 页
 
-## Modified Files (Session 29)
-- `scripts/lib/llm.mjs` — introZh prompt 去模板化，3 处替换
+## Modified Files (Session 30)
+- `docs/plans/content-visibility-strategy.md` — 新增，战略方案文档
+- `src/app/llms.txt/route.ts` — 新增，AI 爬虫站点摘要
+- `src/app/llms-full.txt/route.ts` — 新增，完整 Skills/MCP 索引
+- `src/app/en/layout.tsx` — 新增，英文页面布局
+- `src/app/en/skills/page.tsx` — 新增，英文 Skills 列表
+- `src/app/en/skills/[slug]/page.tsx` — 新增，英文 Skill 详情
+- `src/app/en/mcp/page.tsx` — 新增，英文 MCP 目录
+- `src/app/robots.ts` — 修改，AI 爬虫规则
+- `src/app/sitemap.ts` — 修改，英文 URL
+- `src/app/mcp/page.tsx` — 修改，hreflang
+- `src/app/skills/[slug]/page.tsx` — 修改，FAQ + hreflang + 增强 JSON-LD
+- `src/app/articles/[slug]/page.tsx` — 修改，citation JSON-LD
+- `src/components/shared/json-ld.tsx` — 修改，FAQJsonLd + aggregateRating + citation
+- `scripts/lib/llm.mjs` — 修改，GEO prompt 约束
 
 ## Document Inventory
 | 文件 | 状态 | 行数 | 说明 |
 |------|------|------|------|
-| `HANDOFF.md` | 更新 | ~345 | 交接文档 |
+| `HANDOFF.md` | 更新 | ~370 | 交接文档 |
 | `CLAUDE.md` | 未变 | ~150 | 项目规范 |
+| `docs/plans/content-visibility-strategy.md` | 新增 | 55 | 内容可见性战略方案（已确认） |
 | `docs/specs/content-operations-spec.md` | 未变 | 293 | 内容运营管线规范 v1（生效中） |
 | `docs/specs/content-distribution-spec.md` | 未变 | 373 | 内容分发规范 v1 |
 | `docs/specs/design-system.md` | 未变 | 485 | 设计规范 v1 + §7.4 移动端模式 |
