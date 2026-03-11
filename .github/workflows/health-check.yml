@@ -2,7 +2,7 @@ name: Data Health Check
 
 on:
   schedule:
-    - cron: "0 6 * * *" # UTC 06:00 = Beijing 14:00, daily
+    - cron: "45 23 * * *" # UTC 23:45 = CST 07:45, after morning sync
   workflow_dispatch:
 
 concurrency:

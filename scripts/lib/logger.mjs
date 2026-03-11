@@ -56,6 +56,12 @@ export function createLogger(prefix) {
         appendFileSync(process.env.GITHUB_STEP_SUMMARY, msg + "\n");
       }
     },
+    /** Expose a key-value pair as a GitHub Actions step output. No-op locally. */
+    setOutput: (key, value) => {
+      if (process.env.GITHUB_OUTPUT) {
+        appendFileSync(process.env.GITHUB_OUTPUT, `${key}=${value}\n`);
+      }
+    },
   };
 }
 

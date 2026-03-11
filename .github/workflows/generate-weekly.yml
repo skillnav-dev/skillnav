@@ -2,7 +2,7 @@ name: Generate Weekly Newsletter
 
 on:
   schedule:
-    - cron: "0 4 * * 1" # UTC 04:00 Monday = Beijing 12:00
+    - cron: "0 0 * * 1" # UTC 00:00 Monday = CST 08:00, after morning sync
   workflow_dispatch:
     inputs:
       week_of:

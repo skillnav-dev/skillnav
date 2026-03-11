@@ -2,7 +2,8 @@ name: Sync Articles
 
 on:
   schedule:
-    - cron: "0 0 * * *" # UTC 00:00 = Beijing 08:00, daily
+    - cron: "15 22 * * *" # UTC 22:15 = CST 06:15, morning batch
+    - cron: "15 10 * * *" # UTC 10:15 = CST 18:15, afternoon batch
   workflow_dispatch:
     inputs:
       source:
@@ -40,6 +41,7 @@ jobs:
       - run: npm ci
 
       - name: Sync articles
+        id: sync
         run: |
           ARGS=""
           if [ "${{ inputs.source }}" ]; then ARGS="$ARGS --source ${{ inputs.source }}"; fi
@@ -47,9 +49,19 @@ jobs:
           if [ "${{ inputs.dry_run }}" = "true" ]; then ARGS="$ARGS --dry-run"; fi
           node scripts/sync-articles.mjs $ARGS
 
+      - name: Notify Slack on success
+        if: success()
+        run: |
+          LABEL="采集"
+          if [ "${{ github.event.schedule }}" = "15 22 * * *" ]; then LABEL="晨间采集"; fi
+          if [ "${{ github.event.schedule }}" = "15 10 * * *" ]; then LABEL="午后采集"; fi
+          curl -sS -X POST -H 'Content-type: application/json' \
+            --data "{\"text\":\"✅ *SkillNav ${LABEL}完成*\n+${{ steps.sync.outputs.inserted }} 篇 | 跳过 ${{ steps.sync.outputs.skipped }} | 失败 ${{ steps.sync.outputs.failed }}\"}" \
+            ${{ secrets.SLACK_WEBHOOK_URL }}
+
       - name: Notify Slack on failure
         if: failure()
         run: |
           curl -sS -X POST -H 'Content-type: application/json' \
-            --data "{\"text\":\"❌ *Sync Articles* failed\\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>\"}" \
+            --data "{\"text\":\"❌ *Sync Articles* failed\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>\"}" \
             ${{ secrets.SLACK_WEBHOOK_URL }}

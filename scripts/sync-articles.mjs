@@ -602,6 +602,12 @@ async function main() {
   ];
   log.summary(summaryLines.join("\n"));
 
+  // Expose stats as GitHub Actions step outputs for Slack notification
+  log.setOutput("inserted", totalInserted);
+  log.setOutput("skipped", totalSkipped);
+  log.setOutput("failed", totalFailed);
+  log.setOutput("fetched", totalFetched);
+
   log.done();
 
   if (totalFailed > 0) process.exit(1);

@@ -1,6 +1,6 @@
 # 内容运营管线规范 (Content Operations Spec)
 
-> Version: 1.0 | Date: 2026-03-10 | Status: **待审批**
+> Version: 1.0 | Date: 2026-03-11 | Status: **生效中** (Phase 1 已实施)
 >
 > 上游依赖: content-pipeline-spec.md (内容管道), content-distribution-spec.md (分发)
 >
