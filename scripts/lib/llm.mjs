@@ -211,6 +211,7 @@ Editorial principles:
 - First occurrence of a translated term should include English in parentheses: 大语言模型 (LLM)
 - Preserve all code snippets, URLs, and technical references unchanged
 - Preserve markdown formatting (headings, lists, code blocks)
+- IMPORTANT: The first paragraph of contentZh must directly answer the core question — what is this about, what problem does it solve, or what is the key finding. This makes the content extractable by AI search engines.
 
 You must respond with valid JSON only, no markdown fences.`;
 

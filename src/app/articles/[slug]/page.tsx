@@ -96,6 +96,7 @@ export default async function ArticlePage({ params }: PageProps) {
         url={`${siteConfig.url}/articles/${article.slug}`}
         publishedAt={article.publishedAt}
         image={article.coverImage}
+        sourceUrl={article.sourceUrl}
       />
       <BreadcrumbJsonLd
         items={[

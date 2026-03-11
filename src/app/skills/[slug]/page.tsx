@@ -11,6 +11,7 @@ import { PlatformBadge } from "@/components/skills/platform-badge";
 import {
   BreadcrumbJsonLd,
   SoftwareApplicationJsonLd,
+  FAQJsonLd,
 } from "@/components/shared/json-ld";
 import { ArticleCard } from "@/components/articles/article-card";
 import { siteConfig } from "@/lib/constants";
@@ -46,6 +47,13 @@ export async function generateMetadata({
       type: "website",
       url: `${siteConfig.url}/skills/${skill.slug}`,
     },
+    alternates: {
+      canonical: `${siteConfig.url}/skills/${skill.slug}`,
+      languages: {
+        "zh-CN": `${siteConfig.url}/skills/${skill.slug}`,
+        en: `${siteConfig.url}/en/skills/${skill.slug}`,
+      },
+    },
   };
 }
 
@@ -77,6 +85,32 @@ export default async function SkillDetailPage({ params }: PageProps) {
         author={skill.author}
         platform={skill.platform}
         category={skill.category}
+        stars={skill.stars}
+        installCommand={skill.installCommand}
+      />
+      <FAQJsonLd
+        questions={[
+          {
+            question: `${skill.name} 是什么？`,
+            answer: skill.descriptionZh ?? skill.description,
+          },
+          ...(skill.installCommand
+            ? [
+                {
+                  question: `如何安装 ${skill.name}？`,
+                  answer: `运行命令：${skill.installCommand}`,
+                },
+              ]
+            : []),
+          ...(skill.platform
+            ? [
+                {
+                  question: `${skill.name} 支持哪些编辑器？`,
+                  answer: `支持 ${skill.platform.join("、")} 平台。`,
+                },
+              ]
+            : []),
+        ]}
       />
 
       <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">

@@ -2,11 +2,19 @@ import type { Metadata } from "next";
 import { SectionHeader } from "@/components/shared/section-header";
 import { BreadcrumbJsonLd } from "@/components/shared/json-ld";
 import { MCPGrid } from "@/components/mcp/mcp-grid";
+import { siteConfig } from "@/lib/constants";
 
 export const metadata: Metadata = {
   title: "MCP Server 精选导航",
   description:
     "精选高质量 MCP (Model Context Protocol) Server，让 AI 连接文件系统、数据库、搜索引擎等外部工具。",
+  alternates: {
+    canonical: `${siteConfig.url}/mcp`,
+    languages: {
+      "zh-CN": `${siteConfig.url}/mcp`,
+      en: `${siteConfig.url}/en/mcp`,
+    },
+  },
 };
 
 export default function MCPPage() {

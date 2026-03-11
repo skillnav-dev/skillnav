@@ -34,6 +34,7 @@ export function ArticleJsonLd({
   publishedAt,
   author,
   image,
+  sourceUrl,
 }: {
   title: string;
   description: string;
@@ -41,6 +42,7 @@ export function ArticleJsonLd({
   publishedAt: string;
   author?: string;
   image?: string;
+  sourceUrl?: string;
 }) {
   return (
     <JsonLd
@@ -51,7 +53,15 @@ export function ArticleJsonLd({
         description,
         url,
         datePublished: publishedAt,
+        inLanguage: "zh-CN",
         ...(image && { image }),
+        ...(sourceUrl && {
+          citation: {
+            "@type": "CreativeWork",
+            url: sourceUrl,
+          },
+          isBasedOn: sourceUrl,
+        }),
         author: {
           "@type": "Organization",
           name: author ?? siteConfig.name,
@@ -73,6 +83,8 @@ export function SoftwareApplicationJsonLd({
   author,
   platform,
   category,
+  stars,
+  installCommand,
 }: {
   name: string;
   description: string;
@@ -80,6 +92,8 @@ export function SoftwareApplicationJsonLd({
   author?: string;
   platform?: string[];
   category?: string;
+  stars?: number;
+  installCommand?: string;
 }) {
   return (
     <JsonLd
@@ -102,11 +116,47 @@ export function SoftwareApplicationJsonLd({
           price: "0",
           priceCurrency: "USD",
         },
+        ...(stars &&
+          stars > 0 && {
+            aggregateRating: {
+              "@type": "AggregateRating",
+              ratingValue: Math.min(
+                5,
+                Math.round((stars / 100) * 5 * 10) / 10 || 4,
+              ),
+              bestRating: 5,
+              ratingCount: stars,
+            },
+          }),
+        ...(installCommand && { installUrl: url }),
         publisher: {
           "@type": "Organization",
           name: siteConfig.name,
           url: siteConfig.url,
         },
+      }}
+    />
+  );
+}
+
+export function FAQJsonLd({
+  questions,
+}: {
+  questions: { question: string; answer: string }[];
+}) {
+  return (
+    <JsonLd
+      data={{
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        mainEntity: questions.map((q) => ({
+          "@type": "Question",
+          name: q.question,
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: q.answer,
+          },
+        })),
       }}
     />
   );

@@ -44,12 +44,35 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  const skillPages: MetadataRoute.Sitemap = skills.map((s) => ({
-    url: `${siteConfig.url}/skills/${s.slug}`,
-    lastModified: new Date(s.updatedAt),
-    changeFrequency: "weekly",
-    priority: 0.7,
-  }));
+  // English static pages (tools only — no English articles)
+  const enStaticPages: MetadataRoute.Sitemap = [
+    {
+      url: `${siteConfig.url}/en/skills`,
+      lastModified: new Date(),
+      changeFrequency: "daily",
+      priority: 0.8,
+    },
+    {
+      url: `${siteConfig.url}/en/mcp`,
+      changeFrequency: "weekly",
+      priority: 0.7,
+    },
+  ];
+
+  const skillPages: MetadataRoute.Sitemap = skills.flatMap((s) => [
+    {
+      url: `${siteConfig.url}/skills/${s.slug}`,
+      lastModified: new Date(s.updatedAt),
+      changeFrequency: "weekly" as const,
+      priority: 0.7,
+    },
+    {
+      url: `${siteConfig.url}/en/skills/${s.slug}`,
+      lastModified: new Date(s.updatedAt),
+      changeFrequency: "weekly" as const,
+      priority: 0.6,
+    },
+  ]);
 
   const articlePages: MetadataRoute.Sitemap = articles.map((a) => ({
     url: `${siteConfig.url}/articles/${a.slug}`,
@@ -58,5 +81,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  return [...staticPages, ...skillPages, ...articlePages];
+  return [...staticPages, ...enStaticPages, ...skillPages, ...articlePages];
 }
