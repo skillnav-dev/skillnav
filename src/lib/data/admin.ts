@@ -128,6 +128,11 @@ export async function updateArticleStatus(
   id: string,
   status: string,
 ): Promise<void> {
+  const hasServiceKey = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
+  console.log(
+    `[admin] updateArticleStatus: id=${id}, status=${status}, hasServiceKey=${hasServiceKey}`,
+  );
+
   const supabase = createAdminClient();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -136,9 +141,14 @@ export async function updateArticleStatus(
     .eq("id", id)
     .select("id");
 
-  if (error) throw error;
+  if (error) {
+    console.error(`[admin] Supabase error:`, error);
+    throw error;
+  }
   if (!data || data.length === 0) {
-    throw new Error("No rows updated — check RLS policy or article ID");
+    throw new Error(
+      `No rows updated (hasServiceKey=${hasServiceKey}) — check RLS policy or article ID`,
+    );
   }
 }
 

@@ -40,11 +40,11 @@ export function StatusToggleForm({
       STATUS_OPTIONS.find((o) => o.value === newStatus)?.label ?? newStatus;
 
     startTransition(async () => {
-      try {
-        await changeArticleStatus(formData);
+      const result = await changeArticleStatus(formData);
+      if (result.ok) {
         toast.success(`已切换为「${targetLabel}」`);
-      } catch {
-        toast.error("状态切换失败，请重试");
+      } else {
+        toast.error(`状态切换失败: ${result.error ?? "未知错误"}`);
       }
     });
   }
