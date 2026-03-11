@@ -1,348 +1,42 @@
 # Handoff — SkillNav
-<!-- Updated at 2026-03-11 session 29 -->
-
-## Objective
-中文开发者的 AI 智能体工具站（Skills · MCP · 实战资讯），当前阶段：内容战略 2.0 实施中
+<!-- Updated at 2026-03-11 session 31 -->
 
 ## Completed
 
-### 第 1 轮：基础设施 + 内容管线（session 1-3, ~Day 1-2）
-- 站点上线 skillnav.dev（Cloudflare Workers + OpenNext）
-- 168 精选 Skills（7 个源仓库）+ 6,447 ClawHub Skills（hidden）
-- 13 RSS 源自动同步管线，~514 篇文章
-- 长文翻译策略（分块/摘要）
-- 内容治理 DB schema（quality_tier, is_hidden, status, relevance_score）
-- Umami 分析 + GSC 验证
-- About 页面 + 文章图片 fallback
+### 第 1-29 轮摘要（session 1-30, Day 1-11）
+- 站点上线 skillnav.dev + 168 精选 Skills + 99 篇文章（13 RSS 源自动管线）
+- 编译模式（LLM prompt 从翻译→编译）+ 全量回炉 48 篇 + 数据清洗
+- UI/UX 重构 Phase 0-5 + 设计规范 v1 + 移动端修复
+- Admin 后台 + MCP 18 个精选 + GitHub 50 个项目 + 周刊工具链
+- 内容战略 2.0 + 运营规范 + 分发规范 + 竞情分析（腾讯 SkillHub）
+- SEO: sitemap 精简 950→224, llms.txt, 英文路由, GEO 优化
+- ClawHub 7,159 条全量删除，DB 精简至 185 skills + 99 articles
 
-### 第 2 轮：Admin 后台 + 安全修复 + 文章评分（session 4, Day 3）
-- Phase 0 安全修复（draft 泄露防护 + 版权声明）
-- Phase 1 Admin 后台（login/dashboard/articles/edit，1,278 行）
-- 文章 LLM 评分完成（126 published / 95 draft / 293 hidden）
+### 第 30 轮：工具情报管线方案设计（session 31, Day 11）
+- **四路并行调研**: Skills 发现源 + MCP 发现源 + 竞品展示分析 + 保鲜机制技术方案
+- **腾讯 SkillHub 补充调研**: ClawHub CDN 镜像，无 API，无编辑深度，低威胁
+- **方案 v2 产出**: `docs/plans/tool-intelligence-pipeline.md`（含全部调研结论）
+- **关键决策**: OpenClaw 精选应做（50-100 个带编辑点评）；MCP 必须入库；编辑点评是最大差异化武器
+- **发现源选型**: Skills P0=awesome-agent-skills+skills.sh / MCP P0=Official Registry+Smithery
+- **Memory 重构**: MEMORY.md 精简 + 新建 `memory/tool-intelligence-pipeline.md`
 
-### 第 3 轮：生产环境配置 + 部署（session 5, Day 3）
-- ADMIN_PASSWORD 配置到 Cloudflare Workers secret + GitHub Actions secret
-- CI/CD 部署成功，Admin 后台生产环境可用
+## Next
 
-### 第 4 轮：战略重定位 + 信息源终审（session 6, Day 3）
-- 3 轮深度调研（并行 Agent）：竞品分析 + KOL/内容源 + 开发者需求/市场
-- 定位锁定: "中文开发者的 AI 智能体工具站（Skills · MCP · 实战资讯）"
-- 数据源决策: 移除 5 源 + 新增 3 源，最终 11 个自动源
-- 信息源终审文档: `docs/plans/content-sources-audit.md`
-
-### 第 5 轮：数据源重构 + MCP 板块 + 全站升级（session 7, Day 4）
-- **数据源重构**: 移除 5 源，新增 2 源（ai-coding-daily/thenewstack），收紧关键词
-- **存量清洗 SQL**: migration 创建
-- **分类升级**: article_type 新增 `review`
-- **MCP 导航板块**: `/mcp` 页面 + 18 个精选 MCP Server
-- **全站定位更新** + **原创文章脚本** `create-cornerstone-article.mjs`
-
-### 第 6 轮：数据库清洗 + CI 修复 + 代码样式统一（session 8, Day 5）
-- **SQL migrations 执行**: `20260306_add_review_type.sql` + `20260306_cleanup_articles.sql` 已在 Supabase 执行
-- **清洗结果**: 49 published / 42 draft / 439 hidden（从 ~126 published 清洗至 49）
-- **新源验证**: ai-coding-daily + thenewstack dry-run 通过
-- **CI 修复**: sync-articles workflow `timeout-minutes: 30→45`，source 列表描述更新
-- **LLM JSON 解析加固**: `sanitizeJsonString()` 修复 `Bad escaped character` 解析失败
-- **代码块样式统一**: CodeBlock 加 `not-prose` + `font-mono` + `text-[13px]`，inline code 加 pill 样式
-
-### 第 7 轮：内容管道规范制定（session 9, Day 7）
-- **角色升级**: 战略合伙人（CEO/COO/CTO/CMO/CIO）+ 主编（Editor-in-Chief）
-- **内容管道规范**: `docs/specs/content-pipeline-spec.md`（278 行），定义采集→质量管理→分发三段式管道
-- **关键决策**: 去掉 `news` 类型精简为 3 类 / 双维度评分 / GitHub/TheNewStack 降级观察
-
-### 第 8 轮：About 页面重构 + 资讯列表页布局优化（session 10, Day 7）
-- **About 页面内容重写**: 痛点卡片 + 解法卡片 + 内容管线流程 + 数据概览 + CTA
-- **资讯卡片瘦身**: 去掉封面图，改纯文字卡片，3 列网格
-- **工具栏增强**: 新增排序 + 信源 Select 下拉
-
-### 第 9 轮：Phase 1 类型精简 — news 重分类（session 11, Day 8）
-- **LLM 逐篇分类**: 23 篇 published news → tutorial(2) / analysis(14) / guide(7)
-- **DB 约束更新**: `article_type IN ('tutorial', 'analysis', 'guide')` — news/review 已移除
-- **最终状态**: 49 published（35 analysis + 7 guide + 7 tutorial）、0 legacy types
-
-### 第 10 轮：Skills 列表页布局优化（session 12, Day 8）
-- **工具栏压缩**: 搜索/平台/排序聚合成一行（与资讯页同模式）
-- **排序/平台 UI**: Button → Select 下拉
-
-### 第 11 轮：GitHub 开源项目导航页方案设计（session 13, Day 8）
-- **全面调研**: 6 轮并行 Explore Agent
-- **方案修订**: 推翻静态 TS → Supabase DB + GitHub API 自动维护
-- **方案文件丢失**: `.claude/plans/sequential-knitting-hejlsberg.md` 未提交，需重建
-
-### 第 12 轮：内容战略 2.0 — 全面复审 + 战略重构（session 14, Day 8）
-- **四维并行调研**: 内部现状审计 + 竞品内容策略 + 管线技术评估 + 市场趋势
-- **竞品分析**: mcp.so / ai-bot.cn / HelloGitHub / 36氪 / 机器之心 / toolai.io
-- **战略转型决策**: 从翻译聚合站 → 有编辑立场的策展品牌
-- **内容战略 2.0 确认**: 混合模式 + RSS 降级为素材库 + 周刊底线承诺
-- **5 份文档产出**: 4 份调研报告 + 1 份战略方案（共 981 行）
-
-### 第 13 轮：UI/UX 全面复审 + 重构方案（session 15, Day 8）
-- **四维并行调研**: 内部 UI/UX 审计 + 竞品 UI/UX 分析 + 标杆站点设计拆解 + 用户旅程 & 信息架构
-- **内部审计**: 整体 6.5/10，61 个问题（2 P0 / 17 P1 / 42 P2）
-- **重构方案 v1**: 6 个 Phase，~18h 总工作量
-- **5 份文档产出**: 4 份调研报告 + 1 份重构方案（共 2,511 行）
-
-### 第 14 轮：设计规范制定（session 16, Day 8）
-- **设计规范 v1**: `docs/specs/design-system.md`（431 行）
-- **4 份文档产出**: 3 份调研 + 1 份设计规范（共 1,314 行）
-
-### 第 15 轮：UI/UX 重构 Phase 0-2 实施（session 17, Day 8）
-- **Phase 0 信任修复**: StatsBar 真实数据 + 文章日期格式化
-- **Phase 1 体验基线**: 导航高亮 + 整卡可点击 + 卡片精简 + 视觉一致性
-- **Phase 2 首页重构**: Hero 新文案 + HeroSearch + EditorialHighlights 占位 + 3 列文章
-- **22 个文件变更，4 个新文件**
-
-### 第 16 轮：UI/UX 重构 Phase 3-4 实施（session 18, Day 8）
-- **Phase 3 导航重构**: 去掉"首页"，保留 MCP，新增"周刊" → 5 项导航 (Skills | MCP | 周刊 | 资讯 | 关于)；`/weekly` + `/weekly/[slug]` 路由创建（空状态占位）；Hero CTA 新增"阅读周刊"；清理 `"/"` 死代码分支
-- **Phase 4 转化漏斗**: 根 layout 添加 Toaster；`InlineNewsletterCta` 内联订阅框（文章页版权声明后）；`ShareButtons` 分享按钮 (Twitter/X + 复制链接 toast)（文章标题旁 + 文末）；文章↔Skills 双向交叉引流（文章页显示"相关工具" + Skill 页显示"相关资讯"）
-- **8 个文件变更，4 个新文件** (weekly/page.tsx, weekly/[slug]/page.tsx, inline-newsletter-cta.tsx, share-buttons.tsx)
-
-### 第 17 轮：UI/UX 重构 Phase 5 — 代码清理与打磨（session 19, Day 8）
-- **CopyButton 提取**: 3 处重复 → `src/components/shared/copy-button.tsx` 共享组件
-- **formatNumber 提取**: 4 处重复 → `src/lib/utils.ts` 统一函数
-- **删除废弃文件**: `skill-install.tsx`（已被 `skill-install-tabs.tsx` 替代）
-- **SectionHeader 多态**: 新增 `as` prop，列表页标题用 h1（SEO 标题层级修复）
-- **Newsletter "即将推出"**: 去掉假表单，改为静态提示，组件不再是 client component
-- **Giscus 评论配置**: 创建 `skillnav-dev/discussions` 公开仓库，配置 repoId/categoryId，安装 Giscus App
-- **Select 移动端响应式**: `w-[140px]` → `w-full sm:w-[140px]`（skills-toolbar + articles-toolbar）
-- **净减 206 行代码**（+92 / -298），19 个文件变更
-
-### 第 18 轮：内容战略 2.0 数据层（session 19b, Day 8）
-- **DB 迁移**: `content_tier` + `series` + `series_number` 列已添加
-- **TypeScript 类型**: `ContentTier` / `ArticleSeries` 类型已定义
-- **DAL 支持**: 查询函数已支持 content_tier/series 过滤
-
-### 第 19 轮：周刊生成工具链（session 20, Day 8）
-- **主脚本**: `scripts/generate-weekly.mjs`（~210 行）— 查询文章 → 按源分类 → LLM 编者按 → Markdown 组装 → 入库
-- **CLI 参数**: `--dry-run` / `--week-of YYYY-MM-DD` / `--limit N` / `--no-llm`
-- **GitHub Actions**: `.github/workflows/generate-weekly.yml` — 每周一 UTC 04:00 自动触发
-- **操作文档**: `docs/plans/weekly-pipeline.md`（184 行）
-- **Bug 修复**: `callLLM` 导出 + Supabase NULL 处理 (`.neq` → `.or`) + 时区安全 `formatDate`
-- **npm script**: `generate:weekly` 添加到 package.json
-- **Dry-run 验证通过**: 14 篇文章成功组装为周刊第 1 期预览
-
-### 第 20 轮：GitHub 导航页方案设计 + 实施（session 21, Day 8）
-- **三路并行调研**: 现有文档分析 + 站点架构模式分析 + 竞品深度调研（HelloGitHub / GrowingGit / OSSInsight / Trendshift / skills.sh / SkillsMP 等 8 个竞品）
-- **设计方案 v2**: `docs/plans/github-nav-design.md`（233 行），推翻 session 13 的 DB 方案
-- **4 个关键决策**: 静态 TS 数据 / 场景导向 7 分类 / 不做详情页 / 不加导航入口
-- **实施完成**: 4 个新文件，1,025 行代码
-  - `src/data/github-projects.ts` — 50 个精选项目 + 类型定义（Agent 框架 10 / AI 编码 8 / AI 应用平台 8 / RAG 6 / 模型推理 6 / 开发者工具 6 / 精选资源 6）
-  - `src/components/github/github-card.tsx` — 项目卡片（名称、stars、中文描述、编辑点评、标签）
-  - `src/components/github/github-grid.tsx` — 客户端搜索 + 分类过滤 + 网格布局
-  - `src/app/github/page.tsx` — 页面入口（Static 预渲染）
-- **构建验证通过**，`/github` 路由生成为静态页面
-
-### 第 21 轮：移动端设计规范 + 修复 + 课程导读文章（session 22, Day 9）
-- **设计规范补充**: `docs/specs/design-system.md` 新增 §7.4 移动端模式（M1-M5: 溢出防御 / 横滚渐变 / 触控目标 / 等宽文本 / 双列响应式）
-- **移动端修复 6 项**:
-  - Fix 1-2: MCP/Skill/Article 卡片添加 `overflow-hidden`（M1）
-  - Fix 3: `ScrollFade` 共享组件 + Skills/Articles toolbar 集成（M2）
-  - Fix 4: CopyButton `h-7 w-7` → `h-9 w-9` 触控目标（M3）
-  - Fix 5: 搜索清除按钮 `p-2` 热区扩大（M3）
-  - Fix 6: 安装命令 `text-xs sm:text-sm` 响应式字号（M4）
-- **课程导读文章**: 「吴恩达 × Anthropic Agent Skills 课程完全指南」
-  - 7,400 字中文，12 分钟阅读，editorial tier
-  - 逐课导读 + SkillNav Skill 推荐 + SKILL.md 格式速查 + 3 条学习路径
-  - 插入 Supabase 为 draft 状态，slug: `andrew-ng-agent-skills-course-guide`
-  - 脚本: `scripts/create-course-guide.mjs`
-- **热门课程监测调研**: DeepLearning.AI Sitemap 差量方案 + The Batch RSS + 多平台覆盖策略
-
-### 第 22 轮：课程导读文章质量复审 + Admin 发布修复（session 23, Day 9）
-- **课程导读文章质量复审**:
-  - 第 1-2 课缺失问题：在「逐课导读」开头加过渡说明
-  - 新增「社区反馈与编辑补充」段落：Skills vs 脚本判断 + 课程盲区补充 + 中文学习资源
-  - 结尾声明调整："不翻译课程内容" → "不只是翻译课程内容"
-  - 内容来源：DeepLearning.AI 社区论坛调研 + Datawhale/B站 中文资源
-- **Admin 发布按钮修复（两层问题）**:
-  - Bug 1: `status-toggle-form.tsx` 无 try/catch，server action 失败时 UI 静默 → 加 sonner toast
-  - Bug 2: `SUPABASE_SERVICE_ROLE_KEY` 未设为 Cloudflare Worker secret → 线上回退 anon key → RLS 拦截写入但 Supabase 不报错 → 看起来成功实际未更新
-  - Fix: `wrangler secret put SUPABASE_SERVICE_ROLE_KEY` + `updateArticleStatus` 检查返回行数
-- **课程导读文章已通过本地脚本发布**: status=published（Admin 线上修复部署中）
-
-### 第 23 轮：内容分发规范制定（session 24, Day 9）
-- **四路并行调研**: 微信公众号 + 小红书 + X/Twitter + 竞品分发策略/其他平台
-- **调研覆盖**: 6 个竞品标杆 (机器之心/HelloGitHub/阮一峰/idoubi/少数派/即刻) + 8 个分发平台
-- **分发规范 v1**: `docs/specs/content-distribution-spec.md`（373 行），定义平台选择/内容适配/SOP/自动化管线
-- **4 份调研报告**: `docs/research/distribution/` 目录，共 612 行
-- **关键决策**:
-  - 第一梯队: X + 公众号 + 知乎 + 即刻（立即启动）
-  - 第二梯队: 掘金 + CSDN（后期自动同步）
-  - 不做: 小红书（严禁外链）、B站（视频成本过高）
-  - 运营模型: "一鱼多吃" + 阮一峰极简 + idoubi Build in Public
-  - 公众号发布规则更正: "发布"功能不限次数（关闭群发通知），群发每天 1 次
-
-### 第 24 轮：内容运营管线规范制定（session 25, Day 10）
-- **四路并行调研**: 管线配置审计 + CI 故障分析 + RSS 发布时间分布 + 运营最佳实践
-- **CI 故障根因确认**: 3/5-3/7 timeout (旧 30min) + 3/8 GPT Proxy 503 宕机 + 3/9 恢复
-- **RSS 时间分析**: 8/10 源集中 UTC 16:00-22:00 (CST 00:00-06:00) 发布，与中国读者高峰错位
-- **运营规范 v1**: `docs/specs/content-operations-spec.md`（293 行），定义端到端时序编排
-- **3 份调研报告**: `docs/research/content-ops-*.md`，共 238 行
-- **关键决策（待审批）**:
-  - 双时段采集: UTC 22:15 (CST 06:15) + UTC 10:15 (CST 18:15)，赶读者早/晚高峰
-  - 健康检查移至 UTC 23:45（晨间采集后验证）
-  - 周刊生成移至周一 UTC 00:00（晨间采集后生成）
-  - LLM Fallback: GPT → DeepSeek 自动降级
-  - Per-source 10min 超时，防单源拖垮全局
-  - 成功也发 Slack 通知（摘要）
-  - 每日 09:00 CST 固定编辑审核窗口（15-30min）
-  - 三阶段实施: Phase 1 改 cron / Phase 2 可靠性 / Phase 3 审核增强
-- **DB 现状盘点**: 50 published / 57 draft / 463 hidden，最新入库 3/9，今日 (3/10) 未采集
-- **文章发布建议**: 12 篇 3 月 draft 待审核，推荐 3 篇（Markdown vs MCP / Anthropic×Mozilla / Cursor 第三时代）
-
-### 第 25 轮：竞情分析 + SEO sitemap 精简（session 26, Day 11）
-- **腾讯 SkillHub 竞情分析**: skillhub.tencent.com 上线（3/9），13K skills + WorkBuddy Agent + CLI 工具
-  - 判断: 直接威胁中低（企业/运营用户 vs 我们的开发者），间接利好（教育市场 + 搜索量上升）
-  - 应对: 不改战略方向，蹭热度产内容 + 继续深耕编辑差异化
-- **GSC 索引报告分析**: 69 已索引 / 282 未索引，269 "已发现-尚未编入索引" + 9 个 404 + 4 "已抓取-未索引"
-- **SEO sitemap 精简**: 950 → 224 URL，只给 Google 看精品
-  - `getSitemapSkills()`: `source='curated'` 过滤，168 精选 skills
-  - `getSitemapArticles()`: published articles，真实 `published_at` 时间戳
-  - 补全 /mcp, /weekly, /about 静态页
-  - `lastModified` 从 `new Date()` 改为 DB 真实时间戳
-- **4 文件变更**: sitemap.ts + skills.ts + articles.ts + index.ts
-- **已部署 + GSC 已重新提交 sitemap**
-
-### 第 26 轮：内容运营 Phase 1 + 编译模式升级（session 27, Day 11）
-- **内容运营规范 v1 审批通过**: `content-operations-spec.md` status → 生效中
-- **Phase 1 实施**: 双时段采集 (UTC 22:15 + 10:15) + 健康检查/周刊时间调整 + Slack 成功通知
-  - `logger.mjs` 新增 `setOutput()` — step outputs 暴露给 workflow
-  - `sync-articles.mjs` 暴露 inserted/skipped/failed/fetched 到 GITHUB_OUTPUT
-  - Slack 通知区分晨间/午后采集（via `github.event.schedule`）
-  - 手动触发 sync 补数据，确认管线恢复正常
-- **内容二次加工体系调研**: 4 路并行 Agent
-  - 69 篇 draft 库存盘点（78% score=5, huggingface/thenewstack/crewai 为主）
-  - 编辑标准缺口分析（5 个关键缺口：无改写流程、无升级路径等）
-  - 竞品内容加工模式（机器之心/InfoQ/36氪/掘金/少数派）
-  - AI 内容 SEO 需求（10 个优先关键词方向 + 蓝海机会）
-- **编译模式升级（核心决策）**: 修源头不补下游
-  - 判断: 69 篇积压的根因是翻译质量不够发布级，不是缺加工环节
-  - 方案: 升级 LLM prompt 从"翻译"→"编译"，一次调用产出改写标题 + 导读 + 编译正文
-  - SYSTEM_PROMPT: "professional translator" → "senior tech media editor"
-  - 新增 `introZh` 字段: 2-3 句导读（文章讲什么、为什么值得读）
-  - DB 迁移: `intro_zh` 列已执行
-  - 前端: 文章详情页导读块（左侧边线样式）
-  - `--retranslate-drafts` flag: 批量回炉 draft，支持 --source/--limit
-  - dry-run 验证通过（69 篇可查询，3 篇模拟成功）
-- **4 份调研报告 + 1 份 DB 迁移**: docs/research/content-editing-*.md
-
-### 第 27 轮：Admin 发布修复 + 编译模式验证 + 数据清理（session 28, Day 11）
-- **Admin 发布按钮修复（Cloudflare Worker secrets）**:
-  - 根因: `SUPABASE_SERVICE_ROLE_KEY` Worker secret 值为空字符串 + `process.env` 无法获取 Worker secrets
-  - 修复: `getCloudflareContext().env` 直接访问 secrets + server action 改返回值模式 `{ok, error}`
-  - 重新 `wrangler secret put` 设置正确值
-- **编译模式试跑验证**: 5 篇 draft 回炉（4/5 成功，1 篇 GPT Proxy 502）
-  - 质量达发布标准，确认可全量回炉
-- **数据清理**: 删除 162 篇 2025-11 之前的旧文章，保留 gpt-oss-safeguard（published）
-  - DB 从 582 → 420 篇
-
-### 第 28 轮：编译模式全量回炉 + 数据清理 + prompt 修复（session 29, Day 11）
-- **全量回炉**: 48/48 篇 draft 编译成功，0 失败，耗时 ~48 分钟
-- **删除 hidden 文章**: 321 篇 hidden 从 DB 删除，DB 从 420 → 99 篇 (63 published + 36 draft)
-- **introZh prompt 修复**: 去掉 "why it matters to Chinese developers" 模板化描述，改为自然中文指引 + 负面约束（"不要用'对中国开发者来说'之类的泛化开头"），3 处替换（single/chunked/summarize）
-- **CrewAI 文章代码块修复**: `72413e64` 文章中裸露 Python 代码加 ````python` 围栏
-- **选稿进行中**: 用户通过 Admin 后台已发布部分文章（draft 48→36, published 51→63）
-
-### 第 29 轮：内容可见性战略 — llms.txt + 英文路由 + GEO 优化（session 30, Day 11）
-- **战略决策**: 让知识说它自己的语言，让观点保持中文
-  - 英文文章不做（中文编辑视角是护城河）
-  - 工具页开英文（数据天然是英文，边际成本零）
-  - GEO 不是新体系，是 SEO 升级层
-- **llms.txt + llms-full.txt**: AI 爬虫站点知识声明（Route Handler, 24h revalidate）
-- **robots.txt 升级**: 允许 GPTBot/ClaudeBot/PerplexityBot/ChatGPT-User/Google-Extended
-- **JSON-LD 增强**: Article +citation/isBasedOn, Skill +aggregateRating/stars, 新增 FAQJsonLd
-- **英文路由**: `/en/skills`, `/en/skills/[slug]`, `/en/mcp` — 复用现有英文数据
-- **hreflang 互指**: 中英文 Skill 详情 + MCP 页面双向标注
-- **Sitemap 扩展**: 新增英文 URL（skills + mcp）
-- **编译 prompt GEO 优化**: 新增"首段即答案"约束
-- **ClawHub 全量删除**: 7,159 条从 DB 删除（发现 729 条 is_hidden 漏设导致 SSG 膨胀 1876 页）
-- **DB 现状**: 185 skills (168 curated + 17 anthropic hidden) + 99 articles (63 published + 36 draft)
-- **页面数**: 1876 → 418
-- **14 个文件变更，7 个新文件**，构建通过，已部署
-
-## In Progress
-
-无
-
-## Next Actions
-
-### 选稿发布（继续）
-1. **审核剩余 36 篇 draft** — 通过 Admin 后台 publish/hide
-
-### 内容运营管线 Phase 2
-2. **LLM Fallback**: scripts/lib/llm.mjs 增加 provider 降级链
-3. **Per-source timeout**: sync-articles.mjs 单源 10min 超时
-4. **Workflow 重试**: nick-fields/retry@v3
-
-### 内容分发启动
-5. **蹭腾讯 SkillHub 热度** — 横评文章
-6. **注册 X / 公众号 / 知乎 / 即刻** — 冷启动
-
-### 内容战略 2.0 继续
-7. **首期周刊正式生成** — `npm run generate:weekly`
-8. **EditorialHighlights 接入** — 首页组件接入周刊/编辑文章数据
-
-### 后续优化
-9. **Newsletter 接入 Resend API** — 当前为"即将推出"占位
-10. **GitHub 页面内链引流** — 从首页/文章页引流到 `/github`
-11. **GSC 重新提交 sitemap** — 英文 URL 已加入，观察索引变化
-
-## Risks & Decisions
-- **内容可见性战略已确认 (2026-03-11)**: 知识双语 + 观点纯中文 + GEO 优化；方案文档 `docs/plans/content-visibility-strategy.md`
-- **ClawHub 全量删除**: 不再保留 hidden，直接清除 7,159 条。DB 从 7,344 → 185 skills
-- **英文路由不做文章**: 与原始源直接竞争无差异化，编辑观点是中文护城河
-- **AI 爬虫策略**: 允许主流 AI 爬虫索引，通过 llms.txt 声明站点结构
-- **UI/UX 重构方案 v1 全部完成**: Phase 0-5 已实施
-- **设计规范 v1 已生效 + 移动端模式补充**: §7.4 M1-M5
-- **导航决策变更**: 原方案 MCP 降至 Footer，用户决定保留 MCP 在主导航 → 5 项导航
-- **EditorialHighlights 占位**: 硬编码 `hasEditorial = false`，return null，待周刊数据层就绪后接入
-- **Newsletter 改为"即将推出"**: 不再欺骗用户，待 Resend API 接入后恢复表单
-- **内容战略 2.0 已确认**: 混合模式 + RSS 降级为素材库 + 内容策略先行
-- **编译模式核心决策**: 修源头不补下游 + 首段即答案（GEO）
-- **Cloudflare Worker secrets**: 用 `getCloudflareContext().env` 访问，不能依赖 `process.env`
-- **内容运营规范 v1 已生效**: Phase 1 已实施（双同步 + Slack 通知），Phase 2/3 待做
-- **SEO 策略: 少而精**: sitemap 只提交高质量页面 + 英文工具页
+1. **用户审批方案** — `docs/plans/tool-intelligence-pipeline.md` 待拍板
+2. **M1: MCP 入库** — 创建 `mcp_servers` 表 + 迁移 18 条数据 + DAL + 页面改造
+3. **M2: Skills 管线** — 接入 awesome-agent-skills + skills.sh + OpenClaw 精选
+4. **M3: 保鲜层** — `refresh-tool-metadata.mjs` + GraphQL 批量 + freshness 角标
+5. **M4: 周刊枢纽** — 升级 `generate-weekly.mjs` 整合三支柱
+6. **审核 36 篇 draft** — Admin 后台 publish/hide
+7. **内容运营 Phase 2** — LLM fallback + per-source timeout
 
 ## Verify
-- `test -f src/app/llms.txt/route.ts && echo OK` — OK（llms.txt 路由存在）
-- `test -f src/app/en/skills/page.tsx && echo OK` — OK（英文 Skills 列表存在）
-- `grep 'GPTBot' src/app/robots.ts` — 存在（AI 爬虫规则）
-- `grep 'FAQJsonLd' src/components/shared/json-ld.tsx` — 存在（FAQ Schema）
-- `grep 'first paragraph' scripts/lib/llm.mjs` — 存在（GEO prompt 约束）
-- `npm run build` — 构建通过，418 页
+- `test -f docs/plans/tool-intelligence-pipeline.md && echo OK` — 方案文档存在
+- `test -f src/app/llms.txt/route.ts && echo OK` — llms.txt 路由存在
+- `test -f src/app/en/skills/page.tsx && echo OK` — 英文 Skills 页存在
+- `npm run build` — 构建通过
 
-## Modified Files (Session 30)
-- `docs/plans/content-visibility-strategy.md` — 新增，战略方案文档
-- `src/app/llms.txt/route.ts` — 新增，AI 爬虫站点摘要
-- `src/app/llms-full.txt/route.ts` — 新增，完整 Skills/MCP 索引
-- `src/app/en/layout.tsx` — 新增，英文页面布局
-- `src/app/en/skills/page.tsx` — 新增，英文 Skills 列表
-- `src/app/en/skills/[slug]/page.tsx` — 新增，英文 Skill 详情
-- `src/app/en/mcp/page.tsx` — 新增，英文 MCP 目录
-- `src/app/robots.ts` — 修改，AI 爬虫规则
-- `src/app/sitemap.ts` — 修改，英文 URL
-- `src/app/mcp/page.tsx` — 修改，hreflang
-- `src/app/skills/[slug]/page.tsx` — 修改，FAQ + hreflang + 增强 JSON-LD
-- `src/app/articles/[slug]/page.tsx` — 修改，citation JSON-LD
-- `src/components/shared/json-ld.tsx` — 修改，FAQJsonLd + aggregateRating + citation
-- `scripts/lib/llm.mjs` — 修改，GEO prompt 约束
-
-## Document Inventory
-| 文件 | 状态 | 行数 | 说明 |
-|------|------|------|------|
-| `HANDOFF.md` | 更新 | ~370 | 交接文档 |
-| `CLAUDE.md` | 未变 | ~150 | 项目规范 |
-| `docs/plans/content-visibility-strategy.md` | 新增 | 55 | 内容可见性战略方案（已确认） |
-| `docs/specs/content-operations-spec.md` | 未变 | 293 | 内容运营管线规范 v1（生效中） |
-| `docs/specs/content-distribution-spec.md` | 未变 | 373 | 内容分发规范 v1 |
-| `docs/specs/design-system.md` | 未变 | 485 | 设计规范 v1 + §7.4 移动端模式 |
-| `docs/specs/ui-ux-redesign-v1.md` | 未变 | 338 | UI/UX 重构方案 v1（全部完成） |
-| `docs/specs/content-strategy-v2.md` | 未变 | 289 | 内容战略 2.0 最终方案（已确认） |
-| `docs/specs/content-pipeline-spec.md` | 未变 | 278 | 内容管道规范 v1（生效中） |
-| `docs/plans/github-nav-design.md` | 未变 | 233 | GitHub 导航页设计方案 v2（已实施） |
-| `docs/plans/weekly-pipeline.md` | 未变 | 184 | 周刊生成工具链操作文档 |
-| `docs/research/content-editing-*.md` | 未变 | ~290 | 4 份内容编辑调研报告 |
-| `docs/research/content-ops-*.md` | 未变 | 238 | 3 份运营调研报告 |
-| `docs/research/distribution/*.md` | 未变 | 612 | 4 份分发渠道调研报告 |
-| `docs/research/*.md` | 未变 | ~3.7K | 其他调研报告 |
-| `docs/plans/content-sources-audit.md` | 未变 | 248 | 信息源终审决策 |
-| `docs/github/*.md` | 未变 | 877 | 4 个 GitHub 项目榜单源数据 |
+## Risks & Decisions
+- **工具情报管线方案 v2 待审批**: 四路调研完成，方案含发现源/展示/保鲜/实施路径
+- **OpenClaw 精选已决策**: 做，50-100 个带编辑点评，source='openclaw'
+- **编辑点评是护城河**: 竞品（mcp.so/SkillHub）都是量无观点，我们做"精+有观点"
