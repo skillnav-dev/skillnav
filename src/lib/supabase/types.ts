@@ -148,7 +148,7 @@ export interface Database {
           forks_count: number;
           weekly_downloads: number;
           quality_score: number | null;
-          quality_tier: "A" | "B" | "C";
+          quality_tier: "S" | "A" | "B" | "C";
           quality_reason: string | null;
           editor_comment_zh: string | null;
           editor_rating: string | null;

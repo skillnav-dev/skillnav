@@ -8,6 +8,7 @@ export const mcpSearchParams = {
   q: parseAsString.withDefault(""),
   category: parseAsString.withDefault(""),
   sort: parseAsString.withDefault(""),
+  tier: parseAsString.withDefault(""),
   page: parseAsInteger.withDefault(1),
 };
 

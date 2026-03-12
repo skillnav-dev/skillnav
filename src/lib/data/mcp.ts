@@ -49,12 +49,16 @@ function filterStatic(
     category?: string;
     search?: string;
     sort?: string;
+    tier?: string;
     limit?: number;
     offset?: number;
   },
 ): McpServer[] {
   let results = [...servers];
 
+  if (options?.tier) {
+    results = results.filter((s) => s.qualityTier === options.tier);
+  }
   if (options?.category) {
     results = results.filter((s) => s.category === options.category);
   }
@@ -94,6 +98,7 @@ export async function getMcpServers(options?: {
   category?: string;
   search?: string;
   sort?: string;
+  tier?: string;
 }): Promise<McpServer[]> {
   if (!isSupabaseConfigured()) {
     const { mcpServers } = await import("@/data/mcp-servers");
@@ -113,6 +118,7 @@ export async function getMcpServers(options?: {
     .order(sortField, { ascending: false });
 
   if (options?.category) query = query.eq("category", options.category);
+  if (options?.tier) query = query.eq("quality_tier", options.tier);
   if (options?.search) {
     query = query.or(
       `name.ilike.%${options.search}%,name_zh.ilike.%${options.search}%`,
@@ -137,12 +143,16 @@ export async function getMcpServersWithCount(options?: {
   category?: string;
   search?: string;
   sort?: string;
+  tier?: string;
 }): Promise<{ servers: McpServer[]; total: number }> {
   if (!isSupabaseConfigured()) {
     const { mcpServers } = await import("@/data/mcp-servers");
     const mapped = mcpServers.map(mapStaticToMcpServer);
 
     let results = [...mapped];
+    if (options?.tier) {
+      results = results.filter((s) => s.qualityTier === options.tier);
+    }
     if (options?.category) {
       results = results.filter((s) => s.category === options.category);
     }
@@ -186,6 +196,7 @@ export async function getMcpServersWithCount(options?: {
     .order(sortField, { ascending: false });
 
   if (options?.category) query = query.eq("category", options.category);
+  if (options?.tier) query = query.eq("quality_tier", options.tier);
   if (options?.search) {
     query = query.or(
       `name.ilike.%${options.search}%,name_zh.ilike.%${options.search}%`,

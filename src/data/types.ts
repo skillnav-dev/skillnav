@@ -146,7 +146,7 @@ export interface McpServer {
   forksCount: number;
   weeklyDownloads: number;
   qualityScore?: number;
-  qualityTier: "A" | "B" | "C";
+  qualityTier: "S" | "A" | "B" | "C";
   qualityReason?: string;
   editorCommentZh?: string;
   editorRating?: string;

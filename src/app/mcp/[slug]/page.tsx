@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { Star, Github } from "lucide-react";
+import { Star, Github, Award } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { PageBreadcrumb } from "@/components/shared/page-breadcrumb";
 import { CopyButton } from "@/components/shared/copy-button";
@@ -137,7 +137,16 @@ export default async function McpDetailPage({ params }: PageProps) {
                 {server.category}
               </Badge>
             )}
-            {server.isFeatured && (
+            {server.qualityTier === "S" && (
+              <Badge
+                variant="secondary"
+                className="border-amber-200 bg-amber-100 text-amber-800 text-xs dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-400"
+              >
+                <Award className="mr-0.5 size-3" />
+                编辑精选
+              </Badge>
+            )}
+            {server.isFeatured && server.qualityTier !== "S" && (
               <Badge
                 variant="secondary"
                 className="border-amber-200 bg-amber-50 text-amber-700 text-xs dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300"
@@ -155,17 +164,8 @@ export default async function McpDetailPage({ params }: PageProps) {
             </p>
           )}
           <p className="mt-4 text-base leading-relaxed text-foreground/85">
-            {server.descriptionZh ?? server.description}
+            {server.introZh ?? server.descriptionZh ?? server.description}
           </p>
-
-          {/* Editor comment */}
-          {server.editorCommentZh && (
-            <div className="mt-4 rounded-lg border-l-4 border-primary/50 bg-primary/5 px-4 py-3">
-              <p className="text-sm italic text-foreground/80">
-                {server.editorCommentZh}
-              </p>
-            </div>
-          )}
 
           {/* Badges row */}
           <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -198,6 +198,39 @@ export default async function McpDetailPage({ params }: PageProps) {
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_280px]">
           {/* Left: main content */}
           <div className="min-w-0 space-y-6">
+            {/* Editor review card */}
+            {server.editorCommentZh && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-6 dark:border-amber-800/50 dark:bg-amber-950/20">
+                <div className="mb-3 flex items-center gap-2">
+                  <Award className="size-5 text-amber-600 dark:text-amber-400" />
+                  <h2 className="text-lg font-semibold">编辑评测</h2>
+                </div>
+                <p className="text-sm leading-relaxed text-foreground/85">
+                  {server.editorCommentZh}
+                </p>
+                {server.editorRating && (
+                  <div className="mt-3 flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">评分:</span>
+                    <span className="flex items-center gap-0.5">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`size-4 ${
+                            i < Number(server.editorRating)
+                              ? "fill-amber-400 text-amber-400"
+                              : "text-muted-foreground/30"
+                          }`}
+                        />
+                      ))}
+                    </span>
+                    <span className="text-sm text-muted-foreground">
+                      ({server.editorRating}/5)
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Install command block */}
             {server.installCommand && (
               <div className="rounded-lg border border-border/40 bg-card p-6">
@@ -230,23 +263,6 @@ export default async function McpDetailPage({ params }: PageProps) {
                     <p key={i}>{p}</p>
                   ))}
                 </div>
-              </div>
-            )}
-
-            {/* Editor review */}
-            {server.editorRating && (
-              <div className="rounded-lg border border-border/40 bg-card p-6">
-                <div className="mb-3 flex items-center gap-2">
-                  <h2 className="text-lg font-semibold">编辑评级</h2>
-                  <Badge variant="secondary" className="text-xs">
-                    {server.editorRating}
-                  </Badge>
-                </div>
-                {server.qualityReason && (
-                  <p className="text-sm leading-relaxed text-foreground/85">
-                    {server.qualityReason}
-                  </p>
-                )}
               </div>
             )}
 

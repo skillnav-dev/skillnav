@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Star, Copy, Check, ExternalLink, Wrench } from "lucide-react";
+import { Star, Copy, Check, ExternalLink, Wrench, Award } from "lucide-react";
 import { FreshnessBadge } from "@/components/shared/freshness-badge";
 import { formatNumber } from "@/lib/utils";
 import type { McpServer } from "@/data/types";
@@ -37,7 +37,16 @@ export function MCPCard({ server }: MCPCardProps) {
                   {server.nameZh ?? server.name}
                 </Link>
               </h3>
-              {server.isFeatured && (
+              {server.qualityTier === "S" && (
+                <Badge
+                  variant="secondary"
+                  className="border-amber-200 bg-amber-100 text-amber-800 text-xs dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-400"
+                >
+                  <Award className="mr-0.5 size-3" />
+                  编辑精选
+                </Badge>
+              )}
+              {server.isFeatured && server.qualityTier !== "S" && (
                 <Badge
                   variant="secondary"
                   className="border-amber-200 bg-amber-50 text-amber-700 text-xs dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300"
@@ -74,7 +83,7 @@ export function MCPCard({ server }: MCPCardProps) {
       </CardHeader>
       <CardContent className="space-y-3">
         <p className="line-clamp-2 text-sm text-muted-foreground">
-          {server.descriptionZh ?? server.description ?? ""}
+          {server.introZh ?? server.descriptionZh ?? server.description ?? ""}
         </p>
         {server.editorCommentZh && (
           <p className="line-clamp-1 text-xs italic text-muted-foreground/70">

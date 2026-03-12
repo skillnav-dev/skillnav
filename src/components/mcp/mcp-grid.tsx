@@ -7,10 +7,11 @@ interface MCPGridProps {
   q: string;
   category: string;
   sort: string;
+  tier: string;
   page: number;
 }
 
-export async function MCPGrid({ q, category, sort, page }: MCPGridProps) {
+export async function MCPGrid({ q, category, sort, tier, page }: MCPGridProps) {
   const offset = (page - 1) * MCP_PAGE_SIZE;
   const { servers, total } = await getMcpServersWithCount({
     limit: MCP_PAGE_SIZE,
@@ -18,6 +19,7 @@ export async function MCPGrid({ q, category, sort, page }: MCPGridProps) {
     category,
     search: q,
     sort,
+    tier,
   });
 
   const totalPages = Math.ceil(total / MCP_PAGE_SIZE);
@@ -47,6 +49,7 @@ export async function MCPGrid({ q, category, sort, page }: MCPGridProps) {
                   q: q || undefined,
                   category: category || undefined,
                   sort: sort || undefined,
+                  tier: tier || undefined,
                   page: page - 1 > 1 ? page - 1 : undefined,
                 },
               }}
@@ -65,6 +68,7 @@ export async function MCPGrid({ q, category, sort, page }: MCPGridProps) {
                   q: q || undefined,
                   category: category || undefined,
                   sort: sort || undefined,
+                  tier: tier || undefined,
                   page: page + 1,
                 },
               }}

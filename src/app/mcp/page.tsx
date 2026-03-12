@@ -27,7 +27,8 @@ type PageProps = {
 };
 
 export default async function MCPPage({ searchParams }: PageProps) {
-  const { q, category, sort, page } = await mcpParamsCache.parse(searchParams);
+  const { q, category, sort, tier, page } =
+    await mcpParamsCache.parse(searchParams);
   const offset = (page - 1) * MCP_PAGE_SIZE;
 
   const [categories, { total }] = await Promise.all([
@@ -38,6 +39,7 @@ export default async function MCPPage({ searchParams }: PageProps) {
       category,
       search: q,
       sort,
+      tier,
     }),
   ]);
 
@@ -57,7 +59,13 @@ export default async function MCPPage({ searchParams }: PageProps) {
         />
         <MCPToolbar categories={categories} totalCount={total} />
         <Suspense fallback={<MCPGridSkeleton />}>
-          <MCPGrid q={q} category={category} sort={sort} page={page} />
+          <MCPGrid
+            q={q}
+            category={category}
+            sort={sort}
+            tier={tier}
+            page={page}
+          />
         </Suspense>
       </div>
     </>

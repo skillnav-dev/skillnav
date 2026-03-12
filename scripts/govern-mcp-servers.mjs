@@ -61,6 +61,9 @@ const A_TOOLS_THRESHOLD = 3;
  *   null means skip (already published)
  */
 function classify(server) {
+  // Protect S-tier: never auto-downgrade editor's picks
+  if (server.quality_tier === "S") return null;
+
   // Skip already-published servers
   if (server.status === "published") return null;
 
@@ -179,7 +182,7 @@ async function main() {
 
   // ── Step 3: Classify ───────────────────────────────────────────────
 
-  const stats = { A: 0, B: 0, hidden: 0, skipped: 0, errors: 0 };
+  const stats = { S: 0, A: 0, B: 0, hidden: 0, skipped: 0, errors: 0 };
   const updates = [];
   const topA = [];
 
@@ -187,7 +190,11 @@ async function main() {
     const result = classify(s);
 
     if (result === null) {
-      stats.skipped++;
+      if (s.quality_tier === "S") {
+        stats.S++;
+      } else {
+        stats.skipped++;
+      }
       continue;
     }
 
@@ -242,6 +249,7 @@ async function main() {
   const summaryLines = [
     `\n${mode} MCP Governance Summary:`,
     `  Total servers: ${servers.length}`,
+    `  S-tier (protected): ${stats.S}`,
     `  A-tier (published): ${stats.A}`,
     `  B-tier (published): ${stats.B}`,
     `  Hidden: ${stats.hidden}`,

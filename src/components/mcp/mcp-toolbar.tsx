@@ -2,7 +2,7 @@
 
 import { useTransition } from "react";
 import { useQueryState } from "nuqs";
-import { Search, X, ArrowUpDown } from "lucide-react";
+import { Search, X, ArrowUpDown, Award } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -49,6 +49,14 @@ export function MCPToolbar({ categories, totalCount }: MCPToolbarProps) {
     }),
   );
 
+  const [tier, setTier] = useQueryState(
+    "tier",
+    mcpSearchParams.tier.withOptions({
+      shallow: false,
+      startTransition,
+    }),
+  );
+
   const [, setPage] = useQueryState(
     "page",
     mcpSearchParams.page.withOptions({
@@ -69,6 +77,11 @@ export function MCPToolbar({ categories, totalCount }: MCPToolbarProps) {
 
   function handleSort(value: string) {
     setSort(value === "stars" ? null : value);
+    setPage(1);
+  }
+
+  function handleTier() {
+    setTier(tier === "S" ? null : "S");
     setPage(1);
   }
 
@@ -114,7 +127,20 @@ export function MCPToolbar({ categories, totalCount }: MCPToolbarProps) {
       {/* Category filters */}
       <ScrollFade>
         <Button
-          variant={!category ? "default" : "outline"}
+          variant={tier === "S" ? "default" : "outline"}
+          size="sm"
+          onClick={handleTier}
+          className={cn(
+            "shrink-0",
+            tier === "S" &&
+              "border-amber-200 bg-amber-100 text-amber-800 hover:bg-amber-200 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-400 dark:hover:bg-amber-900/50",
+          )}
+        >
+          <Award className="mr-1 size-3.5" />
+          编辑精选
+        </Button>
+        <Button
+          variant={!category && tier !== "S" ? "default" : "outline"}
           size="sm"
           onClick={() => handleCategory("")}
           className="shrink-0"

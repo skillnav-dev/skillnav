@@ -1,7 +1,14 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { Star, Github, ExternalLink, Calendar, Clock } from "lucide-react";
+import {
+  Star,
+  Github,
+  ExternalLink,
+  Calendar,
+  Clock,
+  Award,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { CopyButton } from "@/components/shared/copy-button";
 import {
@@ -136,7 +143,16 @@ export default async function EnMcpDetailPage({ params }: PageProps) {
                 {server.category}
               </Badge>
             )}
-            {server.isFeatured && (
+            {server.qualityTier === "S" && (
+              <Badge
+                variant="secondary"
+                className="border-amber-200 bg-amber-100 text-amber-800 text-xs dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-400"
+              >
+                <Award className="mr-0.5 size-3" />
+                Editor&apos;s Pick
+              </Badge>
+            )}
+            {server.isFeatured && server.qualityTier !== "S" && (
               <Badge
                 variant="secondary"
                 className="border-amber-200 bg-amber-50 text-amber-700 text-xs dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300"
