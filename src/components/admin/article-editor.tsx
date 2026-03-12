@@ -2,7 +2,8 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { ArrowLeft, Save, Send } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, Save, Send, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import type { Article } from "@/data/types";
 import { Button } from "@/components/ui/button";
@@ -18,7 +19,10 @@ import {
 } from "@/components/ui/select";
 import { ArticlePreview } from "./article-preview";
 import { ArticleOriginal } from "./article-original";
-import { saveArticle } from "@/app/admin/articles/[id]/edit/actions";
+import {
+  saveArticle,
+  deleteArticleAction,
+} from "@/app/admin/articles/[id]/edit/actions";
 
 interface ArticleEditorProps {
   article: Article;
@@ -33,6 +37,7 @@ export function ArticleEditor({ article }: ArticleEditorProps) {
     String(article.relevanceScore ?? 3),
   );
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
 
   function handleSave(publish: boolean) {
     const formData = new FormData();
@@ -47,8 +52,25 @@ export function ArticleEditor({ article }: ArticleEditorProps) {
       try {
         await saveArticle(formData);
         toast.success(publish ? "文章已发布" : "文章已保存");
+        if (publish) {
+          router.push("/admin/articles");
+        }
       } catch {
         toast.error("保存失败，请重试");
+      }
+    });
+  }
+
+  function handleDelete() {
+    if (!confirm("确定要删除这篇文章吗？此操作不可撤销。")) return;
+
+    startTransition(async () => {
+      const result = await deleteArticleAction(article.id);
+      if (result.ok) {
+        toast.success("文章已删除");
+        router.push("/admin/articles");
+      } else {
+        toast.error(result.error ?? "删除失败");
       }
     });
   }
@@ -166,21 +188,34 @@ export function ArticleEditor({ article }: ArticleEditorProps) {
 
         {/* Right: Preview area */}
         <div className="space-y-2">
-          <Label>预览</Label>
-          <div className="h-[calc(100vh-320px)] min-h-[500px] overflow-y-auto rounded-lg border bg-background p-4">
-            <ArticlePreview content={contentZh} />
+          <div className="sticky top-4">
+            <Label>预览</Label>
+            <div className="mt-2 max-h-[calc(100vh-120px)] overflow-y-auto rounded-lg border bg-background p-4">
+              <ArticlePreview content={contentZh} />
+            </div>
           </div>
         </div>
       </div>
 
       {/* Bottom action bar */}
       <div className="sticky bottom-0 flex items-center justify-between border-t bg-background py-4">
-        <Button variant="ghost" asChild>
-          <Link href="/admin/articles">
-            <ArrowLeft className="mr-2 size-4" />
-            返回列表
-          </Link>
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" asChild>
+            <Link href="/admin/articles">
+              <ArrowLeft className="mr-2 size-4" />
+              返回列表
+            </Link>
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            disabled={isPending}
+            onClick={handleDelete}
+          >
+            <Trash2 className="mr-2 size-4" />
+            删除
+          </Button>
+        </div>
         <div className="flex items-center gap-3">
           <Button
             variant="outline"

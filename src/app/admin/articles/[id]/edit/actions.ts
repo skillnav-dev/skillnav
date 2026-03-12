@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { updateArticle } from "@/lib/data/admin";
+import { updateArticle, deleteArticle } from "@/lib/data/admin";
 
 export async function saveArticle(formData: FormData) {
   const id = formData.get("id") as string;
@@ -36,4 +36,20 @@ export async function saveArticle(formData: FormData) {
   revalidatePath("/articles");
 
   return { success: true };
+}
+
+export async function deleteArticleAction(
+  id: string,
+): Promise<{ ok: boolean; error?: string }> {
+  try {
+    await deleteArticle(id);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Unknown error";
+    console.error(`[admin] deleteArticle failed: ${msg}`);
+    return { ok: false, error: msg };
+  }
+
+  revalidatePath("/admin/articles");
+  revalidatePath("/articles");
+  return { ok: true };
 }

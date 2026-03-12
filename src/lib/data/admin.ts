@@ -204,6 +204,20 @@ export async function updateArticle(
   if (error) throw error;
 }
 
+/**
+ * Delete an article by id.
+ */
+export async function deleteArticle(id: string): Promise<void> {
+  const supabase = createAdminClient();
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase.from("articles") as any)
+    .delete()
+    .eq("id", id);
+
+  if (error) throw error;
+}
+
 // ---------------------------------------------------------------------------
 // Skills admin
 // ---------------------------------------------------------------------------
