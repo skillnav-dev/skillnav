@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS mcp_servers (
   forks_count INTEGER DEFAULT 0,
   weekly_downloads INTEGER DEFAULT 0,
   quality_score INTEGER,
-  quality_tier TEXT DEFAULT 'B' CHECK (quality_tier IN ('A', 'B', 'C')),
+  quality_tier TEXT DEFAULT 'B' CHECK (quality_tier IN ('S', 'A', 'B', 'C')),
   quality_reason TEXT,
   editor_comment_zh TEXT,
   editor_rating NUMERIC(2,1),

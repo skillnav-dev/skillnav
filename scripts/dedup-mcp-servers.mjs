@@ -55,7 +55,7 @@ async function fetchPublishedWithGithub(supabase) {
   while (true) {
     const { data, error } = await supabase
       .from("mcp_servers")
-      .select("slug, github_url, stars, status, created_at")
+      .select("slug, name, github_url, stars, status, created_at")
       .eq("status", "published")
       .not("github_url", "is", null)
       .order("stars", { ascending: false })
@@ -72,31 +72,67 @@ async function fetchPublishedWithGithub(supabase) {
 }
 
 /**
- * Group servers by github_url and return only groups with duplicates.
- * @returns {Map<string, Array>} github_url → sorted array of servers
+ * Normalize a name for fuzzy comparison: lowercase, strip common prefixes/suffixes,
+ * remove non-alphanumeric characters.
+ */
+function normalizeName(name) {
+  return (name || "")
+    .toLowerCase()
+    .replace(/^(mcp[-_ ]?server[-_ ]?|mcp[-_ ]?)/i, "")
+    .replace(/[-_ ]/g, "")
+    .trim();
+}
+
+/**
+ * Group servers by github_url, then sub-group by similar name.
+ * Only servers with the same github_url AND similar name are considered duplicates.
+ * This prevents monorepo servers (same repo, different tools) from being deduped.
+ *
+ * @returns {Map<string, Array>} composite_key → sorted array of servers
  */
 function findDuplicateGroups(servers) {
-  const groups = new Map();
-
+  // Step 1: Group by github_url
+  const urlGroups = new Map();
   for (const s of servers) {
-    // Normalize URL: trim trailing slash, lowercase
     const normalized = s.github_url.replace(/\/+$/, "").toLowerCase();
-    if (!groups.has(normalized)) {
-      groups.set(normalized, []);
+    if (!urlGroups.has(normalized)) {
+      urlGroups.set(normalized, []);
     }
-    groups.get(normalized).push(s);
+    urlGroups.get(normalized).push(s);
   }
 
-  // Keep only groups with > 1 member
+  // Step 2: Within each url group, sub-group by normalized name
   const dupes = new Map();
-  for (const [url, members] of groups) {
-    if (members.length > 1) {
-      // Sort: highest stars first, then earliest created_at
-      members.sort((a, b) => {
-        if (b.stars !== a.stars) return b.stars - a.stars;
-        return new Date(a.created_at) - new Date(b.created_at);
-      });
-      dupes.set(url, members);
+  for (const [url, members] of urlGroups) {
+    if (members.length <= 1) continue;
+
+    const nameGroups = new Map();
+    for (const s of members) {
+      const nName = normalizeName(s.name);
+      // Find existing group with similar name
+      let matched = false;
+      for (const [key, group] of nameGroups) {
+        if (nName === key || nName.includes(key) || key.includes(nName)) {
+          group.push(s);
+          matched = true;
+          break;
+        }
+      }
+      if (!matched) {
+        nameGroups.set(nName, [s]);
+      }
+    }
+
+    // Only keep sub-groups with > 1 member (actual duplicates)
+    for (const [nName, subGroup] of nameGroups) {
+      if (subGroup.length > 1) {
+        subGroup.sort((a, b) => {
+          if (b.stars !== a.stars) return b.stars - a.stars;
+          return new Date(a.created_at) - new Date(b.created_at);
+        });
+        const key = `${url} [${nName}]`;
+        dupes.set(key, subGroup);
+      }
     }
   }
 
@@ -140,7 +176,7 @@ async function main() {
     const toHide = members.slice(1);
     totalDupes += toHide.length;
 
-    // Extract repo path for display
+    // key format: "url [normalizedName]"
     const repoPath = url.replace(/^https?:\/\/github\.com\//, "");
 
     log.info(`\n  ${repoPath}: ${members.length} entries`);
@@ -158,16 +194,19 @@ async function main() {
     log.info(`\nApplying ${updates.length} updates...`);
     let errors = 0;
 
-    for (let i = 0; i < updates.length; i += BATCH_SIZE) {
-      const batch = updates.slice(i, i + BATCH_SIZE);
+    for (let i = 0; i < updates.length; i++) {
+      const { slug, status } = updates[i];
       const { error } = await supabase
         .from("mcp_servers")
-        .upsert(batch, { onConflict: "slug", ignoreDuplicates: false });
+        .update({ status })
+        .eq("slug", slug);
       if (error) {
-        log.error(`Batch ${Math.floor(i / BATCH_SIZE) + 1} failed: ${error.message}`);
-        errors += batch.length;
+        log.error(`Failed to hide ${slug}: ${error.message}`);
+        errors++;
       }
-      log.info(`  Progress: ${Math.min(i + BATCH_SIZE, updates.length)}/${updates.length}`);
+      if ((i + 1) % 50 === 0 || i === updates.length - 1) {
+        log.info(`  Progress: ${i + 1}/${updates.length}`);
+      }
     }
 
     if (errors > 0) {

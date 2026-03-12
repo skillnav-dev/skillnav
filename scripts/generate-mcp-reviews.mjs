@@ -68,13 +68,15 @@ if (!dryRun && !applyMode && previewCount === 0) {
 
 // ── Review Prompt ───────────────────────────────────────────────────────
 
-const REVIEW_SYSTEM_PROMPT = `You are a senior Chinese tech editor at SkillNav (skillnav.dev), a curated AI tools directory for Chinese developers. Your task is to write editorial reviews for MCP (Model Context Protocol) servers.
+const REVIEW_SYSTEM_PROMPT = `You are a senior Chinese tech editor at SkillNav (skillnav.dev), a curated AI tools directory for Chinese developers. You write editorial reviews for MCP (Model Context Protocol) servers.
 
-Your reviews should be:
-- Practical and opinionated — tell developers when and why to use this tool
-- Honest about limitations — don't oversell
-- Written in natural Chinese — no translation artifacts
-- Focused on use cases, not feature lists
+Writing style:
+- Opinionated and specific — name concrete use cases (e.g. "让 Claude 直接读写你的 Notion 文档" not "用于管理文档")
+- Each review must feel unique — NEVER use templates like "这个服务器解决了X的问题，适合Y的开发者"
+- Vary your sentence structure — mix short punchy statements with longer explanations
+- Honest about trade-offs — but lead with what makes this tool worth using
+- Written in natural, conversational Chinese — like a tech blogger recommending a tool to a friend
+- For official/verified servers: acknowledge their authority and ecosystem importance
 
 You must respond with valid JSON only, no markdown fences.`;
 
@@ -96,10 +98,10 @@ function buildReviewPrompt(server, readme) {
 }
 
 Rating guide:
-5 = Best-in-class, production-ready, well-documented (e.g. official Anthropic servers)
-4 = High quality, actively maintained, good docs
-3 = Useful but has rough edges or limited scope
-2 = Early stage or niche, use with caution
+5 = Best-in-class, production-ready, well-documented, widely adopted (official Anthropic/GitHub/major-company servers with 10K+ stars)
+4 = High quality, actively maintained, good docs, clear use case (1K+ stars or verified publisher)
+3 = Solid and useful but has rough edges, limited docs, or narrow scope
+2 = Early stage or very niche, use with caution
 1 = Experimental, not recommended for production
 
 MCP Server info:
@@ -322,20 +324,29 @@ async function main() {
 
   if (applyMode && results.length > 0) {
     log.info(`Writing ${results.length} reviews to DB...`);
-    const BATCH_SIZE = 50;
+    let writeErrors = 0;
 
-    for (let i = 0; i < results.length; i += BATCH_SIZE) {
-      const batch = results.slice(i, i + BATCH_SIZE);
+    for (let i = 0; i < results.length; i++) {
+      const { slug, ...fields } = results[i];
       const { error } = await supabase
         .from("mcp_servers")
-        .upsert(batch, { onConflict: "slug", ignoreDuplicates: false });
+        .update(fields)
+        .eq("slug", slug);
 
       if (error) {
-        log.error(`Batch ${Math.floor(i / BATCH_SIZE) + 1} failed: ${error.message}`);
+        log.error(`Failed to update ${slug}: ${error.message}`);
+        writeErrors++;
+      }
+      if ((i + 1) % 10 === 0 || i === results.length - 1) {
+        log.info(`  Write progress: ${i + 1}/${results.length}`);
       }
     }
 
-    log.success(`Wrote ${results.length} reviews to DB`);
+    if (writeErrors > 0) {
+      log.error(`${writeErrors} writes failed`);
+    } else {
+      log.success(`Wrote ${results.length} reviews to DB`);
+    }
   }
 
   // ── Summary ─────────────────────────────────────────────────────────
