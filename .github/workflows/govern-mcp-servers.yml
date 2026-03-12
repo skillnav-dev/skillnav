@@ -1,0 +1,58 @@
+name: Govern MCP Servers
+
+on:
+  schedule:
+    - cron: "30 3 * * 1"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Governance mode"
+        required: true
+        default: "apply"
+        type: choice
+        options:
+          - audit
+          - dry-run
+          - apply
+      limit:
+        description: "Limit number of servers to process (optional)"
+        required: false
+        type: number
+
+concurrency:
+  group: govern-mcp-servers
+  cancel-in-progress: true
+
+jobs:
+  govern:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci
+      - name: Run governance
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            FLAGS="--apply"
+          else
+            FLAGS="--${{ inputs.mode }}"
+          fi
+
+          if [ -n "${{ inputs.limit }}" ]; then
+            FLAGS="$FLAGS --limit ${{ inputs.limit }}"
+          fi
+
+          node scripts/govern-mcp-servers.mjs $FLAGS
+      - name: Notify Slack on failure
+        if: failure()
+        run: |
+          curl -sS -X POST -H 'Content-type: application/json' \
+            --data "{\"text\":\"❌ *Govern MCP Servers* failed\\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>\"}" \
+            ${{ secrets.SLACK_WEBHOOK_URL }}

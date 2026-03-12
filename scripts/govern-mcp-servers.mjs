@@ -166,12 +166,10 @@ async function main() {
     if (applyMode) {
       for (let i = 0; i < toolsBackfillUpdates.length; i += BATCH_SIZE) {
         const batch = toolsBackfillUpdates.slice(i, i + BATCH_SIZE);
-        for (const u of batch) {
-          await supabase
-            .from("mcp_servers")
-            .update({ tools_count: u.tools_count })
-            .eq("slug", u.slug);
-        }
+        const { error } = await supabase
+          .from("mcp_servers")
+          .upsert(batch, { onConflict: "slug", ignoreDuplicates: false });
+        if (error) throw new Error(`Backfill batch: ${error.message}`);
       }
       log.success(`Backfilled tools_count for ${toolsBackfillUpdates.length} servers`);
     } else {
@@ -220,27 +218,22 @@ async function main() {
 
   if (applyMode && updates.length > 0) {
     log.info(`Applying ${updates.length} updates...`);
-    let applied = 0;
+    let errors = 0;
 
     for (let i = 0; i < updates.length; i += BATCH_SIZE) {
       const batch = updates.slice(i, i + BATCH_SIZE);
-      for (const u of batch) {
-        const { error } = await supabase
-          .from("mcp_servers")
-          .update({ status: u.status, quality_tier: u.quality_tier })
-          .eq("slug", u.slug);
-
-        if (error) {
-          log.error(`  Failed ${u.slug}: ${error.message}`);
-          stats.errors++;
-        } else {
-          applied++;
-        }
+      const { error } = await supabase
+        .from("mcp_servers")
+        .upsert(batch, { onConflict: "slug", ignoreDuplicates: false });
+      if (error) {
+        log.error(`Batch ${i / BATCH_SIZE + 1} failed: ${error.message}`);
+        errors += batch.length;
+        stats.errors += batch.length;
       }
       log.info(`  Progress: ${Math.min(i + BATCH_SIZE, updates.length)}/${updates.length}`);
     }
 
-    log.success(`Applied ${applied} updates`);
+    log.success(`Applied ${updates.length - errors} updates`);
   }
 
   // ── Summary ────────────────────────────────────────────────────────
