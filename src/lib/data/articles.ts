@@ -95,6 +95,27 @@ export async function getLatestArticles(limit = 4): Promise<Article[]> {
 }
 
 /**
+ * Get total published articles count.
+ */
+export async function getArticlesCount(): Promise<number> {
+  if (!isSupabaseConfigured()) {
+    const { mockArticles } = await import("@/data/mock-articles");
+    return mockArticles.length;
+  }
+
+  const { createServerClient } = await import("@/lib/supabase/server");
+  const supabase = await createServerClient();
+
+  const { count, error } = await supabase
+    .from("articles")
+    .select("*", { count: "exact", head: true })
+    .eq("status", "published");
+
+  if (error) throw error;
+  return count ?? 0;
+}
+
+/**
  * Get articles with total count (for paginated listing).
  */
 export async function getArticlesWithCount(options?: {
