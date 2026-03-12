@@ -42,11 +42,12 @@ const PROVIDERS = {
     type: "openai-compatible",
   },
   gpt: {
-    name: "GPT-5.3 Codex",
+    name: "GPT-5.4",
     baseUrl: "https://gmn.chuangzuoli.com/v1",
-    model: "gpt-5.3-codex",
+    model: "gpt-5.4",
     apiKeyEnv: "GPT_API_KEY",
     type: "openai-responses",
+    reasoning: { effort: "xhigh" },
   },
 };
 
@@ -136,6 +137,7 @@ async function callOpenAIResponses(provider, systemPrompt, userPrompt, maxTokens
     body: JSON.stringify({
       model: provider.model,
       max_output_tokens: maxTokens,
+      ...(provider.reasoning && { reasoning: provider.reasoning }),
       input: [
         {
           type: "message",
