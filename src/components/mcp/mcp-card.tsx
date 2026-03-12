@@ -24,7 +24,7 @@ export function MCPCard({ server }: MCPCardProps) {
   };
 
   return (
-    <Card className="group overflow-hidden transition-shadow hover:shadow-md">
+    <Card className="group relative overflow-hidden transition-shadow hover:shadow-md">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
@@ -32,7 +32,7 @@ export function MCPCard({ server }: MCPCardProps) {
               <h3 className="text-base font-semibold">
                 <Link
                   href={`/mcp/${server.slug}`}
-                  className="hover:text-primary hover:underline"
+                  className="transition-colors after:absolute after:inset-0 group-hover:text-primary"
                 >
                   {server.nameZh ?? server.name}
                 </Link>
@@ -52,7 +52,7 @@ export function MCPCard({ server }: MCPCardProps) {
               </p>
             )}
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="relative z-10 flex items-center gap-1.5">
             <FreshnessBadge
               freshness={server.freshness}
               isTrending={server.isTrending}
@@ -85,7 +85,7 @@ export function MCPCard({ server }: MCPCardProps) {
         {server.installCommand && (
           <button
             onClick={handleCopy}
-            className="flex w-full items-center gap-2 rounded-md border bg-muted/50 px-3 py-2 text-left text-xs font-mono text-muted-foreground transition-colors hover:bg-muted"
+            className="relative z-10 flex w-full items-center gap-2 rounded-md border bg-muted/50 px-3 py-2 text-left text-xs font-mono text-muted-foreground transition-colors hover:bg-muted"
           >
             <code className="min-w-0 flex-1 truncate">
               {server.installCommand}

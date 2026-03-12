@@ -48,11 +48,6 @@ export function SkillCard({ skill }: SkillCardProps) {
         <p className="line-clamp-2 text-sm text-muted-foreground">
           {skill.descriptionZh ?? skill.description}
         </p>
-        {skill.editorCommentZh && (
-          <p className="line-clamp-1 text-xs italic text-muted-foreground/70">
-            {skill.editorCommentZh}
-          </p>
-        )}
         <div className="flex items-center justify-between">
           <div className="flex flex-wrap gap-1">
             <Badge variant="secondary" className="text-xs">

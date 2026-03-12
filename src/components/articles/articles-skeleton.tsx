@@ -1,5 +1,3 @@
-import { ARTICLES_PAGE_SIZE } from "@/lib/articles-search-params";
-
 function CardSkeleton() {
   return (
     <div className="overflow-hidden rounded-xl border bg-card">
@@ -29,7 +27,7 @@ export function ArticlesSkeleton() {
   return (
     <div className="mt-6">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {Array.from({ length: ARTICLES_PAGE_SIZE }, (_, i) => (
+        {Array.from({ length: 6 }, (_, i) => (
           <CardSkeleton key={i} />
         ))}
       </div>

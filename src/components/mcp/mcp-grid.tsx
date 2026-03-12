@@ -32,7 +32,6 @@ export async function MCPGrid({ q, category, sort, page }: MCPGridProps) {
 
   return (
     <div className="mt-6 space-y-6">
-      <p className="text-sm text-muted-foreground">共 {total} 个 MCP Server</p>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {servers.map((server) => (
           <MCPCard key={server.slug} server={server} />

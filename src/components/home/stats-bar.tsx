@@ -1,24 +1,24 @@
 import Link from "next/link";
-import { Wrench, FileText, Rss, RefreshCw } from "lucide-react";
+import { Wrench, FileText, Server, RefreshCw } from "lucide-react";
 
 const stats = [
   {
     label: "精选工具",
-    value: "168+",
+    value: "309+",
     icon: Wrench,
     href: "/skills",
   },
   {
-    label: "翻译资讯",
-    value: "270+",
-    icon: FileText,
-    href: "/articles",
+    label: "MCP 工具",
+    value: "5,100+",
+    icon: Server,
+    href: "/mcp",
   },
   {
-    label: "一手信源",
-    value: "13",
-    icon: Rss,
-    href: "/about",
+    label: "翻译资讯",
+    value: "99+",
+    icon: FileText,
+    href: "/articles",
   },
   {
     label: "更新频率",
