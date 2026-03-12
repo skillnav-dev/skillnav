@@ -1,14 +1,19 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Calendar } from "lucide-react";
 import { SectionHeader } from "@/components/shared/section-header";
+import { ArticleCard } from "@/components/articles/article-card";
+import { getWeeklyArticles, getEditorialArticles } from "@/lib/data";
 
-// Placeholder: renders nothing until editorial content (e.g. weekly digest) exists.
-// Will display a featured large card + article list once content_tier='editorial' records appear.
 export async function EditorialHighlights() {
-  // TODO: query articles where content_tier = 'editorial' or series = 'weekly'
-  const hasEditorial = false;
+  const [weeklies, editorials] = await Promise.all([
+    getWeeklyArticles(1),
+    getEditorialArticles(3),
+  ]);
 
-  if (!hasEditorial) return null;
+  const latestWeekly = weeklies[0] ?? null;
+  const hasContent = latestWeekly || editorials.length > 0;
+
+  if (!hasContent) return null;
 
   return (
     <section className="py-16">
@@ -26,7 +31,56 @@ export async function EditorialHighlights() {
             <ArrowRight className="size-4" />
           </Link>
         </div>
-        {/* Editorial content grid will be added when weekly digest is ready */}
+        <div className="mt-8 grid gap-6 lg:grid-cols-5">
+          {/* Large weekly card */}
+          {latestWeekly && (
+            <Link
+              href={`/weekly/${latestWeekly.slug}`}
+              className="group relative flex flex-col justify-end overflow-hidden rounded-xl border bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 transition-shadow hover:shadow-md lg:col-span-2"
+            >
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Calendar className="size-3.5" />
+                {new Date(latestWeekly.publishedAt).toLocaleDateString(
+                  "zh-CN",
+                  { month: "long", day: "numeric" },
+                )}
+              </div>
+              <h3 className="mt-3 text-lg font-semibold leading-snug transition-colors group-hover:text-primary">
+                {latestWeekly.titleZh ?? latestWeekly.title}
+              </h3>
+              <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
+                {latestWeekly.introZh ??
+                  latestWeekly.summaryZh ??
+                  latestWeekly.summary}
+              </p>
+              <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary">
+                阅读完整周刊
+                <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+              </span>
+            </Link>
+          )}
+          {/* Editorial articles list */}
+          <div
+            className={
+              latestWeekly
+                ? "grid gap-4 sm:grid-cols-2 lg:col-span-3 lg:grid-cols-1"
+                : "grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+            }
+          >
+            {editorials.map((article) => (
+              <ArticleCard key={article.id} article={article} />
+            ))}
+          </div>
+        </div>
+        <div className="mt-6 text-center sm:hidden">
+          <Link
+            href="/articles"
+            className="inline-flex items-center gap-1 text-sm font-medium text-primary"
+          >
+            查看全部
+            <ArrowRight className="size-4" />
+          </Link>
+        </div>
       </div>
     </section>
   );
