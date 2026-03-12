@@ -1,34 +1,85 @@
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getArticleStats } from "@/lib/data/admin";
+import { getArticleStats, getSkillStats } from "@/lib/data/admin";
 import { requireAdmin } from "@/lib/admin-auth";
 
 export default async function AdminDashboardPage() {
   await requireAdmin();
-  const stats = await getArticleStats();
+  const [articleStats, skillStats] = await Promise.all([
+    getArticleStats(),
+    getSkillStats(),
+  ]);
 
-  const cards = [
-    { title: "总文章数", value: stats.total },
-    { title: "已发布", value: stats.published },
-    { title: "草稿", value: stats.draft },
-    { title: "已隐藏", value: stats.hidden },
+  const articleCards = [
+    { title: "总文章数", value: articleStats.total },
+    { title: "已发布", value: articleStats.published },
+    { title: "草稿", value: articleStats.draft },
+    { title: "已隐藏", value: articleStats.hidden },
+  ];
+
+  const skillCards = [
+    { title: "总 Skill 数", value: skillStats.total },
+    { title: "已发布", value: skillStats.published },
+    { title: "草稿", value: skillStats.draft },
+    { title: "已隐藏", value: skillStats.hidden },
   ];
 
   return (
-    <div>
-      <h1 className="mb-6 text-2xl font-bold">Dashboard</h1>
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        {cards.map((card) => (
-          <Card key={card.title}>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {card.title}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold">{card.value}</p>
-            </CardContent>
-          </Card>
-        ))}
+    <div className="space-y-8">
+      <h1 className="text-2xl font-bold">Dashboard</h1>
+
+      {/* Articles section */}
+      <div>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-lg font-semibold">文章</h2>
+          <Link
+            href="/admin/articles"
+            className="text-sm text-primary hover:underline"
+          >
+            管理文章
+          </Link>
+        </div>
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          {articleCards.map((card) => (
+            <Card key={card.title}>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  {card.title}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-3xl font-bold">{card.value}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+
+      {/* Skills section */}
+      <div>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Skills</h2>
+          <Link
+            href="/admin/skills"
+            className="text-sm text-primary hover:underline"
+          >
+            管理 Skills
+          </Link>
+        </div>
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          {skillCards.map((card) => (
+            <Card key={card.title}>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  {card.title}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-3xl font-bold">{card.value}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
     </div>
   );

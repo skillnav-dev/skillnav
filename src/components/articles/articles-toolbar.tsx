@@ -121,7 +121,7 @@ export function ArticlesToolbar({
             </button>
           )}
         </div>
-        <div className="flex gap-2">
+        <div className="flex w-full gap-2 sm:w-auto">
           {sources.length > 0 && (
             <Select value={source || "all"} onValueChange={handleSource}>
               <SelectTrigger className="h-10 w-full sm:w-[140px]">

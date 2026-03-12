@@ -6,6 +6,7 @@ import { SkillCard } from "@/components/skills/skill-card";
 import { SkillContent } from "@/components/skills/skill-content";
 import { SkillInstallTabs } from "@/components/skills/skill-install-tabs";
 import { SkillSidebar } from "@/components/skills/skill-sidebar";
+import { SkillMobileMetaBar } from "@/components/skills/skill-mobile-meta";
 import { GiscusComments } from "@/components/shared/giscus-comments";
 import { PlatformBadge } from "@/components/skills/platform-badge";
 import {
@@ -156,6 +157,11 @@ export default async function SkillDetailPage({ params }: PageProps) {
               </Badge>
             </div>
           )}
+        </div>
+
+        {/* Mobile-only compact metadata bar */}
+        <div className="mb-6">
+          <SkillMobileMetaBar skill={skill} />
         </div>
 
         {/* Two-column layout: main content + sidebar */}
