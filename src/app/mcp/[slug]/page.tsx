@@ -22,8 +22,11 @@ interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
+export const dynamicParams = true;
+export const revalidate = 86400; // 24h ISR
+
 export async function generateStaticParams() {
-  const slugs = await getAllMcpSlugs();
+  const slugs = await getAllMcpSlugs({ limit: 200 });
   return slugs.map((slug) => ({ slug }));
 }
 

@@ -308,19 +308,29 @@ export async function getMcpCategories(): Promise<string[]> {
 /**
  * Get all published MCP server slugs (for generateStaticParams).
  */
-export async function getAllMcpSlugs(): Promise<string[]> {
+export async function getAllMcpSlugs(options?: {
+  limit?: number;
+}): Promise<string[]> {
   if (!isSupabaseConfigured()) {
     const { mcpServers } = await import("@/data/mcp-servers");
-    return mcpServers.map((s) => s.slug);
+    const slugs = mcpServers.map((s) => s.slug);
+    return options?.limit ? slugs.slice(0, options.limit) : slugs;
   }
 
   const { createStaticClient } = await import("@/lib/supabase/static");
   const supabase = createStaticClient();
 
-  const { data, error } = (await supabase
+  let query = supabase
     .from("mcp_servers")
     .select("slug")
-    .eq("status", "published")) as {
+    .eq("status", "published")
+    .order("stars", { ascending: false });
+
+  if (options?.limit) {
+    query = query.limit(options.limit);
+  }
+
+  const { data, error } = (await query) as {
     data: { slug: string }[] | null;
     error: unknown;
   };
