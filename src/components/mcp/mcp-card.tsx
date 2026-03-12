@@ -85,11 +85,6 @@ export function MCPCard({ server }: MCPCardProps) {
         <p className="line-clamp-2 text-sm text-muted-foreground">
           {server.introZh ?? server.descriptionZh ?? server.description ?? ""}
         </p>
-        {server.editorCommentZh && (
-          <p className="line-clamp-1 text-xs italic text-muted-foreground/70">
-            {server.editorCommentZh}
-          </p>
-        )}
         {/* Install command */}
         {server.installCommand && (
           <button

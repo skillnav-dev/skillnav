@@ -68,7 +68,7 @@ export interface Skill {
   // Repo source tracking
   repoSource?: string;
   // Content governance
-  qualityTier?: "A" | "B" | "C";
+  qualityTier?: "S" | "A" | "B" | "C";
   isHidden?: boolean;
   status?: "draft" | "published" | "hidden";
   introZh?: string;

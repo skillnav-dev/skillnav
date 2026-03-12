@@ -3,16 +3,9 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FreshnessBadge } from "@/components/shared/freshness-badge";
 import { PlatformBadge } from "@/components/skills/platform-badge";
-import { Star, GitFork } from "lucide-react";
+import { Star, Award } from "lucide-react";
 import { formatNumber } from "@/lib/utils";
 import type { Skill } from "@/data/types";
-
-const repoSourceLabels: Record<string, string> = {
-  "anthropics/skills": "Anthropic",
-  "openai/codex": "OpenAI",
-  "daymade/claude-code-skills": "daymade",
-  "levnikolaevich/claude-code-skills": "levnikolaevich",
-};
 
 interface SkillCardProps {
   skill: Skill;
@@ -46,13 +39,22 @@ export function SkillCard({ skill }: SkillCardProps) {
       </CardHeader>
       <CardContent className="space-y-2">
         <p className="line-clamp-2 text-sm text-muted-foreground">
-          {skill.descriptionZh ?? skill.description}
+          {skill.introZh ?? skill.descriptionZh ?? skill.description}
         </p>
         <div className="flex items-center justify-between">
           <div className="flex flex-wrap gap-1">
             <Badge variant="secondary" className="text-xs">
               {skill.category}
             </Badge>
+            {skill.qualityTier === "S" && (
+              <Badge
+                variant="secondary"
+                className="border-amber-200 bg-amber-100 text-amber-800 text-xs dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-400"
+              >
+                <Award className="mr-0.5 size-3" />
+                编辑精选
+              </Badge>
+            )}
             {skill.qualityTier === "A" && (
               <Badge
                 variant="secondary"
@@ -67,12 +69,6 @@ export function SkillCard({ skill }: SkillCardProps) {
               <span className="flex items-center gap-1">
                 <Star className="size-3" />
                 {formatNumber(skill.stars)}
-              </span>
-            )}
-            {skill.repoSource && (
-              <span className="flex items-center gap-1">
-                <GitFork className="size-3" />
-                {repoSourceLabels[skill.repoSource] ?? skill.repoSource}
               </span>
             )}
           </div>
