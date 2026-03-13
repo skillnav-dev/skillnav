@@ -15,8 +15,14 @@ import {
   FAQJsonLd,
 } from "@/components/shared/json-ld";
 import { ArticleCard } from "@/components/articles/article-card";
+import { MCPCard } from "@/components/mcp/mcp-card";
 import { siteConfig } from "@/lib/constants";
-import { getSkillBySlug, getSkills, getAllSkillSlugs } from "@/lib/data";
+import {
+  getSkillBySlug,
+  getSkills,
+  getAllSkillSlugs,
+  getMcpServers,
+} from "@/lib/data";
 import { getArticlesWithCount } from "@/lib/data/articles";
 
 interface PageProps {
@@ -63,12 +69,17 @@ export default async function SkillDetailPage({ params }: PageProps) {
   const skill = await getSkillBySlug(slug);
   if (!skill) notFound();
 
-  // Parallel fetch: related skills + related articles
-  const [allSkills, { articles: relatedArticles }] = await Promise.all([
-    getSkills({ category: skill.category, limit: 4 }),
-    getArticlesWithCount({ search: skill.name, limit: 3 }),
-  ]);
+  // Parallel fetch: related skills + related articles + related MCP servers
+  const [allSkills, { articles: relatedArticles }, allMcpServers] =
+    await Promise.all([
+      getSkills({ category: skill.category, limit: 4 }),
+      getArticlesWithCount({ search: skill.name, limit: 3 }),
+      getMcpServers({ category: skill.category, limit: 4 }),
+    ]);
   const related = allSkills.filter((s) => s.id !== skill.id).slice(0, 3);
+  const relatedMcp = allMcpServers
+    .filter((s) => s.name !== skill.name)
+    .slice(0, 3);
 
   return (
     <>
@@ -206,6 +217,19 @@ export default async function SkillDetailPage({ params }: PageProps) {
         </div>
       </div>
 
+      {/* Related MCP servers */}
+      {relatedMcp.length > 0 && (
+        <section className="border-t border-border/40">
+          <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
+            <h2 className="mb-6 text-xl font-bold">相关 MCP 服务</h2>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {relatedMcp.map((s) => (
+                <MCPCard key={s.id} server={s} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
       {/* Related articles */}
       {relatedArticles.length > 0 && (
         <section className="border-t border-border/40">

@@ -13,8 +13,14 @@ import {
 import { MCPCard } from "@/components/mcp/mcp-card";
 import { McpDetailSidebar } from "@/components/mcp/mcp-detail-sidebar";
 import { McpReadme } from "@/components/mcp/mcp-readme";
+import { SkillCard } from "@/components/skills/skill-card";
 import { siteConfig } from "@/lib/constants";
-import { getMcpServerBySlug, getMcpServers, getAllMcpSlugs } from "@/lib/data";
+import {
+  getMcpServerBySlug,
+  getMcpServers,
+  getAllMcpSlugs,
+  getSkills,
+} from "@/lib/data";
 import { fetchReadme } from "@/lib/github-readme";
 import { formatNumber } from "@/lib/utils";
 
@@ -67,14 +73,18 @@ export default async function McpDetailPage({ params }: PageProps) {
   const server = await getMcpServerBySlug(slug);
   if (!server) notFound();
 
-  // Parallel fetch: related servers + README
-  const [allInCategory, readme] = await Promise.all([
+  // Parallel fetch: related servers + README + related skills
+  const [allInCategory, readme, allSkills] = await Promise.all([
     server.category
       ? getMcpServers({ category: server.category, limit: 4 })
       : Promise.resolve([]),
     server.githubUrl ? fetchReadme(server.githubUrl) : Promise.resolve(null),
+    server.category
+      ? getSkills({ category: server.category, limit: 4 })
+      : Promise.resolve([]),
   ]);
   const related = allInCategory.filter((s) => s.id !== server.id).slice(0, 3);
+  const relatedSkills = allSkills.slice(0, 3);
 
   return (
     <>
@@ -166,6 +176,14 @@ export default async function McpDetailPage({ params }: PageProps) {
           <p className="mt-4 text-base leading-relaxed text-foreground/85">
             {server.introZh ?? server.descriptionZh ?? server.description}
           </p>
+          {/* Editor one-liner comment */}
+          {server.editorCommentZh && (
+            <div className="mt-4 rounded-lg border-l-4 border-primary/50 bg-primary/5 px-4 py-3">
+              <p className="text-sm italic text-foreground/80">
+                {server.editorCommentZh}
+              </p>
+            </div>
+          )}
 
           {/* Badges row */}
           <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -198,39 +216,6 @@ export default async function McpDetailPage({ params }: PageProps) {
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_280px]">
           {/* Left: main content */}
           <div className="min-w-0 space-y-6">
-            {/* Editor review card */}
-            {server.editorCommentZh && (
-              <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-6 dark:border-amber-800/50 dark:bg-amber-950/20">
-                <div className="mb-3 flex items-center gap-2">
-                  <Award className="size-5 text-amber-600 dark:text-amber-400" />
-                  <h2 className="text-lg font-semibold">编辑评测</h2>
-                </div>
-                <p className="text-sm leading-relaxed text-foreground/85">
-                  {server.editorCommentZh}
-                </p>
-                {server.editorRating && (
-                  <div className="mt-3 flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">评分:</span>
-                    <span className="flex items-center gap-0.5">
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`size-4 ${
-                            i < Number(server.editorRating)
-                              ? "fill-amber-400 text-amber-400"
-                              : "text-muted-foreground/30"
-                          }`}
-                        />
-                      ))}
-                    </span>
-                    <span className="text-sm text-muted-foreground">
-                      ({server.editorRating}/5)
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
-
             {/* Install command block */}
             {server.installCommand && (
               <div className="rounded-lg border border-border/40 bg-card p-6">
@@ -327,6 +312,19 @@ export default async function McpDetailPage({ params }: PageProps) {
         </div>
       </div>
 
+      {/* Related Skills */}
+      {relatedSkills.length > 0 && (
+        <section className="border-t border-border/40">
+          <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
+            <h2 className="mb-6 text-xl font-bold">相关 Skills</h2>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {relatedSkills.map((s) => (
+                <SkillCard key={s.id} skill={s} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
       {/* Related MCP servers */}
       {related.length > 0 && (
         <section className="border-t border-border/40">
