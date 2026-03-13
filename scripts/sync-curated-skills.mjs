@@ -267,6 +267,17 @@ async function syncAdapter(adapter, { limit, skipExisting, existingSlugs, increm
             ? parsed.tags.split(",").map((t) => t.trim()).filter(Boolean)
             : [];
 
+        // Clean up description: skip "Tier:" prefix (e.g. alirezarezvani)
+        let description = parsed.description || "";
+        const tierMatch = description.match(/^Tier:\s*\w+\s*[-–—]?\s*/i);
+        if (tierMatch) {
+          description = description.slice(tierMatch[0].length).trim();
+        }
+        // If description is now empty or still just a tier label, use name instead
+        if (!description || /^tier:\s*\w+$/i.test(description)) {
+          description = "";
+        }
+
         // Extract author from parsed data or path
         const dirParts = path.split("/");
         const dirName = dirParts[dirParts.length - 2];
@@ -275,12 +286,12 @@ async function syncAdapter(adapter, { limit, skipExisting, existingSlugs, increm
         skills.push({
           slug,
           name: parsed.name || dirName,
-          description: parsed.description || "",
+          description,
           author,
           category: categorize(
             parsed.name || dirName,
             tags,
-            parsed.description || ""
+            description
           ),
           tags,
           source: "curated",
@@ -471,7 +482,7 @@ Return JSON:
   "nameZh": "Chinese name (keep English technical terms)",
   "descriptionZh": "Chinese description (1-2 sentences, concise)",
   "introZh": "Brief Chinese intro explaining what this skill does and why it's useful (2-3 sentences)",
-  "category": "One of: 编码开发, AI 智能体, 数据处理, 搜索研究, 运维部署, 内容创作, 效率工具, 安全监控, 平台集成, 其他",
+  "category": "One of: 编码与调试, AI 与智能体, 数据与存储, 搜索与获取, DevOps, 内容与创意, 效率与工作流, 安全与合规, 平台与服务, 行业场景, 其他",
   "qualityScore": <1-5 integer: 5=production-ready, 4=solid, 3=usable, 2=early, 1=minimal>,
   "qualityReason": "Brief English explanation of score",
   "editorCommentZh": "One-line Chinese editor's pick comment (why this skill is worth trying)"

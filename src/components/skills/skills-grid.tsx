@@ -7,24 +7,16 @@ import { SkillsPagination } from "./skills-pagination";
 interface SkillsGridProps {
   q: string;
   category: string;
-  platform: string;
   tab: string;
   sort: string;
   page: number;
 }
 
-function buildPageUrl(
-  q: string,
-  category: string,
-  platform: string,
-  tab: string,
-  sort: string,
-) {
+function buildPageUrl(q: string, category: string, tab: string, sort: string) {
   return (page: number) => {
     const params = new URLSearchParams();
     if (q) params.set("q", q);
     if (category) params.set("category", category);
-    if (platform) params.set("platform", platform);
     if (tab) params.set("tab", tab);
     if (sort) params.set("sort", sort);
     if (page > 1) params.set("page", String(page));
@@ -36,7 +28,6 @@ function buildPageUrl(
 export async function SkillsGrid({
   q,
   category,
-  platform,
   tab,
   sort,
   page,
@@ -49,7 +40,6 @@ export async function SkillsGrid({
     offset,
     category: category || undefined,
     search: q || undefined,
-    platform: platform || undefined,
     tab: tab || undefined,
     sort: sort || undefined,
   });
@@ -73,7 +63,7 @@ export async function SkillsGrid({
         <SkillsPagination
           currentPage={validPage}
           totalPages={totalPages}
-          buildPageUrl={buildPageUrl(q, category, platform, tab, sort)}
+          buildPageUrl={buildPageUrl(q, category, tab, sort)}
         />
       </div>
     </div>

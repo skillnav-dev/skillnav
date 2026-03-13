@@ -2,7 +2,6 @@ export {
   getSkills,
   getSkillsWithCount,
   getSkillCategories,
-  getSkillPlatforms,
   getSkillRepoSources,
   getSkillBySlug,
   getFeaturedSkills,

@@ -7,7 +7,6 @@ import {
 export const skillsSearchParams = {
   q: parseAsString.withDefault(""),
   category: parseAsString.withDefault(""),
-  platform: parseAsString.withDefault(""),
   tab: parseAsString.withDefault(""),
   sort: parseAsString.withDefault(""),
   page: parseAsInteger.withDefault(1),

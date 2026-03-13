@@ -22,7 +22,6 @@ export async function getSkills(options?: {
   category?: string;
   source?: string;
   search?: string;
-  platform?: string;
   tab?: string;
   sort?: string;
 }): Promise<Skill[]> {
@@ -62,7 +61,6 @@ export async function getSkills(options?: {
 
   if (options?.category) query = query.eq("category", options.category);
   if (options?.source) query = query.eq("source", options.source);
-  if (options?.platform) query = query.contains("platform", [options.platform]);
   if (options?.tab === "featured") {
     query = query.eq("is_featured", true).in("quality_tier", ["A", "B"]);
   }
@@ -164,7 +162,6 @@ export async function getSkillsWithCount(options?: {
   category?: string;
   source?: string;
   search?: string;
-  platform?: string;
   tab?: string;
   sort?: string;
 }): Promise<{ skills: Skill[]; total: number }> {
@@ -205,7 +202,6 @@ export async function getSkillsWithCount(options?: {
 
   if (options?.category) query = query.eq("category", options.category);
   if (options?.source) query = query.eq("source", options.source);
-  if (options?.platform) query = query.contains("platform", [options.platform]);
   if (options?.tab === "featured") {
     query = query.eq("is_featured", true).in("quality_tier", ["A", "B"]);
   }

@@ -2,9 +2,10 @@
  * Shared skill categorization module.
  * Weighted keyword scoring across tags, name, and description.
  *
- * Categories: 10 scenario-based (consolidated from 16)
- * Merge rules: 写作+创意→内容创作, 效率+自动化→效率工具,
- *   金融/教育/通讯/基础→redistributed or 其他
+ * Categories: 10 scenario-based + 行业场景 vertical
+ *   编码与调试 | AI 与智能体 | 数据与存储 | 搜索与获取 | DevOps
+ *   内容与创意 | 效率与工作流 | 安全与合规 | 平台与服务 | 行业场景
+ *   + 兜底 "其他"
  */
 
 // Weights for each text source
@@ -14,24 +15,12 @@ const WEIGHTS = { tags: 3, name: 2, description: 1 };
 const MIN_SCORE = 2;
 
 /**
- * Category keyword mapping — 10 scenario-based categories.
+ * Category keyword mapping — 10 scenario-based categories + 行业场景.
  * Order matters for tie-breaking: earlier categories win on equal score.
- *
- * Consolidation from 16:
- *   开发 → 编码开发 (kept)
- *   AI → AI 智能体 (expanded with agent keywords)
- *   数据 → 数据处理 (kept)
- *   搜索 → 搜索研究 (kept)
- *   DevOps → 运维部署 (kept, absorbed 基础 infra keywords)
- *   写作 + 创意 → 内容创作 (merged)
- *   效率 + 自动化 → 效率工具 (merged)
- *   安全 → 安全监控 (kept, absorbed monitoring keywords)
- *   集成 + 通讯 → 平台集成 (merged)
- *   金融/教育/基础 → redistributed or 其他
  */
 export const CATEGORY_KEYWORDS = {
-  // --- 编码开发 (Coding & Development) ---
-  "编码开发": [
+  // --- 编码与调试 (Coding & Debugging) ---
+  "编码与调试": [
     "code", "coding", "development", "developer", "programming",
     "debug", "debugger", "debugging", "test", "testing", "unittest",
     "lint", "linter", "format", "formatter", "refactor", "compile",
@@ -45,8 +34,8 @@ export const CATEGORY_KEYWORDS = {
     "prototype", "sdk-builder", "sourcemap",
   ],
 
-  // --- AI 智能体 (AI & Agents) ---
-  "AI 智能体": [
+  // --- AI 与智能体 (AI & Agents) ---
+  "AI 与智能体": [
     "ai", "llm", "gpt", "claude", "openai", "anthropic",
     "gemini", "mistral", "llama", "ollama", "huggingface",
     "model", "inference", "embedding", "vector", "rag",
@@ -58,8 +47,8 @@ export const CATEGORY_KEYWORDS = {
     "chatbot", "conversational", "agentic",
   ],
 
-  // --- 数据处理 (Data Processing) ---
-  "数据处理": [
+  // --- 数据与存储 (Data & Storage) ---
+  "数据与存储": [
     "data", "dataset", "database", "sql", "postgres", "postgresql",
     "mysql", "sqlite", "mongodb", "redis", "supabase", "firebase",
     "analytics", "analysis", "visualization", "chart", "graph",
@@ -67,19 +56,24 @@ export const CATEGORY_KEYWORDS = {
     "etl", "pipeline", "bigquery", "warehouse", "tableau",
     "statistics", "metric", "prisma", "drizzle", "typeorm",
     "analyzer", "analyse", "analyze",
+    // Filesystem & storage
+    "filesystem", "file-system", "storage", "s3", "blob",
+    "backup", "migrate", "migration", "orm",
   ],
 
-  // --- 搜索研究 (Search & Research) ---
-  "搜索研究": [
+  // --- 搜索与获取 (Search & Fetch) ---
+  "搜索与获取": [
     "search", "browse", "browsing", "browser", "crawler", "scrape", "scraping",
     "spider", "web-search", "google", "bing", "duckduckgo", "serp",
     "fetch", "indexing", "lookup", "finder", "discovery",
     "sitemap", "seo", "ranking", "tavily", "exa",
     "research", "researcher", "investigate",
+    // RSS & API aggregation
+    "rss", "feed", "aggregate", "aggregation", "api-fetch", "scraper",
   ],
 
-  // --- 运维部署 (DevOps & Infrastructure) ---
-  "运维部署": [
+  // --- DevOps ---
+  "DevOps": [
     "docker", "container", "kubernetes", "k8s", "helm",
     "deploy", "deployment", "cicd", "ci-cd",
     "jenkins", "circleci", "terraform", "ansible",
@@ -95,8 +89,8 @@ export const CATEGORY_KEYWORDS = {
     "router", "routing", "runtime", "process",
   ],
 
-  // --- 内容创作 (Content Creation) — merged 写作 + 创意 ---
-  "内容创作": [
+  // --- 内容与创意 (Content & Creative) ---
+  "内容与创意": [
     // Writing
     "write", "writer", "writing", "blog", "blogger", "article",
     "content", "copywriting", "copy", "editor", "editing",
@@ -119,8 +113,8 @@ export const CATEGORY_KEYWORDS = {
     "media", "camera", "screenshot", "wallpaper",
   ],
 
-  // --- 效率工具 (Productivity) — merged 效率 + 自动化 ---
-  "效率工具": [
+  // --- 效率与工作流 (Productivity & Workflow) ---
+  "效率与工作流": [
     // Productivity
     "productivity", "file", "files", "pdf", "word",
     "notion", "obsidian", "todoist", "trello", "jira", "asana",
@@ -135,13 +129,13 @@ export const CATEGORY_KEYWORDS = {
     "automation", "automate", "automated", "workflow", "flow",
     "orchestrate", "orchestration", "scheduler",
     "cron", "trigger", "event", "hook", "listener",
-    "scraper", "bot", "robot", "rpa",
+    "bot", "robot", "rpa",
     "macro", "script", "cli", "command", "shell", "bash",
     "pipe", "chain", "sequence", "queue", "job",
   ],
 
-  // --- 安全监控 (Security & Monitoring) ---
-  "安全监控": [
+  // --- 安全与合规 (Security & Compliance) ---
+  "安全与合规": [
     "security", "secure", "encrypt", "encryption", "decrypt",
     "password", "credential", "vault", "secret",
     "audit", "scan", "scanner", "vulnerability", "malware",
@@ -155,8 +149,8 @@ export const CATEGORY_KEYWORDS = {
     "grafana", "prometheus", "alert", "alerting",
   ],
 
-  // --- 平台集成 (Platform Integration) — merged 集成 + 通讯 ---
-  "平台集成": [
+  // --- 平台与服务 (Platforms & Services) ---
+  "平台与服务": [
     // API & integration
     "api", "rest", "graphql", "webhook", "integration", "connect",
     "connector", "oauth", "zapier", "ifttt",
@@ -171,8 +165,28 @@ export const CATEGORY_KEYWORDS = {
     "sms", "twilio", "sendgrid", "resend", "mailgun",
     "comment", "reply", "thread", "conversation", "inbox",
     "feishu", "lark", "dingtalk", "social", "twitter",
-    // Finance (absorbed: payment/ecommerce platform integrations)
+    // Payment/ecommerce platform integrations
     "stripe", "paypal", "shopify", "ecommerce",
+  ],
+
+  // --- 行业场景 (Vertical / Industry) ---
+  "行业场景": [
+    // Finance
+    "finance", "fintech", "trading", "stock", "crypto", "blockchain",
+    "payment", "accounting", "invoice",
+    // Education
+    "education", "learning", "tutorial", "course", "quiz", "exam",
+    "student", "teacher",
+    // Legal
+    "legal", "law", "contract", "compliance", "regulation",
+    // Medical / Healthcare
+    "medical", "health", "healthcare", "clinical", "patient", "diagnosis",
+    // Gaming
+    "game", "gaming", "unity", "unreal", "godot", "3d-modeling",
+    // Resume / HR
+    "resume", "cv", "hiring", "interview", "recruitment", "job",
+    // Real estate
+    "real-estate", "property", "mortgage",
   ],
 };
 

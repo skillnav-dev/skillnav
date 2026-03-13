@@ -51,10 +51,20 @@ export function normalizeGithubUrl(url) {
 function extractLinksFromMarkdown(content) {
   const results = [];
   const lines = content.split("\n");
+  let currentSection = ""; // Track current section heading for tag derivation
 
   for (const line of lines) {
-    // Skip headings, empty lines, comments
-    if (/^#+\s/.test(line) || !line.trim()) continue;
+    // Track section headings (## or ###) for tag extraction
+    const headingMatch = line.match(/^#{1,3}\s+(.+)/);
+    if (headingMatch) {
+      currentSection = headingMatch[1]
+        .replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, "") // Remove emoji
+        .replace(/[^\w\s-]/g, " ") // Remove special chars
+        .trim();
+      continue;
+    }
+
+    if (!line.trim()) continue;
 
     // Match markdown links: [text](url)
     const linkPattern = /\[([^\]]+)\]\((https?:\/\/github\.com\/[^)]+)\)/g;
@@ -107,12 +117,20 @@ function extractLinksFromMarkdown(content) {
       const githubUrl = normalizeGithubUrl(rawUrl);
       if (!githubUrl) continue;
 
+      // Derive tags from section heading: lowercase, split, filter short/stopwords
+      const stopwords = new Set(["and", "the", "for", "with", "other", "misc", "more", "table", "contents"]);
+      const sectionTags = currentSection
+        ? [...new Set(
+            currentSection.toLowerCase().split(/[\s-]+/).filter(t => t.length >= 2 && !stopwords.has(t))
+          )]
+        : [];
+
       results.push({
         name,
         description: description.slice(0, 500),
         githubUrl,
         source: "awesome-list",
-        tags: [],
+        tags: sectionTags,
       });
     }
   }

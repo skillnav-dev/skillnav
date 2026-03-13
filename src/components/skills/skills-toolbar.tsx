@@ -18,7 +18,6 @@ import { cn } from "@/lib/utils";
 
 interface SkillsToolbarProps {
   categories: string[];
-  platforms: string[];
   totalCount: number;
 }
 
@@ -28,18 +27,7 @@ const TAB_OPTIONS = [
   { value: "latest", label: "最新" },
 ];
 
-const PLATFORM_OPTIONS = [
-  { value: "all", label: "全部平台" },
-  { value: "claude", label: "Claude" },
-  { value: "codex", label: "Codex" },
-  { value: "universal", label: "Universal" },
-];
-
-export function SkillsToolbar({
-  categories,
-  platforms,
-  totalCount,
-}: SkillsToolbarProps) {
+export function SkillsToolbar({ categories, totalCount }: SkillsToolbarProps) {
   const [isPending, startTransition] = useTransition();
 
   const [q, setQ] = useQueryState(
@@ -54,14 +42,6 @@ export function SkillsToolbar({
   const [category, setCategory] = useQueryState(
     "category",
     skillsSearchParams.category.withOptions({
-      shallow: false,
-      startTransition,
-    }),
-  );
-
-  const [platform, setPlatform] = useQueryState(
-    "platform",
-    skillsSearchParams.platform.withOptions({
       shallow: false,
       startTransition,
     }),
@@ -98,11 +78,6 @@ export function SkillsToolbar({
 
   function handleCategory(cat: string) {
     setCategory(cat === category ? null : cat || null);
-    setPage(1);
-  }
-
-  function handlePlatform(p: string) {
-    setPlatform(p === "all" ? null : p);
     setPage(1);
   }
 
@@ -149,7 +124,7 @@ export function SkillsToolbar({
         </div>
       </div>
 
-      {/* Search + platform + sort */}
+      {/* Search + sort */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -170,20 +145,6 @@ export function SkillsToolbar({
           )}
         </div>
         <div className="flex w-full gap-2 sm:w-auto">
-          {platforms.length > 0 && (
-            <Select value={platform || "all"} onValueChange={handlePlatform}>
-              <SelectTrigger className="h-10 w-full sm:w-[140px]">
-                <SelectValue placeholder="全部平台" />
-              </SelectTrigger>
-              <SelectContent>
-                {PLATFORM_OPTIONS.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
           <Select
             value={sort === "latest" ? "latest" : "stars"}
             onValueChange={handleSort}
@@ -230,7 +191,7 @@ export function SkillsToolbar({
           isPending && "opacity-50",
         )}
       >
-        {q || category || platform || tab
+        {q || category || tab
           ? `找到 ${totalCount} 个 Skills`
           : `共 ${totalCount} 个 Skills`}
       </p>

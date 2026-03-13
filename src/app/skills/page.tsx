@@ -5,11 +5,7 @@ import { BreadcrumbJsonLd } from "@/components/shared/json-ld";
 import { SkillsToolbar } from "@/components/skills/skills-toolbar";
 import { SkillsGrid } from "@/components/skills/skills-grid";
 import { SkillsSkeleton } from "@/components/skills/skills-skeleton";
-import {
-  getSkillCategories,
-  getSkillPlatforms,
-  getSkillsWithCount,
-} from "@/lib/data";
+import { getSkillCategories, getSkillsWithCount } from "@/lib/data";
 import { skillsParamsCache, PAGE_SIZE } from "@/lib/skills-search-params";
 
 interface PageProps {
@@ -19,11 +15,10 @@ interface PageProps {
 export async function generateMetadata({
   searchParams,
 }: PageProps): Promise<Metadata> {
-  const { q, category, platform, tab, page } =
+  const { q, category, tab, page } =
     await skillsParamsCache.parse(searchParams);
   const parts = ["Skills 导航"];
   if (tab === "featured") parts.push("精选");
-  if (platform) parts.push(platform);
   if (category) parts.push(category);
   if (q) parts.push(`「${q}」`);
   if (page > 1) parts.push(`第 ${page} 页`);
@@ -36,19 +31,17 @@ export async function generateMetadata({
 }
 
 export default async function SkillsPage({ searchParams }: PageProps) {
-  const { q, category, platform, tab, sort, page } =
+  const { q, category, tab, sort, page } =
     await skillsParamsCache.parse(searchParams);
 
-  // Parallel fetch: categories + platforms + count for toolbar display
-  const [categories, platforms, { total }] = await Promise.all([
+  // Parallel fetch: categories + count for toolbar display
+  const [categories, { total }] = await Promise.all([
     getSkillCategories(),
-    getSkillPlatforms(),
     getSkillsWithCount({
       limit: PAGE_SIZE,
       offset: (Math.max(1, page) - 1) * PAGE_SIZE,
       category: category || undefined,
       search: q || undefined,
-      platform: platform || undefined,
       tab: tab || undefined,
       sort: sort || undefined,
     }),
@@ -69,20 +62,15 @@ export default async function SkillsPage({ searchParams }: PageProps) {
           description="浏览和发现最好用的 AI Agent Skills"
         />
         <div className="mt-6">
-          <SkillsToolbar
-            categories={categories}
-            platforms={platforms}
-            totalCount={total}
-          />
+          <SkillsToolbar categories={categories} totalCount={total} />
         </div>
         <Suspense
-          key={`${q}-${category}-${platform}-${tab}-${sort}-${page}`}
+          key={`${q}-${category}-${tab}-${sort}-${page}`}
           fallback={<SkillsSkeleton />}
         >
           <SkillsGrid
             q={q}
             category={category}
-            platform={platform}
             tab={tab}
             sort={sort}
             page={page}
