@@ -1,0 +1,66 @@
+name: Backfill Data Quality
+
+on:
+  schedule:
+    # Run daily at 05:00 UTC (after other sync jobs finish)
+    - cron: "0 5 * * *"
+  workflow_dispatch:
+    inputs:
+      tasks:
+        description: "Tasks to run (comma-separated: name-zh,tags,mcp-desc-zh,mcp-reclassify)"
+        required: false
+        default: "name-zh,tags,mcp-desc-zh,mcp-reclassify"
+        type: string
+
+concurrency:
+  group: backfill-data
+  cancel-in-progress: true
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      GPT_API_KEY: ${{ secrets.GPT_API_KEY }}
+      LLM_PROVIDER: gpt
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci
+
+      - name: Determine tasks
+        id: tasks
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            echo "run=name-zh,tags,mcp-desc-zh,mcp-reclassify" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=${{ inputs.tasks }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Backfill skills name_zh
+        if: contains(steps.tasks.outputs.run, 'name-zh')
+        run: node scripts/backfill-skills-name-zh.mjs --apply || true
+
+      - name: Backfill skills tags
+        if: contains(steps.tasks.outputs.run, 'tags')
+        run: node scripts/backfill-skills-tags.mjs --apply || true
+
+      - name: Backfill MCP description_zh
+        if: contains(steps.tasks.outputs.run, 'mcp-desc-zh')
+        run: node scripts/backfill-mcp-description-zh.mjs --apply || true
+
+      - name: Reclassify remaining MCP "other"
+        if: contains(steps.tasks.outputs.run, 'mcp-reclassify')
+        run: node scripts/reclassify-all.mjs --mcp-only --llm-assist || true
+
+      - name: Notify Slack on failure
+        if: failure()
+        run: |
+          curl -sS -X POST -H 'Content-type: application/json' \
+            --data "{\"text\":\"Backfill Data Quality had failures\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>\"}" \
+            ${{ secrets.SLACK_WEBHOOK_URL }}

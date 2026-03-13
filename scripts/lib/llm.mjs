@@ -6,8 +6,8 @@
  *   - deepseek (default): DEEPSEEK_API_KEY, model deepseek-chat
  *   - gemini:             GEMINI_API_KEY, model gemini-2.0-flash
  *   - anthropic:          ANTHROPIC_API_KEY, model claude-haiku-4-5-20251001
- *   - openai:             OPENAI_API_KEY, model gpt-4o-mini (OPENAI_BASE_URL for proxy)
- *   - gpt:                GPT_API_KEY, model gpt-5 (OpenAI Responses API via proxy)
+ *   - openai:             OPENAI_API_KEY, model gpt-5.4 (OpenAI Responses API, OPENAI_BASE_URL for proxy)
+ *   - gpt:                GPT_API_KEY, model gpt-5.4 (OpenAI Responses API via proxy)
  */
 
 // ── Provider Configuration ───────────────────────────────────────────
@@ -34,12 +34,13 @@ const PROVIDERS = {
     type: "anthropic",
   },
   openai: {
-    name: "GPT-4o-mini",
+    name: "GPT-5.4",
     baseUrl: "https://api.openai.com/v1",
     baseUrlEnv: "OPENAI_BASE_URL",
-    model: "gpt-4o-mini",
+    model: "gpt-5.4",
     apiKeyEnv: "OPENAI_API_KEY",
-    type: "openai-compatible",
+    type: "openai-responses",
+    reasoning: { effort: "xhigh" },
   },
   gpt: {
     name: "GPT-5.4",
