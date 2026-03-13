@@ -20,42 +20,72 @@ interface TabDef {
   command: string;
 }
 
+/**
+ * Derive the owner/repo slug from a GitHub URL.
+ * e.g. "https://github.com/anthropics/skill-foo" -> "anthropics/skill-foo"
+ */
+function ownerRepoFromUrl(url: string): string | null {
+  try {
+    const { pathname } = new URL(url);
+    const parts = pathname
+      .replace(/^\//, "")
+      .replace(/\.git$/, "")
+      .split("/");
+    if (parts.length >= 2) return `${parts[0]}/${parts[1]}`;
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
+/**
+ * Build a Claude Code install command from available data.
+ */
+function claudeCommand(
+  installCommand?: string,
+  githubUrl?: string,
+  skillName?: string,
+): string {
+  if (installCommand) return installCommand;
+  if (githubUrl) {
+    const slug = ownerRepoFromUrl(githubUrl);
+    if (slug) return `claude skill add --url https://github.com/${slug}`;
+  }
+  return `claude skill add ${skillName || "skill"}`;
+}
+
+/**
+ * Transform a Claude Code command into the equivalent for another CLI.
+ */
+function transformCommand(claudeCmd: string, targetPrefix: string): string {
+  // Replace "claude skill add" / "claude skill install" variants
+  return claudeCmd.replace(/^claude\s+skill\s+(add|install)/, targetPrefix);
+}
+
 function buildTabs(
-  platform: string[],
   installCommand?: string,
   githubUrl?: string,
   skillName?: string,
 ): TabDef[] {
-  const tabs: TabDef[] = [];
-  const fallback = githubUrl ? `git clone ${githubUrl}` : "";
-  const name = skillName || "skill";
+  const base = claudeCommand(installCommand, githubUrl, skillName);
 
-  if (platform.includes("claude")) {
-    tabs.push({
+  return [
+    {
       id: "claude",
       label: "Claude Code",
-      command: installCommand || fallback || `claude skill add ${name}`,
-    });
-  }
-
-  if (platform.includes("codex")) {
-    tabs.push({
+      command: base,
+    },
+    {
       id: "codex",
-      label: "Codex",
-      command: installCommand || fallback || `codex skill add ${name}`,
-    });
-  }
-
-  // Always show a generic tab if there are any commands
-  if (tabs.length === 0 && (installCommand || fallback)) {
-    tabs.push({
-      id: "generic",
-      label: "安装",
-      command: installCommand || fallback,
-    });
-  }
-
-  return tabs;
+      label: "Codex CLI",
+      command: transformCommand(base, "codex skill install"),
+    },
+    {
+      id: "gemini",
+      label: "Gemini CLI",
+      command: transformCommand(base, "gemini skill add"),
+    },
+  ];
 }
 
 export function SkillInstallTabs({
@@ -63,16 +93,13 @@ export function SkillInstallTabs({
   requiresEnv,
   requiresBins,
   githubUrl,
-  platform,
   skillName,
 }: SkillInstallTabsProps) {
-  const tabs = buildTabs(platform ?? [], installCommand, githubUrl, skillName);
-  const [activeTab, setActiveTab] = useState(tabs[0]?.id ?? "");
+  const tabs = buildTabs(installCommand, githubUrl, skillName);
+  const [activeTab, setActiveTab] = useState(tabs[0].id);
 
   const hasEnv = requiresEnv && requiresEnv.length > 0;
   const hasBins = requiresBins && requiresBins.length > 0;
-
-  if (tabs.length === 0 && !hasEnv && !hasBins) return null;
 
   const activeCommand = tabs.find((t) => t.id === activeTab)?.command ?? "";
 
@@ -84,31 +111,26 @@ export function SkillInstallTabs({
       </div>
 
       {/* Tab buttons */}
-      {tabs.length > 1 && (
-        <div className="mb-3 flex gap-1 rounded-md bg-muted p-1">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={cn(
-                "rounded-sm px-3 py-1.5 text-xs font-medium transition-colors",
-                activeTab === tab.id
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      )}
+      <div className="mb-3 flex gap-1 rounded-md bg-muted p-1">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={cn(
+              "rounded-sm px-3 py-1.5 text-xs font-medium transition-colors",
+              activeTab === tab.id
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
 
       {/* Command block */}
       {activeCommand && (
         <div className="mb-4">
-          {tabs.length <= 1 && (
-            <p className="mb-2 text-xs text-muted-foreground">安装命令</p>
-          )}
           <div className="flex items-center justify-between gap-2 rounded-md bg-muted px-4 py-3">
             <code className="flex-1 overflow-x-auto font-mono text-xs sm:text-sm">
               {activeCommand}

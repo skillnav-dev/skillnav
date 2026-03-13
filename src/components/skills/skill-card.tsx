@@ -2,7 +2,6 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FreshnessBadge } from "@/components/shared/freshness-badge";
-import { PlatformBadge } from "@/components/skills/platform-badge";
 import { Star, Award } from "lucide-react";
 import { formatNumber } from "@/lib/utils";
 import type { Skill } from "@/data/types";
@@ -28,7 +27,6 @@ export function SkillCard({ skill }: SkillCardProps) {
             </p>
           </div>
           <div className="flex items-center gap-1.5">
-            <PlatformBadge platform={skill.platform} />
             <FreshnessBadge
               freshness={skill.freshness}
               isTrending={skill.isTrending}

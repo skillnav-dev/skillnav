@@ -23,6 +23,7 @@ dotenv.config();
 
 import { createAdminClient } from "./lib/supabase-admin.mjs";
 import { categorize } from "./lib/categorize.mjs";
+import { callLLMText } from "./lib/llm.mjs";
 import { createLogger } from "./lib/logger.mjs";
 import { validateEnv } from "./lib/validate-env.mjs";
 
@@ -52,38 +53,6 @@ Rules:
 - If a tool connects to a specific platform/service, prefer 平台与服务
 - If a tool is domain-specific (finance, legal, medical), prefer 行业场景
 - Never return 其他`;
-
-/**
- * Call DeepSeek API directly (without json_object format constraint).
- */
-async function callLLMText(systemPrompt, userPrompt) {
-  const apiKey = process.env.DEEPSEEK_API_KEY;
-  if (!apiKey) throw new Error("DEEPSEEK_API_KEY not set");
-
-  const res = await fetch("https://api.deepseek.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: "deepseek-chat",
-      max_tokens: 1024,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-    }),
-  });
-
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`DeepSeek API error ${res.status}: ${body.slice(0, 200)}`);
-  }
-
-  const data = await res.json();
-  return data.choices[0].message.content;
-}
 
 /**
  * Classify items using LLM in batches.

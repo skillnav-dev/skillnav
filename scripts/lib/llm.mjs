@@ -61,7 +61,7 @@ const VALID_ARTICLE_TYPES = ["tutorial", "analysis", "guide"];
 // ── Provider Resolution ──────────────────────────────────────────────
 
 function getProvider() {
-  const name = process.env.LLM_PROVIDER || "deepseek";
+  const name = process.env.LLM_PROVIDER || "gpt";
   const provider = PROVIDERS[name];
   if (!provider) {
     throw new Error(
@@ -85,7 +85,7 @@ function getProvider() {
  * @returns {{ name: string, model: string, provider: string }}
  */
 export function getProviderInfo() {
-  const name = process.env.LLM_PROVIDER || "deepseek";
+  const name = process.env.LLM_PROVIDER || "gpt";
   const provider = PROVIDERS[name];
   return provider
     ? { provider: name, name: provider.name, model: provider.model }
@@ -96,23 +96,26 @@ export function getProviderInfo() {
 
 /**
  * Call an OpenAI-compatible API (DeepSeek, OpenAI, etc.)
+ * @param {boolean} [jsonMode=true] - Whether to request JSON response format
  */
-async function callOpenAICompatible(provider, systemPrompt, userPrompt, maxTokens) {
+async function callOpenAICompatible(provider, systemPrompt, userPrompt, maxTokens, jsonMode = true) {
+  const body = {
+    model: provider.model,
+    max_tokens: maxTokens,
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
+  };
+  if (jsonMode) body.response_format = { type: "json_object" };
+
   const res = await fetch(`${provider.baseUrl}/chat/completions`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${provider.apiKey}`,
     },
-    body: JSON.stringify({
-      model: provider.model,
-      max_tokens: maxTokens,
-      response_format: { type: "json_object" },
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-    }),
+    body: JSON.stringify(body),
   });
 
   if (!res.ok) {
@@ -186,7 +189,7 @@ async function callAnthropic(provider, systemPrompt, userPrompt, maxTokens) {
 }
 
 /**
- * Unified LLM call dispatcher.
+ * Unified LLM call dispatcher (JSON mode for openai-compatible providers).
  */
 export async function callLLM(systemPrompt, userPrompt, maxTokens = 16384) {
   const provider = getProvider();
@@ -197,6 +200,21 @@ export async function callLLM(systemPrompt, userPrompt, maxTokens = 16384) {
     return callOpenAIResponses(provider, systemPrompt, userPrompt, maxTokens);
   }
   return callOpenAICompatible(provider, systemPrompt, userPrompt, maxTokens);
+}
+
+/**
+ * Unified LLM call dispatcher (plain text mode — no JSON format constraint).
+ * Use this for classification tasks that return numbered lists, etc.
+ */
+export async function callLLMText(systemPrompt, userPrompt, maxTokens = 4096) {
+  const provider = getProvider();
+  if (provider.type === "anthropic") {
+    return callAnthropic(provider, systemPrompt, userPrompt, maxTokens);
+  }
+  if (provider.type === "openai-responses") {
+    return callOpenAIResponses(provider, systemPrompt, userPrompt, maxTokens);
+  }
+  return callOpenAICompatible(provider, systemPrompt, userPrompt, maxTokens, false);
 }
 
 // ── Shared Prompts ───────────────────────────────────────────────────

@@ -174,7 +174,6 @@ export default async function SkillDetailPage({ params }: PageProps) {
               requiresEnv={skill.requiresEnv}
               requiresBins={skill.requiresBins}
               githubUrl={skill.githubUrl}
-              platform={skill.platform}
               skillName={skill.name}
             />
 

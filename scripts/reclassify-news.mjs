@@ -6,92 +6,18 @@
  * Phase 1 of content pipeline spec — type simplification.
  *
  * Usage:
- *   # Dry-run: show LLM classification results (no DB changes)
- *   LLM_PROVIDER=gpt npm run reclassify-news
- *
- *   # Apply: write new types to DB + hide low-score drafts
- *   LLM_PROVIDER=gpt npm run reclassify-news -- --apply
+ *   node scripts/reclassify-news.mjs              # Dry-run (preview only)
+ *   node scripts/reclassify-news.mjs --apply      # Apply to DB
  */
 
+import dotenv from "dotenv";
+dotenv.config({ path: ".env.local" });
+dotenv.config();
+
 import { createAdminClient } from "./lib/supabase-admin.mjs";
+import { callLLM } from "./lib/llm.mjs";
 
 // ── LLM Classification ─────────────────────────────────────────────
-
-const PROVIDERS = {
-  deepseek: {
-    baseUrl: "https://api.deepseek.com/v1",
-    model: "deepseek-chat",
-    apiKeyEnv: "DEEPSEEK_API_KEY",
-    type: "openai-compatible",
-  },
-  gemini: {
-    baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai",
-    model: "gemini-2.0-flash",
-    apiKeyEnv: "GEMINI_API_KEY",
-    type: "openai-compatible",
-  },
-  gpt: {
-    baseUrl: "https://gmn.chuangzuoli.com/v1",
-    model: "gpt-5.3-codex",
-    apiKeyEnv: "GPT_API_KEY",
-    type: "openai-responses",
-  },
-};
-
-function getProvider() {
-  const name = process.env.LLM_PROVIDER || "deepseek";
-  const cfg = PROVIDERS[name];
-  if (!cfg) throw new Error(`Unknown LLM_PROVIDER: ${name}`);
-  const apiKey = process.env[cfg.apiKeyEnv];
-  if (!apiKey) throw new Error(`${cfg.apiKeyEnv} not set`);
-  return { ...cfg, apiKey };
-}
-
-async function callLLM(systemPrompt, userPrompt) {
-  const p = getProvider();
-
-  if (p.type === "openai-responses") {
-    const res = await fetch(`${p.baseUrl}/responses`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${p.apiKey}`,
-      },
-      body: JSON.stringify({
-        model: p.model,
-        max_output_tokens: 512,
-        input: [
-          { type: "message", role: "developer", content: [{ type: "input_text", text: systemPrompt }] },
-          { type: "message", role: "user", content: [{ type: "input_text", text: userPrompt }] },
-        ],
-      }),
-    });
-    if (!res.ok) throw new Error(`LLM error ${res.status}: ${(await res.text()).slice(0, 300)}`);
-    const data = await res.json();
-    return data.output?.find((o) => o.type === "message")?.content?.find((c) => c.type === "output_text")?.text;
-  }
-
-  // OpenAI-compatible
-  const res = await fetch(`${p.baseUrl}/chat/completions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${p.apiKey}`,
-    },
-    body: JSON.stringify({
-      model: p.model,
-      max_tokens: 512,
-      response_format: { type: "json_object" },
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-    }),
-  });
-  if (!res.ok) throw new Error(`LLM error ${res.status}: ${(await res.text()).slice(0, 300)}`);
-  const data = await res.json();
-  return data.choices[0].message.content;
-}
 
 const CLASSIFY_SYSTEM = `You are a content editor for a Chinese AI developer tools site (skillnav.dev).
 Your job is to classify articles into exactly one of three types. Respond with valid JSON only.`;

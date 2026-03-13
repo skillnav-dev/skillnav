@@ -2,8 +2,23 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Compass } from "lucide-react";
 import { HeroSearch } from "./hero-search";
+import { getSkillsCount, getMcpServersCount } from "@/lib/data";
 
-export function HeroSection() {
+// Format total as friendly string: 5481 → "5,400+"
+function formatTotal(n: number): string {
+  if (n >= 1000) {
+    const hundreds = Math.floor(n / 100) * 100;
+    return `${hundreds.toLocaleString("en-US")}+`;
+  }
+  return String(n);
+}
+
+export async function HeroSection() {
+  const [skillsCount, mcpCount] = await Promise.all([
+    getSkillsCount(),
+    getMcpServersCount(),
+  ]);
+  const totalCount = formatTotal(skillsCount + mcpCount);
   return (
     <section className="relative overflow-hidden py-20 sm:py-28">
       {/* Subtle gradient background */}
@@ -20,7 +35,7 @@ export function HeroSection() {
             <span className="text-primary">AI 工具生态指南</span>
           </h1>
           <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
-            精选信源 · 编辑策展 · 每周更新
+            {totalCount} AI 开发工具收录 · 每日更新
           </p>
           <div className="mt-8">
             <HeroSearch />
