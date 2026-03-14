@@ -7,8 +7,12 @@
 import { createClient } from "@supabase/supabase-js";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import type { Database } from "@/lib/supabase/types";
-import type { Article, Skill } from "@/data/types";
-import { mapArticleRow, mapSkillRow } from "@/lib/supabase/mappers";
+import type { Article, Skill, McpServer } from "@/data/types";
+import {
+  mapArticleRow,
+  mapSkillRow,
+  mapMcpServerRow,
+} from "@/lib/supabase/mappers";
 
 type ArticleUpdate = Database["public"]["Tables"]["articles"]["Update"];
 type SkillUpdate = Database["public"]["Tables"]["skills"]["Update"];
@@ -81,6 +85,8 @@ export const ADMIN_PAGE_SIZE = 20;
 export async function getAdminArticles(params: {
   status?: string;
   source?: string;
+  contentTier?: string;
+  articleType?: string;
   search?: string;
   page?: number;
   pageSize?: number;
@@ -100,6 +106,12 @@ export async function getAdminArticles(params: {
   }
   if (params.source) {
     query = query.eq("source", params.source);
+  }
+  if (params.contentTier) {
+    query = query.eq("content_tier", params.contentTier);
+  }
+  if (params.articleType) {
+    query = query.eq("article_type", params.articleType);
   }
   if (params.search) {
     query = query.or(
@@ -432,4 +444,331 @@ export async function batchUpdateSkillStatus(
 
   if (error) throw error;
   return data?.length ?? 0;
+}
+
+/**
+ * Batch delete skills.
+ */
+export async function batchDeleteSkills(ids: string[]): Promise<number> {
+  const supabase = createAdminClient();
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase.from("skills") as any)
+    .delete()
+    .in("id", ids)
+    .select("id");
+
+  if (error) throw error;
+  return data?.length ?? 0;
+}
+
+/**
+ * Batch update article status.
+ */
+export async function batchUpdateArticleStatus(
+  ids: string[],
+  status: string,
+): Promise<number> {
+  const supabase = createAdminClient();
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase.from("articles") as any)
+    .update({ status: status as "published" | "draft" | "hidden" })
+    .in("id", ids)
+    .select("id");
+
+  if (error) throw error;
+  return data?.length ?? 0;
+}
+
+/**
+ * Batch delete articles.
+ */
+export async function batchDeleteArticles(ids: string[]): Promise<number> {
+  const supabase = createAdminClient();
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase.from("articles") as any)
+    .delete()
+    .in("id", ids)
+    .select("id");
+
+  if (error) throw error;
+  return data?.length ?? 0;
+}
+
+// ---------------------------------------------------------------------------
+// MCP Servers admin
+// ---------------------------------------------------------------------------
+
+type McpServerUpdate = Database["public"]["Tables"]["mcp_servers"]["Update"];
+
+export interface McpStats {
+  total: number;
+  published: number;
+  draft: number;
+  hidden: number;
+}
+
+/**
+ * Get MCP server counts grouped by status.
+ */
+export async function getMcpStats(): Promise<McpStats> {
+  const supabase = createAdminClient();
+
+  const [publishedRes, draftRes, hiddenRes] = await Promise.all([
+    supabase
+      .from("mcp_servers")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "published"),
+    supabase
+      .from("mcp_servers")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "draft"),
+    supabase
+      .from("mcp_servers")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "hidden"),
+  ]);
+
+  const published = publishedRes.count ?? 0;
+  const draft = draftRes.count ?? 0;
+  const hidden = hiddenRes.count ?? 0;
+
+  return {
+    total: published + draft + hidden,
+    published,
+    draft,
+    hidden,
+  };
+}
+
+/**
+ * Get MCP servers for admin listing with filters and pagination.
+ */
+export async function getAdminMcpServers(params: {
+  status?: string;
+  qualityTier?: string;
+  category?: string;
+  source?: string;
+  search?: string;
+  page?: number;
+  pageSize?: number;
+}): Promise<{ servers: McpServer[]; total: number }> {
+  const supabase = createAdminClient();
+  const pageSize = params.pageSize ?? ADMIN_PAGE_SIZE;
+  const page = params.page ?? 1;
+  const offset = (Math.max(1, page) - 1) * pageSize;
+
+  let query = supabase
+    .from("mcp_servers")
+    .select("*", { count: "exact" })
+    .order("stars", { ascending: false });
+
+  if (params.status) {
+    query = query.eq("status", params.status);
+  }
+  if (params.qualityTier) {
+    query = query.eq("quality_tier", params.qualityTier);
+  }
+  if (params.category) {
+    query = query.eq("category", params.category);
+  }
+  if (params.source) {
+    query = query.eq("source", params.source);
+  }
+  if (params.search) {
+    query = query.or(
+      `name.ilike.%${params.search}%,name_zh.ilike.%${params.search}%,author.ilike.%${params.search}%`,
+    );
+  }
+
+  query = query.range(offset, offset + pageSize - 1);
+
+  const { data, count, error } = await query;
+  if (error) throw error;
+
+  return {
+    servers: (data ?? []).map(mapMcpServerRow),
+    total: count ?? 0,
+  };
+}
+
+/**
+ * Get distinct MCP server categories for admin filter.
+ */
+export async function getAdminMcpCategories(): Promise<string[]> {
+  const supabase = createAdminClient();
+
+  const { data, error } = (await supabase
+    .from("mcp_servers")
+    .select("category")) as {
+    data: { category: string | null }[] | null;
+    error: unknown;
+  };
+  if (error) throw error;
+
+  return [
+    ...new Set(
+      (data ?? []).map((r) => r.category).filter((c): c is string => !!c),
+    ),
+  ].sort();
+}
+
+/**
+ * Get distinct MCP server sources for admin filter.
+ */
+export async function getAdminMcpSources(): Promise<string[]> {
+  const supabase = createAdminClient();
+
+  const { data, error } = (await supabase
+    .from("mcp_servers")
+    .select("source")) as {
+    data: { source: string }[] | null;
+    error: unknown;
+  };
+  if (error) throw error;
+
+  return [...new Set((data ?? []).map((r) => r.source).filter(Boolean))].sort();
+}
+
+/**
+ * Get a single MCP server by ID (no status filter, for admin editing).
+ */
+export async function getAdminMcpById(id: string): Promise<McpServer | null> {
+  const supabase = createAdminClient();
+
+  const { data, error } = await supabase
+    .from("mcp_servers")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error) return null;
+  return mapMcpServerRow(data);
+}
+
+/**
+ * Update MCP server fields (admin editor).
+ */
+export async function updateMcpServer(
+  id: string,
+  data: {
+    name_zh?: string;
+    description_zh?: string;
+    editor_comment_zh?: string;
+    status?: string;
+    category?: string;
+    quality_tier?: string;
+  },
+): Promise<void> {
+  const supabase = createAdminClient();
+
+  const updateData: McpServerUpdate = {};
+  if (data.name_zh !== undefined) updateData.name_zh = data.name_zh;
+  if (data.description_zh !== undefined)
+    updateData.description_zh = data.description_zh;
+  if (data.editor_comment_zh !== undefined)
+    updateData.editor_comment_zh = data.editor_comment_zh;
+  if (data.status !== undefined)
+    updateData.status = data.status as "published" | "draft" | "hidden";
+  if (data.category !== undefined) updateData.category = data.category;
+  if (data.quality_tier !== undefined)
+    updateData.quality_tier = data.quality_tier as "S" | "A" | "B" | "C";
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase.from("mcp_servers") as any)
+    .update(updateData)
+    .eq("id", id);
+
+  if (error) throw error;
+}
+
+/**
+ * Update MCP server status (for status toggle).
+ */
+export async function updateMcpStatus(
+  id: string,
+  status: string,
+): Promise<void> {
+  const supabase = createAdminClient();
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase.from("mcp_servers") as any)
+    .update({ status: status as "published" | "draft" | "hidden" })
+    .eq("id", id)
+    .select("id");
+
+  if (error) throw error;
+  if (!data || data.length === 0) {
+    throw new Error("No rows updated — check RLS policy or MCP server ID");
+  }
+}
+
+/**
+ * Batch update MCP server status.
+ */
+export async function batchUpdateMcpStatus(
+  ids: string[],
+  status: string,
+): Promise<number> {
+  const supabase = createAdminClient();
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase.from("mcp_servers") as any)
+    .update({ status: status as "published" | "draft" | "hidden" })
+    .in("id", ids)
+    .select("id");
+
+  if (error) throw error;
+  return data?.length ?? 0;
+}
+
+/**
+ * Batch delete MCP servers.
+ */
+export async function batchDeleteMcpServers(ids: string[]): Promise<number> {
+  const supabase = createAdminClient();
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase.from("mcp_servers") as any)
+    .delete()
+    .in("id", ids)
+    .select("id");
+
+  if (error) throw error;
+  return data?.length ?? 0;
+}
+
+/**
+ * Batch update MCP server quality tier.
+ */
+export async function batchUpdateMcpTier(
+  ids: string[],
+  tier: string,
+): Promise<number> {
+  const supabase = createAdminClient();
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase.from("mcp_servers") as any)
+    .update({ quality_tier: tier as "S" | "A" | "B" | "C" })
+    .in("id", ids)
+    .select("id");
+
+  if (error) throw error;
+  return data?.length ?? 0;
+}
+
+/**
+ * Delete a single MCP server.
+ */
+export async function deleteMcpServer(id: string): Promise<void> {
+  const supabase = createAdminClient();
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase.from("mcp_servers") as any)
+    .delete()
+    .eq("id", id);
+
+  if (error) throw error;
 }

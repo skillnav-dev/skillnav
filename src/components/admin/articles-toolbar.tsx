@@ -38,6 +38,22 @@ export function AdminArticlesToolbar({ sources }: AdminArticlesToolbarProps) {
     }),
   );
 
+  const [contentTier, setContentTier] = useQueryState(
+    "contentTier",
+    adminArticlesSearchParams.contentTier.withOptions({
+      shallow: false,
+      startTransition,
+    }),
+  );
+
+  const [articleType, setArticleType] = useQueryState(
+    "articleType",
+    adminArticlesSearchParams.articleType.withOptions({
+      shallow: false,
+      startTransition,
+    }),
+  );
+
   const [, setPage] = useQueryState(
     "page",
     adminArticlesSearchParams.page.withOptions({
@@ -53,6 +69,16 @@ export function AdminArticlesToolbar({ sources }: AdminArticlesToolbarProps) {
 
   function handleSourceChange(value: string) {
     setSource(value === "all" ? null : value);
+    setPage(1);
+  }
+
+  function handleContentTierChange(value: string) {
+    setContentTier(value === "all" ? null : value);
+    setPage(1);
+  }
+
+  function handleArticleTypeChange(value: string) {
+    setArticleType(value === "all" ? null : value);
     setPage(1);
   }
 
@@ -80,7 +106,7 @@ export function AdminArticlesToolbar({ sources }: AdminArticlesToolbarProps) {
 
       {/* Source filter */}
       <Select value={source || "all"} onValueChange={handleSourceChange}>
-        <SelectTrigger className="h-9 w-full sm:w-[180px]">
+        <SelectTrigger className="h-9 w-full sm:w-[160px]">
           <SelectValue placeholder="全部来源" />
         </SelectTrigger>
         <SelectContent>
@@ -90,6 +116,37 @@ export function AdminArticlesToolbar({ sources }: AdminArticlesToolbarProps) {
               {ARTICLE_SOURCE_LABELS[src] ?? src}
             </SelectItem>
           ))}
+        </SelectContent>
+      </Select>
+
+      {/* Content tier filter */}
+      <Select
+        value={contentTier || "all"}
+        onValueChange={handleContentTierChange}
+      >
+        <SelectTrigger className="h-9 w-full sm:w-[160px]">
+          <SelectValue placeholder="全部层级" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">全部层级</SelectItem>
+          <SelectItem value="editorial">原创</SelectItem>
+          <SelectItem value="translated">翻译</SelectItem>
+        </SelectContent>
+      </Select>
+
+      {/* Article type filter */}
+      <Select
+        value={articleType || "all"}
+        onValueChange={handleArticleTypeChange}
+      >
+        <SelectTrigger className="h-9 w-full sm:w-[160px]">
+          <SelectValue placeholder="全部类型" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">全部类型</SelectItem>
+          <SelectItem value="tutorial">教程</SelectItem>
+          <SelectItem value="analysis">分析</SelectItem>
+          <SelectItem value="guide">指南</SelectItem>
         </SelectContent>
       </Select>
     </div>
