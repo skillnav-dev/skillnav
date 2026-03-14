@@ -2,10 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Star, Wrench } from "lucide-react";
 import { SectionHeader } from "@/components/shared/section-header";
-import { SkillCard } from "@/components/skills/skill-card";
-import { MCPCard } from "@/components/mcp/mcp-card";
+import { formatNumber } from "@/lib/utils";
 import type { Skill, McpServer } from "@/data/types";
 
 const TABS = [
@@ -58,33 +57,82 @@ export function FeaturedTools({ skills, mcpServers }: FeaturedToolsProps) {
           ))}
         </div>
 
-        {/* Skills grid - pre-rendered, toggle visibility */}
-        <div
-          className={
-            activeTab === "skills"
-              ? "mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
-              : "hidden"
-          }
-        >
+        {/* Skills list */}
+        <div className={activeTab === "skills" ? "mt-2" : "hidden"}>
           {skills.map((skill) => (
-            <SkillCard key={skill.id} skill={skill} />
+            <Link
+              key={skill.id}
+              href={`/skills/${skill.slug}`}
+              className="flex items-center gap-3 border-b border-border/30 px-1 py-3 transition-colors hover:bg-muted/40"
+            >
+              <div className="min-w-0 flex-1">
+                <span className="text-sm font-medium group-hover:text-primary">
+                  {skill.nameZh ?? skill.name}
+                </span>
+                <span className="ml-2 text-xs text-muted-foreground">
+                  by {skill.author}
+                </span>
+                <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
+                  {skill.introZh ?? skill.descriptionZh ?? skill.description}
+                </p>
+              </div>
+              <div className="flex shrink-0 items-center gap-3 text-xs text-muted-foreground">
+                {skill.stars > 0 && (
+                  <span className="flex items-center gap-1">
+                    <Star className="size-3" />
+                    {formatNumber(skill.stars)}
+                  </span>
+                )}
+                <ArrowRight className="size-3.5 text-muted-foreground/50" />
+              </div>
+            </Link>
           ))}
         </div>
 
-        {/* MCP grid - pre-rendered, toggle visibility */}
-        <div
-          className={
-            activeTab === "mcp"
-              ? "mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
-              : "hidden"
-          }
-        >
+        {/* MCP list */}
+        <div className={activeTab === "mcp" ? "mt-2" : "hidden"}>
           {mcpServers.map((server) => (
-            <MCPCard key={server.id} server={server} />
+            <Link
+              key={server.id}
+              href={`/mcp/${server.slug}`}
+              className="flex items-center gap-3 border-b border-border/30 px-1 py-3 transition-colors hover:bg-muted/40"
+            >
+              <div className="min-w-0 flex-1">
+                <span className="text-sm font-medium">
+                  {server.nameZh ?? server.name}
+                </span>
+                {server.author && (
+                  <span className="ml-2 text-xs text-muted-foreground">
+                    by {server.author}
+                  </span>
+                )}
+                <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
+                  {server.introZh ??
+                    server.descriptionZh ??
+                    server.description ??
+                    ""}
+                </p>
+              </div>
+              <div className="flex shrink-0 items-center gap-3 text-xs text-muted-foreground">
+                {server.toolsCount > 0 && (
+                  <span className="flex items-center gap-1">
+                    <Wrench className="size-3" />
+                    {server.toolsCount}
+                  </span>
+                )}
+                {server.stars > 0 && (
+                  <span className="flex items-center gap-1">
+                    <Star className="size-3" />
+                    {formatNumber(server.stars)}
+                  </span>
+                )}
+                <ArrowRight className="size-3.5 text-muted-foreground/50" />
+              </div>
+            </Link>
           ))}
         </div>
 
-        <div className="mt-6 text-center sm:hidden">
+        <div className="mt-4 text-center sm:hidden">
           <Link
             href={currentTab.href}
             className="inline-flex items-center gap-1 text-sm font-medium text-primary"

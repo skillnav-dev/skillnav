@@ -9,8 +9,8 @@ import { getFeaturedSkills, getFeaturedMcpServers } from "@/lib/data";
 
 export default async function Home() {
   const [skills, mcpServers] = await Promise.all([
-    getFeaturedSkills(),
-    getFeaturedMcpServers(),
+    getFeaturedSkills(10),
+    getFeaturedMcpServers(10),
   ]);
 
   return (
