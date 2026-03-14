@@ -1,4 +1,26 @@
 /**
+ * Check if an error is retryable.
+ * Non-retryable: 400/401/403/404 (client errors where retry won't help).
+ * Retryable: 408/429/5xx/524, network errors, timeout errors.
+ */
+function isRetryable(err) {
+  const msg = err?.message || '';
+
+  // Extract HTTP status from "API error {status}" pattern thrown by llm.mjs
+  const statusMatch = msg.match(/API error (\d{3})/);
+  if (statusMatch) {
+    const status = Number(statusMatch[1]);
+    // Client errors (except 408 Request Timeout and 429 Rate Limit) are not retryable
+    if (status >= 400 && status < 500 && status !== 408 && status !== 429) {
+      return false;
+    }
+  }
+
+  // Everything else is retryable (network errors, timeouts, 5xx, 524, etc.)
+  return true;
+}
+
+/**
  * Retry wrapper with exponential backoff.
  * @param {Function} fn - async function to retry
  * @param {object} options
@@ -14,6 +36,12 @@ export async function withRetry(fn, { maxRetries = 3, baseDelay = 1000, label = 
       return await fn();
     } catch (err) {
       lastError = err;
+      if (!isRetryable(err)) {
+        console.warn(
+          `\x1b[31m[retry]\x1b[0m ${label ? `"${label}" ` : ''}non-retryable error: ${err.message}`
+        );
+        throw err;
+      }
       if (attempt < maxRetries) {
         const delayMs = baseDelay * Math.pow(2, attempt);
         console.warn(

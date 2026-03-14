@@ -56,6 +56,7 @@ const PROVIDERS = {
 const CHUNK_THRESHOLD = 15000; // Below this: single-call translation
 const SUMMARIZE_THRESHOLD = 50000; // Above this: structured summary instead of full translation
 const CHUNK_SIZE = 12000; // Target size per chunk
+const LLM_TIMEOUT_MS = 60_000; // 60s per request
 
 const VALID_ARTICLE_TYPES = ["tutorial", "analysis", "guide"];
 
@@ -117,6 +118,7 @@ async function callOpenAICompatible(provider, systemPrompt, userPrompt, maxToken
       Authorization: `Bearer ${provider.apiKey}`,
     },
     body: JSON.stringify(body),
+    signal: AbortSignal.timeout(LLM_TIMEOUT_MS),
   });
 
   if (!res.ok) {
@@ -138,6 +140,7 @@ async function callOpenAIResponses(provider, systemPrompt, userPrompt, maxTokens
       "Content-Type": "application/json",
       Authorization: `Bearer ${provider.apiKey}`,
     },
+    signal: AbortSignal.timeout(LLM_TIMEOUT_MS),
     body: JSON.stringify({
       model: provider.model,
       max_output_tokens: maxTokens,
@@ -177,7 +180,7 @@ async function callOpenAIResponses(provider, systemPrompt, userPrompt, maxTokens
  */
 async function callAnthropic(provider, systemPrompt, userPrompt, maxTokens) {
   const { default: Anthropic } = await import("@anthropic-ai/sdk");
-  const client = new Anthropic({ apiKey: provider.apiKey });
+  const client = new Anthropic({ apiKey: provider.apiKey, timeout: LLM_TIMEOUT_MS });
 
   const response = await client.messages.create({
     model: provider.model,

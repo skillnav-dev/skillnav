@@ -3,32 +3,21 @@
 
 ## Completed
 
-### 第 1-47 轮摘要
+### 第 1-48 轮摘要
 - 站点上线 skillnav.dev + 309 Skills + 99 文章 + 5,172 MCP servers
 - UI/UX 全阶段 + Admin + 周刊 + SEO + CI + MCP tools + 三层目录
 - Phase 3 编辑策展 + 交叉推荐 + 统一内容管理系统
+- 首页改版：灰带合并、Tab 工具列表、列表化布局、Bug 修复
 
-### 第 48 轮：首页改版 — Bug 修复 + 信息密度提升
-- **Bug 修复**: 孤儿卡片（articles limit 4→3, editorial 有周刊时只显 2 篇）
-- **Bug 修复**: editorial-highlights 无周刊时 grid 只占 1/5 宽度
-- **布局压缩**: Hero py-20→py-12, 所有 section py-16→py-10
-- **合并灰带**: StatsBar + ScenarioShortcuts 合并为一个 border-b 容器
-- **Tab 工具列表**: Skills+MCP 合并为 FeaturedTools，Tab 切换，各 10 条
-- **列表化**: FeaturedTools 从卡片改为首字母头像+双行列表
-- **列表化**: LatestArticles 从卡片网格改为类型 Badge+标题+摘要列表行
-- **移除**: NewsletterCta 占位区块
+### 第 49 轮：GPT Proxy 稳定性优化
+- `llm.mjs` 添加 60s fetch 超时（3 处：OpenAI-compatible / Responses API / Anthropic SDK）
+- `retry.mjs` 添加 `isRetryable()` 错误分类：400/401/403/404 立即失败，408/429/5xx/524/网络超时正常重试
 
 ## Next
-1. 本地 `npm run dev` 全断点验收首页（mobile/sm/lg + 深色模式）
-2. 可选：ScenarioShortcuts 加分类数量标注（需新建 category count 查询）
-3. 可选：GPT proxy 稳定性优化（524 超时率 ~30%）
-4. 下一个大方向待定（搜索增强 / 评分体系 / 用户系统）
+1. `git push` 后观察下次 `sync-articles` GitHub Actions 日志，确认超时和错误分类生效
+2. 本地 `npm run dev` 全断点验收首页（mobile/sm/lg + 深色模式）
+3. 下一个大方向待定（搜索增强 / 评分体系 / 用户系统）
 
 ## Key Files
-- `src/app/page.tsx` — 首页组装（async, 灰带容器包裹 Stats+Shortcuts）
-- `src/components/home/featured-tools.tsx` — **新建** Tab 列表（Skills/MCP）
-- `src/components/home/latest-articles.tsx` — 列表行布局
-- `src/components/home/editorial-highlights.tsx` — 条件 grid 修复
-- `src/components/home/stats-bar.tsx` — 去掉独立 section wrapper
-- `src/components/home/scenario-shortcuts.tsx` — 去掉独立 section wrapper
-- `src/lib/data/articles.ts` — getLatestArticles limit 4→3
+- `scripts/lib/llm.mjs` — LLM 调用层，新增 `LLM_TIMEOUT_MS` + 3 处超时
+- `scripts/lib/retry.mjs` — 重试逻辑，新增 `isRetryable()` 错误分类
