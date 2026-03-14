@@ -3,36 +3,32 @@
 
 ## Completed
 
-### 第 1-44 轮摘要
+### 第 1-47 轮摘要
 - 站点上线 skillnav.dev + 309 Skills + 99 文章 + 5,172 MCP servers
 - UI/UX 全阶段 + Admin + 周刊 + SEO + CI + MCP tools + 三层目录
-- Phase 1 分类统一 + Phase 2 数据补全 + 首页增强 + backfill cron
+- Phase 3 编辑策展 + 交叉推荐 + 统一内容管理系统
 
-### 第 46 轮：Phase 3 编辑策展 + 交叉推荐（Day 14）
-- **编辑评语**: `backfill-editor-comments.mjs` — Top 30 Skills + Top 50 MCP 评语写入 DB (80/80)
-- **交叉推荐**: Skills 详情页新增"相关 MCP 服务"，MCP 详情页新增"相关 Skills"
-- **卡片增强**: SkillCard/MCPCard 底部新增编辑评语单行预览
-- **MCP 详情页**: 编辑评语移至 hero 区域，与 Skills 页统一
-- **CI**: backfill-data.yml 新增 editor-comments 任务
-
-### 第 47 轮：统一内容管理系统（Day 14）
-- **管理模式统一**: Skills/Articles/MCP 三种内容共享同一套多选+批量操作模式
-- **Skills 补齐**: 批量转草稿 + 批量删除（含 confirm）
-- **Articles 对齐**: 多选复选框 + 批量发布/转草稿/隐藏/删除 + 内容层级过滤 + 文章类型过滤
-- **MCP 管理页**: 从零搭建（列表+编辑+批量操作+改层级），8 个新文件
-- **Dashboard**: 新增 MCP 统计卡片，导航新增 MCP 管理入口
+### 第 48 轮：首页改版 — Bug 修复 + 信息密度提升
+- **Bug 修复**: 孤儿卡片（articles limit 4→3, editorial 有周刊时只显 2 篇）
+- **Bug 修复**: editorial-highlights 无周刊时 grid 只占 1/5 宽度
+- **布局压缩**: Hero py-20→py-12, 所有 section py-16→py-10
+- **合并灰带**: StatsBar + ScenarioShortcuts 合并为一个 border-b 容器
+- **Tab 工具列表**: Skills+MCP 合并为 FeaturedTools，Tab 切换，各 10 条
+- **列表化**: FeaturedTools 从卡片改为首字母头像+双行列表
+- **列表化**: LatestArticles 从卡片网格改为类型 Badge+标题+摘要列表行
+- **移除**: NewsletterCta 占位区块
 
 ## Next
-1. 审核编辑评语质量（打开 S/A-tier 工具详情页抽查）
-2. 可选：场景指南文章（移至内容运营日常）
+1. 本地 `npm run dev` 全断点验收首页（mobile/sm/lg + 深色模式）
+2. 可选：ScenarioShortcuts 加分类数量标注（需新建 category count 查询）
 3. 可选：GPT proxy 稳定性优化（524 超时率 ~30%）
 4. 下一个大方向待定（搜索增强 / 评分体系 / 用户系统）
 
 ## Key Files
-- `src/app/admin/mcp/` — MCP 管理页（列表+编辑）
-- `src/components/admin/mcp-*.tsx` — MCP 管理组件（table/toolbar/editor/status-toggle）
-- `src/components/admin/articles-table.tsx` — Articles 表格（+多选批量操作）
-- `src/components/admin/skills-table.tsx` — Skills 表格（+转草稿+删除）
-- `src/lib/data/admin.ts` — 统一 DAL（Skills+Articles+MCP 管理函数）
-- `scripts/backfill-editor-comments.mjs` — 编辑评语批量生成脚本
-- `.github/workflows/backfill-data.yml` — 每日数据补全 cron
+- `src/app/page.tsx` — 首页组装（async, 灰带容器包裹 Stats+Shortcuts）
+- `src/components/home/featured-tools.tsx` — **新建** Tab 列表（Skills/MCP）
+- `src/components/home/latest-articles.tsx` — 列表行布局
+- `src/components/home/editorial-highlights.tsx` — 条件 grid 修复
+- `src/components/home/stats-bar.tsx` — 去掉独立 section wrapper
+- `src/components/home/scenario-shortcuts.tsx` — 去掉独立 section wrapper
+- `src/lib/data/articles.ts` — getLatestArticles limit 4→3
