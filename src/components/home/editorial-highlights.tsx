@@ -11,12 +11,13 @@ export async function EditorialHighlights() {
   ]);
 
   const latestWeekly = weeklies[0] ?? null;
-  const hasContent = latestWeekly || editorials.length > 0;
+  const displayEditorials = latestWeekly ? editorials.slice(0, 2) : editorials;
+  const hasContent = latestWeekly || displayEditorials.length > 0;
 
   if (!hasContent) return null;
 
   return (
-    <section className="py-16">
+    <section className="py-10">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="flex items-end justify-between">
           <SectionHeader
@@ -31,7 +32,7 @@ export async function EditorialHighlights() {
             <ArrowRight className="size-4" />
           </Link>
         </div>
-        <div className="mt-8 grid gap-6 lg:grid-cols-5">
+        <div className="mt-6 grid gap-6 lg:grid-cols-5">
           {/* Large weekly card */}
           {latestWeekly && (
             <Link
@@ -67,7 +68,7 @@ export async function EditorialHighlights() {
                 : "grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
             }
           >
-            {editorials.map((article) => (
+            {displayEditorials.map((article) => (
               <ArticleCard key={article.id} article={article} />
             ))}
           </div>

@@ -73,7 +73,7 @@ export async function getArticleBySlug(slug: string): Promise<Article | null> {
 /**
  * Get latest articles for homepage.
  */
-export async function getLatestArticles(limit = 4): Promise<Article[]> {
+export async function getLatestArticles(limit = 3): Promise<Article[]> {
   if (!isSupabaseConfigured()) {
     const { mockArticles } = await import("@/data/mock-articles");
     return mockArticles.slice(0, limit);
