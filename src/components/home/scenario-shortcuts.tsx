@@ -27,25 +27,23 @@ const SCENARIOS = [
 
 export function ScenarioShortcuts() {
   return (
-    <section className="border-b border-border/40 bg-muted/30">
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-        <div className="grid grid-cols-5 gap-3 sm:grid-cols-10">
-          {SCENARIOS.map(({ label, slug, icon: Icon }) => (
-            <Link
-              key={slug}
-              href={`/skills?category=${encodeURIComponent(slug)}`}
-              className="group flex flex-col items-center gap-1.5 rounded-lg p-2 text-center transition-colors hover:bg-muted/50"
-            >
-              <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 transition-colors group-hover:bg-primary/20">
-                <Icon className="size-5 text-primary" />
-              </div>
-              <span className="text-xs text-muted-foreground group-hover:text-foreground">
-                {label}
-              </span>
-            </Link>
-          ))}
-        </div>
+    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+      <div className="grid grid-cols-5 gap-3 sm:grid-cols-10">
+        {SCENARIOS.map(({ label, slug, icon: Icon }) => (
+          <Link
+            key={slug}
+            href={`/skills?category=${encodeURIComponent(slug)}`}
+            className="group flex flex-col items-center gap-1.5 rounded-lg p-2 text-center transition-colors hover:bg-muted/50"
+          >
+            <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 transition-colors group-hover:bg-primary/20">
+              <Icon className="size-5 text-primary" />
+            </div>
+            <span className="text-xs text-muted-foreground group-hover:text-foreground">
+              {label}
+            </span>
+          </Link>
+        ))}
       </div>
-    </section>
+    </div>
   );
 }
