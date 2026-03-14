@@ -32,7 +32,9 @@ export async function EditorialHighlights() {
             <ArrowRight className="size-4" />
           </Link>
         </div>
-        <div className="mt-6 grid gap-6 lg:grid-cols-5">
+        <div
+          className={latestWeekly ? "mt-6 grid gap-6 lg:grid-cols-5" : "mt-6"}
+        >
           {/* Large weekly card */}
           {latestWeekly && (
             <Link
