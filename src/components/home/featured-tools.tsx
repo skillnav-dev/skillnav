@@ -19,6 +19,15 @@ interface FeaturedToolsProps {
   mcpServers: McpServer[];
 }
 
+// Extract initials: "Filesystem MCP" → "FM", "supabase" → "SU"
+function getInitials(name: string): string {
+  const words = name.split(/[\s\-_/]+/).filter(Boolean);
+  if (words.length >= 2) {
+    return (words[0][0] + words[1][0]).toUpperCase();
+  }
+  return name.slice(0, 2).toUpperCase();
+}
+
 export function FeaturedTools({ skills, mcpServers }: FeaturedToolsProps) {
   const [activeTab, setActiveTab] = useState<TabKey>("skills");
   const currentTab = TABS.find((t) => t.key === activeTab)!;
@@ -58,21 +67,26 @@ export function FeaturedTools({ skills, mcpServers }: FeaturedToolsProps) {
         </div>
 
         {/* Skills list */}
-        <div className={activeTab === "skills" ? "mt-2" : "hidden"}>
+        <div className={activeTab === "skills" ? "mt-1" : "hidden"}>
           {skills.map((skill) => (
             <Link
               key={skill.id}
               href={`/skills/${skill.slug}`}
-              className="flex items-center gap-3 border-b border-border/30 px-1 py-3 transition-colors hover:bg-muted/40"
+              className="group flex items-center gap-3 border-b border-border/30 px-1 py-2.5 transition-colors hover:bg-muted/40"
             >
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-xs font-semibold text-primary">
+                {getInitials(skill.name)}
+              </div>
               <div className="min-w-0 flex-1">
-                <span className="text-sm font-medium group-hover:text-primary">
-                  {skill.nameZh ?? skill.name}
-                </span>
-                <span className="ml-2 text-xs text-muted-foreground">
-                  by {skill.author}
-                </span>
-                <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
+                <div className="flex items-baseline gap-2">
+                  <span className="truncate text-sm font-medium transition-colors group-hover:text-primary">
+                    {skill.nameZh ?? skill.name}
+                  </span>
+                  <span className="hidden shrink-0 text-xs text-muted-foreground sm:inline">
+                    by {skill.author}
+                  </span>
+                </div>
+                <p className="line-clamp-1 text-xs text-muted-foreground">
                   {skill.introZh ?? skill.descriptionZh ?? skill.description}
                 </p>
               </div>
@@ -83,30 +97,35 @@ export function FeaturedTools({ skills, mcpServers }: FeaturedToolsProps) {
                     {formatNumber(skill.stars)}
                   </span>
                 )}
-                <ArrowRight className="size-3.5 text-muted-foreground/50" />
+                <ArrowRight className="size-3.5 text-muted-foreground/50 transition-transform group-hover:translate-x-0.5" />
               </div>
             </Link>
           ))}
         </div>
 
         {/* MCP list */}
-        <div className={activeTab === "mcp" ? "mt-2" : "hidden"}>
+        <div className={activeTab === "mcp" ? "mt-1" : "hidden"}>
           {mcpServers.map((server) => (
             <Link
               key={server.id}
               href={`/mcp/${server.slug}`}
-              className="flex items-center gap-3 border-b border-border/30 px-1 py-3 transition-colors hover:bg-muted/40"
+              className="group flex items-center gap-3 border-b border-border/30 px-1 py-2.5 transition-colors hover:bg-muted/40"
             >
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-xs font-semibold text-primary">
+                {getInitials(server.name)}
+              </div>
               <div className="min-w-0 flex-1">
-                <span className="text-sm font-medium">
-                  {server.nameZh ?? server.name}
-                </span>
-                {server.author && (
-                  <span className="ml-2 text-xs text-muted-foreground">
-                    by {server.author}
+                <div className="flex items-baseline gap-2">
+                  <span className="truncate text-sm font-medium transition-colors group-hover:text-primary">
+                    {server.nameZh ?? server.name}
                   </span>
-                )}
-                <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
+                  {server.author && (
+                    <span className="hidden shrink-0 text-xs text-muted-foreground sm:inline">
+                      by {server.author}
+                    </span>
+                  )}
+                </div>
+                <p className="line-clamp-1 text-xs text-muted-foreground">
                   {server.introZh ??
                     server.descriptionZh ??
                     server.description ??
@@ -126,7 +145,7 @@ export function FeaturedTools({ skills, mcpServers }: FeaturedToolsProps) {
                     {formatNumber(server.stars)}
                   </span>
                 )}
-                <ArrowRight className="size-3.5 text-muted-foreground/50" />
+                <ArrowRight className="size-3.5 text-muted-foreground/50 transition-transform group-hover:translate-x-0.5" />
               </div>
             </Link>
           ))}
