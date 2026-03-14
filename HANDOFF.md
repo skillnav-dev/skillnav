@@ -11,20 +11,28 @@
 ### 第 46 轮：Phase 3 编辑策展 + 交叉推荐（Day 14）
 - **编辑评语**: `backfill-editor-comments.mjs` — Top 30 Skills + Top 50 MCP 评语写入 DB (80/80)
 - **交叉推荐**: Skills 详情页新增"相关 MCP 服务"，MCP 详情页新增"相关 Skills"
-- **卡片增强**: SkillCard/MCPCard 底部新增 ✎ 编辑评语单行预览
-- **MCP 详情页**: 编辑评语从底部移至 hero 区域，与 Skills 页统一
+- **卡片增强**: SkillCard/MCPCard 底部新增编辑评语单行预览
+- **MCP 详情页**: 编辑评语移至 hero 区域，与 Skills 页统一
 - **CI**: backfill-data.yml 新增 editor-comments 任务
 
+### 第 47 轮：统一内容管理系统（Day 14）
+- **管理模式统一**: Skills/Articles/MCP 三种内容共享同一套多选+批量操作模式
+- **Skills 补齐**: 批量转草稿 + 批量删除（含 confirm）
+- **Articles 对齐**: 多选复选框 + 批量发布/转草稿/隐藏/删除 + 内容层级过滤 + 文章类型过滤
+- **MCP 管理页**: 从零搭建（列表+编辑+批量操作+改层级），8 个新文件
+- **Dashboard**: 新增 MCP 统计卡片，导航新增 MCP 管理入口
+
 ## Next
-1. 人工审核 S/A-tier 工具的编辑评语质量（打开详情页抽查）
-2. 可选：Phase 3 剩余 — 场景指南文章（移至内容运营日常）
+1. 审核编辑评语质量（打开 S/A-tier 工具详情页抽查）
+2. 可选：场景指南文章（移至内容运营日常）
 3. 可选：GPT proxy 稳定性优化（524 超时率 ~30%）
 4. 下一个大方向待定（搜索增强 / 评分体系 / 用户系统）
 
 ## Key Files
+- `src/app/admin/mcp/` — MCP 管理页（列表+编辑）
+- `src/components/admin/mcp-*.tsx` — MCP 管理组件（table/toolbar/editor/status-toggle）
+- `src/components/admin/articles-table.tsx` — Articles 表格（+多选批量操作）
+- `src/components/admin/skills-table.tsx` — Skills 表格（+转草稿+删除）
+- `src/lib/data/admin.ts` — 统一 DAL（Skills+Articles+MCP 管理函数）
 - `scripts/backfill-editor-comments.mjs` — 编辑评语批量生成脚本
-- `src/app/skills/[slug]/page.tsx` — Skills 详情页（+交叉推荐 MCP）
-- `src/app/mcp/[slug]/page.tsx` — MCP 详情页（+交叉推荐 Skills + 评语前置）
-- `src/components/skills/skill-card.tsx` — SkillCard（+评语预览）
-- `src/components/mcp/mcp-card.tsx` — MCPCard（+评语预览）
-- `.github/workflows/backfill-data.yml` — 每日数据补全 cron（含 editor-comments）
+- `.github/workflows/backfill-data.yml` — 每日数据补全 cron
