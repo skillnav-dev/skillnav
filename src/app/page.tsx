@@ -1,23 +1,27 @@
 import { HeroSection } from "@/components/home/hero-section";
+import { StatsBar } from "@/components/home/stats-bar";
 import { ScenarioShortcuts } from "@/components/home/scenario-shortcuts";
 import { EditorialHighlights } from "@/components/home/editorial-highlights";
-import { FeaturedSkills } from "@/components/home/featured-skills";
-import { FeaturedMcp } from "@/components/home/featured-mcp";
+import { FeaturedTools } from "@/components/home/featured-tools";
 import { LatestArticles } from "@/components/home/latest-articles";
-import { NewsletterCta } from "@/components/home/newsletter-cta";
 import { WebsiteJsonLd } from "@/components/shared/json-ld";
+import { getFeaturedSkills, getFeaturedMcpServers } from "@/lib/data";
 
-export default function Home() {
+export default async function Home() {
+  const [skills, mcpServers] = await Promise.all([
+    getFeaturedSkills(),
+    getFeaturedMcpServers(),
+  ]);
+
   return (
     <>
       <WebsiteJsonLd />
       <HeroSection />
+      <StatsBar />
       <ScenarioShortcuts />
       <EditorialHighlights />
-      <FeaturedSkills />
-      <FeaturedMcp />
+      <FeaturedTools skills={skills} mcpServers={mcpServers} />
       <LatestArticles />
-      <NewsletterCta />
     </>
   );
 }
