@@ -20,7 +20,7 @@ export async function HeroSection() {
   ]);
   const totalCount = formatTotal(skillsCount + mcpCount);
   return (
-    <section className="relative overflow-hidden py-20 sm:py-28">
+    <section className="relative overflow-hidden py-12 sm:py-16">
       {/* Subtle gradient background */}
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent" />
       <div className="relative mx-auto max-w-6xl px-4 sm:px-6">

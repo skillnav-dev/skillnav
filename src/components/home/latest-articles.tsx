@@ -7,13 +7,25 @@ import { getLatestArticles } from "@/lib/data";
 export async function LatestArticles() {
   const latest = await getLatestArticles();
 
+  // Build freshness signal from latest article date
+  const freshDate = latest[0]?.publishedAt
+    ? new Date(latest[0].publishedAt).toLocaleDateString("zh-CN", {
+        month: "long",
+        day: "numeric",
+      })
+    : null;
+
   return (
-    <section className="py-16">
+    <section className="py-10">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="flex items-end justify-between">
           <SectionHeader
             title="最新资讯"
-            description="AI Agent 生态的前沿动态"
+            description={
+              freshDate
+                ? `AI Agent 生态的前沿动态 · ${freshDate} 更新`
+                : "AI Agent 生态的前沿动态"
+            }
           />
           <Link
             href="/articles"

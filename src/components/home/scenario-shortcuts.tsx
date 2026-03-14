@@ -27,7 +27,7 @@ const SCENARIOS = [
 
 export function ScenarioShortcuts() {
   return (
-    <section className="border-y border-border/40 bg-muted/30">
+    <section className="border-b border-border/40 bg-muted/30">
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
         <div className="grid grid-cols-5 gap-3 sm:grid-cols-10">
           {SCENARIOS.map(({ label, slug, icon: Icon }) => (
