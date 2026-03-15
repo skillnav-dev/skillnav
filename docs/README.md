@@ -6,11 +6,12 @@
 
 | 文档 | 说明 | 状态 |
 |------|------|------|
+| [product-spec.md](product-spec.md) | 产品结构契约：信息架构、用户旅程、状态权限、埋点 | 生效中 |
+| [design-spec.md](design-spec.md) | 视觉设计契约：Token、组件、交互模式、组合模式 | 生效中 |
 | [specs/content-strategy-v2.md](specs/content-strategy-v2.md) | 内容战略：从翻译聚合→编辑策展品牌 | 已确认 |
 | [specs/content-pipeline-spec.md](specs/content-pipeline-spec.md) | 内容管线：采集标准、内容类型、源准入 | 生效中 |
 | [specs/content-operations-spec.md](specs/content-operations-spec.md) | 内容运营：端到端时序编排 | 生效中（Phase 1） |
 | [specs/content-distribution-spec.md](specs/content-distribution-spec.md) | 分发规范：一鱼多吃模型 | 待审批 |
-| [specs/design-system.md](specs/design-system.md) | 设计规范：6 大原则 + OKLch 色彩 | 待审批 |
 | [specs/ui-ux-redesign-v1.md](specs/ui-ux-redesign-v1.md) | UX 诊断报告 + 改进方案 | 待审批 |
 
 ## 状态层（反映当前状态，持续更新）
@@ -81,5 +82,6 @@
 
 - `content-pipeline.md` — 旧内容管线方案（被 specs/content-pipeline-spec.md 取代）
 - `content-governance.md` — 旧内容治理方案（被 specs/content-pipeline-spec.md 取代）
+- `design-system-v1.md` — 旧设计规范（被 design-spec.md 取代）
 - `handoff-current.md` — 早期交接文档
 - `github/` — GitHub 项目列表参考资料

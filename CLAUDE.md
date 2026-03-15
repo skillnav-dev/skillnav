@@ -86,7 +86,9 @@ docs/
 ├── README.md                    # Knowledge index (navigation hub)
 │
 │   ── 契约层 ──
-├── specs/                       # Product & design specs (6)
+├── product-spec.md              # Product structure contract (IA, journeys, permissions)
+├── design-spec.md               # Visual design contract (tokens, components, patterns)
+├── specs/                       # Domain specs (content strategy, pipeline, ops)
 │
 │   ── 状态层 ──
 ├── features.md                  # Feature inventory
