@@ -69,6 +69,7 @@
 | [content-editing-draft-inventory](research/2026-03-11-content-editing-draft-inventory.md) | 2026-03-11 | 编辑 |
 | [content-editing-seo-demand](research/2026-03-11-content-editing-seo-demand.md) | 2026-03-11 | 编辑 |
 | [content-editing-standards-gap](research/2026-03-11-content-editing-standards-gap.md) | 2026-03-11 | 编辑 |
+| [content-source-audit](research/2026-03-15-content-source-audit.md) | 2026-03-15 | 内容源 |
 
 ### Troubleshooting（踩坑知识库）
 
