@@ -2,19 +2,17 @@
 <!-- /checkpoint at 2026-03-15 -->
 
 ## Session Tasks
-- [x] 全站 UI 审计（token / layout / card / badge / nav / composition 6 层并行）
-- [x] Phase 1: Token 基础 — 动画关键帧、字体回退、颜色修正、行高
-- [x] Phase 2: 组件修复 — ArticleCard 重构、SecurityBadge/FreshnessBadge 图标颜色、SectionHeader "View all"、MobileNav side、骨架卡片、NavLinks active
-- [x] Phase 3: 页面组合 — Hero/section 间距、Articles 2 列、NewsletterCta、GiscusComments 位置、Related 顺序
-- [x] Phase 4: 收尾 — EmptyState 统一、CopyButton icon size
-- [x] `npm run build` 验证通过
+- [x] Fix FreshnessBadge lint error (Date.now() purity rule) — deployed
+- [x] Anthropic 源升级：第三方 RSS (13篇) → Sanity CMS API (293+篇)
+- [x] 新增 4 个内容源：Google AI, Together AI, Lobsters, Cloudflare
+- [x] 移除失效源：Sourcegraph (RSS 404)
+- [x] Dry-run 全量验证：14 源 551 fetched, 198 待入库, 0 失败
 
 ## Key Files
-- `docs/plans/ui-refactor-spec-alignment.md` — UI 重构方案（done, 29/29）
-- `docs/product-spec.md` — 产品结构契约 v1.0
-- `docs/design-spec.md` — 视觉设计契约 v1.0
+- `scripts/sync-articles.mjs` — 内容源配置 (14 sources, Sanity + RSS mixed)
 
 ## Next
-1. 视觉走查：`npm run dev` 逐页对比契约，发现遗漏项
-2. SectionHeader `href` prop 实际接入首页各 section（EditorialHighlights/FeaturedTools/LatestArticles 已有手写链接，可迁移到 prop）
-3. 下一方向待定：搜索增强 / 评分体系 / 用户系统
+1. 观察明天 CI cron 跑完后的入库效果（日均发布目标 4-5 篇）
+2. 视觉走查：逐页对比 product-spec / design-spec 契约
+3. SectionHeader `href` prop 接入首页各 section
+4. 下一方向待定：搜索增强 / 评分体系 / 用户系统
