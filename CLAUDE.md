@@ -79,6 +79,37 @@ src/
 
 Call direction: `page.tsx` → `components/` → `data/` → `lib/`
 
+## Documentation
+
+```
+docs/
+├── README.md                    # Knowledge index (navigation hub)
+│
+│   ── 契约层 ──
+├── specs/                       # Product & design specs (6)
+│
+│   ── 状态层 ──
+├── features.md                  # Feature inventory
+├── approved-deps.md             # Dependency allowlist
+│
+│   ── 知识层 ──
+├── plans/                       # Implementation plans (9)
+├── adr/                         # Architecture decision records
+├── research/                    # Tech research (22, date-prefixed)
+│   └── distribution/            # Distribution channel research
+├── troubleshooting/             # Issue knowledge base
+│
+└── archive/                     # Superseded docs (AI does not auto-load)
+```
+
+## Knowledge Retrieval Rules
+
+- Before tech research: search `docs/research/` first (avoid duplicate research)
+- Before debugging: search `docs/troubleshooting/` first (avoid repeat mistakes)
+- Before tech decisions: search `docs/adr/` first (avoid revisiting rejected options)
+- Before adding dependencies: check `docs/approved-deps.md` (avoid banned packages)
+- Retrieval method: grep tags or title keywords
+
 ## Key Rules
 
 - NEVER commit .env files or any file containing secrets
@@ -121,6 +152,15 @@ deps — Dependencies      | config — Configuration     | dx — Dev experienc
 - shadcn/ui components must be installed before import: `npx shadcn@latest add <component>`
 - Next.js 15 uses async `params` in dynamic routes — destructure with `await` in server components
 - Tailwind v4 uses CSS-based config (`@theme` in globals.css), not `tailwind.config.ts`
+
+## Documentation Rules
+
+- Update `docs/features.md` when shipping or deprecating features
+- Update `docs/approved-deps.md` when adding new dependencies
+- Create `docs/adr/ADR-xxx.md` for major architecture decisions
+- Update CLAUDE.md "Architecture" section when adding modules/directories
+- Update CLAUDE.md "Commands" section when adding dev commands
+- Update CHANGELOG.md for milestone-level changes
 
 ## Context Management
 

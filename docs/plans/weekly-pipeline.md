@@ -1,4 +1,7 @@
 # 周刊生成管线 (Weekly Newsletter Pipeline)
+Status: draft
+Progress: 0/5
+Date: 2026-03-08
 
 ## 概述
 

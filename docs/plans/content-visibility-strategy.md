@@ -1,6 +1,8 @@
 # Content Visibility Strategy
+Status: approved
+Progress: N/A
+Date: 2026-03-11
 
-> Status: approved (2026-03-11)
 > Decision: make knowledge machine-readable, let tools speak English, keep editorial Chinese
 
 ## Core Insight

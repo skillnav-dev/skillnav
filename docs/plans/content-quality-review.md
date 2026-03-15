@@ -1,7 +1,7 @@
 # Skills & MCP 内容质量复审方案
-
-> 审查日期: 2026-03-13
-> 状态: 待执行
+Status: active
+Progress: N/A
+Date: 2026-03-13
 
 ## 一、数据现状
 

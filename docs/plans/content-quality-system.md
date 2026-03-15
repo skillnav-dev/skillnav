@@ -1,6 +1,9 @@
 # SkillNav 内容体系与展示一体化方案
+Status: approved
+Progress: N/A
+Date: 2026-03-13
 
-> 状态：已批准 | 创建日期：2026-03-13 | 编号：PLAN-007
+> 编号：PLAN-007
 
 ## 背景与问题
 

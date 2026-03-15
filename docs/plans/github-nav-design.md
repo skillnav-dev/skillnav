@@ -1,4 +1,7 @@
 # GitHub 开源项目导航页 — 设计方案 v2
+Status: done
+Progress: N/A
+Date: 2026-03-08
 
 > 重建方案，替代 session 13 丢失的原方案
 

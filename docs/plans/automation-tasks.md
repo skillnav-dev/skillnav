@@ -1,4 +1,7 @@
 # SkillNav 自动化任务系统
+Status: draft
+Progress: N/A
+Date: 2026-03-04
 
 ## 为什么做
 

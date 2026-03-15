@@ -1,9 +1,8 @@
 # SkillNav 内容分发规范 v1
+Status: draft
+Date: 2026-03-09
 
-**版本**: 1.0
-**日期**: 2026-03-09
-**状态**: 待审批
-**前置**: content-strategy-v2.md（内容战略 2.0）
+> 前置: content-strategy-v2.md（内容战略 2.0）
 
 ---
 

@@ -1,6 +1,8 @@
 # SkillNav 内容操作系统方案 v2
+Status: draft
+Progress: N/A
+Date: 2026-03-11
 
-> Status: draft (awaiting approval) | Created: 2026-03-11 | Updated: 2026-03-11
 > Author: Claude (战略合伙人)
 > 基于四路并行调研 + 腾讯 SkillHub 补充调研整合
 

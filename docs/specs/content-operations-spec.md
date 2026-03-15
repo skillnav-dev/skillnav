@@ -1,7 +1,7 @@
 # 内容运营管线规范 (Content Operations Spec)
+Status: active
+Date: 2026-03-10
 
-> Version: 1.0 | Date: 2026-03-11 | Status: **生效中** (Phase 1 已实施)
->
 > 上游依赖: content-pipeline-spec.md (内容管道), content-distribution-spec.md (分发)
 >
 > 本文档定义内容运营的**端到端时序编排**：采集调度 → 故障处理 → 编辑审核 → 发布节奏 → 监控告警。

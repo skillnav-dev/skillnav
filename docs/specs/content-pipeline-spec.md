@@ -1,7 +1,7 @@
 # 内容管道规范 (Content Pipeline Specification)
+Status: active
+Date: 2026-03-07
 
-> 版本：1.0 | 生效日期：2026-03-07
-> 状态：**生效中**
 > 取代：`docs/plans/content-pipeline.md`、`docs/plans/content-governance.md`（历史参考，不再指导执行）
 
 ## 一、内容定位

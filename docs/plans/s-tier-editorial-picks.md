@@ -1,7 +1,7 @@
 # S-tier 编辑精选方案
-
-> 日期: 2026-03-12
-> 状态: 待审批
+Status: approved
+Progress: N/A
+Date: 2026-03-12
 
 ## 背景
 
