@@ -49,7 +49,9 @@ const SOURCES = [
   {
     name: "anthropic",
     label: "Anthropic News",
-    feedUrl: "https://raw.githubusercontent.com/taobojlen/anthropic-rss-feed/main/anthropic_news_rss.xml",
+    type: "sanity", // Direct Sanity CMS API (293+ posts vs 13 in third-party RSS)
+    sanityProjectId: "4zrzovbb",
+    sanityDataset: "website",
     defaultType: "analysis",
     relevanceFilter: null, // Accept all Anthropic articles
   },
@@ -164,6 +166,29 @@ function createRateLimiter(maxPerMinute) {
 }
 
 const llmThrottle = createRateLimiter(10); // 10 req/min max
+
+/**
+ * Fetch recent posts from Anthropic's Sanity CMS API.
+ * Returns items in the same shape as RSS parser output.
+ */
+async function fetchAnthropicFromSanity(source, maxItems = 50) {
+  const query = encodeURIComponent(
+    `*[_type=="post"] | order(_createdAt desc) [0..${maxItems - 1}] { title, slug, _createdAt }`
+  );
+  const url = `https://${source.sanityProjectId}.api.sanity.io/v2021-10-21/data/query/${source.sanityDataset}?query=${query}`;
+  const res = await fetch(url, {
+    headers: { "User-Agent": "SkillNav-Bot/1.0 (+https://skillnav.dev)" },
+    signal: AbortSignal.timeout(15000),
+  });
+  if (!res.ok) throw new Error(`Sanity API ${res.status}: ${res.statusText}`);
+  const data = await res.json();
+  return (data.result || []).map((post) => ({
+    title: post.title,
+    link: `https://www.anthropic.com/news/${post.slug?.current || post.slug}`,
+    pubDate: post._createdAt,
+    contentSnippet: "",
+  }));
+}
 
 /**
  * Extract cover image from HTML document.
@@ -473,46 +498,50 @@ async function main() {
   for (const source of sources) {
     log.info(`\n── ${source.label} (${source.name}) ──`);
 
-    // Step 1: Fetch RSS feed
-    let feed;
+    // Step 1: Fetch items (Sanity API or RSS feed)
+    let items;
     try {
-      // Some feeds have malformed XML (unescaped &, invalid dates).
-      // Fetch raw text first, sanitize, then parse as string.
-      const feedRes = await fetch(source.feedUrl, {
-        headers: { "User-Agent": "SkillNav-Bot/1.0 (+https://skillnav.dev)" },
-        signal: AbortSignal.timeout(15000),
-      });
-      let feedText = await feedRes.text();
-      // Fix unescaped ampersands in XML (e.g. Cursor changelog)
-      feedText = feedText.replace(/&(?!amp;|lt;|gt;|quot;|apos;|#)/g, "&amp;");
-      // Truncate massive feeds to first 100 items to avoid date parsing errors and excessive backfill
-      const entryCount = (feedText.match(/<entry>/g) || []).length;
-      const itemCount = (feedText.match(/<item>/g) || []).length;
-      if (entryCount > 100) {
-        let kept = 0;
-        feedText = feedText.replace(/<entry>[\s\S]*?<\/entry>/g, (match) =>
-          kept++ < 100 ? match : ""
-        );
-        log.info(`Truncated Atom feed from ${entryCount} to 100 entries`);
-      } else if (itemCount > 100) {
-        let kept = 0;
-        feedText = feedText.replace(/<item>[\s\S]*?<\/item>/g, (match) =>
-          kept++ < 100 ? match : ""
-        );
-        log.info(`Truncated RSS feed from ${itemCount} to 100 items`);
+      if (source.type === "sanity") {
+        items = await fetchAnthropicFromSanity(source);
+        log.info(`Fetched ${items.length} items from Sanity API`);
+      } else {
+        // Some feeds have malformed XML (unescaped &, invalid dates).
+        // Fetch raw text first, sanitize, then parse as string.
+        const feedRes = await fetch(source.feedUrl, {
+          headers: { "User-Agent": "SkillNav-Bot/1.0 (+https://skillnav.dev)" },
+          signal: AbortSignal.timeout(15000),
+        });
+        let feedText = await feedRes.text();
+        // Fix unescaped ampersands in XML (e.g. Cursor changelog)
+        feedText = feedText.replace(/&(?!amp;|lt;|gt;|quot;|apos;|#)/g, "&amp;");
+        // Truncate massive feeds to first 100 items to avoid date parsing errors and excessive backfill
+        const entryCount = (feedText.match(/<entry>/g) || []).length;
+        const itemCount = (feedText.match(/<item>/g) || []).length;
+        if (entryCount > 100) {
+          let kept = 0;
+          feedText = feedText.replace(/<entry>[\s\S]*?<\/entry>/g, (match) =>
+            kept++ < 100 ? match : ""
+          );
+          log.info(`Truncated Atom feed from ${entryCount} to 100 entries`);
+        } else if (itemCount > 100) {
+          let kept = 0;
+          feedText = feedText.replace(/<item>[\s\S]*?<\/item>/g, (match) =>
+            kept++ < 100 ? match : ""
+          );
+          log.info(`Truncated RSS feed from ${itemCount} to 100 items`);
+        }
+        const feed = await rssParser.parseString(feedText);
+        items = feed.items || [];
+        log.info(`Fetched ${items.length} items from RSS`);
       }
-      feed = await rssParser.parseString(feedText);
     } catch (e) {
-      log.warn(`Failed to fetch RSS from ${source.feedUrl}: ${e.message}`);
+      log.warn(`Failed to fetch from ${source.type === "sanity" ? "Sanity API" : source.feedUrl}: ${e.message}`);
       continue;
     }
-
-    let items = feed.items || [];
     if (limit !== Infinity) {
       items = items.slice(0, limit);
     }
     totalFetched += items.length;
-    log.info(`Fetched ${items.length} items from RSS`);
 
     if (items.length === 0) continue;
 
