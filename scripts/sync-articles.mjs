@@ -119,6 +119,34 @@ const SOURCES = [
     defaultType: "analysis",
     relevanceFilter: RELEVANCE_KEYWORDS,
   },
+  {
+    name: "google-ai",
+    label: "Google AI Blog",
+    feedUrl: "https://blog.google/technology/ai/rss/",
+    defaultType: "analysis",
+    relevanceFilter: RELEVANCE_KEYWORDS,
+  },
+  {
+    name: "together-ai",
+    label: "Together AI",
+    feedUrl: "https://www.together.ai/blog/rss.xml",
+    defaultType: "analysis",
+    relevanceFilter: RELEVANCE_KEYWORDS,
+  },
+  {
+    name: "lobsters",
+    label: "Lobsters AI",
+    feedUrl: "https://lobste.rs/t/ai.rss",
+    defaultType: "analysis",
+    relevanceFilter: RELEVANCE_KEYWORDS,
+  },
+  {
+    name: "cloudflare",
+    label: "Cloudflare Blog",
+    feedUrl: "https://blog.cloudflare.com/rss/",
+    defaultType: "analysis",
+    relevanceFilter: RELEVANCE_KEYWORDS,
+  },
 ];
 
 /**
