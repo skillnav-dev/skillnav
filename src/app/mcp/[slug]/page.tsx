@@ -302,9 +302,6 @@ export default async function McpDetailPage({ params }: PageProps) {
 
             {/* README from GitHub */}
             {readme && <McpReadme content={readme} />}
-
-            {/* Comments (giscus) */}
-            <GiscusComments />
           </div>
 
           {/* Right: sidebar */}
@@ -338,6 +335,12 @@ export default async function McpDetailPage({ params }: PageProps) {
           </div>
         </section>
       )}
+      {/* Comments (giscus) */}
+      <section className="border-t border-border/40">
+        <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
+          <GiscusComments />
+        </div>
+      </section>
     </>
   );
 }

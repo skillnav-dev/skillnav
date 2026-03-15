@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { Shield, ShieldAlert, ShieldX, ShieldQuestion } from "lucide-react";
+import { Shield, ShieldCheck, ShieldAlert, ShieldX } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { SecurityScore } from "@/data/types";
 
@@ -10,7 +10,7 @@ const config: Record<
   safe: {
     label: "安全",
     className: "bg-safe/15 text-safe border-safe/30",
-    icon: Shield,
+    icon: ShieldCheck,
   },
   warning: {
     label: "注意",
@@ -25,7 +25,7 @@ const config: Record<
   unscanned: {
     label: "未扫描",
     className: "bg-unscanned/15 text-unscanned border-unscanned/30",
-    icon: ShieldQuestion,
+    icon: Shield,
   },
 };
 

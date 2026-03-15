@@ -2,6 +2,8 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FreshnessBadge } from "@/components/shared/freshness-badge";
+import { PlatformBadge } from "@/components/skills/platform-badge";
+import { SecurityBadge } from "@/components/shared/security-badge";
 import { Star, Award } from "lucide-react";
 import { formatNumber } from "@/lib/utils";
 import type { Skill } from "@/data/types";
@@ -13,18 +15,21 @@ interface SkillCardProps {
 export function SkillCard({ skill }: SkillCardProps) {
   return (
     <Card className="group relative overflow-hidden transition-shadow hover:shadow-md">
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
-            <Link
-              href={`/skills/${skill.slug}`}
-              className="line-clamp-1 text-base font-semibold transition-colors after:absolute after:inset-0 group-hover:text-primary"
-            >
-              {skill.nameZh ?? skill.name}
-            </Link>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              by {skill.author}
-            </p>
+            <h3 className="text-base font-semibold">
+              <Link
+                href={`/skills/${skill.slug}`}
+                className="line-clamp-1 transition-colors after:absolute after:inset-0 group-hover:text-primary"
+              >
+                {skill.nameZh ?? skill.name}
+              </Link>
+            </h3>
+            <div className="mt-1 flex items-center gap-1.5">
+              <p className="text-xs text-muted-foreground">by {skill.author}</p>
+              {skill.platform && <PlatformBadge platform={skill.platform} />}
+            </div>
           </div>
           <div className="flex items-center gap-1.5">
             <FreshnessBadge
@@ -68,6 +73,12 @@ export function SkillCard({ skill }: SkillCardProps) {
             )}
           </div>
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            {skill.securityScore && (
+              <SecurityBadge
+                score={skill.securityScore}
+                className="text-[10px]"
+              />
+            )}
             {skill.stars > 0 && (
               <span className="flex items-center gap-1">
                 <Star className="size-3" />

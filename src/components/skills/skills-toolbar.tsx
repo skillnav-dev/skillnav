@@ -108,18 +108,15 @@ export function SkillsToolbar({ categories, totalCount }: SkillsToolbarProps) {
       <div className="flex items-center justify-between gap-4">
         <div className="flex gap-1 rounded-md bg-muted p-1">
           {TAB_OPTIONS.map((opt) => (
-            <button
+            <Button
               key={opt.value}
+              variant={(tab || "") === opt.value ? "default" : "ghost"}
+              size="sm"
               onClick={() => handleTab(opt.value)}
-              className={cn(
-                "rounded-sm px-3 py-1.5 text-sm font-medium transition-colors",
-                (tab || "") === opt.value
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
+              className="rounded-sm"
             >
               {opt.label}
-            </button>
+            </Button>
           ))}
         </div>
       </div>

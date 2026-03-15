@@ -59,7 +59,7 @@ export async function ArticlesGrid({
 
   return (
     <div className="mt-6">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2">
         {articles.map((article) => (
           <ArticleCard key={article.id} article={article} />
         ))}

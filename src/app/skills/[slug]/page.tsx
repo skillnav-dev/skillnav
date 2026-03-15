@@ -207,9 +207,6 @@ export default async function SkillDetailPage({ params }: PageProps) {
                 </p>
               </div>
             )}
-
-            {/* Comments (giscus) */}
-            <GiscusComments />
           </div>
 
           {/* Right: sidebar */}
@@ -217,6 +214,19 @@ export default async function SkillDetailPage({ params }: PageProps) {
         </div>
       </div>
 
+      {/* Related Skills */}
+      {related.length > 0 && (
+        <section className="border-t border-border/40">
+          <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
+            <h2 className="mb-6 text-xl font-bold">相关 Skills</h2>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {related.map((s) => (
+                <SkillCard key={s.id} skill={s} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
       {/* Related MCP servers */}
       {relatedMcp.length > 0 && (
         <section className="border-t border-border/40">
@@ -243,19 +253,12 @@ export default async function SkillDetailPage({ params }: PageProps) {
           </div>
         </section>
       )}
-      {/* Related Skills: full width section */}
-      {related.length > 0 && (
-        <section className="border-t border-border/40">
-          <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-            <h2 className="mb-6 text-xl font-bold">相关 Skills</h2>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {related.map((s) => (
-                <SkillCard key={s.id} skill={s} />
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
+      {/* Comments (giscus) */}
+      <section className="border-t border-border/40">
+        <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
+          <GiscusComments />
+        </div>
+      </section>
     </>
   );
 }

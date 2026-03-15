@@ -37,9 +37,9 @@ export function CopyButton({
       )}
     >
       {copied ? (
-        <Check className="size-3.5 text-green-500" />
+        <Check className="size-4 text-green-500" />
       ) : (
-        <Copy className="size-3.5" />
+        <Copy className="size-4" />
       )}
     </button>
   );

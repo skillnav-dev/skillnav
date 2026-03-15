@@ -57,7 +57,9 @@ export default async function EnMCPPage({ searchParams }: PageProps) {
           title="MCP Servers Directory"
           description="Curated Model Context Protocol servers — connect AI agents to external tools and data sources"
         />
-        <MCPToolbar categories={categories} totalCount={total} />
+        <div className="mt-6">
+          <MCPToolbar categories={categories} totalCount={total} />
+        </div>
         <Suspense fallback={<MCPGridSkeleton />}>
           <MCPGrid
             q={q}

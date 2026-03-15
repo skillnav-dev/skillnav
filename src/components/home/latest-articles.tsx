@@ -22,7 +22,7 @@ export async function LatestArticles() {
     : null;
 
   return (
-    <section className="py-10">
+    <section className="py-16">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="flex items-end justify-between">
           <SectionHeader

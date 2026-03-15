@@ -57,7 +57,9 @@ export default async function MCPPage({ searchParams }: PageProps) {
           title="MCP Server 精选导航"
           description="精选高质量 Model Context Protocol Server，让 AI Agent 连接外部工具和数据源"
         />
-        <MCPToolbar categories={categories} totalCount={total} />
+        <div className="mt-6">
+          <MCPToolbar categories={categories} totalCount={total} />
+        </div>
         <Suspense fallback={<MCPGridSkeleton />}>
           <MCPGrid
             q={q}

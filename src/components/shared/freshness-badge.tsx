@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, Sparkles, AlertTriangle, Archive } from "lucide-react";
+import { Flame, Sparkles, AlertTriangle, Archive } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type FreshnessStatus = "fresh" | "active" | "stale" | "archived";
@@ -22,33 +22,32 @@ export function FreshnessBadge({
   discoveredAt,
   className,
 }: FreshnessBadgeProps) {
-  // Priority 1: Trending
+  // Priority 1: Trending (orange/amber)
   if (isTrending) {
     return (
       <Badge
         variant="outline"
         className={cn(
-          "gap-1 border border-red-300 bg-red-50 font-medium text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300",
+          "gap-1 border border-amber-300 bg-amber-50 font-medium text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300",
           className,
         )}
       >
-        <TrendingUp className="size-3" />
+        <Flame className="size-3" />
         热门
       </Badge>
     );
   }
 
-  // Priority 2: New (discovered_at < 30 days)
+  // Priority 2: New (discovered_at < 14 days, blue)
   if (discoveredAt) {
-    // eslint-disable-next-line react-hooks/purity -- server component, Date.now() is stable per request
     const age = Date.now() - new Date(discoveredAt).getTime();
-    const thirtyDays = 30 * 24 * 60 * 60 * 1000;
-    if (age < thirtyDays) {
+    const fourteenDays = 14 * 24 * 60 * 60 * 1000;
+    if (age < fourteenDays) {
       return (
         <Badge
           variant="outline"
           className={cn(
-            "gap-1 border border-green-300 bg-green-50 font-medium text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-300",
+            "gap-1 border border-blue-300 bg-blue-50 font-medium text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300",
             className,
           )}
         >

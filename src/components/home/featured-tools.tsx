@@ -33,7 +33,7 @@ export function FeaturedTools({ skills, mcpServers }: FeaturedToolsProps) {
   const currentTab = TABS.find((t) => t.key === activeTab)!;
 
   return (
-    <section className="py-10">
+    <section className="py-16">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="flex items-end justify-between">
           <SectionHeader

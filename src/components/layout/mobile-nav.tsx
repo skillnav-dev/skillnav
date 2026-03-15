@@ -25,7 +25,7 @@ export function MobileNav() {
           <span className="sr-only">打开菜单</span>
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-72">
+      <SheetContent side="right" className="w-72">
         <SheetTitle className="px-4">
           <Link
             href="/"

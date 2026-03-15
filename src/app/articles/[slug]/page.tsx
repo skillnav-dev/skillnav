@@ -8,6 +8,7 @@ import { ArticleJsonLd, BreadcrumbJsonLd } from "@/components/shared/json-ld";
 import { FallbackImage } from "@/components/shared/fallback-image";
 import { InlineNewsletterCta } from "@/components/shared/inline-newsletter-cta";
 import { ShareButtons } from "@/components/shared/share-buttons";
+import { GiscusComments } from "@/components/shared/giscus-comments";
 import { SkillCard } from "@/components/skills/skill-card";
 import { siteConfig } from "@/lib/constants";
 import { getArticleBySlug, getArticles, getAllArticleSlugs } from "@/lib/data";
@@ -169,11 +170,11 @@ export default async function ArticlePage({ params }: PageProps) {
             title={articleTitle}
           />
         </div>
-        {/* Inline newsletter CTA */}
-        <div className="mt-8">
-          <InlineNewsletterCta />
-        </div>
       </article>
+      {/* Inline newsletter CTA */}
+      <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
+        <InlineNewsletterCta />
+      </div>
       {/* Related tools mentioned in this article */}
       {relatedSkills.length > 0 && (
         <section className="border-t border-border/40">
@@ -199,6 +200,12 @@ export default async function ArticlePage({ params }: PageProps) {
           </div>
         </section>
       )}
+      {/* Comments */}
+      <section className="border-t border-border/40">
+        <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
+          <GiscusComments />
+        </div>
+      </section>
     </>
   );
 }

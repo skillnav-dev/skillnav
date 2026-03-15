@@ -1,5 +1,10 @@
 import Link from "next/link";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Clock } from "lucide-react";
 import type { Article } from "@/data/types";
@@ -23,8 +28,23 @@ export function ArticleCard({ article }: ArticleCardProps) {
 
   return (
     <Card className="group relative overflow-hidden transition-shadow hover:shadow-md">
-      <CardHeader className="pb-2">
-        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+      <CardHeader className="pb-3">
+        <h3 className="text-base font-semibold">
+          <Link
+            href={`/articles/${article.slug}`}
+            className="line-clamp-2 leading-snug transition-colors after:absolute after:inset-0 group-hover:text-primary"
+          >
+            {article.titleZh ?? article.title}
+          </Link>
+        </h3>
+      </CardHeader>
+      <CardContent>
+        <p className="line-clamp-2 text-sm text-muted-foreground">
+          {article.summaryZh ?? article.summary}
+        </p>
+      </CardContent>
+      <CardFooter className="pt-3 text-xs text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-2">
           <Badge
             variant="secondary"
             className={ARTICLE_TYPE_COLORS[article.category]}
@@ -50,18 +70,7 @@ export function ArticleCard({ article }: ArticleCardProps) {
             </>
           )}
         </div>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        <Link
-          href={`/articles/${article.slug}`}
-          className="line-clamp-2 text-base font-semibold leading-snug transition-colors after:absolute after:inset-0 group-hover:text-primary"
-        >
-          {article.titleZh ?? article.title}
-        </Link>
-        <p className="line-clamp-2 text-sm text-muted-foreground">
-          {article.summaryZh ?? article.summary}
-        </p>
-      </CardContent>
+      </CardFooter>
     </Card>
   );
 }
