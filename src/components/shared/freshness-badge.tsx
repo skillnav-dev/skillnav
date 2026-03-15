@@ -40,6 +40,7 @@ export function FreshnessBadge({
 
   // Priority 2: New (discovered_at < 14 days, blue)
   if (discoveredAt) {
+    // eslint-disable-next-line react-hooks/purity -- server component, Date.now() is stable per request
     const age = Date.now() - new Date(discoveredAt).getTime();
     const fourteenDays = 14 * 24 * 60 * 60 * 1000;
     if (age < fourteenDays) {
