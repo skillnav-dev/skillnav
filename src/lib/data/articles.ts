@@ -380,6 +380,33 @@ export async function getSeriesArticles(
 }
 
 /**
+ * Get all articles in a series, ordered by series_number ascending.
+ * Used by the guides landing page to render the full TOC.
+ */
+export async function getAllSeriesArticles(series: string): Promise<Article[]> {
+  if (!isSupabaseConfigured()) {
+    const { mockArticles } = await import("@/data/mock-articles");
+    return mockArticles
+      .filter((a) => a.series === series)
+      .sort((a, b) => (a.seriesNumber ?? 0) - (b.seriesNumber ?? 0));
+  }
+
+  const { createServerClient } = await import("@/lib/supabase/server");
+  const { mapArticleRow } = await import("@/lib/supabase/mappers");
+  const supabase = await createServerClient();
+
+  const { data, error } = await supabase
+    .from("articles")
+    .select("*")
+    .eq("status", "published")
+    .eq("series", series)
+    .order("series_number", { ascending: true });
+
+  if (error) throw error;
+  return (data ?? []).map(mapArticleRow);
+}
+
+/**
  * Get published article slugs with updated_at for sitemap.
  */
 export async function getSitemapArticles(): Promise<

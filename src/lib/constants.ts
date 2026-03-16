@@ -15,6 +15,7 @@ export const navItems = [
   { title: "Skills", href: "/skills" },
   { title: "MCP", href: "/mcp" },
   { title: "周刊", href: "/weekly" },
+  { title: "专栏", href: "/guides" },
   { title: "资讯", href: "/articles" },
   { title: "关于", href: "/about" },
 ] as const;
@@ -25,6 +26,7 @@ export const footerLinks = {
     links: [
       { title: "Skills 导航", href: "/skills" },
       { title: "MCP 导航", href: "/mcp" },
+      { title: "专栏", href: "/guides" },
       { title: "资讯", href: "/articles" },
     ],
   },
