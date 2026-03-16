@@ -1,6 +1,6 @@
 # Skills & MCP 内容质量复审方案
 Status: active
-Progress: N/A
+Progress: Phase 3 partial (3.1 done, others pending)
 Date: 2026-03-13
 
 ## 一、数据现状

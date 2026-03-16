@@ -35,6 +35,14 @@ Core tables: `skills` (slug, name, name_zh, category, tags, stars, security_scor
 npm run dev        # Local dev server
 npm run build      # Production build
 npm run lint       # Run linter
+
+# Content pipeline
+node scripts/sync-articles.mjs                          # Full article sync (all sources)
+node scripts/sync-articles.mjs --retranslate-published   # Re-compile published articles with current prompt
+node scripts/sync-articles.mjs --retranslate-drafts      # Re-compile draft articles
+node scripts/backfill-mcp-description-zh.mjs --tier B --apply  # Backfill B-tier Chinese descriptions
+node scripts/govern-articles.mjs --audit                 # Article status/score report
+node scripts/audit-content.mjs                           # Skills content quality audit
 ```
 
 ## Development Conventions

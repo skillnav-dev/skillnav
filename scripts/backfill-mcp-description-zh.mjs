@@ -8,6 +8,7 @@
  *   node scripts/backfill-mcp-description-zh.mjs              # Dry run (default)
  *   node scripts/backfill-mcp-description-zh.mjs --apply       # Live update
  *   node scripts/backfill-mcp-description-zh.mjs --limit 20    # Process first N servers
+ *   node scripts/backfill-mcp-description-zh.mjs --tier B --apply  # Process B-tier
  */
 
 import dotenv from "dotenv";
@@ -33,6 +34,8 @@ const args = process.argv.slice(2);
 const DRY_RUN = !args.includes("--apply");
 const limitIdx = args.indexOf("--limit");
 const LIMIT = limitIdx !== -1 ? Number(args[limitIdx + 1]) : Infinity;
+const tierIdx = args.indexOf("--tier");
+const TIER_FILTER = tierIdx !== -1 ? args[tierIdx + 1].toUpperCase() : "A";
 
 // ── Helpers ─────────────────────────────────────────────────────────
 
@@ -58,7 +61,8 @@ async function fetchMcpServersMissingDescZh(supabase) {
     const { data, error } = await supabase
       .from("mcp_servers")
       .select("slug, name, description")
-      .eq("quality_tier", "A")
+      .eq("quality_tier", TIER_FILTER)
+      .eq("status", "published")
       .is("description_zh", null)
       .not("description", "is", null)
       .range(offset, offset + PAGE_SIZE - 1);
@@ -88,7 +92,7 @@ async function main() {
 
   // ── Step 1: Fetch A-tier MCP servers missing description_zh ────
 
-  log.info("Fetching A-tier MCP servers where description_zh IS NULL...");
+  log.info(`Fetching ${TIER_FILTER}-tier MCP servers where description_zh IS NULL...`);
   let servers = await fetchMcpServersMissingDescZh(supabase);
   log.info(`Found ${servers.length} servers needing description_zh`);
 

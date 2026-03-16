@@ -2,25 +2,31 @@
 <!-- /checkpoint at 2026-03-16 -->
 
 ## Active Plan
-Guides (专栏) — `docs/plans/guides-series.md` (7/8, 87%)
+Skills & MCP 内容质量复审 — `docs/plans/content-quality-review.md`（Phase 3 partial）
 
 ## Session Tasks
-- [x] 扩展 series.ts：chapters + description + isGuide + getGuideSeries()
-- [x] 新增 getAllSeriesArticles() 数据查询函数
-- [x] 专栏列表页 `/guides`（系列大卡片）
-- [x] 系列落地页 `/guides/[slug]`（按章节分组目录）
-- [x] 导航栏 + Footer 加"专栏"入口
-- [x] 修复系列文章翻译丢失 code block 问题（4 篇：prompts-i-use / linear-walkthroughs / red-green-tdd / first-run-the-tests）
-- [x] 优化 compile prompt 强化代码块保留规则
-- [ ] 首页编辑精选区加专栏卡片（P1）
+- [x] Fix `llm.mjs` backtick syntax error (line 292)
+- [x] Hide 7,087 ClawHub skills (published → hidden)
+- [x] Hide 138 empty-content skills (published → draft)
+- [x] Hide 669 no-description B-tier MCP servers
+- [x] Clean 2 skills with template variable residue
+- [x] Rewrite SYSTEM_PROMPT with fidelity guardrails (anti-clickbait, anti-hallucination)
+- [x] Add `--retranslate-published` to sync-articles.mjs
+- [x] Add `--tier` flag to backfill-mcp-description-zh.mjs
+- [x] Run Codex translation quality audit → `audit-data/translation-quality-report.md`
+- [ ] B-tier description_zh backfill (3,521 servers, GPT proxy, ~250/3521 done)
+- [ ] Published articles retranslation (88 articles, DeepSeek, just started)
+- [ ] Publish 106 high-score draft articles (`govern-articles --apply`)
+- [ ] Build terminology glossary (Codex report recommendation)
+- [ ] S/A-tier MCP tools backfill (needs new approach — Smithery can't find mcp-registry sources)
 
 ## Key Files
-- `docs/plans/guides-series.md` — 专栏方案（approved, 7/8）
-- `src/data/series.ts` — 系列元数据（含 chapters/description）
-- `src/app/guides/page.tsx` — 专栏列表页
-- `src/app/guides/[slug]/page.tsx` — 系列落地页
-- `scripts/lib/llm.mjs` — compile prompt（已强化 code block 保留）
+- `scripts/lib/llm.mjs` — Rewritten SYSTEM_PROMPT with fidelity rules
+- `scripts/sync-articles.mjs` — Added `--retranslate-published` mode
+- `scripts/backfill-mcp-description-zh.mjs` — Added `--tier` parameter
+- `audit-data/translation-quality-report.md` — Codex quality audit report
+- `docs/troubleshooting/2026-03-16-content-quality-audit.md` — Full audit record
 
-## Next
-1. 首页编辑精选区加专栏卡片（guides-series.md 最后一个 task）
-2. 观察 CI sync-articles cron 稳定性（120min timeout）
+## Decisions Needed
+- Whether to batch-publish 106 high-score draft articles via `govern-articles --apply`
+- Strategy for extracting tools data from mcp-registry/manual source servers (not on Smithery)
