@@ -60,10 +60,15 @@ const LLM_TIMEOUT_MS = 60_000; // 60s per request
 
 const VALID_ARTICLE_TYPES = ["tutorial", "analysis", "guide"];
 
+// ── Fallback State ──────────────────────────────────────────────────
+// Track consecutive primary failures; switch to fallback after threshold
+const FALLBACK_THRESHOLD = 3;
+let consecutiveFailures = 0;
+let usingFallback = false;
+
 // ── Provider Resolution ──────────────────────────────────────────────
 
-function getProvider() {
-  const name = process.env.LLM_PROVIDER || "gpt";
+function resolveProvider(name) {
   const provider = PROVIDERS[name];
   if (!provider) {
     throw new Error(
@@ -71,15 +76,47 @@ function getProvider() {
     );
   }
   const apiKey = process.env[provider.apiKeyEnv];
-  if (!apiKey) {
-    throw new Error(
-      `${provider.apiKeyEnv} is not set. Required for provider "${name}".`
-    );
-  }
-  // Allow base URL override via env var (e.g. OPENAI_BASE_URL for proxies)
+  if (!apiKey) return null; // key not available
   const baseUrl =
     (provider.baseUrlEnv && process.env[provider.baseUrlEnv]) || provider.baseUrl;
-  return { ...provider, apiKey, baseUrl };
+  return { ...provider, providerName: name, apiKey, baseUrl };
+}
+
+function getProvider() {
+  const primaryName = process.env.LLM_PROVIDER || "gpt";
+  const fallbackName = process.env.LLM_FALLBACK_PROVIDER;
+
+  // If already switched to fallback, stay there
+  if (usingFallback && fallbackName) {
+    const fb = resolveProvider(fallbackName);
+    if (fb) return fb;
+  }
+
+  const primary = resolveProvider(primaryName);
+  if (!primary) {
+    throw new Error(
+      `${PROVIDERS[primaryName]?.apiKeyEnv || primaryName} is not set. Required for provider "${primaryName}".`
+    );
+  }
+  return primary;
+}
+
+function onCallSuccess() {
+  consecutiveFailures = 0;
+}
+
+function onCallFailure() {
+  consecutiveFailures++;
+  const fallbackName = process.env.LLM_FALLBACK_PROVIDER;
+  if (!usingFallback && fallbackName && consecutiveFailures >= FALLBACK_THRESHOLD) {
+    const fb = resolveProvider(fallbackName);
+    if (fb) {
+      usingFallback = true;
+      console.log(
+        `\x1b[33m[llm] ${consecutiveFailures} consecutive failures — switching to fallback: ${fb.name} (${fallbackName})\x1b[0m`
+      );
+    }
+  }
 }
 
 /**
@@ -197,13 +234,14 @@ async function callAnthropic(provider, systemPrompt, userPrompt, maxTokens) {
  */
 export async function callLLM(systemPrompt, userPrompt, maxTokens = 16384) {
   const provider = getProvider();
-  if (provider.type === "anthropic") {
-    return callAnthropic(provider, systemPrompt, userPrompt, maxTokens);
+  try {
+    const result = await dispatchCall(provider, systemPrompt, userPrompt, maxTokens, true);
+    onCallSuccess();
+    return result;
+  } catch (err) {
+    onCallFailure();
+    throw err;
   }
-  if (provider.type === "openai-responses") {
-    return callOpenAIResponses(provider, systemPrompt, userPrompt, maxTokens);
-  }
-  return callOpenAICompatible(provider, systemPrompt, userPrompt, maxTokens);
 }
 
 /**
@@ -212,13 +250,27 @@ export async function callLLM(systemPrompt, userPrompt, maxTokens = 16384) {
  */
 export async function callLLMText(systemPrompt, userPrompt, maxTokens = 4096) {
   const provider = getProvider();
+  try {
+    const result = await dispatchCall(provider, systemPrompt, userPrompt, maxTokens, false);
+    onCallSuccess();
+    return result;
+  } catch (err) {
+    onCallFailure();
+    throw err;
+  }
+}
+
+/**
+ * Dispatch to the correct call implementation based on provider type.
+ */
+function dispatchCall(provider, systemPrompt, userPrompt, maxTokens, jsonMode) {
   if (provider.type === "anthropic") {
     return callAnthropic(provider, systemPrompt, userPrompt, maxTokens);
   }
   if (provider.type === "openai-responses") {
     return callOpenAIResponses(provider, systemPrompt, userPrompt, maxTokens);
   }
-  return callOpenAICompatible(provider, systemPrompt, userPrompt, maxTokens, false);
+  return callOpenAICompatible(provider, systemPrompt, userPrompt, maxTokens, jsonMode);
 }
 
 // ── Shared Prompts ───────────────────────────────────────────────────

@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       source:
-        description: "Source filter (anthropic/openai/langchain/simonw/github/huggingface/crewai/latent-space/ai-coding-daily/thenewstack)"
+        description: "Source filter (anthropic/openai/langchain/simonw/github/huggingface/crewai/latent-space/ai-coding-daily/thenewstack/google-ai/together-ai/lobsters/cloudflare)"
         required: false
       limit:
         description: "Max items per source"
@@ -29,7 +29,9 @@ jobs:
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       GPT_API_KEY: ${{ secrets.GPT_API_KEY }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       LLM_PROVIDER: gpt
+      LLM_FALLBACK_PROVIDER: gemini
     steps:
       - uses: actions/checkout@v4
 
