@@ -36,6 +36,7 @@
 | [plans/automation-tasks.md](plans/automation-tasks.md) | draft | CI 自动化任务体系 |
 | [plans/weekly-pipeline.md](plans/weekly-pipeline.md) | draft | 周刊生成管线 |
 | [plans/github-nav-design.md](plans/github-nav-design.md) | draft | GitHub 开源导航页 |
+| [plans/guides-series.md](plans/guides-series.md) | approved | 专栏（Guides）一级内容产品 |
 
 ### ADR（架构决策记录）
 
@@ -76,6 +77,7 @@
 | 文档 | 日期 | 标签 |
 |------|------|------|
 | [clawhub-sync-issues](troubleshooting/2026-03-03-clawhub-sync-issues.md) | 2026-03-03 | supabase, sync |
+| [ci-llm-provider-failure](troubleshooting/2026-03-16-ci-llm-provider-failure.md) | 2026-03-16 | ci, llm, deepseek |
 
 ## 归档
 

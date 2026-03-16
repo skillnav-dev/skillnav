@@ -15,6 +15,7 @@
 | MCP-03 | MCP 自动分级治理 | shipped | 基于星数/工具数/验证状态 |
 | MCP-04 | S-tier 编辑精选 | shipped | 从 A-tier 中精选 + 编辑评论 |
 | WKL-01 | 周刊生成 + 页面 | shipped | 整合三支柱 + LLM 编辑序言 |
+| GUIDE-01 | 专栏系列支持 | wip | series 标签 + 导航组件 + backfill 脚本，落地页待建 |
 | GH-01 | GitHub 开源导航页 | shipped | AI Agent 生态项目导航 |
 
 ## 运营系统
@@ -29,6 +30,8 @@
 | OPS-06 | 数据质量健康检查 | shipped | 每日 23:45，Job Summary 报告 |
 | OPS-07 | 内容治理自动化 | shipped | Skills/Articles/MCP 三路治理 |
 | OPS-08 | GPT Proxy 超时 + 错误分类 | shipped | 60s 超时，isRetryable 分类 |
+| OPS-09 | LLM Fallback 机制 | shipped | 连续 3 次失败自动切备用 provider |
+| OPS-10 | 系列内容回填脚本 | shipped | `backfill-series.mjs`，可复用 |
 
 ## 前端 & UX
 

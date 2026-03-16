@@ -1,23 +1,26 @@
 # HANDOFF
 <!-- /checkpoint at 2026-03-16 -->
 
+## Active Plan
+Guides (专栏) — `docs/plans/guides-series.md` (3/8, 37%)
+
 ## Session Tasks
-- [x] 诊断 CI sync-articles 连续 5 次失败（GPT 代理被 Cloudflare 拦截）
-- [x] 添加 LLM fallback 机制（连续 3 次失败自动切备用 provider）
-- [x] CI 切换到 DeepSeek 主力 + Gemini fallback
-- [x] 修复 DeepSeek max_tokens 8192 限制
-- [x] LLM 超时 60s → 120s，workflow 超时 45min → 120min
-- [x] 验证成功：limit=5 跑通 11 篇，全量跑通 18 篇（0 失败）
-- [ ] 全量无 limit 同步正在跑（run 23126315230），等待结果确认
+- [x] 确认 CI sync-articles 全量同步结果（旧 commit 45min 超时，新 120min 已生效）
+- [x] 发现 Agentic Engineering Patterns 系列（Simon Willison, 12 篇结构化指南）
+- [x] 设计系列支持方案（series 标签 + SeriesNav 组件 + backfill 脚本）
+- [x] 实现 Phase 1-3：backfill 全部 13 篇 + 打标 + 前端系列导航 + 部署
+- [x] 简化新入库文章 slug（去掉 -agentic-engineering-patterns 后缀）
+- [x] 设计专栏（Guides）一级内容产品方案（已批准）
+- [ ] 扩展 series.ts：chapters + description
+- [ ] 专栏列表页 `/guides` + 系列落地页 `/guides/[slug]`
+- [ ] 导航栏 + Footer 加"专栏"入口
 
 ## Key Files
-- `scripts/lib/llm.mjs` — fallback 机制 + maxOutputTokens + 120s timeout
-- `.github/workflows/sync-articles.yml` — DeepSeek provider, 120min timeout
-- `docs/troubleshooting/2026-03-16-ci-llm-provider-failure.md` — 问题归档
+- `docs/plans/guides-series.md` — 专栏方案（approved, 3/8）
+- `src/data/series.ts` — 系列元数据配置
+- `src/components/articles/series-nav.tsx` — 系列导航组件
+- `scripts/backfill-series.mjs` — 系列内容回填脚本
 
 ## Next
-1. 确认全量同步结果，观察后续 cron 稳定性
-2. Gemini API key 配额问题（免费 key 已耗尽，需绑卡或换 key）
-3. 视觉走查：逐页对比 product-spec / design-spec 契约
-4. SectionHeader `href` prop 接入首页各 section
-5. 下一方向待定：搜索增强 / 评分体系 / 用户系统
+1. 执行 guides-series.md 剩余 5 个任务（落地页 + 入口）
+2. 观察 CI sync-articles cron 稳定性（120min timeout）

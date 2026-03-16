@@ -63,13 +63,14 @@ src/
 │   └── not-found.tsx           # Custom 404
 ├── components/
 │   ├── home/                   # Homepage sections (hero, stats, featured, articles, newsletter)
-│   ├── articles/               # Article card, meta, content
+│   ├── articles/               # Article card, meta, content, series-nav
 │   ├── skills/                 # Skill card
 │   ├── layout/                 # Header, footer, mobile nav, theme toggle
 │   ├── shared/                 # Section header, security badge, JSON-LD
 │   └── ui/                     # shadcn/ui primitives
 ├── data/                       # Mock data (skills, articles) + type definitions
 │   ├── types.ts                # Skill / Article interfaces
+│   ├── series.ts               # Series metadata (chapters, authors) — static config
 │   ├── mock-skills.ts          # 10 mock Skills
 │   └── mock-articles.ts        # 7 mock articles with full Chinese content
 └── lib/                        # Utilities
