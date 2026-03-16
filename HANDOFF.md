@@ -1,19 +1,23 @@
 # HANDOFF
-<!-- /checkpoint at 2026-03-15 -->
+<!-- /checkpoint at 2026-03-16 -->
 
 ## Session Tasks
-- [x] Fix FreshnessBadge lint error (Date.now() purity rule) — deployed
-- [x] Anthropic 源升级：第三方 RSS → Sanity CMS API (293+ posts)
-- [x] 新增 4 个内容源：Google AI, Together AI, Lobsters, Cloudflare
-- [x] 移除失效源：Sourcegraph (RSS 404)
-- [x] Dry-run 全量验证：14 源 551 fetched, 198 待入库, 0 失败
-- [x] 知识归档：`docs/research/2026-03-15-content-source-audit.md`
+- [x] 诊断 CI sync-articles 连续 5 次失败（GPT 代理被 Cloudflare 拦截）
+- [x] 添加 LLM fallback 机制（连续 3 次失败自动切备用 provider）
+- [x] CI 切换到 DeepSeek 主力 + Gemini fallback
+- [x] 修复 DeepSeek max_tokens 8192 限制
+- [x] LLM 超时 60s → 120s，workflow 超时 45min → 120min
+- [x] 验证成功：limit=5 跑通 11 篇，全量跑通 18 篇（0 失败）
+- [ ] 全量无 limit 同步正在跑（run 23126315230），等待结果确认
 
 ## Key Files
-- `scripts/sync-articles.mjs` — 内容源配置 (14 sources: 1 Sanity + 13 RSS)
+- `scripts/lib/llm.mjs` — fallback 机制 + maxOutputTokens + 120s timeout
+- `.github/workflows/sync-articles.yml` — DeepSeek provider, 120min timeout
+- `docs/troubleshooting/2026-03-16-ci-llm-provider-failure.md` — 问题归档
 
 ## Next
-1. 观察 CI cron 入库效果（日均发布目标 4-5 篇）
-2. 视觉走查：逐页对比 product-spec / design-spec 契约
-3. SectionHeader `href` prop 接入首页各 section
-4. 下一方向待定：搜索增强 / 评分体系 / 用户系统
+1. 确认全量同步结果，观察后续 cron 稳定性
+2. Gemini API key 配额问题（免费 key 已耗尽，需绑卡或换 key）
+3. 视觉走查：逐页对比 product-spec / design-spec 契约
+4. SectionHeader `href` prop 接入首页各 section
+5. 下一方向待定：搜索增强 / 评分体系 / 用户系统
