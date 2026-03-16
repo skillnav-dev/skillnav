@@ -11,8 +11,15 @@ import { ShareButtons } from "@/components/shared/share-buttons";
 import { GiscusComments } from "@/components/shared/giscus-comments";
 import { SkillCard } from "@/components/skills/skill-card";
 import { siteConfig } from "@/lib/constants";
-import { getArticleBySlug, getArticles, getAllArticleSlugs } from "@/lib/data";
+import {
+  getArticleBySlug,
+  getArticles,
+  getAllArticleSlugs,
+  getSeriesArticles,
+} from "@/lib/data";
 import { getSkills } from "@/lib/data/skills";
+import { SERIES_META } from "@/data/series";
+import { SeriesNav } from "@/components/articles/series-nav";
 
 // Extract the most meaningful keyword from an article title for skill matching.
 // Picks the longest CJK segment or the longest word (>3 chars) from the title.
@@ -81,11 +88,18 @@ export default async function ArticlePage({ params }: PageProps) {
   const article = await getArticleBySlug(slug);
   if (!article) notFound();
 
-  // Parallel fetch: related articles + related skills
+  // Parallel fetch: related articles + related skills + series siblings
   const articleTitle = article.titleZh ?? article.title;
-  const [candidates, relatedSkills] = await Promise.all([
+  const seriesSlug = article.series;
+  const isContentSeries = seriesSlug && seriesSlug !== "weekly";
+  const seriesMeta = isContentSeries ? SERIES_META[seriesSlug] : undefined;
+
+  const [candidates, relatedSkills, seriesSiblings] = await Promise.all([
     getArticles({ limit: 3, category: article.category }),
     getSkills({ search: extractKeywords(articleTitle), limit: 3 }),
+    isContentSeries
+      ? getSeriesArticles(seriesSlug, article.id)
+      : Promise.resolve([]),
   ]);
   const related = candidates.filter((a) => a.id !== article.id).slice(0, 2);
 
@@ -140,6 +154,15 @@ export default async function ArticlePage({ params }: PageProps) {
         {article.introZh && (
           <div className="mt-6 rounded-md border-l-4 border-primary/40 bg-muted/30 px-4 py-3 text-sm leading-relaxed text-muted-foreground">
             {article.introZh}
+          </div>
+        )}
+        {seriesMeta && seriesSiblings.length > 0 && (
+          <div className="mt-6">
+            <SeriesNav
+              current={article}
+              siblings={seriesSiblings}
+              meta={seriesMeta}
+            />
           </div>
         )}
         <div className="mt-8">

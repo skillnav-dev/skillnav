@@ -31,6 +31,7 @@ export {
   getEditorialArticles,
   getWeeklyArticles,
   getWeeklyBySlug,
+  getSeriesArticles,
   getAllArticleSlugs,
   getSitemapArticles,
 } from "./articles";

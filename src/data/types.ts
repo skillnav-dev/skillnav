@@ -28,7 +28,10 @@ export type ArticleSource =
   | "manual"
   | "other";
 export type ContentTier = "editorial" | "translated";
-export type ArticleSeries = "weekly" | "monthly-roundup";
+export type ArticleSeries =
+  | "weekly"
+  | "monthly-roundup"
+  | "agentic-engineering-patterns";
 export type ArticleStatus = "published" | "draft" | "hidden";
 export type SubmissionStatus = "pending" | "approved" | "rejected";
 

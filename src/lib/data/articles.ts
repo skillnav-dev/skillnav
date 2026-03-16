@@ -349,6 +349,37 @@ export async function getAllArticleSlugs(): Promise<string[]> {
 }
 
 /**
+ * Get other articles in the same series (for series navigation).
+ * Returns all series articles ordered by series_number, excluding the current one.
+ */
+export async function getSeriesArticles(
+  series: string,
+  excludeId: string,
+): Promise<Article[]> {
+  if (!isSupabaseConfigured()) {
+    const { mockArticles } = await import("@/data/mock-articles");
+    return mockArticles
+      .filter((a) => a.series === series && a.id !== excludeId)
+      .sort((a, b) => (a.seriesNumber ?? 0) - (b.seriesNumber ?? 0));
+  }
+
+  const { createServerClient } = await import("@/lib/supabase/server");
+  const { mapArticleRow } = await import("@/lib/supabase/mappers");
+  const supabase = await createServerClient();
+
+  const { data, error } = await supabase
+    .from("articles")
+    .select("*")
+    .eq("status", "published")
+    .eq("series", series)
+    .neq("id", excludeId)
+    .order("series_number", { ascending: true });
+
+  if (error) throw error;
+  return (data ?? []).map(mapArticleRow);
+}
+
+/**
  * Get published article slugs with updated_at for sitemap.
  */
 export async function getSitemapArticles(): Promise<
