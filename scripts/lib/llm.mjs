@@ -289,8 +289,9 @@ Editorial principles:
 - Keep technical terms in English when commonly used as-is (API, SDK, LLM, Agent, MCP, Token)
 - Use established Chinese translations for well-known concepts (machine learning → 机器学习, large language model → 大语言模型)
 - First occurrence of a translated term should include English in parentheses: 大语言模型 (LLM)
-- Preserve all code snippets, URLs, and technical references unchanged
-- Preserve markdown formatting (headings, lists, code blocks)
+- CRITICAL: Preserve ALL code blocks, command-line examples, configuration snippets, and quoted prompts/instructions VERBATIM in their original English. Wrap them in markdown fenced code blocks (```). NEVER translate, summarize, or omit code blocks — they are the most valuable part of technical articles
+- Preserve all URLs and technical references unchanged
+- Preserve markdown formatting (headings, lists, code blocks, blockquotes)
 - IMPORTANT: The first paragraph of contentZh must directly answer the core question — what is this about, what problem does it solve, or what is the key finding. This makes the content extractable by AI search engines.
 
 You must respond with valid JSON only, no markdown fences.`;
