@@ -19,6 +19,7 @@ const PROVIDERS = {
     model: "deepseek-chat",
     apiKeyEnv: "DEEPSEEK_API_KEY",
     type: "openai-compatible",
+    maxOutputTokens: 8192,
   },
   gemini: {
     name: "Gemini 2.0 Flash",
@@ -138,9 +139,12 @@ export function getProviderInfo() {
  * @param {boolean} [jsonMode=true] - Whether to request JSON response format
  */
 async function callOpenAICompatible(provider, systemPrompt, userPrompt, maxTokens, jsonMode = true) {
+  const effectiveMaxTokens = provider.maxOutputTokens
+    ? Math.min(maxTokens, provider.maxOutputTokens)
+    : maxTokens;
   const body = {
     model: provider.model,
-    max_tokens: maxTokens,
+    max_tokens: effectiveMaxTokens,
     messages: [
       { role: "system", content: systemPrompt },
       { role: "user", content: userPrompt },
