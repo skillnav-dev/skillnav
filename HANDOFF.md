@@ -2,23 +2,26 @@
 <!-- /checkpoint at 2026-03-17 -->
 
 ## Active Plan
-学习中心 — `docs/plans/glossary-learning-center.md`（2/5, P1 进行中）
+学习中心 — `docs/plans/glossary-learning-center.md`（5/5, P1 done, P2 pending）
 
 ## Session Tasks
-- [x] 发布 106 篇高分草稿（score>=4）→ 194 篇 published
-- [x] SEO 基础：sitemap 补 /learn、article↔learn 双向内链
-- [x] 检查 88 篇重翻结果 → 质量合格，3 篇缺 intro_zh（不紧急）
-- [ ] P1-3: 实现 2 种图解组件（对比图 + 架构图）
-- [ ] P1-4: learn 页面内链到 articles/mcp（已完成静态链接，待验证搜索参数 ?q= 是否生效）
-- [ ] 决定 `rag-tutorial.html` 用途（结论：设计灵感存档，等基础流量起来再做深度指南品类）
+- [x] P1-3: 实现图解组件（CompareChart, FlowDiagram, ArchitectureDiagram, Callout）
+- [x] P1-4/5: 嵌入 3 个概念页 + 部署验证
+- [x] 修复 sync-articles CI 失败（llm.mjs 反引号转义，已在之前 commit 修复，本次推送生效）
+- [x] 手动触发文章采集（CI run 23179616401 运行中）
+- [x] 上线 AI 架构交互式深度指南 → `public/guides/ai-guide.html`
+- [x] 上线 RAG 交互式深度指南 → `public/guides/rag-deep-guide.html`
+- [ ] 删除 RAG 单独指南（与 AI 指南内容重复）
+- [ ] 提升指南入口（当前藏在 /learn 底部，需移到主导航或首页）
 - [ ] B-tier MCP description_zh 回填（~250/3521）
-- [ ] 发布 26 篇 3 分草稿（可选，当前保留 draft）
+- [ ] P2: 补齐剩余 9-12 个概念页
 
 ## Key Files
-- `src/app/sitemap.ts` — 已加 /learn 页面
-- `src/app/articles/[slug]/page.tsx` — 新增概念速查内链
-- `src/app/learn/[slug]/page.tsx` — 新增延伸阅读内链
+- `src/components/learn/compare-chart.tsx` — 对比图组件
+- `src/components/learn/flow-diagram.tsx` — 流程箭头图组件
+- `src/components/learn/architecture-diagram.tsx` — 时间轴/架构图组件
+- `src/app/learn/[slug]/page.tsx` — 图解插入逻辑（visualInserts config）
+- `public/guides/ai-guide.html` — 10 章交互式 AI 指南
 
-## Data State
-- Articles: 194 published, 36 draft (26×score3 + 9×low + 1×unscored)
-- Skills: 168 published | MCP: 3,947 published
+## Decisions Needed
+- 指南入口放哪？主导航加"指南" vs 首页加板块

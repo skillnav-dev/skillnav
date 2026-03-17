@@ -74,7 +74,7 @@ src/
 │   ├── home/                   # Homepage sections (hero, stats, featured, articles, newsletter)
 │   ├── articles/               # Article card, meta, content, series-nav
 │   ├── skills/                 # Skill card
-│   ├── learn/                  # Concept card, related concepts
+│   ├── learn/                  # Concept card, related concepts, visual diagrams
 │   ├── layout/                 # Header, footer, mobile nav, theme toggle
 │   ├── shared/                 # Section header, security badge, JSON-LD
 │   └── ui/                     # shadcn/ui primitives
@@ -87,6 +87,10 @@ src/
 └── lib/                        # Utilities
     ├── constants.ts            # Site-wide constants (name, URL, description)
     └── fonts.ts                # Font configuration
+
+public/
+└── guides/                     # Interactive deep guides (static HTML)
+    └── ai-guide.html           # 10-chapter AI architecture guide
 
 scripts/lib/
 ├── llm.mjs                     # LLM providers + compile prompt (imports glossary)

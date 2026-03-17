@@ -1,6 +1,6 @@
 # SkillNav 学习中心方案
 
-> 状态：进行中 | 审批：2026-03-17 | Progress: 4/5 (P1)
+> 状态：进行中 | 审批：2026-03-17 | Progress: 5/5 (P1 done, P2 pending)
 
 ---
 
