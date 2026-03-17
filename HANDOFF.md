@@ -2,16 +2,18 @@
 <!-- /checkpoint at 2026-03-17 -->
 
 ## Active Plan
-学习中心 — `docs/plans/glossary-learning-center.md`（6/9, P2 in progress）
+学习中心 — `docs/plans/glossary-learning-center.md`（8/9, P2 content done）
 
 ## Session Tasks
-- [x] UI/UX 审计 P0 修复：border-border 透明度统一、卡片圆角/标题规范化
-- [x] UI/UX 审计 P1 修复：6 项一致性改进（border/30→/40、ContentBlock 圆角、Sidebar padding、MCP 分页、GitHubCard、hover:shadow-md）
-- [x] P2 信息架构：Hero CTA 3→2（移除"最新资讯"）
-- [x] P2 学习中心选题：9 个概念元数据入库 `src/data/learn.ts`
-- [ ] 9 个概念内容页编写（每个需 `src/content/learn/what-is-{slug}.ts` + visual inserts）
+- [x] SEO/GEO 审计 + 快速修复（canonical, OG image, sitemap, robots, llms.txt）
+- [x] 9 个 P2 概念内容页编写 + visual inserts + furtherReading
+- [x] 文章页概念速查关键词扩展（3→10 概念覆盖）
+- [x] page.tsx 拆分（605→184 行，提取 visual-inserts.tsx + learn-links.ts）
+- [ ] 学习中心 P2 剩余：MCP/Skills 自动关联、索引页搜索、英文版
 - [ ] 社交分发：X @skillnav_dev 首条推文
 
 ## Key Files
-- `src/data/learn.ts` — 12 个概念元数据（3 P1 + 9 P2）
-- `docs/research/2026-03-17-ui-ux-audit-report.md` — 审计报告（已完成 P0/P1/P2 修复）
+- `src/content/learn/what-is-*.ts` — 12 个概念内容文件
+- `src/components/learn/visual-inserts.tsx` — 可视化图表配置
+- `src/data/learn-links.ts` — 延伸阅读链接
+- `src/app/learn/[slug]/page.tsx` — 概念详情页（184 行）

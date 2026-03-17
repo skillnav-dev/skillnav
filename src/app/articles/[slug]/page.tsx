@@ -211,6 +211,17 @@ export default async function ArticlePage({ params }: PageProps) {
           agent: ["agent", "智能体", "agentic"],
           mcp: ["mcp", "model context protocol"],
           rag: ["rag", "检索增强", "retrieval-augmented"],
+          "tool-use": ["tool use", "function calling", "工具调用"],
+          "context-window": ["context window", "上下文窗口", "context length"],
+          "prompt-engineering": [
+            "prompt engineering",
+            "提示工程",
+            "prompt 技巧",
+          ],
+          guardrails: ["guardrail", "安全护栏", "safety"],
+          hallucination: ["hallucination", "幻觉", "编造"],
+          llm: ["large language model", "大语言模型", "大模型"],
+          grounding: ["grounding", "事实对齐", "citation"],
         };
         const matched = LEARN_CONCEPTS.filter((c) =>
           keywords[c.slug]?.some((kw) => text.includes(kw)),
