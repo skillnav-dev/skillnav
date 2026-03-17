@@ -8,13 +8,14 @@
 | SKL-02 | Skills 中文翻译（name_zh/description_zh） | shipped | LLM 批量翻译 |
 | SKL-03 | Skills 标签系统 | shipped | LLM 生成 3-5 标签 |
 | SKL-04 | Skills 编辑评论 | shipped | Wirecutter 风格一句话推荐 |
-| ART-01 | 文章列表 + 详情页 | shipped | 99+ 篇，RSS 采集 + 编译翻译 |
+| ART-01 | 文章列表 + 详情页 | shipped | 194 篇 published，RSS 采集 + 编译翻译 |
 | ART-02 | 文章封面图提取 | shipped | 从 source_url 提取 og:image |
 | MCP-01 | MCP 列表 + 详情页 | shipped | 5,172+ servers，三层分级（S/A/Hidden） |
 | MCP-02 | MCP 工具定义（tools JSONB） | shipped | 从 Smithery API 回填 |
 | MCP-03 | MCP 自动分级治理 | shipped | 基于星数/工具数/验证状态 |
 | MCP-04 | S-tier 编辑精选 | shipped | 从 A-tier 中精选 + 编辑评论 |
 | WKL-01 | 周刊生成 + 页面 | shipped | 整合三支柱 + LLM 编辑序言 |
+| LEARN-01 | 学习中心索引 + 概念页 | wip | 3 概念页上线（Agent/MCP/RAG），P1 4/5 |
 | GUIDE-01 | 专栏系列支持 | wip | series 标签 + 导航组件 + backfill 脚本，落地页待建 |
 | GH-01 | GitHub 开源导航页 | shipped | AI Agent 生态项目导航 |
 
@@ -47,7 +48,7 @@
 
 | ID | 功能 | 状态 | 说明 |
 |----|------|------|------|
-| SEO-01 | Sitemap + robots.txt | shipped | 精选质量页面 |
+| SEO-01 | Sitemap + robots.txt | shipped | 精选质量页面，含 /learn |
 | SEO-02 | JSON-LD 结构化数据 | shipped | |
 | SEO-03 | llms.txt / llms-full.txt | shipped | AI 可读摘要 |
 | SEO-04 | Umami + GA + GSC | shipped | 三重分析 |
