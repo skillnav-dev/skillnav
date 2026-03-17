@@ -48,7 +48,7 @@ export async function EditorialHighlights() {
                   { month: "long", day: "numeric" },
                 )}
               </div>
-              <h3 className="mt-3 text-lg font-semibold leading-snug transition-colors group-hover:text-primary">
+              <h3 className="mt-3 text-base font-semibold leading-snug transition-colors group-hover:text-primary">
                 {latestWeekly.titleZh ?? latestWeekly.title}
               </h3>
               <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">

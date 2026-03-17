@@ -38,7 +38,7 @@ export function CodeBlock({ children, ...props }: React.ComponentProps<"pre">) {
   return (
     <div className="not-prose group relative my-4 rounded-lg border border-border/40 bg-muted/50 dark:bg-muted/30">
       {/* Toolbar */}
-      <div className="flex items-center justify-between border-b border-border/30 px-4 py-1.5">
+      <div className="flex items-center justify-between border-b border-border/40 px-4 py-1.5">
         <span className="font-mono text-xs text-muted-foreground">
           {language ?? "code"}
         </span>

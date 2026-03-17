@@ -295,7 +295,7 @@ export default async function LearnConceptPage({ params }: PageProps) {
 
         {/* Further reading */}
         {furtherReading[conceptSlug] && (
-          <div className="mt-10 rounded-lg border border-border/60 bg-muted/20 p-5">
+          <div className="mt-10 rounded-lg border border-border/40 bg-muted/20 p-5">
             <h2 className="text-lg font-semibold">延伸阅读</h2>
             <ul className="mt-3 space-y-2">
               {furtherReading[conceptSlug].map((link) => (

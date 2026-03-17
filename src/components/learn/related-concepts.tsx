@@ -14,7 +14,7 @@ export function RelatedConcepts({ slugs }: RelatedConceptsProps) {
   if (related.length === 0) return null;
 
   return (
-    <section className="mt-12 rounded-lg border border-border/60 bg-muted/30 p-6">
+    <section className="mt-12 rounded-lg border border-border/40 bg-muted/30 p-6">
       <h2 className="mb-4 text-lg font-semibold">相关概念</h2>
       <div className="grid gap-3 sm:grid-cols-2">
         {related.map((c) => (

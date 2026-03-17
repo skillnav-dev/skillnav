@@ -53,12 +53,12 @@ export async function MCPGrid({ q, category, sort, tier, page }: MCPGridProps) {
                   page: page - 1 > 1 ? page - 1 : undefined,
                 },
               }}
-              className="rounded-md border px-3 py-1.5 text-sm hover:bg-muted"
+              className="inline-flex h-9 items-center justify-center rounded-md border bg-background px-4 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
             >
               上一页
             </Link>
           )}
-          <span className="px-3 py-1.5 text-sm text-muted-foreground">
+          <span className="inline-flex h-9 items-center px-3 text-sm text-muted-foreground">
             {page} / {totalPages}
           </span>
           {page < totalPages && (
@@ -72,7 +72,7 @@ export async function MCPGrid({ q, category, sort, tier, page }: MCPGridProps) {
                   page: page + 1,
                 },
               }}
-              className="rounded-md border px-3 py-1.5 text-sm hover:bg-muted"
+              className="inline-flex h-9 items-center justify-center rounded-md border bg-background px-4 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
             >
               下一页
             </Link>

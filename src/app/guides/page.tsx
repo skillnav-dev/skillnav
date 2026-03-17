@@ -26,7 +26,7 @@ export default function GuidesPage() {
           <Link
             key={s.slug}
             href={`/guides/${s.slug}`}
-            className="group rounded-lg border bg-card p-6 transition-colors hover:border-primary/50 hover:bg-accent/50"
+            className="group rounded-xl border bg-card p-6 transition-colors hover:border-primary/50 hover:bg-accent/50"
           >
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0 flex-1 space-y-2">

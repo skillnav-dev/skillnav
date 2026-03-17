@@ -19,7 +19,7 @@ export function GitHubCard({ project }: GitHubCardProps) {
       className="block"
     >
       <Card className="group h-full transition-shadow hover:shadow-md">
-        <CardHeader className="pb-2">
+        <CardHeader className="pb-3">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">

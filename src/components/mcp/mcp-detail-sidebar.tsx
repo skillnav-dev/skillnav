@@ -41,7 +41,7 @@ export function McpDetailSidebar({ server }: McpDetailSidebarProps) {
   return (
     <aside className="space-y-4 lg:sticky lg:top-24">
       {/* Metadata card */}
-      <div className="rounded-lg border border-border/40 bg-card p-5">
+      <div className="rounded-xl border border-border/40 bg-card p-6">
         <h3 className="mb-3 text-sm font-semibold">详情</h3>
         <div className="divide-y divide-border/40">
           {server.category && (
@@ -114,7 +114,7 @@ export function McpDetailSidebar({ server }: McpDetailSidebarProps) {
 
       {/* Tags card */}
       {server.tags.length > 0 && (
-        <div className="rounded-lg border border-border/40 bg-card p-5">
+        <div className="rounded-xl border border-border/40 bg-card p-6">
           <div className="mb-3 flex items-center gap-1.5">
             <Tag className="size-3.5 text-muted-foreground" />
             <h3 className="text-sm font-semibold">标签</h3>
@@ -131,7 +131,7 @@ export function McpDetailSidebar({ server }: McpDetailSidebarProps) {
 
       {/* External links card */}
       {(server.sourceUrl || server.githubUrl) && (
-        <div className="rounded-lg border border-border/40 bg-card p-5">
+        <div className="rounded-xl border border-border/40 bg-card p-6">
           <h3 className="mb-3 text-sm font-semibold">链接</h3>
           <div className="space-y-2">
             {server.githubUrl && (

@@ -21,7 +21,7 @@ export default async function Home() {
       <section className="border-b border-border/40 bg-muted/30">
         <StatsBar />
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <div className="border-t border-border/20" />
+          <div className="border-t border-border/40" />
         </div>
         <ScenarioShortcuts />
       </section>

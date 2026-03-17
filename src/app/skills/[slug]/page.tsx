@@ -193,7 +193,7 @@ export default async function SkillDetailPage({ params }: PageProps) {
 
             {/* Editorial review (only shown when data exists) */}
             {skill.editorReviewZh && (
-              <div className="rounded-lg border border-border/40 bg-card p-6">
+              <div className="rounded-xl border border-border/40 bg-card p-6">
                 <div className="mb-3 flex items-center gap-2">
                   <h2 className="text-lg font-semibold">编辑评测</h2>
                   {skill.editorRating && (

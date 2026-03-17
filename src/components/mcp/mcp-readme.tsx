@@ -25,7 +25,7 @@ export function McpReadme({ content }: McpReadmeProps) {
   if (!cleaned) return null;
 
   return (
-    <div className="rounded-lg border border-border/40 bg-card p-6">
+    <div className="rounded-xl border border-border/40 bg-card p-6">
       {/* Header with toggle */}
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">README</h2>

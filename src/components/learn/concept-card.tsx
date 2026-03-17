@@ -16,14 +16,14 @@ export function ConceptCard({ concept, featured }: ConceptCardProps) {
   return (
     <Link
       href={`/learn/what-is-${concept.slug}`}
-      className={`group block rounded-lg border border-border/60 bg-card p-6 transition-colors hover:border-primary/40 hover:bg-accent/30 ${
+      className={`group block rounded-xl border border-border/40 bg-card p-6 transition-all hover:border-primary/40 hover:bg-accent/30 hover:shadow-md ${
         featured ? "sm:col-span-2 lg:col-span-1" : ""
       }`}
     >
       <div className="mb-2 text-xs font-medium text-muted-foreground">
         {categoryLabel[concept.category]}
       </div>
-      <h3 className="text-lg font-semibold tracking-tight group-hover:text-primary">
+      <h3 className="text-base font-semibold tracking-tight group-hover:text-primary">
         {concept.zh}
       </h3>
       <p className="mt-1 text-sm text-muted-foreground">{concept.term}</p>

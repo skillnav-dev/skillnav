@@ -218,7 +218,7 @@ export default async function McpDetailPage({ params }: PageProps) {
           <div className="min-w-0 space-y-6">
             {/* Install command block */}
             {server.installCommand && (
-              <div className="rounded-lg border border-border/40 bg-card p-6">
+              <div className="rounded-xl border border-border/40 bg-card p-6">
                 <h2 className="mb-3 text-lg font-semibold">安装命令</h2>
                 <div className="flex items-center gap-2 rounded-md border bg-muted/50 px-3 py-2.5 font-mono text-sm">
                   <code className="min-w-0 flex-1 truncate text-muted-foreground">
@@ -231,7 +231,7 @@ export default async function McpDetailPage({ params }: PageProps) {
 
             {/* Install config JSON (if present) */}
             {server.installConfig && (
-              <div className="rounded-lg border border-border/40 bg-card p-6">
+              <div className="rounded-xl border border-border/40 bg-card p-6">
                 <h2 className="mb-3 text-lg font-semibold">配置示例</h2>
                 <pre className="overflow-x-auto rounded-md border bg-muted/50 p-3 text-xs">
                   <code>{JSON.stringify(server.installConfig, null, 2)}</code>
@@ -241,7 +241,7 @@ export default async function McpDetailPage({ params }: PageProps) {
 
             {/* Intro */}
             {server.introZh && (
-              <div className="rounded-lg border border-border/40 bg-card p-6">
+              <div className="rounded-xl border border-border/40 bg-card p-6">
                 <h2 className="mb-3 text-lg font-semibold">简介</h2>
                 <div className="prose prose-sm max-w-none text-foreground/85">
                   {server.introZh.split("\n").map((p, i) => (
@@ -253,7 +253,7 @@ export default async function McpDetailPage({ params }: PageProps) {
 
             {/* Tools list */}
             {server.tools && server.tools.length > 0 ? (
-              <div className="rounded-lg border border-border/40 bg-card p-6">
+              <div className="rounded-xl border border-border/40 bg-card p-6">
                 <h2 className="mb-3 text-lg font-semibold">
                   提供的工具 ({server.tools.length})
                 </h2>
@@ -261,7 +261,7 @@ export default async function McpDetailPage({ params }: PageProps) {
                   {server.tools.map((tool) => (
                     <div
                       key={tool.name}
-                      className="rounded-md border border-border/30 bg-muted/30 px-4 py-3"
+                      className="rounded-md border border-border/40 bg-muted/30 px-4 py-3"
                     >
                       <code className="text-sm font-semibold text-primary">
                         {tool.name}
@@ -276,7 +276,7 @@ export default async function McpDetailPage({ params }: PageProps) {
                 </div>
               </div>
             ) : server.toolsCount > 0 ? (
-              <div className="rounded-lg border border-border/40 bg-card p-6">
+              <div className="rounded-xl border border-border/40 bg-card p-6">
                 <h2 className="mb-3 text-lg font-semibold">提供的工具</h2>
                 <p className="text-sm text-foreground/85">
                   该 MCP Server 提供{" "}

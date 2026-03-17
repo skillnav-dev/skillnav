@@ -192,7 +192,7 @@ export default async function EnMcpDetailPage({ params }: PageProps) {
           <div className="min-w-0 space-y-6">
             {/* Install command */}
             {server.installCommand && (
-              <div className="rounded-lg border border-border/40 bg-card p-6">
+              <div className="rounded-xl border border-border/40 bg-card p-6">
                 <h2 className="mb-3 text-lg font-semibold">Install</h2>
                 <div className="flex items-center gap-2 rounded-md border bg-muted/50 px-3 py-2.5 font-mono text-sm">
                   <code className="min-w-0 flex-1 truncate text-muted-foreground">
@@ -205,7 +205,7 @@ export default async function EnMcpDetailPage({ params }: PageProps) {
 
             {/* Install config JSON */}
             {server.installConfig && (
-              <div className="rounded-lg border border-border/40 bg-card p-6">
+              <div className="rounded-xl border border-border/40 bg-card p-6">
                 <h2 className="mb-3 text-lg font-semibold">
                   Configuration Example
                 </h2>
@@ -217,7 +217,7 @@ export default async function EnMcpDetailPage({ params }: PageProps) {
 
             {/* Tools list */}
             {server.tools && server.tools.length > 0 ? (
-              <div className="rounded-lg border border-border/40 bg-card p-6">
+              <div className="rounded-xl border border-border/40 bg-card p-6">
                 <h2 className="mb-3 text-lg font-semibold">
                   Tools ({server.tools.length})
                 </h2>
@@ -225,7 +225,7 @@ export default async function EnMcpDetailPage({ params }: PageProps) {
                   {server.tools.map((tool) => (
                     <div
                       key={tool.name}
-                      className="rounded-md border border-border/30 bg-muted/30 px-4 py-3"
+                      className="rounded-md border border-border/40 bg-muted/30 px-4 py-3"
                     >
                       <code className="text-sm font-semibold text-primary">
                         {tool.name}
@@ -240,7 +240,7 @@ export default async function EnMcpDetailPage({ params }: PageProps) {
                 </div>
               </div>
             ) : server.toolsCount > 0 ? (
-              <div className="rounded-lg border border-border/40 bg-card p-6">
+              <div className="rounded-xl border border-border/40 bg-card p-6">
                 <h2 className="mb-3 text-lg font-semibold">Tools</h2>
                 <p className="text-sm text-foreground/85">
                   This MCP Server provides{" "}

@@ -172,7 +172,7 @@ export default async function ArticlePage({ params }: PageProps) {
         </div>
         {/* Copyright attribution for translated articles */}
         {article.sourceUrl && (
-          <div className="mt-10 rounded-md border border-border/60 bg-muted/30 px-4 py-3 text-xs text-muted-foreground">
+          <div className="mt-10 rounded-md border border-border/40 bg-muted/30 px-4 py-3 text-xs text-muted-foreground">
             本文编译自{" "}
             <a
               href={article.sourceUrl}
@@ -222,7 +222,7 @@ export default async function ArticlePage({ params }: PageProps) {
                   <Link
                     key={c.slug}
                     href={`/learn/what-is-${c.slug}`}
-                    className="rounded-lg border border-border/60 p-4 transition-colors hover:border-primary/40 hover:bg-muted/30"
+                    className="rounded-lg border border-border/40 p-4 transition-colors hover:border-primary/40 hover:bg-muted/30"
                   >
                     <p className="font-medium">{c.zh}</p>
                     <p className="mt-1 text-sm text-muted-foreground line-clamp-2">

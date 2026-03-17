@@ -50,7 +50,7 @@ export default async function WeeklyPage() {
               <Link
                 key={issue.id}
                 href={`/weekly/${issue.slug}`}
-                className="group rounded-lg border border-border/60 p-6 transition-colors hover:border-primary/40 hover:bg-muted/30"
+                className="group rounded-xl border border-border/40 p-6 transition-all hover:border-primary/40 hover:bg-muted/30 hover:shadow-md"
               >
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <Calendar className="size-3.5" />
@@ -65,7 +65,7 @@ export default async function WeeklyPage() {
                     <span className="ml-auto">{issue.readingTime} 分钟</span>
                   )}
                 </div>
-                <h2 className="mt-3 text-lg font-semibold group-hover:text-primary">
+                <h2 className="mt-3 text-base font-semibold group-hover:text-primary">
                   {issue.titleZh ?? issue.title}
                 </h2>
                 {issue.summaryZh && (
