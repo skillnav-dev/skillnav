@@ -75,7 +75,7 @@ export default async function LearnConceptPage({ params }: PageProps) {
           { name: "首页", href: "/" },
           { name: "学习中心", href: "/learn" },
           {
-            name: `什么是${concept.zh}`,
+            name: concept.seoTitle,
             href: `/learn/what-is-${concept.slug}`,
           },
         ]}
@@ -85,11 +85,11 @@ export default async function LearnConceptPage({ params }: PageProps) {
           items={[
             { label: "首页", href: "/" },
             { label: "学习中心", href: "/learn" },
-            { label: `什么是${concept.zh}` },
+            { label: concept.seoTitle },
           ]}
         />
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-          什么是 {concept.zh}（{concept.term}）？
+          {concept.seoTitle}
         </h1>
 
         {/* One-liner definition card */}
