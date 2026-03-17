@@ -1,3 +1,7 @@
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
+
 /**
  * Shared LLM utility module.
  * Supports multiple providers via LLM_PROVIDER env var.
@@ -60,6 +64,37 @@ const CHUNK_SIZE = 12000; // Target size per chunk
 const LLM_TIMEOUT_MS = 120_000; // 120s per request
 
 const VALID_ARTICLE_TYPES = ["tutorial", "analysis", "guide"];
+
+// ── Glossary ────────────────────────────────────────────────────────
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const glossary = JSON.parse(readFileSync(join(__dirname, "glossary.json"), "utf-8"));
+
+/**
+ * Build the "Technical terms" section of the system prompt from glossary.json.
+ */
+function buildGlossaryPrompt() {
+  const lines = ["## Technical terms (mandatory glossary)"];
+
+  // keep
+  lines.push(`- ALWAYS keep these terms in English: ${glossary.keep.join(", ")}`);
+
+  // translate
+  lines.push("- ALWAYS translate these terms to Chinese:");
+  for (const [en, zh] of Object.entries(glossary.translate)) {
+    lines.push(`  - ${en} → ${zh}`);
+  }
+
+  // bracket
+  lines.push("- First occurrence: use bracket notation 中文（English）; subsequent occurrences: Chinese only:");
+  for (const [en, zh] of Object.entries(glossary.bracket)) {
+    lines.push(`  - ${en} → ${zh}`);
+  }
+
+  lines.push("- For terms not in this glossary: if commonly used as English in Chinese dev circles, keep English; otherwise translate and bracket on first occurrence");
+  lines.push("- Be consistent: once you choose a translation for a term, use it throughout the entire article");
+
+  return lines.join("\n");
+}
 
 // ── Fallback State ──────────────────────────────────────────────────
 // Track consecutive primary failures; switch to fallback after threshold
@@ -308,11 +343,7 @@ Compile = restructure for Chinese readability while staying faithful to the orig
 - Eliminate translation artifacts: no "然而/此外/值得注意的是" padding, use natural Chinese transitions
 - Cut genuine filler, but do NOT cut substantive content or examples
 
-## Technical terms
-- Keep in English when commonly used as-is: API, SDK, LLM, Agent, MCP, Token, PR, CI/CD
-- Use established Chinese for well-known concepts: machine learning → 机器学习, large language model → 大语言模型
-- First occurrence of a translated term: 大语言模型 (LLM)
-- Be consistent: once you choose a translation for a term, use it throughout
+{{GLOSSARY}}
 
 ## Code and references
 - CRITICAL: Preserve ALL code blocks, command-line examples, configuration snippets, and quoted prompts/instructions VERBATIM in their original English. Wrap them in markdown fenced code blocks (\`\`\`). NEVER translate, summarize, or omit code blocks
@@ -322,7 +353,7 @@ Compile = restructure for Chinese readability while staying faithful to the orig
 ## SEO
 - The first paragraph of contentZh must directly state what this article is about, what problem it addresses, or the key finding — making it extractable by AI search engines.
 
-You must respond with valid JSON only, no markdown fences.`;
+You must respond with valid JSON only, no markdown fences.`.replace("{{GLOSSARY}}", buildGlossaryPrompt());
 
 // ── Chunking Utilities ───────────────────────────────────────────────
 

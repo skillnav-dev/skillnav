@@ -84,6 +84,10 @@ src/
 └── lib/                        # Utilities
     ├── constants.ts            # Site-wide constants (name, URL, description)
     └── fonts.ts                # Font configuration
+
+scripts/lib/
+├── llm.mjs                     # LLM providers + compile prompt (imports glossary)
+└── glossary.json               # Centralized terminology (keep/translate/bracket policies)
 ```
 
 Call direction: `page.tsx` → `components/` → `data/` → `lib/`

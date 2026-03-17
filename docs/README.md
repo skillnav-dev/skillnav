@@ -37,6 +37,7 @@
 | [plans/weekly-pipeline.md](plans/weekly-pipeline.md) | draft | 周刊生成管线 |
 | [plans/github-nav-design.md](plans/github-nav-design.md) | draft | GitHub 开源导航页 |
 | [plans/guides-series.md](plans/guides-series.md) | approved | 专栏（Guides）一级内容产品 |
+| [plans/glossary-learning-center.md](plans/glossary-learning-center.md) | pending | 学习中心：AI Agent 工程概念教学 |
 
 ### ADR（架构决策记录）
 
@@ -71,6 +72,7 @@
 | [content-editing-seo-demand](research/2026-03-11-content-editing-seo-demand.md) | 2026-03-11 | 编辑 |
 | [content-editing-standards-gap](research/2026-03-11-content-editing-standards-gap.md) | 2026-03-11 | 编辑 |
 | [content-source-audit](research/2026-03-15-content-source-audit.md) | 2026-03-15 | 内容源 |
+| [glossary-competitive-research](research/2026-03-17-glossary-competitive-research.md) | 2026-03-17 | 术语/学习中心 |
 
 ### Troubleshooting（踩坑知识库）
 

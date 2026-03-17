@@ -1,0 +1,55 @@
+{
+  "meta": {
+    "version": "1.0.0",
+    "description": "Centralized terminology glossary for content pipeline. Policies: keep = always English, translate = always Chinese, bracket = first occurrence 中文（English）then Chinese only.",
+    "updatedAt": "2026-03-17"
+  },
+  "keep": [
+    "API",
+    "SDK",
+    "LLM",
+    "MCP",
+    "Agent",
+    "Token",
+    "PR",
+    "CI/CD",
+    "CLI",
+    "IDE",
+    "JSON",
+    "YAML",
+    "OAuth",
+    "RSS",
+    "RAG",
+    "TDD",
+    "SSR",
+    "ISR",
+    "Docker",
+    "Kubernetes",
+    "GitHub",
+    "npm",
+    "Skills"
+  ],
+  "translate": {
+    "machine learning": "机器学习",
+    "large language model": "大语言模型",
+    "repository": "仓库",
+    "deploy": "部署",
+    "deployment": "部署",
+    "middleware": "中间件",
+    "fine-tuning": "微调",
+    "prompt engineering": "提示工程",
+    "workflow": "工作流"
+  },
+  "bracket": {
+    "harness": "执行框架（Harness）",
+    "context rot": "上下文腐化（Context Rot）",
+    "guardrails": "安全护栏（Guardrails）",
+    "human-in-the-loop": "人机协同（Human-in-the-Loop）",
+    "agentic engineering": "智能体工程（Agentic Engineering）",
+    "tool use": "工具调用（Tool Use）",
+    "context window": "上下文窗口（Context Window）",
+    "hallucination": "模型幻觉（Hallucination）",
+    "grounding": "事实对齐（Grounding）",
+    "retrieval-augmented generation": "检索增强生成（RAG）"
+  }
+}
