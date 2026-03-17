@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import fs from "node:fs";
-import path from "node:path";
 import { PageBreadcrumb } from "@/components/shared/page-breadcrumb";
 import { ArticleContent } from "@/components/articles/article-content";
 import { RelatedConcepts } from "@/components/learn/related-concepts";
@@ -12,6 +10,17 @@ import {
 import { siteConfig } from "@/lib/constants";
 import { LEARN_CONCEPTS, getLearnConcept } from "@/data/learn";
 
+// Static imports — bundled at build time, no fs needed
+import agentContent from "@/content/learn/what-is-agent";
+import mcpContent from "@/content/learn/what-is-mcp";
+import ragContent from "@/content/learn/what-is-rag";
+
+const contentMap: Record<string, string> = {
+  agent: agentContent,
+  mcp: mcpContent,
+  rag: ragContent,
+};
+
 interface PageProps {
   params: Promise<{ slug: string }>;
 }
@@ -19,19 +28,6 @@ interface PageProps {
 /** Strip "what-is-" prefix to get the concept slug */
 function parseSlug(raw: string): string {
   return raw.startsWith("what-is-") ? raw.slice(8) : raw;
-}
-
-function loadContent(conceptSlug: string): string | null {
-  const filePath = path.join(
-    process.cwd(),
-    "src/content/learn",
-    `what-is-${conceptSlug}.md`,
-  );
-  try {
-    return fs.readFileSync(filePath, "utf-8");
-  } catch {
-    return null;
-  }
 }
 
 export function generateStaticParams() {
@@ -63,7 +59,7 @@ export default async function LearnConceptPage({ params }: PageProps) {
   const concept = getLearnConcept(conceptSlug);
   if (!concept) notFound();
 
-  const content = loadContent(conceptSlug);
+  const content = contentMap[conceptSlug];
   if (!content) notFound();
 
   return (
