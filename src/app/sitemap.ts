@@ -5,6 +5,7 @@ import {
   getSitemapArticles,
   getSitemapMcpServers,
 } from "@/lib/data";
+import { LEARN_CONCEPTS } from "@/data/learn";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [skills, articles, mcpServers] = await Promise.all([
@@ -42,6 +43,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "weekly",
       priority: 0.7,
     },
+    {
+      url: `${siteConfig.url}/learn`,
+      changeFrequency: "weekly",
+      priority: 0.8,
+    },
+    ...LEARN_CONCEPTS.map((c) => ({
+      url: `${siteConfig.url}/learn/what-is-${c.slug}`,
+      changeFrequency: "monthly" as const,
+      priority: 0.8,
+    })),
     {
       url: `${siteConfig.url}/about`,
       changeFrequency: "monthly",

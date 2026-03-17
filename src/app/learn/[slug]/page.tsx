@@ -9,11 +9,30 @@ import {
 } from "@/components/shared/json-ld";
 import { siteConfig } from "@/lib/constants";
 import { LEARN_CONCEPTS, getLearnConcept } from "@/data/learn";
+import Link from "next/link";
 
 // Static imports — bundled at build time, no fs needed
 import agentContent from "@/content/learn/what-is-agent";
 import mcpContent from "@/content/learn/what-is-mcp";
 import ragContent from "@/content/learn/what-is-rag";
+
+const furtherReading: Record<string, { label: string; href: string }[]> = {
+  agent: [
+    { label: "AI Agent 相关资讯", href: "/articles?q=agent" },
+    { label: "Claude Code Skills 导航", href: "/skills" },
+    { label: "MCP Server 精选", href: "/mcp" },
+  ],
+  mcp: [
+    { label: "MCP 相关资讯", href: "/articles?q=mcp" },
+    { label: "MCP Server 精选导航", href: "/mcp" },
+    { label: "什么是 AI Agent？", href: "/learn/what-is-agent" },
+  ],
+  rag: [
+    { label: "RAG 相关资讯", href: "/articles?q=rag" },
+    { label: "MCP Server 精选", href: "/mcp" },
+    { label: "什么是 AI Agent？", href: "/learn/what-is-agent" },
+  ],
+};
 
 const contentMap: Record<string, string> = {
   agent: agentContent,
@@ -104,6 +123,25 @@ export default async function LearnConceptPage({ params }: PageProps) {
 
         {/* Related concepts */}
         <RelatedConcepts slugs={concept.relatedSlugs} />
+
+        {/* Further reading */}
+        {furtherReading[conceptSlug] && (
+          <div className="mt-10 rounded-lg border border-border/60 bg-muted/20 p-5">
+            <h2 className="text-lg font-semibold">延伸阅读</h2>
+            <ul className="mt-3 space-y-2">
+              {furtherReading[conceptSlug].map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="text-primary hover:underline"
+                  >
+                    {link.label} →
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </article>
     </>
   );

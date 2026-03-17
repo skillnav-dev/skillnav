@@ -20,6 +20,8 @@ import {
 import { getSkills } from "@/lib/data/skills";
 import { SERIES_META } from "@/data/series";
 import { SeriesNav } from "@/components/articles/series-nav";
+import { LEARN_CONCEPTS } from "@/data/learn";
+import Link from "next/link";
 
 // Extract the most meaningful keyword from an article title for skill matching.
 // Picks the longest CJK segment or the longest word (>3 chars) from the title.
@@ -198,6 +200,41 @@ export default async function ArticlePage({ params }: PageProps) {
       <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
         <InlineNewsletterCta />
       </div>
+      {/* Related learn concepts */}
+      {(() => {
+        const text =
+          `${articleTitle} ${article.contentZh ?? article.content}`.toLowerCase();
+        const keywords: Record<string, string[]> = {
+          agent: ["agent", "智能体", "agentic"],
+          mcp: ["mcp", "model context protocol"],
+          rag: ["rag", "检索增强", "retrieval-augmented"],
+        };
+        const matched = LEARN_CONCEPTS.filter((c) =>
+          keywords[c.slug]?.some((kw) => text.includes(kw)),
+        );
+        if (matched.length === 0) return null;
+        return (
+          <section className="border-t border-border/40">
+            <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
+              <h2 className="mb-6 text-xl font-bold">概念速查</h2>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {matched.map((c) => (
+                  <Link
+                    key={c.slug}
+                    href={`/learn/what-is-${c.slug}`}
+                    className="rounded-lg border border-border/60 p-4 transition-colors hover:border-primary/40 hover:bg-muted/30"
+                  >
+                    <p className="font-medium">{c.zh}</p>
+                    <p className="mt-1 text-sm text-muted-foreground line-clamp-2">
+                      {c.oneLiner}
+                    </p>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </section>
+        );
+      })()}
       {/* Related tools mentioned in this article */}
       {relatedSkills.length > 0 && (
         <section className="border-t border-border/40">
