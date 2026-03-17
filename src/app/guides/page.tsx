@@ -72,6 +72,27 @@ export default function GuidesPage() {
           <p>专栏内容筹备中，敬请期待。</p>
         </div>
       )}
+
+      {/* Interactive deep guide */}
+      <section className="mt-12">
+        <h2 className="mb-4 text-lg font-semibold text-foreground">
+          交互式深度指南
+        </h2>
+        <Link
+          href="/guides/ai-guide.html"
+          className="group block rounded-lg border bg-card p-6 transition-colors hover:border-primary/50 hover:bg-accent/50"
+        >
+          <div className="text-xs font-medium text-primary/70">
+            10 章 · 交互式演示
+          </div>
+          <h3 className="mt-1 text-xl font-semibold tracking-tight group-hover:text-primary">
+            AI 架构深度指南
+          </h3>
+          <p className="mt-2 text-muted-foreground">
+            从提示词工程到 Agent 系统，从 RAG 到 MCP，交互式演示掌握 AI 工程全貌
+          </p>
+        </Link>
+      </section>
     </div>
   );
 }

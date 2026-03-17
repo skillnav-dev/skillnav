@@ -33,7 +33,6 @@ const furtherReading: Record<string, { label: string; href: string }[]> = {
     { label: "什么是 AI Agent？", href: "/learn/what-is-agent" },
   ],
   rag: [
-    { label: "RAG 深度指南（交互式）", href: "/guides/rag-deep-guide.html" },
     { label: "RAG 相关资讯", href: "/articles?q=rag" },
     { label: "什么是 AI Agent？", href: "/learn/what-is-agent" },
   ],
