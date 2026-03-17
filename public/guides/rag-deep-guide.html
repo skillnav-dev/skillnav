@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAG 深度指南 — 检索增强生成完全手册 | SkillNav</title>
+<meta name="description" content="从零理解检索增强生成(RAG)的核心原理、优化策略与工程实践。交互式演示，直观掌握每一个关键概念。">
+<link rel="canonical" href="https://skillnav.dev/guides/rag-deep-guide.html">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #FAFAF8;
+  --bg-card: #FFFFFF;
+  --bg-code: #F5F3EF;
+  --bg-dark: #1A1A18;
+  --text-primary: #1A1A18;
+  --text-secondary: #6B6B63;
+  --text-tertiary: #9C9C94;
+  --border: #E8E6E0;
+  --border-light: #F0EEE8;
+  --accent: #2D6A4F;
+  --accent-light: #D8F3DC;
+  --accent-dark: #1B4332;
+  --purple: #5E4DB2;
+  --purple-light: #EEEDFE;
+  --teal: #1D9E75;
+  --teal-light: #E1F5EE;
+  --amber: #BA7517;
+  --amber-light: #FAEEDA;
+  --coral: #D85A30;
+  --coral-light: #FAECE7;
+  --red: #C94040;
+  --red-light: #FCEBEB;
+  --font-body: 'Noto Sans SC', -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --radius-xs: 6px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.06);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.08);
+  --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text-primary);
+  line-height: 1.8;
+  font-size: 15px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* === NAV === */
+.nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: rgba(250,250,248,0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border-light);
+  transition: var(--transition);
+}
+.nav-inner {
+  max-width: 1100px; margin: 0 auto;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 2rem; height: 56px;
+}
+.nav-logo {
+  font-weight: 700; font-size: 17px; color: var(--accent-dark);
+  letter-spacing: -0.5px;
+}
+.nav-logo span { color: var(--teal); }
+.nav-links { display: flex; gap: 4px; }
+.nav-links a {
+  padding: 6px 14px; border-radius: var(--radius-xs);
+  font-size: 13px; color: var(--text-secondary); text-decoration: none;
+  transition: var(--transition); font-weight: 400;
+}
+.nav-links a:hover { background: var(--border-light); color: var(--text-primary); }
+.nav-links a.active { background: var(--accent-light); color: var(--accent-dark); font-weight: 500; }
+
+/* === HERO === */
+.hero {
+  padding: 140px 2rem 80px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; top: -200px; left: 50%; transform: translateX(-50%);
+  width: 800px; height: 800px;
+  background: radial-gradient(ellipse, rgba(45,106,79,0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-badge {
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 100px;
+  background: var(--accent-light);
+  color: var(--accent-dark);
+  font-size: 12px; font-weight: 500;
+  letter-spacing: 0.5px;
+  margin-bottom: 24px;
+}
+.hero h1 {
+  font-size: clamp(36px, 5vw, 56px);
+  font-weight: 900;
+  letter-spacing: -1.5px;
+  line-height: 1.15;
+  margin-bottom: 20px;
+  color: var(--text-primary);
+}
+.hero h1 em {
+  font-style: normal;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--teal) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.hero-sub {
+  font-size: 17px;
+  color: var(--text-secondary);
+  max-width: 600px;
+  margin: 0 auto 40px;
+  line-height: 1.7;
+  font-weight: 300;
+}
+.hero-cta {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 12px 28px;
+  background: var(--accent-dark);
+  color: #fff;
+  border-radius: 100px;
+  text-decoration: none;
+  font-size: 14px; font-weight: 500;
+  transition: var(--transition);
+  box-shadow: 0 4px 12px rgba(27,67,50,0.25);
+}
+.hero-cta:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(27,67,50,0.35); }
+
+/* === LAYOUT === */
+.container { max-width: 1100px; margin: 0 auto; padding: 0 2rem; }
+section { padding: 80px 0; }
+.section-label {
+  font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--teal); margin-bottom: 12px;
+}
+.section-title {
+  font-size: 32px; font-weight: 700; letter-spacing: -0.8px;
+  margin-bottom: 16px; line-height: 1.3;
+}
+.section-desc {
+  font-size: 16px; color: var(--text-secondary); max-width: 640px;
+  line-height: 1.7; margin-bottom: 48px; font-weight: 300;
+}
+
+/* === CHAPTER CARDS === */
+.chapter-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+}
+.chapter-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px;
+  cursor: pointer;
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+.chapter-card:hover {
+  border-color: var(--teal);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+.chapter-num {
+  font-size: 48px; font-weight: 900; line-height: 1;
+  color: var(--border); margin-bottom: 12px;
+  transition: var(--transition);
+}
+.chapter-card:hover .chapter-num { color: var(--accent-light); }
+.chapter-card h3 {
+  font-size: 18px; font-weight: 700; margin-bottom: 8px;
+  letter-spacing: -0.3px;
+}
+.chapter-card p {
+  font-size: 13px; color: var(--text-secondary); line-height: 1.6;
+}
+.chapter-tag {
+  display: inline-block; margin-top: 12px;
+  padding: 3px 10px; border-radius: 100px;
+  font-size: 11px; font-weight: 500;
+}
+.tag-beginner { background: var(--teal-light); color: var(--accent-dark); }
+.tag-intermediate { background: var(--amber-light); color: #633806; }
+.tag-advanced { background: var(--coral-light); color: #712B13; }
+
+/* === CONTENT SECTIONS === */
+.content-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 48px;
+  margin-bottom: 24px;
+  scroll-margin-top: 80px;
+}
+.content-section h2 {
+  font-size: 26px; font-weight: 700; letter-spacing: -0.5px;
+  margin-bottom: 8px;
+}
+.content-section .sub {
+  font-size: 15px; color: var(--text-secondary); margin-bottom: 32px;
+  font-weight: 300;
+}
+.content-section h3 {
+  font-size: 18px; font-weight: 700; margin: 32px 0 12px;
+  letter-spacing: -0.3px;
+}
+.content-section p { margin-bottom: 16px; color: var(--text-primary); }
+.content-section ul {
+  margin: 0 0 16px 20px;
+  list-style: none;
+}
+.content-section ul li {
+  position: relative; padding-left: 16px; margin-bottom: 8px;
+  color: var(--text-primary); font-size: 14px;
+}
+.content-section ul li::before {
+  content: ''; position: absolute; left: 0; top: 10px;
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--teal);
+}
+
+/* === FLOW DIAGRAMS === */
+.flow-container {
+  display: flex; align-items: center; gap: 12px;
+  flex-wrap: wrap; margin: 24px 0;
+  padding: 24px;
+  background: var(--bg);
+  border-radius: var(--radius);
+}
+.flow-box {
+  padding: 12px 20px;
+  border-radius: var(--radius-sm);
+  font-size: 13px; font-weight: 500;
+  text-align: center;
+  border: 1px solid;
+}
+.fb-purple { background: var(--purple-light); color: var(--purple); border-color: #AFA9EC; }
+.fb-teal { background: var(--teal-light); color: var(--accent-dark); border-color: #5DCAA5; }
+.fb-amber { background: var(--amber-light); color: #633806; border-color: #EF9F27; }
+.fb-coral { background: var(--coral-light); color: #712B13; border-color: #F0997B; }
+.flow-arrow { color: var(--text-tertiary); font-size: 18px; flex-shrink: 0; }
+
+/* === INTERACTIVE DEMO === */
+.demo-box {
+  background: var(--bg);
+  border-radius: var(--radius);
+  padding: 28px;
+  margin: 24px 0;
+  border: 1px solid var(--border-light);
+}
+.demo-title {
+  font-size: 12px; font-weight: 700; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--teal);
+  margin-bottom: 16px;
+}
+.demo-tabs {
+  display: flex; gap: 4px; margin-bottom: 20px;
+  border-bottom: 1px solid var(--border-light);
+  padding-bottom: 12px;
+}
+.demo-tab {
+  padding: 6px 14px; border-radius: var(--radius-xs);
+  font-size: 12px; cursor: pointer; border: none;
+  background: transparent; color: var(--text-secondary);
+  font-family: var(--font-body); transition: var(--transition);
+}
+.demo-tab.active { background: var(--accent-light); color: var(--accent-dark); font-weight: 500; }
+.demo-panel { display: none; }
+.demo-panel.active { display: block; }
+
+/* === DOC CHIPS === */
+.doc-shelf { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0; }
+.doc-chip {
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  transition: var(--transition);
+  line-height: 1.5;
+}
+.doc-chip.hit {
+  background: var(--teal-light);
+  border-color: #5DCAA5;
+  color: var(--accent-dark);
+}
+.doc-chip.dim { opacity: 0.3; }
+
+/* === SLIDER CONTROLS === */
+.slider-group { margin: 20px 0; }
+.slider-row {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 12px;
+}
+.slider-label { font-size: 13px; color: var(--text-secondary); min-width: 90px; }
+.slider-val { font-size: 14px; font-weight: 500; min-width: 48px; text-align: right; }
+input[type="range"] {
+  flex: 1; height: 4px; -webkit-appearance: none;
+  background: var(--border); border-radius: 4px; outline: none;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 18px; height: 18px;
+  background: var(--accent-dark); border-radius: 50%; cursor: pointer;
+  border: 3px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+}
+
+/* === COMPARISON GRID === */
+.compare-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+  margin: 24px 0;
+}
+.compare-card {
+  padding: 24px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+}
+.compare-card h4 {
+  font-size: 16px; font-weight: 700; margin-bottom: 12px;
+}
+.compare-card p {
+  font-size: 13px; color: var(--text-secondary); line-height: 1.7;
+}
+.tag-pill {
+  display: inline-block; padding: 3px 10px;
+  border-radius: 100px; font-size: 11px; font-weight: 500;
+  margin: 2px;
+}
+.pill-pro { background: var(--teal-light); color: var(--accent-dark); }
+.pill-con { background: var(--red-light); color: var(--red); }
+
+/* === EXPANDABLE CARD === */
+.expand-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 8px;
+  background: var(--bg-card);
+  overflow: hidden;
+  transition: var(--transition);
+}
+.expand-card:hover { border-color: var(--teal); }
+.expand-head {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 14px 18px; cursor: pointer;
+}
+.expand-head h4 { font-size: 14px; font-weight: 500; }
+.expand-arrow {
+  font-size: 14px; color: var(--text-tertiary);
+  transition: transform var(--transition);
+}
+.expand-card.open .expand-arrow { transform: rotate(90deg); }
+.expand-body {
+  display: none;
+  padding: 0 18px 18px;
+  font-size: 13px; color: var(--text-secondary); line-height: 1.8;
+  border-top: 1px solid var(--border-light);
+  margin-top: 0; padding-top: 14px;
+}
+.expand-card.open .expand-body { display: block; }
+
+/* === COMPARISON TABLE === */
+.vs-table {
+  width: 100%; border-collapse: collapse; margin: 24px 0;
+  font-size: 13px;
+}
+.vs-table th {
+  text-align: left; font-weight: 600; padding: 12px 14px;
+  border-bottom: 2px solid var(--border);
+  font-size: 13px;
+}
+.vs-table td {
+  padding: 12px 14px; border-bottom: 1px solid var(--border-light);
+  color: var(--text-secondary); line-height: 1.6; vertical-align: top;
+}
+.vs-table td:first-child { font-weight: 500; color: var(--text-primary); }
+
+/* === TOKEN BADGES === */
+.token-badge {
+  display: inline-block; padding: 3px 10px;
+  border-radius: var(--radius-xs);
+  font-size: 11px; font-weight: 500;
+  font-family: var(--font-mono);
+  margin: 2px;
+}
+.tk-r { background: var(--purple-light); color: var(--purple); }
+.tk-rel { background: var(--teal-light); color: var(--accent-dark); }
+.tk-s { background: var(--amber-light); color: #633806; }
+.tk-u { background: var(--coral-light); color: #712B13; }
+
+/* === CALLOUT === */
+.callout {
+  padding: 16px 20px;
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--teal);
+  background: var(--bg);
+  font-size: 14px; line-height: 1.7;
+  margin: 24px 0;
+  color: var(--text-secondary);
+}
+.callout strong { color: var(--text-primary); }
+
+/* === CODE BLOCK === */
+.code-block {
+  background: var(--bg-dark);
+  border-radius: var(--radius-sm);
+  padding: 20px 24px;
+  margin: 16px 0;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: #D4D4D4;
+  line-height: 1.6;
+}
+.code-block .kw { color: #C586C0; }
+.code-block .str { color: #CE9178; }
+.code-block .fn { color: #DCDCAA; }
+.code-block .cm { color: #6A9955; }
+.code-block .num { color: #B5CEA8; }
+
+/* === TECH STACK === */
+.stack-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px; margin: 24px 0;
+}
+.stack-card {
+  padding: 20px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+}
+.stack-card .sc-cat {
+  font-size: 11px; font-weight: 700; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--teal); margin-bottom: 10px;
+}
+.stack-card h4 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+.stack-card p { font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
+
+/* === TIMELINE === */
+.timeline { position: relative; padding-left: 32px; margin: 24px 0; }
+.timeline::before {
+  content: ''; position: absolute; left: 10px; top: 4px; bottom: 4px;
+  width: 2px; background: var(--border);
+}
+.tl-item { position: relative; margin-bottom: 24px; }
+.tl-dot {
+  position: absolute; left: -28px; top: 4px;
+  width: 12px; height: 12px; border-radius: 50%;
+  border: 2px solid; background: var(--bg);
+}
+.tl-item h4 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.tl-item p { font-size: 13px; color: var(--text-secondary); line-height: 1.7; }
+
+/* === FOOTER === */
+.footer {
+  padding: 48px 2rem;
+  border-top: 1px solid var(--border);
+  text-align: center;
+  font-size: 13px; color: var(--text-tertiary);
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 768px) {
+  .content-section { padding: 28px 20px; }
+  .compare-grid { grid-template-columns: 1fr; }
+  .nav-links { display: none; }
+  .hero { padding: 120px 1.5rem 60px; }
+}
+
+/* === SCROLL ANIMATIONS === */
+.fade-in {
+  opacity: 0; transform: translateY(20px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.fade-in.visible { opacity: 1; transform: translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-inner">
+    <div class="nav-logo"><a href="/" style="text-decoration:none;color:inherit;">Skill<span>Nav</span></a></div>
+    <div class="nav-links">
+      <a href="/learn/what-is-rag">概念速查</a>
+      <a href="#what-is-rag" class="active">什么是 RAG</a>
+      <a href="#optimization">优化策略</a>
+      <a href="#chunking">Chunking</a>
+      <a href="#hyde">HyDE</a>
+      <a href="#self-rag">Self-RAG & CRAG</a>
+      <a href="#tech-stack">技术栈</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="hero-badge">交互式学习指南 · 2025</div>
+  <h1>RAG <em>深度指南</em></h1>
+  <p class="hero-sub">从零理解检索增强生成的核心原理、优化策略与工程实践。通过交互式演示，直观掌握每一个关键概念。</p>
+  <a href="#what-is-rag" class="hero-cta">开始学习 ↓</a>
+</header>
+
+<!-- CHAPTER INDEX -->
+<section>
+  <div class="container">
+    <div class="section-label">学习路径</div>
+    <div class="section-title">六个章节，从入门到实战</div>
+    <div class="section-desc">每个章节包含交互式演示，帮你建立直觉而非死记概念。</div>
+    <div class="chapter-grid">
+      <div class="chapter-card" onclick="location.href='#what-is-rag'">
+        <div class="chapter-num">01</div>
+        <h3>什么是 RAG</h3>
+        <p>大模型的知识瓶颈与 RAG 的核心思路：查→拼→答</p>
+        <span class="chapter-tag tag-beginner">入门</span>
+      </div>
+      <div class="chapter-card" onclick="location.href='#optimization'">
+        <div class="chapter-num">02</div>
+        <h3>优化策略全景</h3>
+        <p>检索前、检索中、检索后三阶段的八大优化策略</p>
+        <span class="chapter-tag tag-beginner">入门</span>
+      </div>
+      <div class="chapter-card" onclick="location.href='#chunking'">
+        <div class="chapter-num">03</div>
+        <h3>Chunking 与 Overlap</h3>
+        <p>文档分块策略、重叠比例设定与场景适配</p>
+        <span class="chapter-tag tag-intermediate">中级</span>
+      </div>
+      <div class="chapter-card" onclick="location.href='#hyde'">
+        <div class="chapter-num">04</div>
+        <h3>HyDE 假设文档嵌入</h3>
+        <p>用"假设性回答"提升语义检索精度的巧妙方法</p>
+        <span class="chapter-tag tag-intermediate">中级</span>
+      </div>
+      <div class="chapter-card" onclick="location.href='#self-rag'">
+        <div class="chapter-num">05</div>
+        <h3>Self-RAG & CRAG</h3>
+        <p>让模型学会自我反思和纠错的自适应检索架构</p>
+        <span class="chapter-tag tag-advanced">高级</span>
+      </div>
+      <div class="chapter-card" onclick="location.href='#tech-stack'">
+        <div class="chapter-num">06</div>
+        <h3>技术栈与实战</h3>
+        <p>从零搭建 RAG 系统的框架选型与部署建议</p>
+        <span class="chapter-tag tag-advanced">高级</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- CHAPTER 1: WHAT IS RAG -->
+<!-- ============================================ -->
+<section id="what-is-rag">
+  <div class="container">
+    <div class="content-section fade-in">
+      <div class="section-label">第一章</div>
+      <h2>什么是 RAG</h2>
+      <div class="sub">Retrieval-Augmented Generation — 检索增强生成</div>
+
+      <h3>大模型的两个核心痛点</h3>
+      <p>大语言模型虽然强大，但存在两个根本性的局限：<strong>知识截止</strong>（训练数据有时间限制，不知道最新信息）和<strong>幻觉</strong>（当不确定时可能自信地编造答案）。RAG 正是为了解决这两个问题而设计的。</p>
+
+      <div class="demo-box">
+        <div class="demo-title">交互演示：RAG 工作流程</div>
+        <div class="demo-tabs">
+          <button class="demo-tab active" onclick="showDemo('rag',0)">1. 问题</button>
+          <button class="demo-tab" onclick="showDemo('rag',1)">2. 检索</button>
+          <button class="demo-tab" onclick="showDemo('rag',2)">3. 增强</button>
+          <button class="demo-tab" onclick="showDemo('rag',3)">4. 生成</button>
+        </div>
+
+        <div class="demo-panel active" data-group="rag">
+          <div style="padding:16px;background:var(--bg-card);border-radius:var(--radius-sm);border:1px solid var(--border);margin-bottom:12px;">
+            <div style="font-size:12px;color:var(--text-tertiary);margin-bottom:6px;">用户提问</div>
+            <div style="font-size:14px;font-weight:500;">「公司最新的退货政策是什么？」</div>
+          </div>
+          <div style="padding:16px;background:var(--red-light);border-radius:var(--radius-sm);border:1px solid #F7C1C1;">
+            <div style="font-size:12px;color:var(--red);font-weight:500;margin-bottom:4px;">⚠ 普通大模型的回答</div>
+            <div style="font-size:13px;color:#791F1F;">抱歉，我的训练数据截止到 2024 年，无法获取贵公司最新的退货政策。我可能会给出过时或编造的答案……</div>
+          </div>
+        </div>
+
+        <div class="demo-panel" data-group="rag">
+          <div style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;">系统通过语义相似度从知识库中匹配最相关的文档：</div>
+          <div class="doc-shelf" id="rag-docs">
+            <div class="doc-chip dim">📄 员工手册 v3.2</div>
+            <div class="doc-chip hit">📄 2025 退货政策 <span style="font-size:11px;opacity:.7">— 相似度 0.94</span></div>
+            <div class="doc-chip dim">📄 产品目录 Q1</div>
+            <div class="doc-chip hit">📄 客服 FAQ <span style="font-size:11px;opacity:.7">— 相似度 0.87</span></div>
+            <div class="doc-chip dim">📄 财务报表 2024</div>
+          </div>
+        </div>
+
+        <div class="demo-panel" data-group="rag">
+          <div class="flow-container">
+            <div class="flow-box fb-purple">用户问题</div>
+            <div class="flow-arrow">+</div>
+            <div class="flow-box fb-teal">检索到的文档</div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-box fb-amber">增强后的 Prompt</div>
+          </div>
+          <div style="padding:16px;background:var(--bg-card);border-radius:var(--radius-sm);border:1px solid var(--border);font-size:13px;line-height:1.8;">
+            <span style="color:var(--purple);font-weight:500;">系统指令：</span>请根据以下参考资料回答用户问题。<br><br>
+            <span style="color:var(--teal);font-weight:500;">参考资料：</span><br>
+            [文档1] 2025退货政策：自收货之日起30天内，凭购买凭证可无理由退货…<br>
+            [文档2] 客服FAQ：Q: 退货运费谁承担？A: 质量问题由公司承担…<br><br>
+            <span style="color:var(--amber);font-weight:500;">用户问题：</span>公司最新的退货政策是什么？
+          </div>
+        </div>
+
+        <div class="demo-panel" data-group="rag">
+          <div style="padding:16px;background:var(--teal-light);border-radius:var(--radius-sm);border:1px solid #5DCAA5;font-size:13px;line-height:1.8;color:var(--accent-dark);">
+            根据最新的 2025 退货政策：<br><br>
+            • 自收货之日起 <strong>30天内</strong> 可无理由退货，需凭购买凭证。<br>
+            • 电子产品退货需保持原包装完好。<br>
+            • 退货运费：质量问题由公司承担，非质量问题由消费者自行承担。<br><br>
+            <span style="font-size:12px;opacity:.7;">📎 来源：2025退货政策、客服FAQ</span>
+          </div>
+        </div>
+      </div>
+
+      <h3>RAG 与普通 LLM 对比</h3>
+      <div class="compare-grid">
+        <div class="compare-card">
+          <h4>❌ 无 RAG</h4>
+          <p>模型仅依赖训练数据，无法访问私有知识，可能产生幻觉，知识有截止日期。</p>
+          <div style="margin-top:10px;">
+            <span class="tag-pill pill-con">易产生幻觉</span>
+            <span class="tag-pill pill-con">知识过时</span>
+            <span class="tag-pill pill-con">无法个性化</span>
+          </div>
+        </div>
+        <div class="compare-card">
+          <h4>✅ 有 RAG</h4>
+          <p>模型先检索再回答，能引用真实来源，知识实时更新，答案可追溯验证。</p>
+          <div style="margin-top:10px;">
+            <span class="tag-pill pill-pro">有据可查</span>
+            <span class="tag-pill pill-pro">知识实时</span>
+            <span class="tag-pill pill-pro">减少幻觉</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>一句话总结：</strong>RAG 的核心思路就是三个字——<strong>查→拼→答</strong>。先从外部知识源中检索相关内容，再把这些内容塞进 Prompt 里，最后让模型基于真实材料来回答。
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- CHAPTER 2: OPTIMIZATION -->
+<!-- ============================================ -->
+<section id="optimization">
+  <div class="container">
+    <div class="content-section fade-in">
+      <div class="section-label">第二章</div>
+      <h2>优化策略全景</h2>
+      <div class="sub">检索前 · 检索中 · 检索后 — 八大核心策略</div>
+
+      <div class="demo-box">
+        <div class="demo-tabs">
+          <button class="demo-tab active" onclick="showDemo('opt',0)">检索前</button>
+          <button class="demo-tab" onclick="showDemo('opt',1)">检索中</button>
+          <button class="demo-tab" onclick="showDemo('opt',2)">检索后</button>
+        </div>
+
+        <!-- Pre -->
+        <div class="demo-panel active" data-group="opt">
+          <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">检索前是在"备好弹药"——构建高质量的向量空间。</p>
+
+          <div class="expand-card" onclick="togExp(this)">
+            <div class="expand-head"><h4>Chunking 文档分块</h4><span class="expand-arrow">›</span></div>
+            <div class="expand-body">把长文档切成合适大小的片段。固定长度切分最简单但粗暴；语义切分根据主题边界切割；递归切分先按段落、再按句子逐层细分。通常会加 10-20% 的重叠（overlap）来保留上下文连续性。</div>
+          </div>
+          <div class="expand-card" onclick="togExp(this)">
+            <div class="expand-head"><h4>Embedding 模型选择</h4><span class="expand-arrow">›</span></div>
+            <div class="expand-body">Embedding 模型决定了"语义空间"的质量。需要考虑维度大小（越高越精确但越慢）、多语言支持、领域适配性。可以在通用模型基础上用领域数据做 fine-tune。</div>
+          </div>
+          <div class="expand-card" onclick="togExp(this)">
+            <div class="expand-head"><h4>Metadata enrichment 元数据增强</h4><span class="expand-arrow">›</span></div>
+            <div class="expand-body">给每个 chunk 附加来源、日期、类别、作者等元数据，检索时先用元数据过滤，缩小搜索范围后再做向量匹配。</div>
+          </div>
+        </div>
+
+        <!-- Mid -->
+        <div class="demo-panel" data-group="opt">
+          <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">检索中是在"打得更准"——混合检索与查询改写。</p>
+
+          <div class="expand-card" onclick="togExp(this)">
+            <div class="expand-head"><h4>Hybrid search 混合检索</h4><span class="expand-arrow">›</span></div>
+            <div class="expand-body">
+              纯向量搜索擅长理解语义（"退货"≈"退换货"），但可能漏掉精确关键词匹配（如产品编号 SKU-1234）。纯关键词搜索（BM25）擅长精确匹配但不懂同义词。两者结合效果最好。
+              <div class="flow-container" style="padding:16px;margin-top:12px;">
+                <div class="flow-box fb-teal">向量检索</div>
+                <div class="flow-arrow">+</div>
+                <div class="flow-box fb-amber">BM25 关键词</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-box fb-coral">RRF 融合排序</div>
+              </div>
+            </div>
+          </div>
+          <div class="expand-card" onclick="togExp(this)">
+            <div class="expand-head"><h4>Query transformation 查询改写</h4><span class="expand-arrow">›</span></div>
+            <div class="expand-body">
+              <strong>Query expansion</strong> — 用 LLM 生成同义改写和多角度子问题。<br>
+              <strong>HyDE</strong> — 让 LLM 先"假设性回答"，再用假设答案去检索。<br>
+              <strong>Step-back prompting</strong> — 把具体问题抽象为更宽泛的问题。
+            </div>
+          </div>
+        </div>
+
+        <!-- Post -->
+        <div class="demo-panel" data-group="opt">
+          <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">检索后是在"精选精炼"——重排序与自适应策略。</p>
+
+          <div class="expand-card" onclick="togExp(this)">
+            <div class="expand-head"><h4>Re-ranking 重排序</h4><span class="expand-arrow">›</span></div>
+            <div class="expand-body">初次检索用轻量级 bi-encoder，速度快但精度有限。Re-ranker 用 cross-encoder 对 query 和每个候选文档做精细打分，把最相关的排到最前面。</div>
+          </div>
+          <div class="expand-card" onclick="togExp(this)">
+            <div class="expand-head"><h4>Context compression 上下文压缩</h4><span class="expand-arrow">›</span></div>
+            <div class="expand-body">检索到的 chunk 中可能只有一两句话真正相关。压缩器抽取每个 chunk 中与 query 相关的句子，减少 token 数量，降低成本且提升精度。</div>
+          </div>
+          <div class="expand-card" onclick="togExp(this)">
+            <div class="expand-head"><h4>Self-RAG / CRAG 自适应检索</h4><span class="expand-arrow">›</span></div>
+            <div class="expand-body">让模型自己判断是否需要检索、结果是否有用。Self-RAG 让模型在生成过程中动态决策；CRAG 在检索后加一步"质量评估"，不合格的结果会被丢弃或触发网络搜索补充。</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- CHAPTER 3: CHUNKING -->
+<!-- ============================================ -->
+<section id="chunking">
+  <div class="container">
+    <div class="content-section fade-in">
+      <div class="section-label">第三章</div>
+      <h2>Chunking 与 Overlap</h2>
+      <div class="sub">文档分块策略与重叠比例的场景适配</div>
+
+      <h3>为什么 Overlap 很重要</h3>
+      <p>Overlap 是相邻两个 chunk 之间的"缓冲带"。它防止一个完整的语义单元（一句话、一个论点、一段代码逻辑）被切断在边界上，导致两个 chunk 各拿到一半。</p>
+
+      <div class="demo-box">
+        <div class="demo-title">交互演示：调整 Chunk 与 Overlap</div>
+        <div class="slider-group">
+          <div class="slider-row">
+            <span class="slider-label">Chunk 大小</span>
+            <input type="range" min="60" max="300" value="150" step="10" id="ck-size" oninput="renderChunking()">
+            <span class="slider-val" id="ck-size-val">150</span>
+          </div>
+          <div class="slider-row">
+            <span class="slider-label">Overlap %</span>
+            <input type="range" min="0" max="50" value="15" step="5" id="ck-overlap" oninput="renderChunking()">
+            <span class="slider-val" id="ck-overlap-val">15%</span>
+          </div>
+        </div>
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);line-height:1.6;word-break:break-all;margin-bottom:12px;" id="ck-text"></div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;" id="ck-stats"></div>
+      </div>
+
+      <h3>不同场景的推荐参数</h3>
+      <div class="compare-grid">
+        <div class="compare-card">
+          <h4 style="font-size:14px;">客服 FAQ</h4>
+          <p>问答对简短独立。chunk=128, overlap=10%</p>
+          <span class="tag-pill pill-pro">小 chunk · 低重叠</span>
+        </div>
+        <div class="compare-card">
+          <h4 style="font-size:14px;">法律合同</h4>
+          <p>条款间有上下文依赖。chunk=256, overlap=20%</p>
+          <span class="tag-pill" style="background:var(--amber-light);color:#633806;">中 chunk · 中重叠</span>
+        </div>
+        <div class="compare-card">
+          <h4 style="font-size:14px;">技术文档</h4>
+          <p>代码示例和解释跨段落。chunk=400, overlap=15%</p>
+          <span class="tag-pill pill-con">大 chunk</span>
+        </div>
+        <div class="compare-card">
+          <h4 style="font-size:14px;">学术论文</h4>
+          <p>论点层层递进。chunk=200, overlap=25%</p>
+          <span class="tag-pill" style="background:var(--purple-light);color:var(--purple);">高重叠</span>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>经验法则：</strong>overlap 通常设在 chunk 大小的 10%–25% 之间。低于 10% 容易丢失边界上下文，高于 25% 则存储膨胀明显且收益递减。先从 15% 开始实验，根据检索召回率调整。
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- CHAPTER 4: HyDE -->
+<!-- ============================================ -->
+<section id="hyde">
+  <div class="container">
+    <div class="content-section fade-in">
+      <div class="section-label">第四章</div>
+      <h2>HyDE — 假设文档嵌入</h2>
+      <div class="sub">Hypothetical Document Embeddings：用假设性回答提升检索精度</div>
+
+      <h3>核心洞察</h3>
+      <p>用户的问题和知识库的文档"长得不像"，但 LLM 生成的假设回答和知识库文档"长得很像"。传统 RAG 是拿一句短问题去匹配一段长文档（"点 vs 区域"），HyDE 变成了"文档 vs 文档"的匹配，精度自然更高。</p>
+
+      <div class="demo-box">
+        <div class="demo-title">HyDE 四步工作流</div>
+        <div class="timeline">
+          <div class="tl-item">
+            <div class="tl-dot" style="border-color:var(--purple);"></div>
+            <h4>1. 用户提问</h4>
+            <p>"量子计算对密码学有什么影响？"</p>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot" style="border-color:var(--teal);"></div>
+            <h4>2. LLM 生成假设性文档</h4>
+            <p>"量子计算机利用 Shor 算法可以在多项式时间内分解大整数，这将使 RSA 和 ECC 面临根本性威胁。后量子密码学正在研究基于格的密码……"</p>
+            <div style="font-size:12px;color:var(--amber);margin-top:4px;">⚠ 这段回答可能不准确，但我们只需要它的"语义方向"</div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot" style="border-color:var(--amber);"></div>
+            <h4>3. 用假设文档的向量去检索</h4>
+            <p>假设文档和真实文档形态相似——都是长段落、都包含专业术语。"文档 vs 文档" 的匹配更精确。</p>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot" style="border-color:var(--coral);"></div>
+            <h4>4. 用真实文档生成最终回答</h4>
+            <p>丢弃假设文档 → 用检索到的真实文档 + 原始问题 → LLM 生成有据可查的回答。</p>
+          </div>
+        </div>
+      </div>
+
+      <h3>类比</h3>
+      <p>想在图书馆找一本书。传统方法是拿着书名去搜索；HyDE 是先自己写一段"这本书大概讲什么"，然后拿这段描述去匹配——因为你的描述和真实书的摘要更像。</p>
+
+      <h3>优缺点</h3>
+      <div class="compare-grid">
+        <div class="compare-card">
+          <h4 style="color:var(--teal);">优点</h4>
+          <ul style="margin-left:0;">
+            <li>零训练成本，即插即用</li>
+            <li>显著提升语义模糊查询的召回率</li>
+            <li>跨语言效果好</li>
+            <li>与任何 embedding 模型兼容</li>
+          </ul>
+        </div>
+        <div class="compare-card">
+          <h4 style="color:var(--red);">缺点</h4>
+          <ul style="margin-left:0;">
+            <li>多一次 LLM 调用，延迟 +1-3 秒</li>
+            <li>LLM 生成方向偏离时会"带歪"检索</li>
+            <li>对精确关键词查询无优势</li>
+            <li>API 成本翻倍</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>适用场景：</strong>探索性问题、概念性查询、跨语言检索、用户提问模糊宽泛的场景。<br>
+        <strong>不适合：</strong>精确查找（订单号、SKU）、低延迟要求、LLM 对领域完全陌生的场景。
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- CHAPTER 5: SELF-RAG & CRAG -->
+<!-- ============================================ -->
+<section id="self-rag">
+  <div class="container">
+    <div class="content-section fade-in">
+      <div class="section-label">第五章</div>
+      <h2>Self-RAG & CRAG</h2>
+      <div class="sub">从固定流水线到自适应智能体的进化</div>
+
+      <div class="demo-box">
+        <div class="demo-tabs">
+          <button class="demo-tab active" onclick="showDemo('sr',0)">Self-RAG</button>
+          <button class="demo-tab" onclick="showDemo('sr',1)">CRAG</button>
+        </div>
+
+        <div class="demo-panel active" data-group="sr">
+          <h3 style="font-size:15px;margin-bottom:12px;">核心机制：4 种反思 Token</h3>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;">
+            <span class="token-badge tk-r">Retrieve</span> <span style="font-size:12px;color:var(--text-secondary);line-height:26px;">需要检索吗？</span>
+            <span class="token-badge tk-rel">IsRel</span> <span style="font-size:12px;color:var(--text-secondary);line-height:26px;">文档相关吗？</span>
+            <span class="token-badge tk-s">IsSup</span> <span style="font-size:12px;color:var(--text-secondary);line-height:26px;">生成有依据吗？</span>
+            <span class="token-badge tk-u">IsUse</span> <span style="font-size:12px;color:var(--text-secondary);line-height:26px;">回答有用吗？</span>
+          </div>
+
+          <div class="timeline">
+            <div class="tl-item"><div class="tl-dot" style="border-color:var(--purple);"></div>
+              <h4>接收问题 → 判断是否检索</h4>
+              <p>模型输出 <span class="token-badge tk-r">Retrieve=yes/no</span>，如果 no 则直接用自身知识回答。</p></div>
+            <div class="tl-item"><div class="tl-dot" style="border-color:var(--teal);"></div>
+              <h4>并行生成 + 三维评分</h4>
+              <p>对每个检索文档并行生成候选回答，同时输出 IsRel / IsSup / IsUse 三个维度的评分。</p></div>
+            <div class="tl-item"><div class="tl-dot" style="border-color:var(--amber);"></div>
+              <h4>选择最优候选</h4>
+              <p>综合三个评分，用 beam search 选出得分最高的候选。所有候选分数低时可重新检索。</p></div>
+          </div>
+
+          <div class="expand-card" onclick="togExp(this)">
+            <div class="expand-head"><h4>训练方法详解</h4><span class="expand-arrow">›</span></div>
+            <div class="expand-body">
+              <strong>第 1 步：</strong>用 GPT-4 等教师模型对 15-20K 条数据标注四种反思 token 的值。<br>
+              <strong>第 2 步：</strong>把反思 token 作为特殊 token 加入词汇表，对 Llama 等基座模型做全量 SFT，用标准 next-token-prediction loss。<br>
+              <strong>第 3 步：</strong>推理时可调反思 token 权重来控制行为——想要更多引用就提高 IsSup 权重。
+            </div>
+          </div>
+        </div>
+
+        <div class="demo-panel" data-group="sr">
+          <h3 style="font-size:15px;margin-bottom:12px;">核心机制：检索评估器 + 三条路径</h3>
+
+          <div class="timeline">
+            <div class="tl-item"><div class="tl-dot" style="border-color:var(--purple);"></div>
+              <h4>常规检索</h4><p>和普通 RAG 一样，先检索 Top-K 文档。</p></div>
+            <div class="tl-item"><div class="tl-dot" style="border-color:var(--amber);"></div>
+              <h4>评估器打分 → 分三档</h4><p>T5-large 微调的评估器对每个结果打分。</p></div>
+            <div class="tl-item"><div class="tl-dot" style="border-color:var(--teal);"></div>
+              <h4 style="color:var(--teal);">Correct → 精炼后直接使用</h4>
+              <p>至少有一个文档高度相关，用知识精炼器提取关键信息。</p></div>
+            <div class="tl-item"><div class="tl-dot" style="border-color:var(--red);"></div>
+              <h4 style="color:var(--red);">Incorrect → 丢弃 + Web Search</h4>
+              <p>所有文档不相关，触发网络搜索兜底。</p></div>
+            <div class="tl-item"><div class="tl-dot" style="border-color:var(--amber);"></div>
+              <h4 style="color:var(--amber);">Ambiguous → 两路合并</h4>
+              <p>保留精炼后的检索结果和搜索结果，合并送入 LLM。</p></div>
+          </div>
+
+          <div class="expand-card" onclick="togExp(this)">
+            <div class="expand-head"><h4>训练与集成方式</h4><span class="expand-arrow">›</span></div>
+            <div class="expand-body">
+              <strong>评估器：</strong>基于 T5-large 微调，训练数据从 QA 数据集中标注 correct/incorrect/ambiguous，几千到一万条即可。<br>
+              <strong>精炼器：</strong>无需训练，把文档分解成细粒度"知识条"，评估器逐条打分只保留高分条目。<br>
+              <strong>集成：</strong>即插即用中间层，不修改 LLM，任何 RAG 系统都可直接加入 CRAG 模块。
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h3>Self-RAG vs CRAG 对比</h3>
+      <table class="vs-table">
+        <tr><th style="width:22%;">维度</th><th style="width:39%;">Self-RAG</th><th style="width:39%;">CRAG</th></tr>
+        <tr><td>核心思路</td><td>模型内化反思能力</td><td>外挂质检中间层</td></tr>
+        <tr><td>是否改 LLM</td><td>是，需要微调基座</td><td>否，LLM 不动</td></tr>
+        <tr><td>训练成本</td><td>较高：全量 SFT</td><td>较低：微调小型评估器</td></tr>
+        <tr><td>决策粒度</td><td>token 级别</td><td>query 级别</td></tr>
+        <tr><td>纠错能力</td><td>并行候选 + 评分选择</td><td>web search 兜底</td></tr>
+        <tr><td>适用场景</td><td>高质量要求（研究、写作）</td><td>快速集成的生产系统</td></tr>
+      </table>
+
+      <div class="callout">
+        <strong>简单记忆：</strong>Self-RAG 改的是"大脑"（LLM 本身），CRAG 改的是"流水线"（RAG 管道）。前者上限更高但成本也高，后者务实易落地。两者也可以组合使用。
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- CHAPTER 6: TECH STACK -->
+<!-- ============================================ -->
+<section id="tech-stack">
+  <div class="container">
+    <div class="content-section fade-in">
+      <div class="section-label">第六章</div>
+      <h2>技术栈与实战</h2>
+      <div class="sub">从零搭建 RAG 系统的框架选型与架构建议</div>
+
+      <h3>核心组件选型</h3>
+      <div class="stack-grid">
+        <div class="stack-card">
+          <div class="sc-cat">向量数据库</div>
+          <h4>Milvus / Qdrant / Pinecone</h4>
+          <p>Milvus 开源高性能，Qdrant Rust 实现速度快，Pinecone 全托管免运维。小规模可用 Chroma 或 pgvector。</p>
+        </div>
+        <div class="stack-card">
+          <div class="sc-cat">Embedding 模型</div>
+          <h4>BGE / E5 / OpenAI</h4>
+          <p>开源首选 BGE-M3（多语言）或 E5-Mistral；商用首选 OpenAI text-embedding-3 或 Cohere embed-v3。</p>
+        </div>
+        <div class="stack-card">
+          <div class="sc-cat">编排框架</div>
+          <h4>LangChain / LlamaIndex</h4>
+          <p>LangChain 生态大适合通用场景；LlamaIndex 专注 RAG 更深入；轻量级可用 Haystack。</p>
+        </div>
+        <div class="stack-card">
+          <div class="sc-cat">Re-ranking</div>
+          <h4>Cohere Rerank / BGE-Reranker</h4>
+          <p>商用首选 Cohere Rerank API；开源用 bge-reranker-v2 或 cross-encoder/ms-marco。</p>
+        </div>
+        <div class="stack-card">
+          <div class="sc-cat">LLM</div>
+          <h4>Claude / GPT-4 / 开源</h4>
+          <p>商用首选 Claude 或 GPT-4；开源用 Llama 3、Qwen 2.5、Mistral。按成本和质量需求选择。</p>
+        </div>
+        <div class="stack-card">
+          <div class="sc-cat">文档处理</div>
+          <h4>Unstructured / Docling</h4>
+          <p>Unstructured 支持 PDF、Word、HTML 等多格式解析；Docling 专注高质量文档理解。</p>
+        </div>
+      </div>
+
+      <h3>推荐架构</h3>
+      <div class="flow-container">
+        <div class="flow-box fb-purple">文档解析</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box fb-teal">Chunking + Embedding</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box fb-amber">向量数据库</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box fb-coral">检索 + Re-rank</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box fb-teal">LLM 生成</div>
+      </div>
+
+      <h3>分阶段实施建议</h3>
+      <div class="timeline">
+        <div class="tl-item">
+          <div class="tl-dot" style="border-color:var(--teal);"></div>
+          <h4>第一阶段：MVP（1-2 周）</h4>
+          <p>Chroma/pgvector + LangChain + OpenAI Embedding + Claude/GPT-4。固定 chunk 大小，无 re-ranking。先跑通端到端流程。</p>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot" style="border-color:var(--amber);"></div>
+          <h4>第二阶段：优化（2-4 周）</h4>
+          <p>引入混合检索（BM25 + 向量）、添加 re-ranking、优化 chunking 策略（语义切分 + 合理 overlap）、添加元数据过滤。</p>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot" style="border-color:var(--coral);"></div>
+          <h4>第三阶段：进阶（4-8 周）</h4>
+          <p>实现 query 改写（HyDE/多路查询）、引入 CRAG 评估模块、添加用户反馈循环、构建评估体系（Ragas/TruLens）。</p>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot" style="border-color:var(--purple);"></div>
+          <h4>第四阶段：生产级（8+ 周）</h4>
+          <p>迁移到生产级向量数据库（Milvus/Qdrant）、权限控制、日志监控、A/B 测试框架、自动化数据更新流水线。</p>
+        </div>
+      </div>
+
+      <h3>评估体系</h3>
+      <div class="compare-grid">
+        <div class="compare-card">
+          <h4 style="font-size:14px;">检索质量指标</h4>
+          <ul style="margin-left:0;font-size:13px;">
+            <li><strong>Recall@K</strong> — Top-K 中包含正确文档的比例</li>
+            <li><strong>MRR</strong> — 正确文档排名的倒数均值</li>
+            <li><strong>NDCG</strong> — 考虑排名位置的归一化增益</li>
+          </ul>
+        </div>
+        <div class="compare-card">
+          <h4 style="font-size:14px;">生成质量指标</h4>
+          <ul style="margin-left:0;font-size:13px;">
+            <li><strong>Faithfulness</strong> — 回答是否忠于参考文档</li>
+            <li><strong>Relevance</strong> — 回答是否切题</li>
+            <li><strong>Harmfulness</strong> — 是否包含有害信息</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>最重要的建议：</strong>不要试图一步到位。先用最简单的方案跑通端到端，然后用真实查询做评估，找到瓶颈在哪，再有针对性地优化。RAG 系统的好坏 80% 取决于数据质量和 chunking 策略，而非框架选型。
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <p><a href="/" style="color:var(--teal);text-decoration:none;font-weight:500;">SkillNav</a> · RAG 深度指南 · <a href="/learn" style="color:inherit;text-decoration:underline;">更多概念 →</a></p>
+</footer>
+
+<script>
+/* === Demo Tabs === */
+function showDemo(group, idx) {
+  const panels = document.querySelectorAll(`.demo-panel[data-group="${group}"]`);
+  const tabs = panels[0].closest('.demo-box').querySelectorAll('.demo-tab');
+  panels.forEach((p, i) => p.classList.toggle('active', i === idx));
+  tabs.forEach((t, i) => t.classList.toggle('active', i === idx));
+}
+
+/* === Expand Cards === */
+function togExp(el) { el.classList.toggle('open'); }
+
+/* === Chunking Demo === */
+const CK_DOC = "用户在下单后30天内可以申请退货。退货时商品需保持原始包装完好且不影响二次销售。电子产品类目需要额外提供购买凭证和产品序列号。退货运费方面如因质量问题由公司承担运费否则由消费者自行承担。审核通过后退款将在3至5个工作日内原路退回。";
+function renderChunking() {
+  const cs = +document.getElementById('ck-size').value;
+  const op = +document.getElementById('ck-overlap').value;
+  document.getElementById('ck-size-val').textContent = cs;
+  document.getElementById('ck-overlap-val').textContent = op + '%';
+  const olChars = Math.round(cs * op / 100);
+  const step = Math.max(cs - olChars, 1);
+  const chunks = [];
+  for (let i = 0; i < CK_DOC.length; i += step) {
+    chunks.push({ s: i, e: Math.min(i + cs, CK_DOC.length) });
+    if (i + cs >= CK_DOC.length) break;
+  }
+  let html = '';
+  let pos = 0;
+  const colors = ['var(--purple-light)', 'var(--teal-light)', 'var(--amber-light)', 'var(--coral-light)'];
+  const textEl = document.getElementById('ck-text');
+  // Simple text display
+  textEl.textContent = CK_DOC;
+
+  const totalChars = chunks.reduce((s, c) => s + c.e - c.s, 0);
+  const bloat = Math.round((totalChars / CK_DOC.length - 1) * 100);
+  document.getElementById('ck-stats').innerHTML = `
+    <div style="flex:1;min-width:80px;padding:10px 14px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);">
+      <div style="font-size:11px;color:var(--text-tertiary);">Chunk 数量</div>
+      <div style="font-size:20px;font-weight:700;">${chunks.length}</div>
+    </div>
+    <div style="flex:1;min-width:80px;padding:10px 14px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);">
+      <div style="font-size:11px;color:var(--text-tertiary);">每段约 tokens</div>
+      <div style="font-size:20px;font-weight:700;">~${Math.round(cs * 0.6)}</div>
+    </div>
+    <div style="flex:1;min-width:80px;padding:10px 14px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);">
+      <div style="font-size:11px;color:var(--text-tertiary);">重叠 tokens</div>
+      <div style="font-size:20px;font-weight:700;">~${Math.round(olChars * 0.6)}</div>
+    </div>
+    <div style="flex:1;min-width:80px;padding:10px 14px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);">
+      <div style="font-size:11px;color:var(--text-tertiary);">存储膨胀</div>
+      <div style="font-size:20px;font-weight:700;">+${bloat}%</div>
+    </div>`;
+}
+renderChunking();
+
+/* === Scroll Animations === */
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+/* === Active Nav Link === */
+const sections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('.nav-links a');
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(s => {
+    if (window.scrollY >= s.offsetTop - 100) current = s.id;
+  });
+  navLinks.forEach(a => {
+    a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+  });
+});
+</script>
+
+</body>
+</html>
