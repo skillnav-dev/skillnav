@@ -24,6 +24,8 @@ SkillNav (skillnav.dev) is an editorially curated directory of AI agent tools, f
 - [Articles](/articles): AI agent news and analysis, compiled in Chinese
 - [GitHub Projects](/github): 50 curated open-source AI projects
 - [Weekly Digest](/weekly): Weekly roundup of AI agent ecosystem
+- [Learning Center](/learn): Deep explainers on AI agent concepts (Agent, MCP, RAG, Tool Use, etc.)
+- [Guides](/guides): In-depth technical series on agentic engineering
 
 ## Key Topics
 
@@ -43,8 +45,11 @@ SkillNav (skillnav.dev) is an editorially curated directory of AI agent tools, f
 
 - Skill detail: /skills/{slug}
 - Skill detail (English): /en/skills/{slug}
+- MCP detail: /mcp/{slug}
+- MCP detail (English): /en/mcp/{slug}
 - Article detail: /articles/{slug}
-- MCP directory: /mcp
+- Learning Center concept: /learn/what-is-{slug}
+- Guide series: /guides/{slug}
 - Sitemap: /sitemap.xml
 
 ## Contact

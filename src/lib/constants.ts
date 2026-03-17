@@ -4,7 +4,7 @@ export const siteConfig = {
   description:
     "中文开发者的 AI 智能体工具站 — Skills · MCP · 实战资讯，发现最好用的 AI Agent 工具。",
   url: "https://skillnav.dev",
-  ogImage: "https://skillnav.dev/og.png",
+  ogImage: "https://skillnav.dev/opengraph-image",
   links: {
     github: "https://github.com/skillnav-dev",
     twitter: "https://x.com/skillnav_dev",

@@ -31,6 +31,28 @@ export default function robots(): MetadataRoute.Robots {
         userAgent: "Google-Extended",
         allow: "/",
       },
+      {
+        userAgent: "Bytespider",
+        allow: "/",
+        disallow: ["/admin", "/api"],
+      },
+      {
+        userAgent: "CCBot",
+        allow: "/",
+        disallow: ["/admin", "/api"],
+      },
+      {
+        userAgent: "Applebot-Extended",
+        allow: "/",
+      },
+      {
+        userAgent: "meta-externalagent",
+        allow: "/",
+      },
+      {
+        userAgent: "cohere-ai",
+        allow: "/",
+      },
     ],
     sitemap: `${siteConfig.url}/sitemap.xml`,
   };

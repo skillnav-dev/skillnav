@@ -7,6 +7,7 @@ import {
   getSitemapWeeklies,
 } from "@/lib/data";
 import { LEARN_CONCEPTS } from "@/data/learn";
+import { SERIES_META } from "@/data/series";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [skills, articles, mcpServers, weeklies] = await Promise.all([
@@ -55,6 +56,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "monthly" as const,
       priority: 0.8,
     })),
+    {
+      url: `${siteConfig.url}/guides`,
+      changeFrequency: "weekly",
+      priority: 0.7,
+    },
+    ...Object.entries(SERIES_META)
+      .filter(([, meta]) => meta.isGuide)
+      .map(([slug]) => ({
+        url: `${siteConfig.url}/guides/${slug}`,
+        changeFrequency: "weekly" as const,
+        priority: 0.7,
+      })),
+    {
+      url: `${siteConfig.url}/github`,
+      changeFrequency: "weekly",
+      priority: 0.6,
+    },
     {
       url: `${siteConfig.url}/about`,
       changeFrequency: "monthly",

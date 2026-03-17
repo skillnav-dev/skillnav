@@ -232,6 +232,9 @@ export async function generateMetadata({
   return {
     title: concept.seoTitle,
     description: concept.seoDescription,
+    alternates: {
+      canonical: `${siteConfig.url}/learn/what-is-${concept.slug}`,
+    },
     openGraph: {
       title: concept.seoTitle,
       description: concept.seoDescription,
