@@ -74,6 +74,7 @@
 | [content-source-audit](research/2026-03-15-content-source-audit.md) | 2026-03-15 | 内容源 |
 | [glossary-competitive-research](research/2026-03-17-glossary-competitive-research.md) | 2026-03-17 | 术语/学习中心 |
 | [content-strategy-review](research/2026-03-17-content-strategy-review.md) | 2026-03-17 | 内容战略/竞品/市场 |
+| [ui-ux-audit-report](research/2026-03-17-ui-ux-audit-report.md) | 2026-03-17 | UI/UX 审计 + 竞品 + 设计标杆 |
 
 ### Troubleshooting（踩坑知识库）
 
