@@ -76,10 +76,12 @@ function formatDate(date) {
  * @returns {Promise<Array>}
  */
 async function queryNewSkills(supabase, monday, sunday) {
+  // Exclude curated/manual sources — they are batch-imported, not truly "new this week"
   const { data, error } = await supabase
     .from("skills")
     .select("slug, name, name_zh, description_zh, stars")
     .eq("status", "published")
+    .not("source", "in", '("curated","manual")')
     .gte("discovered_at", monday.toISOString())
     .lte("discovered_at", sunday.toISOString())
     .order("stars", { ascending: false })
@@ -117,10 +119,12 @@ async function queryTrendingSkills(supabase) {
  * @returns {Promise<Array>}
  */
 async function queryNewMcp(supabase, monday, sunday) {
+  // Exclude manual source — batch-imported official servers are not truly "new this week"
   const { data, error } = await supabase
     .from("mcp_servers")
     .select("slug, name, name_zh, description_zh, stars")
     .eq("status", "published")
+    .neq("source", "manual")
     .gte("discovered_at", monday.toISOString())
     .lte("discovered_at", sunday.toISOString())
     .order("stars", { ascending: false })
@@ -162,13 +166,16 @@ async function queryFreshnessChanges(supabase) {
   const stale = [];
   const archived = [];
 
-  // Stale skills
+  // Only report A-tier and above to reduce noise from low-quality entries
+
+  // Stale skills (A+)
   const { data: staleSkills } = await supabase
     .from("skills")
     .select("slug, name, name_zh, freshness")
     .eq("freshness", "stale")
     .eq("status", "published")
-    .limit(10);
+    .in("quality_tier", ["S", "A"])
+    .limit(5);
 
   if (staleSkills?.length) {
     for (const s of staleSkills) {
@@ -176,13 +183,14 @@ async function queryFreshnessChanges(supabase) {
     }
   }
 
-  // Stale MCP
+  // Stale MCP (A+)
   const { data: staleMcp } = await supabase
     .from("mcp_servers")
     .select("slug, name, name_zh, freshness")
     .eq("freshness", "stale")
     .eq("status", "published")
-    .limit(10);
+    .in("quality_tier", ["S", "A"])
+    .limit(5);
 
   if (staleMcp?.length) {
     for (const s of staleMcp) {
@@ -190,12 +198,13 @@ async function queryFreshnessChanges(supabase) {
     }
   }
 
-  // Archived skills
+  // Archived skills (A+)
   const { data: archivedSkills } = await supabase
     .from("skills")
     .select("slug, name, name_zh, freshness")
     .eq("freshness", "archived")
-    .limit(10);
+    .in("quality_tier", ["S", "A"])
+    .limit(5);
 
   if (archivedSkills?.length) {
     for (const s of archivedSkills) {
@@ -203,12 +212,13 @@ async function queryFreshnessChanges(supabase) {
     }
   }
 
-  // Archived MCP
+  // Archived MCP (A+)
   const { data: archivedMcp } = await supabase
     .from("mcp_servers")
     .select("slug, name, name_zh, freshness")
     .eq("freshness", "archived")
-    .limit(10);
+    .in("quality_tier", ["S", "A"])
+    .limit(5);
 
   if (archivedMcp?.length) {
     for (const s of archivedMcp) {

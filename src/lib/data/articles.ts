@@ -407,6 +407,64 @@ export async function getAllSeriesArticles(series: string): Promise<Article[]> {
 }
 
 /**
+ * Get all weekly slugs (for generateStaticParams).
+ */
+export async function getAllWeeklySlugs(): Promise<string[]> {
+  if (!isSupabaseConfigured()) {
+    const { mockArticles } = await import("@/data/mock-articles");
+    return mockArticles.filter((a) => a.series === "weekly").map((a) => a.slug);
+  }
+
+  const { createStaticClient } = await import("@/lib/supabase/static");
+  const supabase = createStaticClient();
+
+  const { data, error } = (await supabase
+    .from("articles")
+    .select("slug")
+    .eq("status", "published")
+    .eq("series", "weekly")
+    .order("series_number", { ascending: false })) as {
+    data: { slug: string }[] | null;
+    error: unknown;
+  };
+
+  if (error) throw error;
+  return (data ?? []).map((r) => r.slug);
+}
+
+/**
+ * Get weekly article slugs with published_at for sitemap.
+ */
+export async function getSitemapWeeklies(): Promise<
+  { slug: string; updatedAt: string }[]
+> {
+  if (!isSupabaseConfigured()) {
+    const { mockArticles } = await import("@/data/mock-articles");
+    return mockArticles
+      .filter((a) => a.series === "weekly")
+      .map((a) => ({ slug: a.slug, updatedAt: a.publishedAt }));
+  }
+
+  const { createStaticClient } = await import("@/lib/supabase/static");
+  const supabase = createStaticClient();
+
+  const { data, error } = (await supabase
+    .from("articles")
+    .select("slug, published_at")
+    .eq("status", "published")
+    .eq("series", "weekly")) as {
+    data: { slug: string; published_at: string }[] | null;
+    error: unknown;
+  };
+
+  if (error) throw error;
+  return (data ?? []).map((r) => ({
+    slug: r.slug,
+    updatedAt: r.published_at,
+  }));
+}
+
+/**
  * Get published article slugs with updated_at for sitemap.
  */
 export async function getSitemapArticles(): Promise<

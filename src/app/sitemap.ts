@@ -4,14 +4,16 @@ import {
   getSitemapSkills,
   getSitemapArticles,
   getSitemapMcpServers,
+  getSitemapWeeklies,
 } from "@/lib/data";
 import { LEARN_CONCEPTS } from "@/data/learn";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [skills, articles, mcpServers] = await Promise.all([
+  const [skills, articles, mcpServers, weeklies] = await Promise.all([
     getSitemapSkills(),
     getSitemapArticles(),
     getSitemapMcpServers(),
+    getSitemapWeeklies(),
   ]);
 
   const staticPages: MetadataRoute.Sitemap = [
@@ -112,11 +114,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
+  const weeklyPages: MetadataRoute.Sitemap = weeklies.map((w) => ({
+    url: `${siteConfig.url}/weekly/${w.slug}`,
+    lastModified: new Date(w.updatedAt),
+    changeFrequency: "weekly",
+    priority: 0.7,
+  }));
+
   return [
     ...staticPages,
     ...enStaticPages,
     ...skillPages,
     ...mcpPages,
     ...articlePages,
+    ...weeklyPages,
   ];
 }

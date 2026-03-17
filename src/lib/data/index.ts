@@ -33,5 +33,7 @@ export {
   getWeeklyBySlug,
   getSeriesArticles,
   getAllArticleSlugs,
+  getAllWeeklySlugs,
   getSitemapArticles,
+  getSitemapWeeklies,
 } from "./articles";
