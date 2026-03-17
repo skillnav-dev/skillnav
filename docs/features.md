@@ -15,7 +15,7 @@
 | MCP-03 | MCP 自动分级治理 | shipped | 基于星数/工具数/验证状态 |
 | MCP-04 | S-tier 编辑精选 | shipped | 从 A-tier 中精选 + 编辑评论 |
 | WKL-01 | 周刊生成 + 页面 | shipped | 三支柱生成 + DB 数据层 + 列表/详情页 + 首期已发布 |
-| LEARN-01 | 学习中心索引 + 概念页 | wip | 3 概念页上线（Agent/MCP/RAG），P1 4/5 |
+| LEARN-01 | 学习中心索引 + 概念页 | wip | 3 概念页上线（Agent/MCP/RAG），P2 选题完成（+9 概念元数据入库） |
 | GUIDE-01 | 专栏系列支持 | wip | series 标签 + 导航组件 + backfill 脚本，落地页待建 |
 | GH-01 | GitHub 开源导航页 | shipped | AI Agent 生态项目导航 |
 

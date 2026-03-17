@@ -1,6 +1,6 @@
 # SkillNav 学习中心方案
 
-> 状态：进行中 | 审批：2026-03-17 | Progress: 5/5 (P1 done, P2 pending)
+> 状态：进行中 | 审批：2026-03-17 | Progress: 6/9 (P1 done, P2 in progress)
 
 ---
 
@@ -285,11 +285,13 @@ P1 核心验证点：搜索引擎收录速度 + 自然流量表现。
 
 ### P2：扩展（4 周）
 
-- 补齐剩余 9-12 个概念页
-- 实现文章自动关联（基于 tags/keywords 匹配）
-- 实现 MCP/Skills 自动关联
-- 索引页搜索功能
-- 英文版（`/en/learn/`）
+- [x] P2 选题确认（9 个概念：tool-use, agentic-engineering, context-window, prompt-engineering, guardrails, human-in-the-loop, hallucination, llm, grounding）
+- [x] 9 个概念元数据入库（`src/data/learn.ts`）
+- [ ] 9 个概念内容页编写（每个需 content TS + visual inserts）
+- [ ] 实现文章自动关联（基于 tags/keywords 匹配）
+- [ ] 实现 MCP/Skills 自动关联
+- [ ] 索引页搜索功能
+- [ ] 英文版（`/en/learn/`）
 
 ### P3：增长（持续）
 
