@@ -162,6 +162,36 @@ export function FAQJsonLd({
   );
 }
 
+export function DefinedTermJsonLd({
+  name,
+  zh,
+  description,
+  url,
+}: {
+  name: string;
+  zh: string;
+  description: string;
+  url: string;
+}) {
+  return (
+    <JsonLd
+      data={{
+        "@context": "https://schema.org",
+        "@type": "DefinedTerm",
+        name,
+        alternateName: zh,
+        description,
+        url,
+        inDefinedTermSet: {
+          "@type": "DefinedTermSet",
+          name: "SkillNav AI Agent 工程术语",
+          url: `${siteConfig.url}/learn`,
+        },
+      }}
+    />
+  );
+}
+
 export function BreadcrumbJsonLd({
   items,
 }: {

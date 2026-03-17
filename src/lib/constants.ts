@@ -17,6 +17,7 @@ export const navItems = [
   { title: "周刊", href: "/weekly" },
   { title: "专栏", href: "/guides" },
   { title: "资讯", href: "/articles" },
+  { title: "学习", href: "/learn" },
   { title: "关于", href: "/about" },
 ] as const;
 
@@ -28,6 +29,7 @@ export const footerLinks = {
       { title: "MCP 导航", href: "/mcp" },
       { title: "专栏", href: "/guides" },
       { title: "资讯", href: "/articles" },
+      { title: "学习中心", href: "/learn" },
     ],
   },
   community: {
