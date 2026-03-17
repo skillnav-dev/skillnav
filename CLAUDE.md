@@ -65,6 +65,7 @@ src/
 │   ├── articles/               # Article list + [slug] detail (SSG)
 │   ├── skills/                 # Skills listing + [slug] detail
 │   ├── mcp/                    # MCP Server 精选导航 (static curated data)
+│   ├── learn/                  # Learning Center: /learn index + /learn/what-is-[slug] detail
 │   ├── layout.tsx              # Root layout (zh lang, fonts, Header/Footer)
 │   ├── globals.css             # Brand color variables (deep indigo theme)
 │   ├── robots.ts / sitemap.ts  # SEO
@@ -73,12 +74,14 @@ src/
 │   ├── home/                   # Homepage sections (hero, stats, featured, articles, newsletter)
 │   ├── articles/               # Article card, meta, content, series-nav
 │   ├── skills/                 # Skill card
+│   ├── learn/                  # Concept card, related concepts
 │   ├── layout/                 # Header, footer, mobile nav, theme toggle
 │   ├── shared/                 # Section header, security badge, JSON-LD
 │   └── ui/                     # shadcn/ui primitives
 ├── data/                       # Mock data (skills, articles) + type definitions
 │   ├── types.ts                # Skill / Article interfaces
 │   ├── series.ts               # Series metadata (chapters, authors) — static config
+│   ├── learn.ts                # Learning Center concept metadata (slug, term, seo)
 │   ├── mock-skills.ts          # 10 mock Skills
 │   └── mock-articles.ts        # 7 mock articles with full Chinese content
 └── lib/                        # Utilities
