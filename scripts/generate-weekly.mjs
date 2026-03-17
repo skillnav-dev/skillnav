@@ -229,10 +229,13 @@ async function queryFreshnessChanges(supabase) {
   return { stale, archived };
 }
 
-// ── LLM Editor's Note ───────────────────────────────────────────────
+// ── LLM Editorial Plan ──────────────────────────────────────────────
 
-async function generateEditorsNote(context, weekNumber) {
-  // Dynamic import to avoid requiring API key when --no-llm
+/**
+ * Generate editorial plan via LLM: editor's note + topic groups + must-reads.
+ * Returns { editorsNote: string, topicGroups: Array<{topic, slugs}>, mustReads: string[] }
+ */
+async function generateEditorialPlan(context, weekNumber) {
   const { callLLM } = await import("./lib/llm.mjs");
 
   const { articles, newSkills, newMcp, trendingSkills, trendingMcp } = context;
@@ -242,21 +245,21 @@ async function generateEditorsNote(context, weekNumber) {
     .map(([source, items]) => `${SOURCE_LABELS[source] || source}: ${items.length} articles`)
     .join(", ");
 
-  const topTitles = articles
-    .slice(0, 8)
-    .map((a) => `- ${a.title_zh || a.title}`)
+  // Build article list with slugs for LLM to reference
+  const articleList = articles
+    .map((a) => `- [${a.slug}] ${a.title_zh || a.title} (score: ${a.relevance_score || 0})`)
     .join("\n");
 
-  // Build tools context for LLM
+  // Build tools context
   const toolsContext = [];
   if (newSkills.length) {
     toolsContext.push(
-      `New Skills this week (${newSkills.length}): ${newSkills.map((s) => s.name).join(", ")}`
+      `New Skills (${newSkills.length}): ${newSkills.map((s) => s.name).join(", ")}`
     );
   }
   if (newMcp.length) {
     toolsContext.push(
-      `New MCP Servers this week (${newMcp.length}): ${newMcp.map((s) => s.name).join(", ")}`
+      `New MCP Servers (${newMcp.length}): ${newMcp.map((s) => s.name).join(", ")}`
     );
   }
   if (trendingSkills.length) {
@@ -271,44 +274,98 @@ async function generateEditorsNote(context, weekNumber) {
   }
 
   const toolsSummary = toolsContext.length
-    ? `\n\nTools ecosystem updates:\n${toolsContext.join("\n")}`
+    ? `\nTools ecosystem:\n${toolsContext.join("\n")}`
     : "";
 
-  const systemPrompt = `You are the editor of SkillNav Weekly, a Chinese-language newsletter about AI Agent tools, Skills, and MCP ecosystem. Write in natural, professional Chinese.`;
+  const systemPrompt = `You are the editor-in-chief of SkillNav Weekly, a Chinese-language newsletter about AI Agent tools, Skills, and MCP ecosystem. You make editorial decisions: which articles are must-reads, and how to group them by topic for readers.`;
 
-  const userPrompt = `Write a brief editor's note (编者按) for SkillNav Weekly #${weekNumber}. 1-2 paragraphs in Chinese.
+  const userPrompt = `Plan SkillNav Weekly #${weekNumber}. We have ${articles.length} articles from: ${sourceSummary}.
 
-This week we have ${articles.length} selected articles from: ${sourceSummary}.
-
-Top articles:
-${topTitles}
+Articles (with slug and relevance score):
+${articleList}
 ${toolsSummary}
 
-Requirements:
-- Summarize the week's highlights and trends
-- If there are new Skills or MCP servers, mention them briefly as ecosystem highlights
-- Mention notable sources or topics
-- Keep it concise (100-250 Chinese characters)
-- Do NOT use markdown formatting, just plain text
-- Return ONLY the editor's note text, nothing else`;
+Return a JSON object with exactly these fields:
 
-  const text = await callLLM(systemPrompt, userPrompt, 1024);
-  return text.trim();
+{
+  "editorsNote": "编者按，1-2段中文，100-250字。概括本周趋势和亮点，有判断力，不要泛泛而谈。纯文本，不要markdown。",
+  "topicGroups": [
+    { "topic": "主题名（中文，简短，如：Agent 安全与沙盒、MCP 生态演进）", "slugs": ["article-slug-1", "article-slug-2"] }
+  ],
+  "mustReads": ["slug-of-must-read-1", "slug-of-must-read-2"]
 }
 
-/** Fallback template when --no-llm is used. */
-function templateEditorsNote(context, weekNumber) {
+Rules:
+- topicGroups: 3-5 groups, every article must appear in exactly one group, use article slugs from the list above
+- mustReads: pick 2-3 most important/insightful articles, use slugs
+- Topic names should be concise (2-8 Chinese characters), reader-oriented
+- Return ONLY valid JSON, no markdown fences, no extra text`;
+
+  const raw = await callLLM(systemPrompt, userPrompt, 2048);
+
+  // Extract JSON from response (handle possible markdown fences)
+  const jsonStr = raw.replace(/^```(?:json)?\s*/m, "").replace(/```\s*$/m, "").trim();
+  const plan = JSON.parse(jsonStr);
+
+  // Validate structure
+  if (!plan.editorsNote || !Array.isArray(plan.topicGroups) || !Array.isArray(plan.mustReads)) {
+    throw new Error("LLM returned invalid editorial plan structure");
+  }
+
+  // Validate all slugs exist
+  const validSlugs = new Set(articles.map((a) => a.slug));
+  for (const group of plan.topicGroups) {
+    group.slugs = group.slugs.filter((s) => validSlugs.has(s));
+  }
+  plan.mustReads = plan.mustReads.filter((s) => validSlugs.has(s));
+
+  // Ensure no article is lost — collect grouped slugs
+  const groupedSlugs = new Set(plan.topicGroups.flatMap((g) => g.slugs));
+  const ungrouped = articles.filter((a) => !groupedSlugs.has(a.slug));
+  if (ungrouped.length > 0) {
+    // Append ungrouped articles to an "其他" group
+    const otherGroup = plan.topicGroups.find((g) => g.topic === "其他");
+    if (otherGroup) {
+      otherGroup.slugs.push(...ungrouped.map((a) => a.slug));
+    } else {
+      plan.topicGroups.push({ topic: "其他", slugs: ungrouped.map((a) => a.slug) });
+    }
+  }
+
+  // Remove empty groups
+  plan.topicGroups = plan.topicGroups.filter((g) => g.slugs.length > 0);
+
+  return plan;
+}
+
+/**
+ * Fallback editorial plan when --no-llm is used.
+ * Groups by source, picks top 3 by relevance_score as must-reads.
+ */
+function fallbackEditorialPlan(context, weekNumber) {
   const { articles, newSkills, newMcp } = context;
   const sourceCount = new Set(articles.map((a) => a.source)).size;
 
+  // Editor's note template
   const parts = [`本期精选了 ${articles.length} 篇来自 ${sourceCount} 个信息源的文章`];
-  if (newSkills.length) {
-    parts.push(`${newSkills.length} 个新 Skill`);
-  }
-  if (newMcp.length) {
-    parts.push(`${newMcp.length} 个新 MCP Server`);
-  }
-  return parts.join("、") + "，涵盖 AI Agent 工具生态的最新动态。";
+  if (newSkills.length) parts.push(`${newSkills.length} 个新 Skill`);
+  if (newMcp.length) parts.push(`${newMcp.length} 个新 MCP Server`);
+  const editorsNote = parts.join("、") + "，涵盖 AI Agent 工具生态的最新动态。";
+
+  // Group by source as fallback
+  const sourceGroups = groupBySource(articles);
+  const topicGroups = Object.entries(sourceGroups).map(([source, items]) => ({
+    topic: SOURCE_LABELS[source] || source,
+    slugs: items.map((a) => a.slug),
+  }));
+
+  // Top 3 by relevance_score as must-reads
+  const mustReads = [...articles]
+    .sort((a, b) => (b.relevance_score || 0) - (a.relevance_score || 0))
+    .slice(0, 3)
+    .map((a) => a.slug);
+
+  return { editorsNote, topicGroups, mustReads };
 }
 
 // ── Markdown Assembly ────────────────────────────────────────────────
@@ -341,7 +398,7 @@ function toolPath(item, type) {
   return `${prefix}/${item.slug}`;
 }
 
-function assembleMarkdown(editorsNote, context, weekNumber) {
+function assembleMarkdown(editorialPlan, context, weekNumber) {
   const {
     articles,
     newSkills,
@@ -350,6 +407,10 @@ function assembleMarkdown(editorsNote, context, weekNumber) {
     trendingMcp,
     freshnessChanges,
   } = context;
+
+  const { editorsNote, topicGroups, mustReads } = editorialPlan;
+  const mustReadSet = new Set(mustReads);
+  const articleMap = new Map(articles.map((a) => [a.slug, a]));
 
   const lines = [];
 
@@ -397,7 +458,6 @@ function assembleMarkdown(editorsNote, context, weekNumber) {
     if (hasTrending) {
       lines.push("### Trending");
       lines.push("");
-      // Merge trending skills and MCP, sort by weekly_stars_delta desc
       const allTrending = [
         ...trendingSkills.map((s) => ({ ...s, _type: "skills" })),
         ...trendingMcp.map((s) => ({ ...s, _type: "mcp" })),
@@ -413,30 +473,23 @@ function assembleMarkdown(editorsNote, context, weekNumber) {
     }
   }
 
-  // ── Articles section ──
+  // ── Articles section — grouped by topic ──
   lines.push("## 📰 精选文章");
   lines.push("");
 
-  const groups = groupBySource(articles);
-  const sourceOrder = Object.keys(SOURCE_LABELS);
-  const sortedSources = Object.keys(groups).sort((a, b) => {
-    const idxA = sourceOrder.indexOf(a);
-    const idxB = sourceOrder.indexOf(b);
-    if (idxA !== -1 && idxB !== -1) return idxA - idxB;
-    if (idxA !== -1) return -1;
-    if (idxB !== -1) return 1;
-    return a.localeCompare(b);
-  });
-
-  for (const source of sortedSources) {
-    const label = SOURCE_LABELS[source] || source;
-    lines.push(`### ${label}`);
+  for (const group of topicGroups) {
+    lines.push(`### ${group.topic}`);
     lines.push("");
 
-    for (const article of groups[source]) {
+    for (const slug of group.slugs) {
+      const article = articleMap.get(slug);
+      if (!article) continue;
+
       const title = article.title_zh || article.title;
+      const badge = mustReadSet.has(slug) ? " 🔥必读" : "";
       const summary = article.summary_zh || article.summary || "";
-      lines.push(`#### [${title}](/articles/${article.slug})`);
+
+      lines.push(`#### [${title}](/articles/${slug})${badge}`);
       if (summary) {
         const shortSummary =
           summary.length > 150 ? summary.slice(0, 150) + "…" : summary;
@@ -585,27 +638,29 @@ async function main() {
     freshnessChanges,
   };
 
-  // Generate editor's note
-  let editorsNote;
+  // Generate editorial plan (editor's note + topic groups + must-reads)
+  let editorialPlan;
   if (noLlm) {
-    editorsNote = templateEditorsNote(context, weekNumber);
-    log.info("Using template editor's note (--no-llm)");
+    editorialPlan = fallbackEditorialPlan(context, weekNumber);
+    log.info("Using fallback editorial plan (--no-llm)");
   } else {
-    log.info("Generating editor's note via LLM...");
+    log.info("Generating editorial plan via LLM...");
     try {
-      editorsNote = await generateEditorsNote(context, weekNumber);
-      log.success("Editor's note generated");
+      editorialPlan = await generateEditorialPlan(context, weekNumber);
+      log.success(
+        `Editorial plan: ${editorialPlan.topicGroups.length} topic groups, ${editorialPlan.mustReads.length} must-reads`
+      );
     } catch (e) {
       log.warn(`LLM failed: ${e.message}. Falling back to template.`);
-      editorsNote = templateEditorsNote(context, weekNumber);
+      editorialPlan = fallbackEditorialPlan(context, weekNumber);
     }
   }
 
   // Assemble markdown
-  const markdown = assembleMarkdown(editorsNote, context, weekNumber);
+  const markdown = assembleMarkdown(editorialPlan, context, weekNumber);
 
   // Extract first sentence of editor's note for summary
-  const summaryZh = editorsNote.split(/[。！？]/)[0] + "。";
+  const summaryZh = editorialPlan.editorsNote.split(/[。！？]/)[0] + "。";
 
   // Build DB record
   const record = {
