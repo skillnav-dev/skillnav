@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 架构深度指南 — RAG · Agent · MCP 完全手册 | SkillNav</title>
+<meta name="description" content="从提示词工程到 Agent 系统，从 RAG 到 MCP。10 章交互式演示，直观掌握现代 AI 应用的每一个关键概念。">
+<link rel="canonical" href="https://skillnav.dev/guides/ai-guide.html">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #FAFAF8; --bg-card: #FFFFFF; --bg-code: #F5F3EF; --bg-dark: #1A1A18;
+  --text-1: #1A1A18; --text-2: #6B6B63; --text-3: #9C9C94;
+  --border: #E8E6E0; --border-l: #F0EEE8;
+  --accent: #2D6A4F; --accent-l: #D8F3DC; --accent-d: #1B4332;
+  --purple: #5E4DB2; --purple-l: #EEEDFE;
+  --teal: #1D9E75; --teal-l: #E1F5EE;
+  --amber: #BA7517; --amber-l: #FAEEDA;
+  --coral: #D85A30; --coral-l: #FAECE7;
+  --red: #C94040; --red-l: #FCEBEB;
+  --blue: #185FA5; --blue-l: #E6F1FB;
+  --green: #3B6D11; --green-l: #EAF3DE;
+  --font: 'Noto Sans SC', -apple-system, sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+  --r: 12px; --rs: 8px; --rxs: 6px;
+  --tr: 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--bg);color:var(--text-1);line-height:1.8;font-size:15px;-webkit-font-smoothing:antialiased}
+
+/* NAV */
+.nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(250,250,248,0.88);backdrop-filter:blur(20px);border-bottom:1px solid var(--border-l)}
+.nav-in{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:0 2rem;height:54px}
+.nav-logo{font-weight:700;font-size:16px;color:var(--accent-d);letter-spacing:-0.5px}
+.nav-logo span{color:var(--teal)}
+.nav-lk{display:flex;gap:2px;flex-wrap:wrap}
+.nav-lk a{padding:5px 10px;border-radius:var(--rxs);font-size:12px;color:var(--text-2);text-decoration:none;transition:var(--tr);white-space:nowrap}
+.nav-lk a:hover{background:var(--border-l);color:var(--text-1)}
+.nav-lk a.active{background:var(--accent-l);color:var(--accent-d);font-weight:500}
+
+/* HERO */
+.hero{padding:130px 2rem 70px;text-align:center;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:-200px;left:50%;transform:translateX(-50%);width:800px;height:800px;background:radial-gradient(ellipse,rgba(45,106,79,0.06) 0%,transparent 70%);pointer-events:none}
+.hero-badge{display:inline-block;padding:5px 14px;border-radius:100px;background:var(--accent-l);color:var(--accent-d);font-size:11px;font-weight:500;letter-spacing:0.5px;margin-bottom:20px}
+.hero h1{font-size:clamp(32px,5vw,52px);font-weight:900;letter-spacing:-1.5px;line-height:1.15;margin-bottom:16px}
+.hero h1 em{font-style:normal;background:linear-gradient(135deg,var(--accent),var(--teal));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero-sub{font-size:16px;color:var(--text-2);max-width:580px;margin:0 auto 36px;line-height:1.7;font-weight:300}
+.hero-cta{display:inline-flex;align-items:center;gap:8px;padding:11px 26px;background:var(--accent-d);color:#fff;border-radius:100px;text-decoration:none;font-size:14px;font-weight:500;transition:var(--tr);box-shadow:0 4px 12px rgba(27,67,50,0.25)}
+.hero-cta:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(27,67,50,0.35)}
+
+/* LAYOUT */
+.container{max-width:1100px;margin:0 auto;padding:0 2rem}
+section{padding:70px 0}
+.slbl{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--teal);margin-bottom:10px}
+.stitle{font-size:30px;font-weight:700;letter-spacing:-0.8px;margin-bottom:14px;line-height:1.3}
+.sdesc{font-size:15px;color:var(--text-2);max-width:620px;line-height:1.7;margin-bottom:44px;font-weight:300}
+
+/* CONTENT SECTIONS */
+.cs{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);padding:44px;margin-bottom:20px;scroll-margin-top:72px}
+.cs h2{font-size:24px;font-weight:700;letter-spacing:-0.5px;margin-bottom:6px}
+.cs .sub{font-size:14px;color:var(--text-2);margin-bottom:28px;font-weight:300}
+.cs h3{font-size:17px;font-weight:700;margin:28px 0 10px;letter-spacing:-0.3px}
+.cs p{margin-bottom:14px}
+.cs ul{margin:0 0 14px 18px;list-style:none}
+.cs ul li{position:relative;padding-left:14px;margin-bottom:6px;font-size:14px}
+.cs ul li::before{content:'';position:absolute;left:0;top:10px;width:5px;height:5px;border-radius:50%;background:var(--teal)}
+
+/* CHAPTER GRID */
+.chg{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.chc{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);padding:24px;cursor:pointer;transition:var(--tr);position:relative}
+.chc:hover{border-color:var(--teal);box-shadow:0 4px 16px rgba(0,0,0,0.06);transform:translateY(-2px)}
+.chc-n{font-size:40px;font-weight:900;line-height:1;color:var(--border-l);margin-bottom:8px;transition:var(--tr)}
+.chc:hover .chc-n{color:var(--accent-l)}
+.chc h3{font-size:15px;font-weight:700;margin-bottom:6px;letter-spacing:-0.2px}
+.chc p{font-size:12px;color:var(--text-2);line-height:1.5}
+.chtag{display:inline-block;margin-top:8px;padding:2px 9px;border-radius:100px;font-size:10px;font-weight:500}
+.t-beg{background:var(--teal-l);color:var(--accent-d)}
+.t-mid{background:var(--amber-l);color:#633806}
+.t-adv{background:var(--coral-l);color:#712B13}
+
+/* DEMO BOX */
+.db{background:var(--bg);border-radius:var(--r);padding:24px;margin:20px 0;border:1px solid var(--border-l)}
+.db-t{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--teal);margin-bottom:14px}
+.dtabs{display:flex;gap:3px;margin-bottom:16px;border-bottom:1px solid var(--border-l);padding-bottom:10px;flex-wrap:wrap}
+.dtab{padding:5px 12px;border-radius:var(--rxs);font-size:12px;cursor:pointer;border:none;background:transparent;color:var(--text-2);font-family:var(--font);transition:var(--tr)}
+.dtab.active{background:var(--accent-l);color:var(--accent-d);font-weight:500}
+.dpnl{display:none}.dpnl.active{display:block}
+
+/* FLOW */
+.flw{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:20px 0;padding:20px;background:var(--bg);border-radius:var(--r)}
+.fb{padding:10px 16px;border-radius:var(--rs);font-size:12px;font-weight:500;text-align:center;border:1px solid}
+.fb-p{background:var(--purple-l);color:var(--purple);border-color:#AFA9EC}
+.fb-t{background:var(--teal-l);color:var(--accent-d);border-color:#5DCAA5}
+.fb-a{background:var(--amber-l);color:#633806;border-color:#EF9F27}
+.fb-c{background:var(--coral-l);color:#712B13;border-color:#F0997B}
+.fb-b{background:var(--blue-l);color:#0C447C;border-color:#85B7EB}
+.fb-g{background:var(--green-l);color:#27500A;border-color:#97C459}
+.fa{color:var(--text-3);font-size:16px;flex-shrink:0}
+
+/* EXPAND CARD */
+.exc{border:1px solid var(--border);border-radius:var(--rs);margin-bottom:8px;background:var(--bg-card);overflow:hidden;transition:var(--tr)}
+.exc:hover{border-color:var(--teal)}
+.exh{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;cursor:pointer}
+.exh h4{font-size:14px;font-weight:500}
+.exa{font-size:14px;color:var(--text-3);transition:transform var(--tr)}
+.exc.open .exa{transform:rotate(90deg)}
+.exb{display:none;padding:0 16px 16px;font-size:13px;color:var(--text-2);line-height:1.8;border-top:1px solid var(--border-l);padding-top:12px}
+.exc.open .exb{display:block}
+
+/* COMPARE */
+.cg{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:20px 0}
+.cc{padding:20px;border-radius:var(--r);border:1px solid var(--border);background:var(--bg-card)}
+.cc h4{font-size:15px;font-weight:700;margin-bottom:10px}
+.cc p{font-size:13px;color:var(--text-2);line-height:1.7}
+.pill{display:inline-block;padding:3px 9px;border-radius:100px;font-size:10px;font-weight:500;margin:2px}
+.pill-g{background:var(--teal-l);color:var(--accent-d)}
+.pill-r{background:var(--red-l);color:var(--red)}
+
+/* TIMELINE */
+.tl{position:relative;padding-left:30px;margin:20px 0}
+.tl::before{content:'';position:absolute;left:9px;top:4px;bottom:4px;width:2px;background:var(--border)}
+.tli{position:relative;margin-bottom:20px}
+.tld{position:absolute;left:-26px;top:4px;width:12px;height:12px;border-radius:50%;border:2px solid;background:var(--bg)}
+.tli h4{font-size:14px;font-weight:600;margin-bottom:3px}
+.tli p{font-size:13px;color:var(--text-2);line-height:1.7}
+
+/* STACK */
+.sg{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin:20px 0}
+.sc{padding:18px;border-radius:var(--r);border:1px solid var(--border);background:var(--bg-card)}
+.sc .scc{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--teal);margin-bottom:8px}
+.sc h4{font-size:14px;font-weight:600;margin-bottom:4px}
+.sc p{font-size:12px;color:var(--text-2);line-height:1.6}
+
+/* CALLOUT */
+.co{padding:14px 18px;border-radius:var(--rs);border-left:3px solid var(--teal);background:var(--bg);font-size:13px;line-height:1.7;margin:20px 0;color:var(--text-2)}
+.co strong{color:var(--text-1)}
+
+/* SLIDER */
+.sr{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.sr-l{font-size:13px;color:var(--text-2);min-width:80px}
+.sr-v{font-size:14px;font-weight:500;min-width:44px;text-align:right}
+input[type="range"]{flex:1;height:4px;-webkit-appearance:none;background:var(--border);border-radius:4px;outline:none}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;background:var(--accent-d);border-radius:50%;cursor:pointer;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.15)}
+
+/* DOC CHIPS */
+.dshelf{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+.dchip{padding:7px 12px;border-radius:var(--rs);font-size:12px;background:var(--bg-card);border:1px solid var(--border);transition:var(--tr);line-height:1.4}
+.dchip.hit{background:var(--teal-l);border-color:#5DCAA5;color:var(--accent-d)}
+.dchip.dim{opacity:0.3}
+
+/* TOKEN BADGE */
+.tkb{display:inline-block;padding:2px 8px;border-radius:var(--rxs);font-size:11px;font-weight:500;font-family:var(--mono);margin:1px}
+.tk-r{background:var(--purple-l);color:var(--purple)}
+.tk-rel{background:var(--teal-l);color:var(--accent-d)}
+.tk-s{background:var(--amber-l);color:#633806}
+.tk-u{background:var(--coral-l);color:#712B13}
+
+/* VS TABLE */
+.vst{width:100%;border-collapse:collapse;margin:20px 0;font-size:13px}
+.vst th{text-align:left;font-weight:600;padding:10px 12px;border-bottom:2px solid var(--border);font-size:12px}
+.vst td{padding:10px 12px;border-bottom:1px solid var(--border-l);color:var(--text-2);line-height:1.6;vertical-align:top}
+.vst td:first-child{font-weight:500;color:var(--text-1)}
+
+/* SIMULATION */
+.simbox{background:var(--bg);border-radius:var(--r);padding:18px;margin:14px 0;border:1px solid var(--border-l);max-height:420px;overflow-y:auto;min-height:200px}
+.sim-msg{padding:9px 12px;border-radius:var(--rs);font-size:12px;line-height:1.7;margin-bottom:6px;max-width:90%;white-space:pre-wrap}
+.sim-user{background:var(--accent-l);color:var(--accent-d);margin-left:auto;text-align:right}
+.sim-agent{background:var(--bg-card);color:var(--text-1);border:1px solid var(--border)}
+.sim-tool{background:var(--purple-l);color:var(--purple);border:1px solid #AFA9EC;font-family:var(--mono);font-size:11px}
+.sim-lbl{font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin:10px 0 3px}
+
+/* AGENT GRID */
+.ag{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:20px 0}
+.ac{padding:18px;border-radius:var(--r);border:1px solid var(--border);background:var(--bg-card)}
+.ac .ai{font-size:22px;margin-bottom:6px}
+.ac h4{font-size:14px;font-weight:600;margin-bottom:4px}
+.ac p{font-size:12px;color:var(--text-2);line-height:1.6}
+
+/* LOOP */
+.loopbox{background:var(--bg);border-radius:var(--r);padding:22px;margin:20px 0;border:1px solid var(--border-l)}
+.ls{display:flex;align-items:flex-start;gap:10px;margin-bottom:14px}
+.ls:last-child{margin-bottom:0}
+.lsn{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0}
+.lsc h5{font-size:13px;font-weight:600;margin-bottom:2px}
+.lsc p{font-size:12px;color:var(--text-2);line-height:1.7}
+.n-p{background:var(--purple-l);color:var(--purple)}
+.n-t{background:var(--teal-l);color:var(--accent-d)}
+.n-a{background:var(--amber-l);color:#633806}
+.n-c{background:var(--coral-l);color:#712B13}
+.n-g{background:var(--green-l);color:#27500A}
+.n-b{background:var(--blue-l);color:#0C447C}
+
+/* PATTERN FLOW */
+.pf{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin:8px 0}
+.pfb{padding:4px 10px;border-radius:var(--rxs);font-size:11px;font-weight:500}
+.pfa{color:var(--text-3);font-size:12px}
+
+/* 3-COL GRID */
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:20px 0}
+
+/* MAP NODE (interactive graph) */
+.map-wrap{position:relative;margin:20px 0}
+.map-svg{width:100%;max-width:680px;margin:0 auto;display:block}
+
+/* FOOTER */
+.footer{padding:44px 2rem;border-top:1px solid var(--border);text-align:center;font-size:12px;color:var(--text-3)}
+
+/* RESPONSIVE */
+@media(max-width:768px){.cs{padding:24px 18px}.cg,.ag,.g3{grid-template-columns:1fr}.nav-lk{display:none}.hero{padding:110px 1.5rem 50px}.chg{grid-template-columns:1fr 1fr}}
+@media(max-width:480px){.chg{grid-template-columns:1fr}}
+
+/* ANIM */
+.fi{opacity:0;transform:translateY(18px);transition:opacity 0.6s ease,transform 0.6s ease}
+.fi.visible{opacity:1;transform:translateY(0)}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav"><div class="nav-in">
+  <div class="nav-logo"><a href="/" style="text-decoration:none;color:inherit;">Skill<span>Nav</span></a></div>
+  <div class="nav-lk">
+    <a href="/learn">学习中心</a>
+    <a href="#map">能力图谱</a>
+    <a href="#prompt">提示词工程</a>
+    <a href="#context">上下文工程</a>
+    <a href="#rag">RAG</a>
+    <a href="#rag-opt">RAG优化</a>
+    <a href="#rag-adv">RAG进阶</a>
+    <a href="#agent">Agent</a>
+    <a href="#agent-pat">Agent模式</a>
+    <a href="#mcp">MCP</a>
+    <a href="#stack">技术栈</a>
+  </div>
+</div></nav>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="hero-badge">交互式学习指南 · 10 章完整体系 · 2026</div>
+  <h1>AI 架构 <em>深度指南</em></h1>
+  <p class="hero-sub">从提示词工程到 Agent 系统，从 RAG 到 MCP。通过交互式演示，直观掌握现代 AI 应用的每一个关键概念。</p>
+  <a href="#map" class="hero-cta">开始学习 ↓</a>
+</header>
+
+<!-- CHAPTER INDEX -->
+<section>
+<div class="container">
+  <div class="slbl">学习路径</div>
+  <div class="stitle">十个章节，从基础到实战</div>
+  <div class="sdesc">每个章节包含交互式演示，帮你建立直觉而非死记概念。点击任意卡片跳转。</div>
+  <div class="chg">
+    <div class="chc" onclick="location.href='#map'"><div class="chc-n">01</div><h3>AI 能力图谱</h3><p>LLM / RAG / Agent / Fine-tuning 的关系全景</p><span class="chtag t-beg">入门</span></div>
+    <div class="chc" onclick="location.href='#prompt'"><div class="chc-n">02</div><h3>提示词工程</h3><p>Prompt 设计、Few-shot、Chain-of-Thought</p><span class="chtag t-beg">入门</span></div>
+    <div class="chc" onclick="location.href='#context'"><div class="chc-n">03</div><h3>上下文工程</h3><p>窗口管理、信息密度、长上下文策略</p><span class="chtag t-beg">入门</span></div>
+    <div class="chc" onclick="location.href='#rag'"><div class="chc-n">04</div><h3>RAG 核心原理</h3><p>查→拼→答 + 幻觉问题与缓解</p><span class="chtag t-mid">中级</span></div>
+    <div class="chc" onclick="location.href='#rag-opt'"><div class="chc-n">05</div><h3>RAG 优化策略</h3><p>Chunking、HyDE、Re-ranking</p><span class="chtag t-mid">中级</span></div>
+    <div class="chc" onclick="location.href='#rag-adv'"><div class="chc-n">06</div><h3>RAG 进阶</h3><p>Self-RAG & CRAG 自适应架构</p><span class="chtag t-adv">高级</span></div>
+    <div class="chc" onclick="location.href='#agent'"><div class="chc-n">07</div><h3>Agent 核心原理</h3><p>四大组件 + 运行循环 + Guardrails</p><span class="chtag t-adv">高级</span></div>
+    <div class="chc" onclick="location.href='#agent-pat'"><div class="chc-n">08</div><h3>Agent 设计模式</h3><p>ReAct、Plan-and-Execute、Multi-Agent</p><span class="chtag t-adv">高级</span></div>
+    <div class="chc" onclick="location.href='#mcp'"><div class="chc-n">09</div><h3>MCP 工具协议</h3><p>Model Context Protocol — Agent 的 USB 接口</p><span class="chtag t-adv">高级</span></div>
+    <div class="chc" onclick="location.href='#stack'"><div class="chc-n">10</div><h3>技术栈与实战</h3><p>RAG + Agent + MCP 统一选型与部署</p><span class="chtag t-adv">高级</span></div>
+  </div>
+</div>
+</section>
+
+<!-- ====== CH1: AI MAP ====== -->
+<section id="map">
+<div class="container"><div class="cs fi">
+  <div class="slbl">第一章</div>
+  <h2>AI 能力图谱</h2>
+  <div class="sub">点击下方节点，跳转到对应章节深入学习</div>
+
+  <svg class="map-svg" viewBox="0 0 680 520" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    </defs>
+    <!-- LLM center -->
+    <g style="cursor:pointer" onclick="location.href='#prompt'">
+      <rect x="240" y="20" width="200" height="64" rx="12" fill="#EEEDFE" stroke="#AFA9EC" stroke-width="1"/>
+      <text x="340" y="44" text-anchor="middle" font-size="16" font-weight="700" fill="#3C3489" font-family="'Noto Sans SC',sans-serif">LLM 大语言模型</text>
+      <text x="340" y="64" text-anchor="middle" font-size="11" fill="#5E4DB2" font-family="'Noto Sans SC',sans-serif">核心引擎 · 理解与生成</text>
+    </g>
+    <!-- Arrows from LLM -->
+    <line x1="260" y1="84" x2="140" y2="160" stroke="#B4B2A9" stroke-width="1" marker-end="url(#arr)"/>
+    <line x1="340" y1="84" x2="340" y2="160" stroke="#B4B2A9" stroke-width="1" marker-end="url(#arr)"/>
+    <line x1="420" y1="84" x2="540" y2="160" stroke="#B4B2A9" stroke-width="1" marker-end="url(#arr)"/>
+    <!-- Prompt Eng -->
+    <g style="cursor:pointer" onclick="location.href='#prompt'">
+      <rect x="40" y="160" width="190" height="56" rx="10" fill="#FAEEDA" stroke="#EF9F27" stroke-width="1"/>
+      <text x="135" y="184" text-anchor="middle" font-size="14" font-weight="600" fill="#633806" font-family="'Noto Sans SC',sans-serif">提示词工程</text>
+      <text x="135" y="200" text-anchor="middle" font-size="10" fill="#854F0B" font-family="'Noto Sans SC',sans-serif">Prompt · Few-shot · CoT</text>
+    </g>
+    <!-- Context Eng -->
+    <g style="cursor:pointer" onclick="location.href='#context'">
+      <rect x="245" y="160" width="190" height="56" rx="10" fill="#E6F1FB" stroke="#85B7EB" stroke-width="1"/>
+      <text x="340" y="184" text-anchor="middle" font-size="14" font-weight="600" fill="#0C447C" font-family="'Noto Sans SC',sans-serif">上下文工程</text>
+      <text x="340" y="200" text-anchor="middle" font-size="10" fill="#185FA5" font-family="'Noto Sans SC',sans-serif">窗口管理 · 信息密度</text>
+    </g>
+    <!-- Fine-tuning -->
+    <g style="cursor:pointer">
+      <rect x="450" y="160" width="190" height="56" rx="10" fill="#FAECE7" stroke="#F0997B" stroke-width="1"/>
+      <text x="545" y="184" text-anchor="middle" font-size="14" font-weight="600" fill="#712B13" font-family="'Noto Sans SC',sans-serif">Fine-tuning</text>
+      <text x="545" y="200" text-anchor="middle" font-size="10" fill="#993C1D" font-family="'Noto Sans SC',sans-serif">能力内化 · 领域适配</text>
+    </g>
+    <!-- Arrow to RAG -->
+    <line x1="340" y1="216" x2="240" y2="290" stroke="#1D9E75" stroke-width="1.5" marker-end="url(#arr)"/>
+    <text x="270" y="258" font-size="10" fill="#1D9E75" font-family="'Noto Sans SC',sans-serif">信息增强</text>
+    <!-- RAG -->
+    <g style="cursor:pointer" onclick="location.href='#rag'">
+      <rect x="100" y="290" width="200" height="64" rx="12" fill="#E1F5EE" stroke="#5DCAA5" stroke-width="1.5"/>
+      <text x="200" y="316" text-anchor="middle" font-size="15" font-weight="700" fill="#085041" font-family="'Noto Sans SC',sans-serif">RAG 检索增强生成</text>
+      <text x="200" y="336" text-anchor="middle" font-size="10" fill="#0F6E56" font-family="'Noto Sans SC',sans-serif">查→拼→答 · 减少幻觉</text>
+    </g>
+    <!-- Arrow to Agent -->
+    <line x1="340" y1="216" x2="460" y2="290" stroke="#5E4DB2" stroke-width="1.5" marker-end="url(#arr)"/>
+    <text x="420" y="258" font-size="10" fill="#5E4DB2" font-family="'Noto Sans SC',sans-serif">行动赋能</text>
+    <!-- Agent -->
+    <g style="cursor:pointer" onclick="location.href='#agent'">
+      <rect x="380" y="290" width="200" height="64" rx="12" fill="#EEEDFE" stroke="#AFA9EC" stroke-width="1.5"/>
+      <text x="480" y="316" text-anchor="middle" font-size="15" font-weight="700" fill="#3C3489" font-family="'Noto Sans SC',sans-serif">Agent 智能体</text>
+      <text x="480" y="336" text-anchor="middle" font-size="10" fill="#534AB7" font-family="'Noto Sans SC',sans-serif">自主规划 · 工具调用</text>
+    </g>
+    <!-- RAG feeds Agent -->
+    <line x1="300" y1="330" x2="378" y2="330" stroke="#888780" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arr)"/>
+    <text x="339" y="322" text-anchor="middle" font-size="9" fill="#888780" font-family="'Noto Sans SC',sans-serif">能力模块</text>
+    <!-- MCP under Agent -->
+    <line x1="480" y1="354" x2="480" y2="420" stroke="#D85A30" stroke-width="1.5" marker-end="url(#arr)"/>
+    <text x="500" y="394" font-size="10" fill="#D85A30" font-family="'Noto Sans SC',sans-serif">工具接入</text>
+    <g style="cursor:pointer" onclick="location.href='#mcp'">
+      <rect x="370" y="420" width="220" height="56" rx="10" fill="#FAECE7" stroke="#F0997B" stroke-width="1.5"/>
+      <text x="480" y="444" text-anchor="middle" font-size="14" font-weight="600" fill="#712B13" font-family="'Noto Sans SC',sans-serif">MCP 工具协议</text>
+      <text x="480" y="460" text-anchor="middle" font-size="10" fill="#993C1D" font-family="'Noto Sans SC',sans-serif">标准化接口 · 生态互联</text>
+    </g>
+    <!-- Guardrails label on Agent -->
+    <rect x="382" y="358" width="76" height="18" rx="9" fill="#FCEBEB" stroke="#F09595" stroke-width="0.5"/>
+    <text x="420" y="370" text-anchor="middle" font-size="9" font-weight="500" fill="#A32D2D" font-family="'Noto Sans SC',sans-serif">Guardrails</text>
+    <!-- Hallucination label on RAG -->
+    <rect x="102" y="358" width="88" height="18" rx="9" fill="#FCEBEB" stroke="#F09595" stroke-width="0.5"/>
+    <text x="146" y="370" text-anchor="middle" font-size="9" font-weight="500" fill="#A32D2D" font-family="'Noto Sans SC',sans-serif">减少幻觉</text>
+  </svg>
+
+  <div class="co">
+    <strong>关系总结：</strong>LLM 是核心引擎；提示词工程和上下文工程是"驾驶技术"；Fine-tuning 是"改装引擎"；RAG 是给它一本随时查阅的百科全书；Agent 是给它手和脚让它自己干活；MCP 是让 Agent 能插上任何工具的标准接口。它们不是互斥关系，而是层层递进的增强。
+  </div>
+</div></div>
+</section>
+
+<!-- ====== CH2: PROMPT ENGINEERING ====== -->
+<section id="prompt">
+<div class="container"><div class="cs fi">
+  <div class="slbl">第二章</div>
+  <h2>提示词工程</h2>
+  <div class="sub">Prompt Engineering — 与 AI 高效沟通的底层技能</div>
+
+  <h3>为什么提示词重要</h3>
+  <p>同一个 LLM，不同的提示词可以让输出质量天差地别。提示词工程不是"奇技淫巧"，而是理解模型如何处理输入、如何生成输出的系统方法论。它是所有 AI 应用（RAG、Agent）的底层基础。</p>
+
+  <div class="db">
+    <div class="db-t">核心技巧</div>
+    <div class="dtabs">
+      <button class="dtab active" onclick="showD('pe',0)">角色设定</button>
+      <button class="dtab" onclick="showD('pe',1)">Few-shot</button>
+      <button class="dtab" onclick="showD('pe',2)">CoT 推理链</button>
+      <button class="dtab" onclick="showD('pe',3)">结构化输出</button>
+    </div>
+
+    <div class="dpnl active" data-g="pe">
+      <h3 style="margin-top:0;font-size:15px;">角色设定（System Prompt）</h3>
+      <p style="font-size:13px;">通过定义模型的身份、专业背景和行为准则，大幅提升输出的专业度和一致性。</p>
+      <div class="cg">
+        <div class="cc">
+          <h4 style="color:var(--red);font-size:13px;">❌ 没有角色设定</h4>
+          <div style="padding:10px;background:var(--bg);border-radius:var(--rs);font-size:12px;margin-top:8px;color:var(--text-2);">
+            用户：解释一下什么是 TCP 三次握手<br>
+            AI：TCP 三次握手是一种网络协议...（泛泛而谈）
+          </div>
+        </div>
+        <div class="cc">
+          <h4 style="color:var(--teal);font-size:13px;">✅ 有角色设定</h4>
+          <div style="padding:10px;background:var(--bg);border-radius:var(--rs);font-size:12px;margin-top:8px;color:var(--text-2);">
+            系统：你是一位有 15 年经验的网络工程师，擅长用类比解释复杂概念。<br>
+            AI：想象你和朋友打电话——你先拨号说"喂"（SYN），对方接起说"喂，听到了"（SYN-ACK），你确认"好，我们开始聊"（ACK）...
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dpnl" data-g="pe">
+      <h3 style="margin-top:0;font-size:15px;">Few-shot 示例学习</h3>
+      <p style="font-size:13px;">在提示词中给出几个输入→输出的示例，让模型"照着做"。比口头描述格式要求有效得多。</p>
+      <div style="padding:14px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--rs);font-size:12px;line-height:1.8;margin-top:10px;">
+        <span style="color:var(--purple);font-weight:500;">任务：</span>将产品评价分类为正面/负面/中性<br><br>
+        <span style="color:var(--teal);font-weight:500;">示例 1：</span>"这个手机太棒了！" → 正面<br>
+        <span style="color:var(--teal);font-weight:500;">示例 2：</span>"电池续航太差了" → 负面<br>
+        <span style="color:var(--teal);font-weight:500;">示例 3：</span>"还行吧，中规中矩" → 中性<br><br>
+        <span style="color:var(--amber);font-weight:500;">请分类：</span>"物流很快但包装有点破损" → ?
+      </div>
+      <div class="co" style="margin-top:12px;">
+        <strong>关键：</strong>示例要覆盖边界情况，2-5 个示例通常足够。示例的质量比数量更重要。
+      </div>
+    </div>
+
+    <div class="dpnl" data-g="pe">
+      <h3 style="margin-top:0;font-size:15px;">Chain-of-Thought 思维链</h3>
+      <p style="font-size:13px;">让模型"一步步思考"再给出答案，显著提升复杂推理任务的准确率。</p>
+      <div class="cg">
+        <div class="cc">
+          <h4 style="font-size:13px;">直接回答</h4>
+          <div style="padding:10px;background:var(--bg);border-radius:var(--rs);font-size:12px;margin-top:8px;color:var(--text-2);">
+            Q：小明有 5 个苹果，给了小红 2 个，又买了 3 个，吃了 1 个，还剩几个？<br>A：5个 ❌
+          </div>
+        </div>
+        <div class="cc">
+          <h4 style="font-size:13px;">CoT 逐步推理</h4>
+          <div style="padding:10px;background:var(--bg);border-radius:var(--rs);font-size:12px;margin-top:8px;color:var(--text-2);">
+            让我一步步想：<br>1) 开始：5 个<br>2) 给小红 2 个：5-2=3<br>3) 买了 3 个：3+3=6<br>4) 吃了 1 个：6-1=<strong>5 个</strong> ✅
+          </div>
+        </div>
+      </div>
+      <p style="font-size:13px;margin-top:10px;">触发方式：在提示词末尾加 "Let's think step by step" 或 "请逐步推理"。</p>
+    </div>
+
+    <div class="dpnl" data-g="pe">
+      <h3 style="margin-top:0;font-size:15px;">结构化输出</h3>
+      <p style="font-size:13px;">要求模型以 JSON、XML 或特定格式输出，方便下游系统解析。在 RAG 和 Agent 系统中尤其关键。</p>
+      <div style="padding:14px;background:var(--bg-dark);border-radius:var(--rs);font-size:12px;color:#D4D4D4;font-family:var(--mono);line-height:1.6;margin-top:10px;overflow-x:auto;">
+<span style="color:#6A9955;">// Prompt 指令</span><br>
+请分析以下文本的情感，以 JSON 格式返回：<br>
+{<br>
+&nbsp;&nbsp;<span style="color:#CE9178;">"sentiment"</span>: <span style="color:#CE9178;">"positive/negative/neutral"</span>,<br>
+&nbsp;&nbsp;<span style="color:#CE9178;">"confidence"</span>: <span style="color:#B5CEA8;">0.0-1.0</span>,<br>
+&nbsp;&nbsp;<span style="color:#CE9178;">"keywords"</span>: [<span style="color:#CE9178;">"关键词列表"</span>]<br>
+}
+      </div>
+      <div class="co" style="margin-top:12px;">
+        <strong>进阶：</strong>现代 LLM（如 Claude）支持 tool_use / function calling，可以直接定义输出的 JSON Schema，比在 prompt 里描述格式更可靠。
+      </div>
+    </div>
+  </div>
+
+  <h3>提示词的六层结构</h3>
+  <div class="flw">
+    <div class="fb fb-p">角色身份</div><div class="fa">→</div>
+    <div class="fb fb-b">任务描述</div><div class="fa">→</div>
+    <div class="fb fb-t">上下文/示例</div><div class="fa">→</div>
+    <div class="fb fb-a">约束条件</div><div class="fa">→</div>
+    <div class="fb fb-c">输出格式</div><div class="fa">→</div>
+    <div class="fb fb-g">兜底指令</div>
+  </div>
+  <p style="font-size:13px;color:var(--text-2);">不是每次都需要六层齐全，但复杂任务中层次越完整，输出越可控。兜底指令如"如果不确定请说明"可以有效减少幻觉。</p>
+
+</div></div>
+</section>
+
+<!-- ====== CH3: CONTEXT ENGINEERING ====== -->
+<section id="context">
+<div class="container"><div class="cs fi">
+  <div class="slbl">第三章</div>
+  <h2>上下文工程</h2>
+  <div class="sub">Context Engineering — 管理模型的"工作记忆"</div>
+
+  <h3>什么是上下文工程</h3>
+  <p>如果说提示词工程关注的是"说什么"，上下文工程关注的是"在什么背景下说"。它是一门系统性地管理送入模型的所有信息的学问——包括系统提示、对话历史、外部知识、工具结果等。Andrej Karpathy 提出这个概念，认为它比单纯的提示词工程更重要。</p>
+
+  <div class="db">
+    <div class="db-t">上下文窗口的构成</div>
+    <div style="position:relative;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--rs);padding:16px;overflow:hidden;">
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        <div style="padding:8px 12px;background:var(--purple-l);border-radius:var(--rxs);font-size:12px;color:var(--purple);font-weight:500;">System Prompt — 角色、规则、工具定义 <span style="float:right;opacity:.6;">~5-15%</span></div>
+        <div style="padding:8px 12px;background:var(--blue-l);border-radius:var(--rxs);font-size:12px;color:#0C447C;font-weight:500;">长期记忆 / 用户画像 <span style="float:right;opacity:.6;">~5%</span></div>
+        <div style="padding:8px 12px;background:var(--teal-l);border-radius:var(--rxs);font-size:12px;color:var(--accent-d);font-weight:500;">RAG 检索结果 — 外部知识 <span style="float:right;opacity:.6;">~20-40%</span></div>
+        <div style="padding:8px 12px;background:var(--amber-l);border-radius:var(--rxs);font-size:12px;color:#633806;font-weight:500;">对话历史 — 多轮上下文 <span style="float:right;opacity:.6;">~20-30%</span></div>
+        <div style="padding:8px 12px;background:var(--coral-l);border-radius:var(--rxs);font-size:12px;color:#712B13;font-weight:500;">工具返回结果 — API / 搜索 <span style="float:right;opacity:.6;">~10-20%</span></div>
+        <div style="padding:8px 12px;background:var(--green-l);border-radius:var(--rxs);font-size:12px;color:#27500A;font-weight:500;">当前用户输入 <span style="float:right;opacity:.6;">~5%</span></div>
+      </div>
+      <div style="margin-top:10px;padding:8px;border-radius:var(--rxs);background:var(--bg);font-size:11px;color:var(--text-3);text-align:center;">
+        ← 上下文窗口总容量（如 Claude: 200K tokens, GPT-4: 128K tokens）→
+      </div>
+    </div>
+  </div>
+
+  <h3>核心原则</h3>
+  <div class="ag">
+    <div class="ac">
+      <div class="ai">🎯</div>
+      <h4>信息密度最大化</h4>
+      <p>每个 token 都很宝贵。去除冗余、压缩对话历史、只注入最相关的检索结果。质量 > 数量。</p>
+    </div>
+    <div class="ac">
+      <div class="ai">📐</div>
+      <h4>位置感知</h4>
+      <p>模型对开头和结尾的信息关注度最高（"Lost in the Middle" 现象）。把最重要的信息放在头尾。</p>
+    </div>
+    <div class="ac">
+      <div class="ai">🔄</div>
+      <h4>动态管理</h4>
+      <p>对话变长时要主动裁剪旧消息、摘要化历史、只保留关键上下文。避免窗口溢出。</p>
+    </div>
+    <div class="ac">
+      <div class="ai">🧩</div>
+      <h4>分层组织</h4>
+      <p>System Prompt 定全局规则，RAG 结果提供事实，对话历史提供连续性——每层各司其职。</p>
+    </div>
+  </div>
+
+  <h3>上下文 vs 提示词</h3>
+  <div class="cg">
+    <div class="cc">
+      <h4 style="font-size:14px;">提示词工程</h4>
+      <p>关注"怎么说"——措辞、格式、技巧。<br>像写一封好邮件。</p>
+    </div>
+    <div class="cc">
+      <h4 style="font-size:14px;">上下文工程</h4>
+      <p>关注"带什么信息"——选择、组织、裁剪。<br>像准备一场会议的全部材料。</p>
+    </div>
+  </div>
+
+  <div class="co">
+    <strong>关键洞察：</strong>大多数 AI 应用的效果瓶颈不在模型能力，而在上下文质量。把正确的信息、以正确的格式、在正确的时机送给模型——这就是上下文工程的全部。RAG 本质上就是一种自动化的上下文工程。
+  </div>
+</div></div>
+</section>
+
+<!-- ====== CH4: RAG CORE ====== -->
+<section id="rag">
+<div class="container"><div class="cs fi">
+  <div class="slbl">第四章</div>
+  <h2>RAG 核心原理</h2>
+  <div class="sub">Retrieval-Augmented Generation — 查→拼→答</div>
+
+  <h3>大模型的两个痛点</h3>
+  <p>大语言模型存在两个根本局限：<strong>知识截止</strong>（训练数据有时间限制）和<strong>幻觉</strong>（可能自信地编造答案）。RAG 正是为了解决这两个问题而设计的。</p>
+
+  <div class="db">
+    <div class="db-t">交互演示：RAG 工作流程</div>
+    <div class="dtabs">
+      <button class="dtab active" onclick="showD('rag',0)">1. 问题</button>
+      <button class="dtab" onclick="showD('rag',1)">2. 检索</button>
+      <button class="dtab" onclick="showD('rag',2)">3. 增强</button>
+      <button class="dtab" onclick="showD('rag',3)">4. 生成</button>
+    </div>
+    <div class="dpnl active" data-g="rag">
+      <div style="padding:14px;background:var(--bg-card);border-radius:var(--rs);border:1px solid var(--border);margin-bottom:10px;">
+        <div style="font-size:11px;color:var(--text-3);margin-bottom:4px;">用户提问</div>
+        <div style="font-size:14px;font-weight:500;">「公司最新的退货政策是什么？」</div>
+      </div>
+      <div style="padding:14px;background:var(--red-l);border-radius:var(--rs);border:1px solid #F7C1C1;">
+        <div style="font-size:11px;color:var(--red);font-weight:500;margin-bottom:3px;">⚠ 普通大模型的回答</div>
+        <div style="font-size:12px;color:#791F1F;">抱歉，我的训练数据截止到 2024 年，无法获取最新退货政策。我可能会给出过时或编造的答案……</div>
+      </div>
+    </div>
+    <div class="dpnl" data-g="rag">
+      <div style="font-size:12px;color:var(--text-2);margin-bottom:10px;">系统通过语义相似度从知识库中匹配最相关的文档：</div>
+      <div class="dshelf">
+        <div class="dchip dim">📄 员工手册 v3.2</div>
+        <div class="dchip hit">📄 2026 退货政策 <span style="font-size:10px;opacity:.7;">— 0.94</span></div>
+        <div class="dchip dim">📄 产品目录 Q1</div>
+        <div class="dchip hit">📄 客服 FAQ <span style="font-size:10px;opacity:.7;">— 0.87</span></div>
+        <div class="dchip dim">📄 财务报表</div>
+      </div>
+    </div>
+    <div class="dpnl" data-g="rag">
+      <div class="flw">
+        <div class="fb fb-p">用户问题</div><div class="fa">+</div>
+        <div class="fb fb-t">检索文档</div><div class="fa">→</div>
+        <div class="fb fb-a">增强 Prompt</div>
+      </div>
+      <div style="padding:14px;background:var(--bg-card);border-radius:var(--rs);border:1px solid var(--border);font-size:12px;line-height:1.8;">
+        <span style="color:var(--purple);font-weight:500;">系统指令：</span>根据参考资料回答，不确定请说明。<br>
+        <span style="color:var(--teal);font-weight:500;">参考资料：</span>[文档1] 30天无理由退货… [文档2] 退货运费规则…<br>
+        <span style="color:var(--amber);font-weight:500;">用户问题：</span>公司最新的退货政策是什么？
+      </div>
+    </div>
+    <div class="dpnl" data-g="rag">
+      <div style="padding:14px;background:var(--teal-l);border-radius:var(--rs);border:1px solid #5DCAA5;font-size:12px;line-height:1.8;color:var(--accent-d);">
+        根据最新 2026 退货政策：自收货起 <strong>30天内</strong> 可无理由退货；电子产品需原包装；运费规则：质量问题公司承担，否则消费者承担。<br>
+        <span style="font-size:11px;opacity:.7;">📎 来源：2025退货政策、客服FAQ</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>幻觉问题与缓解</h3>
+  <p>幻觉（Hallucination）是 LLM 生成看似合理但实际错误的信息。RAG 通过提供真实参考资料来约束模型，但并不能完全消除幻觉。</p>
+  <div class="exc" onclick="togE(this)">
+    <div class="exh"><h4>幻觉的三种类型</h4><span class="exa">›</span></div>
+    <div class="exb">
+      <strong>事实性幻觉</strong> — 编造不存在的事实（如虚构的论文引用）。<br>
+      <strong>忠实性幻觉</strong> — 回答与提供的参考资料不符，模型"无视"了检索结果。<br>
+      <strong>推理性幻觉</strong> — 前提正确但推理链条出错，得出错误结论。
+    </div>
+  </div>
+  <div class="exc" onclick="togE(this)">
+    <div class="exh"><h4>缓解策略</h4><span class="exa">›</span></div>
+    <div class="exb">
+      <strong>RAG 基础层：</strong>提供真实参考文档，要求模型基于文档回答。<br>
+      <strong>Prompt 约束：</strong>加入"如果资料中没有相关信息，请说明"等兜底指令。<br>
+      <strong>引用追溯：</strong>要求模型标注引用来源，方便人工验证。<br>
+      <strong>Self-RAG/CRAG：</strong>让模型自我检查生成内容是否有依据（详见第六章）。<br>
+      <strong>温度控制：</strong>降低 temperature 减少随机性，让输出更保守准确。
+    </div>
+  </div>
+
+  <div class="co">
+    <strong>一句话总结：</strong>RAG 的核心思路就是三个字——<strong>查→拼→答</strong>。先从外部知识源中检索相关内容，再把它们塞进 Prompt，最后让模型基于真实材料回答。
+  </div>
+</div></div>
+</section>
+
+<!-- ====== CH5: RAG OPTIMIZATION ====== -->
+<section id="rag-opt">
+<div class="container"><div class="cs fi">
+  <div class="slbl">第五章</div>
+  <h2>RAG 优化策略</h2>
+  <div class="sub">检索前 · 检索中 · 检索后 — Chunking、HyDE、Re-ranking</div>
+
+  <div class="db">
+    <div class="dtabs">
+      <button class="dtab active" onclick="showD('opt',0)">检索前</button>
+      <button class="dtab" onclick="showD('opt',1)">检索中</button>
+      <button class="dtab" onclick="showD('opt',2)">检索后</button>
+    </div>
+    <div class="dpnl active" data-g="opt">
+      <p style="font-size:13px;color:var(--text-2);margin-bottom:14px;">检索前是在"备好弹药"——构建高质量的向量空间。</p>
+      <div class="exc" onclick="togE(this)"><div class="exh"><h4>Chunking 文档分块</h4><span class="exa">›</span></div><div class="exb">文档太长会稀释语义，太短会丢失上下文。常见策略：固定长度切分、语义切分、递归切分、结构切分。通常加 10-25% 的重叠（overlap）保持上下文连续性。经验法则：客服 FAQ 用 chunk=128/overlap=10%，法律合同用 256/20%，技术文档用 400/15%，学术论文用 200/25%。</div></div>
+      <div class="exc" onclick="togE(this)"><div class="exh"><h4>Embedding 模型选择</h4><span class="exa">›</span></div><div class="exb">Embedding 决定语义空间质量。需考虑维度大小、多语言支持、领域适配。开源首选 BGE-M3；商用首选 OpenAI text-embedding-3 或 Cohere embed-v3。</div></div>
+      <div class="exc" onclick="togE(this)"><div class="exh"><h4>Metadata enrichment 元数据增强</h4><span class="exa">›</span></div><div class="exb">给每个 chunk 附加来源、日期、类别等元数据，检索时先过滤再向量匹配，缩小搜索范围。</div></div>
+    </div>
+    <div class="dpnl" data-g="opt">
+      <p style="font-size:13px;color:var(--text-2);margin-bottom:14px;">检索中是在"打得更准"。</p>
+      <div class="exc" onclick="togE(this)"><div class="exh"><h4>Hybrid search 混合检索</h4><span class="exa">›</span></div><div class="exb">向量搜索擅长语义（"退货"≈"退换货"），BM25 擅长精确关键词（SKU-1234）。两者结合用 RRF 融合排序效果最好。
+        <div class="flw" style="padding:14px;margin-top:10px"><div class="fb fb-t">向量检索</div><div class="fa">+</div><div class="fb fb-a">BM25</div><div class="fa">→</div><div class="fb fb-c">RRF 融合</div></div>
+      </div></div>
+      <div class="exc" onclick="togE(this)"><div class="exh"><h4>HyDE 假设文档嵌入</h4><span class="exa">›</span></div><div class="exb">让 LLM 先"假设性回答"问题，再用假设答案的向量去检索。因为假设文档和真实文档在向量空间中更相似，"文档 vs 文档"匹配比"短 query vs 长文档"更精确。类比：拿一段书的描述去图书馆找书，比拿书名找更准。<br><br><strong>优点：</strong>零训练、即插即用、跨语言好。<strong>缺点：</strong>多一次 LLM 调用，对精确查询无优势。</div></div>
+      <div class="exc" onclick="togE(this)"><div class="exh"><h4>Query transformation 查询改写</h4><span class="exa">›</span></div><div class="exb"><strong>Query expansion：</strong>LLM 生成同义改写和子问题，多路召回合并。<br><strong>Step-back prompting：</strong>把具体问题抽象为更宽泛的问题，检索更全面的上下文。</div></div>
+    </div>
+    <div class="dpnl" data-g="opt">
+      <p style="font-size:13px;color:var(--text-2);margin-bottom:14px;">检索后是在"精选精炼"。</p>
+      <div class="exc" onclick="togE(this)"><div class="exh"><h4>Re-ranking 重排序</h4><span class="exa">›</span></div><div class="exb">初次检索用轻量 bi-encoder（快但粗），Re-ranker 用 cross-encoder 对 query+文档精细打分（慢但准）。先粗筛 Top-20，精排出 Top-5。常用：Cohere Rerank、bge-reranker-v2。</div></div>
+      <div class="exc" onclick="togE(this)"><div class="exh"><h4>Context compression 上下文压缩</h4><span class="exa">›</span></div><div class="exb">检索到的 chunk 中可能只有一两句话真正相关。压缩器抽取关键句子，减少 token 数量，降低成本且提升精度。</div></div>
+    </div>
+  </div>
+
+  <h3>Chunking 交互演示</h3>
+  <div class="db">
+    <div class="sr"><span class="sr-l">Chunk 大小</span><input type="range" min="60" max="300" value="150" step="10" id="ck-s" oninput="ckR()"><span class="sr-v" id="ck-sv">150</span></div>
+    <div class="sr"><span class="sr-l">Overlap %</span><input type="range" min="0" max="50" value="15" step="5" id="ck-o" oninput="ckR()"><span class="sr-v" id="ck-ov">15%</span></div>
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--rs);padding:12px;font-family:var(--mono);font-size:11px;color:var(--text-3);line-height:1.6;word-break:break-all;margin-bottom:10px" id="ck-t"></div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap" id="ck-st"></div>
+  </div>
+
+  <h3>不同场景的 Chunking 推荐</h3>
+  <div class="ag">
+    <div class="ac"><h4>客服 FAQ</h4><p>问答对简短独立。<strong>chunk=128, overlap=10%</strong><br><span class="pill pill-g">小 chunk · 低重叠</span></p></div>
+    <div class="ac"><h4>法律合同</h4><p>条款间有上下文依赖。<strong>chunk=256, overlap=20%</strong><br><span class="pill" style="background:var(--amber-l);color:#633806">中 chunk · 中重叠</span></p></div>
+    <div class="ac"><h4>技术文档</h4><p>代码示例和解释跨段落。<strong>chunk=400, overlap=15%</strong><br><span class="pill pill-r">大 chunk</span></p></div>
+    <div class="ac"><h4>学术论文</h4><p>论点层层递进。<strong>chunk=200, overlap=25%</strong><br><span class="pill" style="background:var(--purple-l);color:var(--purple)">高重叠</span></p></div>
+  </div>
+
+  <h3>HyDE 假设文档嵌入详解</h3>
+  <p>HyDE（Hypothetical Document Embeddings）的核心洞察：用户的问题和知识库文档"长得不像"，但 LLM 生成的假设回答和知识库文档"长得很像"。</p>
+  <div class="db">
+    <div class="db-t">HyDE 四步工作流</div>
+    <div class="tl">
+      <div class="tli"><div class="tld" style="border-color:var(--purple)"></div><h4>1. 用户提问</h4><p>"量子计算对密码学有什么影响？"——短 query，信息量有限。</p></div>
+      <div class="tli"><div class="tld" style="border-color:var(--teal)"></div><h4>2. LLM 生成假设性文档</h4><p>"量子计算机利用 Shor 算法可以在多项式时间内分解大整数，这将使 RSA 和 ECC 面临威胁。后量子密码学正在研究基于格的密码……"<br><span style="color:var(--amber);font-size:12px;">⚠ 可能不准确，但我们只需要它的"语义方向"</span></p></div>
+      <div class="tli"><div class="tld" style="border-color:var(--amber)"></div><h4>3. 用假设文档的向量去检索</h4><p>假设文档和真实文档形态相似——都是长段落、专业术语密集。"文档 vs 文档"匹配更精确。</p></div>
+      <div class="tli"><div class="tld" style="border-color:var(--coral)"></div><h4>4. 丢弃假设文档，用真实文档生成回答</h4><p>假设文档只是"指南针"——不需要自己是目的地，只需指对方向。最终回答基于检索到的真实文档。</p></div>
+    </div>
+  </div>
+  <div class="cg">
+    <div class="cc"><h4 style="color:var(--teal);font-size:14px;">HyDE 适合</h4><p>探索性问题、概念性查询、跨语言检索、用户提问模糊宽泛的场景（研究助手、学术搜索）</p></div>
+    <div class="cc"><h4 style="color:var(--red);font-size:14px;">HyDE 不适合</h4><p>精确查找（订单号、SKU）、低延迟要求（实时客服）、LLM 对领域完全陌生的冷启动场景</p></div>
+  </div>
+
+  <div class="co">
+    <strong>经验法则：</strong>overlap 设在 chunk 的 10-25%。低于 10% 丢失边界上下文，高于 25% 存储膨胀收益递减。从 15% 开始实验。
+  </div>
+</div></div>
+</section>
+
+<!-- ====== CH6: RAG ADVANCED ====== -->
+<section id="rag-adv">
+<div class="container"><div class="cs fi">
+  <div class="slbl">第六章</div>
+  <h2>RAG 进阶</h2>
+  <div class="sub">Self-RAG & CRAG — 从固定流水线到自适应检索</div>
+
+  <div class="db">
+    <div class="dtabs">
+      <button class="dtab active" onclick="showD('sr',0)">Self-RAG</button>
+      <button class="dtab" onclick="showD('sr',1)">CRAG</button>
+    </div>
+    <div class="dpnl active" data-g="sr">
+      <h3 style="margin-top:0;font-size:15px;">核心机制：4 种反思 Token</h3>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:14px;">
+        <span class="tkb tk-r">Retrieve</span><span style="font-size:11px;color:var(--text-2);line-height:24px;">需要检索吗？</span>
+        <span class="tkb tk-rel">IsRel</span><span style="font-size:11px;color:var(--text-2);line-height:24px;">相关吗？</span>
+        <span class="tkb tk-s">IsSup</span><span style="font-size:11px;color:var(--text-2);line-height:24px;">有依据吗？</span>
+        <span class="tkb tk-u">IsUse</span><span style="font-size:11px;color:var(--text-2);line-height:24px;">有用吗？</span>
+      </div>
+      <div class="tl">
+        <div class="tli"><div class="tld" style="border-color:var(--purple)"></div><h4>接收问题 → 判断是否检索</h4><p>模型输出 Retrieve=yes/no，如果 no 则直接用自身知识回答。</p></div>
+        <div class="tli"><div class="tld" style="border-color:var(--teal)"></div><h4>并行生成 + 三维评分</h4><p>对每个检索文档并行生成候选回答，同时输出 IsRel / IsSup / IsUse。</p></div>
+        <div class="tli"><div class="tld" style="border-color:var(--amber)"></div><h4>选择最优候选</h4><p>综合评分用 beam search 选最高分候选。分数都低可重新检索。</p></div>
+      </div>
+      <div class="exc" onclick="togE(this)"><div class="exh"><h4>训练方法详解</h4><span class="exa">›</span></div><div class="exb"><strong>第 1 步：构建带反思标注的训练数据</strong> — 用 GPT-4 等教师模型对现有指令跟随数据集做标注。给教师模型看 (问题, 文档, 回答)，让它生成四种反思 token 的值。大约标注 15-20K 条数据。<br><br><strong>第 2 步：扩展词汇表 + 微调</strong> — 把反思 token（每种有 2-5 个可能值）作为特殊 token 加入词汇表。在标注数据上对 Llama 等基座做全量 SFT。模型学会在生成中"夹带"反思 token，既是内心独白也是控制信号。<br><br><strong>第 3 步：推理时的可控性</strong> — 可通过调整反思 token 权重控制行为：想要更多引用提高 IsSup 权重；想减少延迟调低 Retrieve=yes 阈值。这种可控性是 Self-RAG 区别于普通 RAG 的一大优势。</div></div>
+    </div>
+    <div class="dpnl" data-g="sr">
+      <h3 style="margin-top:0;font-size:15px;">核心机制：检索评估器 + 三条路径</h3>
+      <div class="tl">
+        <div class="tli"><div class="tld" style="border-color:var(--purple)"></div><h4>常规检索</h4><p>和普通 RAG 一样先检索 Top-K。</p></div>
+        <div class="tli"><div class="tld" style="border-color:var(--amber)"></div><h4>评估器打分 → 分三档</h4><p>T5-large 微调的评估器对每个结果打分。</p></div>
+        <div class="tli"><div class="tld" style="border-color:var(--teal)"></div><h4 style="color:var(--teal)">Correct → 精炼后使用</h4><p>高度相关，知识精炼器提取关键信息。</p></div>
+        <div class="tli"><div class="tld" style="border-color:var(--red)"></div><h4 style="color:var(--red)">Incorrect → 丢弃 + Web Search</h4><p>不相关，触发网络搜索兜底。</p></div>
+        <div class="tli"><div class="tld" style="border-color:var(--amber)"></div><h4 style="color:var(--amber)">Ambiguous → 两路合并</h4><p>保留两路结果合并送入 LLM。</p></div>
+      </div>
+      <div class="exc" onclick="togE(this)"><div class="exh"><h4>训练与集成</h4><span class="exa">›</span></div><div class="exb"><strong>检索评估器：</strong>基于 T5-large 微调二分类/三分类模型。训练数据从 QA 数据集（Natural Questions、TriviaQA）取 (问题, 文档) 对，用 GPT-4 标注 correct/incorrect/ambiguous。也可用启发式规则：文档包含标准答案的标为 correct。几千到一万条数据即可。<br><br><strong>知识精炼器：</strong>不需要单独训练。将每个文档分解成细粒度"知识条"（knowledge strips），让评估器逐条打分，只保留高分条目。相当于自动做上下文压缩，显著减少噪声。<br><br><strong>与 LLM 集成：</strong>CRAG 是即插即用的中间层，不修改 LLM。任何 RAG 系统都可以在检索和生成之间插入 CRAG 模块——这是 CRAG 相比 Self-RAG 的最大实用优势。</div></div>
+    </div>
+  </div>
+
+  <h3>Self-RAG vs CRAG 对比</h3>
+  <table class="vst">
+    <tr><th style="width:22%">维度</th><th style="width:39%">Self-RAG</th><th style="width:39%">CRAG</th></tr>
+    <tr><td>核心思路</td><td>模型内化反思能力</td><td>外挂质检中间层</td></tr>
+    <tr><td>是否改 LLM</td><td>是，全量 SFT</td><td>否，LLM 不动</td></tr>
+    <tr><td>决策粒度</td><td>token 级别</td><td>query 级别</td></tr>
+    <tr><td>纠错方式</td><td>并行候选 + 评分</td><td>web search 兜底</td></tr>
+    <tr><td>适用场景</td><td>高质量要求（研究）</td><td>快速集成生产系统</td></tr>
+  </table>
+  <div class="co"><strong>简单记忆：</strong>Self-RAG 改"大脑"，CRAG 改"流水线"。前者上限高成本也高，后者务实易落地。两者可组合使用。</div>
+</div></div>
+</section>
+
+<!-- ====== CH7: AGENT CORE ====== -->
+<section id="agent">
+<div class="container"><div class="cs fi">
+  <div class="slbl">第七章</div>
+  <h2>Agent 核心原理</h2>
+  <div class="sub">从被动应答到自主行动 — LLM + 感知 + 工具 + 自主决策循环</div>
+
+  <h3>四大组成部分</h3>
+  <div class="ag">
+    <div class="ac"><div class="ai">🧠</div><h4>大脑 — LLM</h4><p>核心引擎，负责理解、推理和决策。</p></div>
+    <div class="ac"><div class="ai">🔧</div><h4>工具 — Tools</h4><p>搜索、数据库、API、代码执行器。LLM 做不到的事通过工具完成。</p></div>
+    <div class="ac"><div class="ai">📋</div><h4>规划 — Planning</h4><p>拆解复杂任务为子步骤，制定和调整执行计划。</p></div>
+    <div class="ac"><div class="ai">💾</div><h4>记忆 — Memory</h4><p>短期（当前对话）+ 长期（持久化存储），积累经验。</p></div>
+  </div>
+
+  <h3>运行循环</h3>
+  <div class="loopbox">
+    <div class="ls"><div class="lsn n-p">1</div><div class="lsc"><h5>感知 Perceive</h5><p>接收用户指令或环境输入，理解目标。</p></div></div>
+    <div class="ls"><div class="lsn n-t">2</div><div class="lsc"><h5>思考 Reason</h5><p>LLM 分析情况，决定下一步。可用 CoT 或规划模块。</p></div></div>
+    <div class="ls"><div class="lsn n-a">3</div><div class="lsc"><h5>行动 Act</h5><p>调用工具执行操作：搜索、运行代码、调 API 等。</p></div></div>
+    <div class="ls"><div class="lsn n-c">4</div><div class="lsc"><h5>观察 Observe</h5><p>接收工具结果，评估是否达成目标。</p></div></div>
+    <div class="ls"><div class="lsn n-g">5</div><div class="lsc"><h5>判断 Decide</h5><p>完成→输出。未完成→回到步骤 2。出错→调整策略。</p></div></div>
+    <div style="text-align:center;font-size:11px;color:var(--text-3);padding-top:10px;border-top:1px dashed var(--border);">↻ 循环直到任务达成或达到最大迭代</div>
+  </div>
+
+  <h3>实时模拟：旅行规划 Agent</h3>
+  <p style="font-size:13px;color:var(--text-2);margin-bottom:10px;">点击按钮观察 Agent 的"思考→工具调用→观察→再思考"循环：</p>
+  <button onclick="runSim()" style="padding:7px 18px;border-radius:var(--rxs);border:1px solid var(--border);background:var(--bg-card);cursor:pointer;font-family:var(--font);font-size:13px;font-weight:500;transition:var(--tr);margin-bottom:10px">▶ 开始模拟</button>
+  <div class="simbox" id="sim-area"></div>
+
+  <h3>Guardrails 安全护栏</h3>
+  <p>Agent 能执行真实操作（发邮件、修改数据库、调用付款 API），因此安全护栏至关重要。</p>
+  <div class="exc" onclick="togE(this)"><div class="exh"><h4>权限控制</h4><span class="exa">›</span></div><div class="exb">明确定义 Agent 可以调用哪些工具、不能调用哪些。敏感操作（删除数据、发送邮件、付款）必须设置人工审批节点（human-in-the-loop）。实现最小权限原则。</div></div>
+  <div class="exc" onclick="togE(this)"><div class="exh"><h4>输入/输出过滤</h4><span class="exa">›</span></div><div class="exb">检测并拦截 prompt injection 攻击（恶意用户试图劫持 Agent）。对 Agent 的输出做内容安全审查，防止生成有害内容。可用专门的 guardrail 模型或规则引擎。</div></div>
+  <div class="exc" onclick="togE(this)"><div class="exh"><h4>循环与成本限制</h4><span class="exa">›</span></div><div class="exb">设置最大迭代次数（防止无限循环）、token 预算上限、超时机制。记录每次工具调用的日志用于审计。LLM 的不确定性会在多步中累积——每步 95% 准确率，10 步后只剩 60%。</div></div>
+
+  <div class="co"><strong>核心原则：</strong>Agent 的自主性越高，护栏就要越严。先保证安全可控，再追求能力边界。</div>
+
+  <h3>Agent vs 普通 LLM</h3>
+  <div class="cg">
+    <div class="cc"><h4>普通 LLM</h4>
+      <ul style="margin-left:0;font-size:13px;"><li>输入 prompt → 输出文本</li><li>单轮交互，无状态</li><li>不能调用外部工具</li><li>需要人类逐步指挥</li></ul>
+      <p style="font-size:12px;color:var(--text-3);margin-top:6px;">像一个博学的顾问</p>
+    </div>
+    <div class="cc"><h4>Agent</h4>
+      <ul style="margin-left:0;font-size:13px;"><li>接收目标 → 自主完成</li><li>多轮循环，有记忆</li><li>能调用各种工具和 API</li><li>自主规划和执行</li></ul>
+      <p style="font-size:12px;color:var(--text-3);margin-top:6px;">像一个能干的全能助手</p>
+    </div>
+  </div>
+
+  <h3>Agent vs RAG vs Fine-tuning</h3>
+  <div class="g3">
+    <div class="cc"><h4 style="font-size:14px;">RAG</h4><p>给模型"查字典"的能力。解决知识更新和幻觉问题。是一种<strong>信息增强</strong>策略。</p></div>
+    <div class="cc"><h4 style="font-size:14px;">Fine-tuning</h4><p>改造模型的"大脑结构"。让模型学会新技能或适配领域。是一种<strong>能力内化</strong>策略。</p></div>
+    <div class="cc"><h4 style="font-size:14px;">Agent</h4><p>给模型"手和脚"。让模型能规划和执行真实任务。是一种<strong>行动赋能</strong>策略。</p></div>
+  </div>
+  <div class="co"><strong>它们不是互斥的：</strong>一个强大的 AI 系统往往三者兼备——Fine-tuning 让模型更懂领域，RAG 让它查最新资料，Agent 让它自主完成任务。Agent 是最外层的"骨架"，RAG 和 Fine-tuning 是它的"内功"。</div>
+
+  <h3>Agent 框架生态</h3>
+  <div class="sg">
+    <div class="sc"><div class="scc">通用框架</div><h4>LangGraph / CrewAI</h4><p>LangGraph 基于图的状态机，灵活度最高；CrewAI 专注多智能体协作，上手快。</p></div>
+    <div class="sc"><div class="scc">代码智能体</div><h4>Claude Code / Cursor</h4><p>专注代码生成和编辑的 Agent，能读取项目、编写测试、修复 bug。</p></div>
+    <div class="sc"><div class="scc">工具协议</div><h4>MCP</h4><p>Anthropic 提出的开放标准，统一接入各种外部工具和数据源。</p></div>
+    <div class="sc"><div class="scc">研究框架</div><h4>AutoGen / DSPy</h4><p>AutoGen 多 Agent 对话框架；DSPy 声明式 AI 编程框架。</p></div>
+  </div>
+
+  <h3>构建 Agent 的关键挑战</h3>
+  <div class="tl">
+    <div class="tli"><div class="tld" style="border-color:var(--red)"></div><h4>可靠性</h4><p>LLM 的不确定性会在多步中累积放大。每步 95% 准确率，10 步后只剩 60%。需要充分的错误处理和回退机制。</p></div>
+    <div class="tli"><div class="tld" style="border-color:var(--amber)"></div><h4>成本控制</h4><p>每次任务可能调用数十次 LLM，成本远高于单次问答。需合理设置最大迭代次数和 token 预算。</p></div>
+    <div class="tli"><div class="tld" style="border-color:var(--purple)"></div><h4>安全与权限</h4><p>能执行真实操作（发邮件、改数据库），必须有明确的权限边界和人工审批节点。</p></div>
+    <div class="tli"><div class="tld" style="border-color:var(--teal)"></div><h4>可观测性</h4><p>多步推理的黑箱问题。需要完善的日志、trace、中间状态可视化才能调试和优化。</p></div>
+  </div>
+</div></div>
+</section>
+
+<!-- ====== CH8: AGENT PATTERNS ====== -->
+<section id="agent-pat">
+<div class="container"><div class="cs fi">
+  <div class="slbl">第八章</div>
+  <h2>Agent 设计模式</h2>
+  <div class="sub">五种主流架构，各有适用场景</div>
+
+  <div class="exc" onclick="togE(this)"><div class="exh"><h4>ReAct — 推理与行动交替</h4><span class="exa">›</span></div><div class="exb">最经典的 Agent 模式，来自 2022 年的同名论文。模型交替进行 Thought（推理当前状态）和 Action（调用工具），每次行动后观察结果再推理。Prompt 格式通常是：Thought: 我需要查一下… → Action: search("xxx") → Observation: 搜索结果… → Thought: 根据结果…
+    <div class="pf"><div class="pfb n-t">Thought</div><div class="pfa">→</div><div class="pfb n-a">Action</div><div class="pfa">→</div><div class="pfb n-c">Observation</div><div class="pfa">→</div><div class="pfb n-t">Thought</div><div class="pfa">→</div><div class="pfb n-g">Answer</div></div>
+    <strong>优：</strong>简单直观，推理过程完全可解释，易于调试。<strong>缺：</strong>严格串行执行，无法并行多个子任务，复杂任务效率低。<br><strong>适用：</strong>问答系统、简单的工具调用场景、需要透明推理过程的任务。</div></div>
+
+  <div class="exc" onclick="togE(this)"><div class="exh"><h4>Plan-and-Execute — 规划与执行分离</h4><span class="exa">›</span></div><div class="exb">先用一个 Planner LLM 制定完整计划（步骤列表），再用一个 Executor Agent 逐步执行。关键改进：执行过程中如果发现计划有问题（某步失败或获得新信息），可以回到 Planner 重新规划（re-planning）。
+    <div class="pf"><div class="pfb n-p">Planner</div><div class="pfa">→</div><div class="pfb n-a">Step 1</div><div class="pfa">→</div><div class="pfb n-a">Step 2</div><div class="pfa">→</div><div class="pfb n-c">Re-plan?</div><div class="pfa">→</div><div class="pfb n-g">Done</div></div>
+    <strong>优：</strong>全局视角好，适合复杂多步任务，Planner 可以用更强的模型而 Executor 用更便宜的。<strong>缺：</strong>初始规划可能基于不完整信息，需要良好的 re-planning 机制。<br><strong>典型框架：</strong>LangGraph 的 Plan-and-Execute 模板、BabyAGI。</div></div>
+
+  <div class="exc" onclick="togE(this)"><div class="exh"><h4>Multi-Agent — 多智能体协作</h4><span class="exa">›</span></div><div class="exb">多个专精 Agent 各司其职，通过消息传递协作。核心思想是"分工产生专业性"——比如软件开发场景中，一个 Agent 负责写代码、一个负责代码审查、一个负责测试、一个负责项目管理。
+    <div class="pf"><div class="pfb n-p">Orchestrator</div><div class="pfa">→</div><div class="pfb n-t">Coder</div><div class="pfa">↔</div><div class="pfb n-a">Reviewer</div><div class="pfa">↔</div><div class="pfb n-c">Tester</div></div>
+    <strong>优：</strong>专业分工提高质量，可并行执行，易于扩展新角色。<strong>缺：</strong>Agent 间协调复杂，消息传递成本高，调试困难（"谁说了什么导致了这个结果？"）。<br><strong>典型框架：</strong>AutoGen（微软）、CrewAI、ChatDev。</div></div>
+
+  <div class="exc" onclick="togE(this)"><div class="exh"><h4>Reflexion — 自我反思</h4><span class="exa">›</span></div><div class="exb">Agent 执行任务后，用另一个 LLM 调用（或同一个）对结果进行反思和评估，生成改进建议，然后带着反思记忆重试。类似于"做完作业自己检查一遍，发现问题再改"。反思记忆会持续积累，让 Agent 在后续尝试中避免重复犯错。
+    <div class="pf"><div class="pfb n-a">Execute</div><div class="pfa">→</div><div class="pfb n-c">Evaluate</div><div class="pfa">→</div><div class="pfb n-p">Reflect</div><div class="pfa">→</div><div class="pfb n-t">Retry (improved)</div></div>
+    <strong>优：</strong>能从失败中学习，质量逐轮提升，适合需要迭代优化的任务（如代码生成、写作）。<strong>缺：</strong>多轮调用成本高，可能过度反思陷入死循环。<br><strong>适用：</strong>代码题、数学推理、需要逐步完善的创作任务。</div></div>
+
+  <div class="exc" onclick="togE(this)"><div class="exh"><h4>Tool-Use Agent — 工具增强型</h4><span class="exa">›</span></div><div class="exb">专注于工具调用的 Agent 模式。LLM 根据任务选择合适的工具、构造参数、解析返回结果。现代 LLM 的 function calling / tool_use 能力让这种模式越来越成熟和可靠。<br><br>核心能力链：<strong>工具发现</strong>（知道有哪些工具可用）→ <strong>工具选择</strong>（判断哪个工具最合适）→ <strong>参数构造</strong>（生成正确的调用参数）→ <strong>结果解析</strong>（理解返回值并决定下一步）。<br><br><strong>典型应用：</strong>Claude 的 computer use 和 MCP 集成、GPT 的 code interpreter、各种 API 调用场景。MCP 的出现让这种模式的工具接入成本大幅降低。</div></div>
+
+  <div class="co"><strong>选型建议：</strong>从 ReAct 单 Agent 开始，先确保单步可靠。复杂任务用 Plan-and-Execute。需要专业分工时才上 Multi-Agent。一个做好 3 件事的 Agent 比声称能做 30 件事但不靠谱的更有价值。</div>
+</div></div>
+</section>
+
+<!-- ====== CH9: MCP ====== -->
+<section id="mcp">
+<div class="container"><div class="cs fi">
+  <div class="slbl">第九章</div>
+  <h2>MCP 工具协议</h2>
+  <div class="sub">Model Context Protocol — Agent 的 "USB 接口"</div>
+
+  <h3>什么是 MCP</h3>
+  <p>MCP（Model Context Protocol）是 Anthropic 提出的开放标准，它为 AI 模型连接外部数据源和工具定义了一套统一的协议。类比：在 USB 标准出现之前，每个外设都需要专用接口；MCP 就是 AI 世界的 USB——一个标准协议，让任何 Agent 能接入任何工具。</p>
+
+  <div class="cg">
+    <div class="cc">
+      <h4 style="font-size:14px;">❌ 没有 MCP</h4>
+      <p>每接入一个工具都要写定制代码。N 个模型 × M 个工具 = N×M 种集成。维护噩梦。</p>
+    </div>
+    <div class="cc">
+      <h4 style="font-size:14px;">✅ 有 MCP</h4>
+      <p>所有工具实现统一的 MCP Server 接口。N 个模型 + M 个工具 = N+M 种集成。即插即用。</p>
+    </div>
+  </div>
+
+  <h3>三层架构</h3>
+  <div class="flw">
+    <div class="fb fb-p">Host 宿主</div><div class="fa">→</div>
+    <div class="fb fb-t">Client 客户端</div><div class="fa">→</div>
+    <div class="fb fb-a">Server 服务端</div><div class="fa">→</div>
+    <div class="fb fb-c">外部资源</div>
+  </div>
+  <div class="exc" onclick="togE(this)"><div class="exh"><h4>Host（宿主应用）</h4><span class="exa">›</span></div><div class="exb">用户直接交互的应用，如 Claude Desktop、IDE 插件、自定义 AI 应用。它发起需求，管理多个 Client 连接。类比：你的电脑本身。</div></div>
+  <div class="exc" onclick="togE(this)"><div class="exh"><h4>Client（MCP 客户端）</h4><span class="exa">›</span></div><div class="exb">在 Host 内部运行，负责与特定 Server 建立一对一连接。维护协议通信、能力协商。类比：电脑上的 USB 控制器。每个 Client 对接一个 Server。</div></div>
+  <div class="exc" onclick="togE(this)"><div class="exh"><h4>Server（MCP 服务端）</h4><span class="exa">›</span></div><div class="exb">对外暴露工具、资源和提示模板。每个 Server 连接特定的外部系统（数据库、API、文件系统等）。类比：USB 设备（鼠标、键盘、硬盘）。<br><br><strong>Server 提供三种能力：</strong><br>• <strong>Tools</strong> — 可执行的操作（查询数据库、发邮件）<br>• <strong>Resources</strong> — 可读取的数据（文件内容、API 响应）<br>• <strong>Prompts</strong> — 预定义的提示模板</div></div>
+
+  <h3>MCP vs 传统 API 集成</h3>
+  <table class="vst">
+    <tr><th style="width:25%">维度</th><th style="width:37%">传统 API 集成</th><th style="width:38%">MCP</th></tr>
+    <tr><td>集成方式</td><td>每个工具单独写适配代码</td><td>统一协议，即插即用</td></tr>
+    <tr><td>发现机制</td><td>手动配置工具列表</td><td>Server 自动声明能力</td></tr>
+    <tr><td>双向通信</td><td>通常只有请求-响应</td><td>支持双向实时通信</td></tr>
+    <tr><td>安全模型</td><td>各自实现</td><td>统一的权限和认证框架</td></tr>
+    <tr><td>可组合性</td><td>低，互相独立</td><td>高，多个 Server 自由组合</td></tr>
+  </table>
+
+  <h3>主流 MCP Server 生态</h3>
+  <div class="sg">
+    <div class="sc"><div class="scc">开发工具</div><h4>GitHub / GitLab</h4><p>代码仓库管理、PR 审查、Issue 跟踪</p></div>
+    <div class="sc"><div class="scc">数据存储</div><h4>PostgreSQL / Redis</h4><p>数据库查询、缓存操作</p></div>
+    <div class="sc"><div class="scc">办公协作</div><h4>Slack / Gmail / Calendar</h4><p>消息发送、邮件管理、日程安排</p></div>
+    <div class="sc"><div class="scc">云服务</div><h4>AWS / GCP / Cloudflare</h4><p>云资源管理、部署、监控</p></div>
+    <div class="sc"><div class="scc">知识管理</div><h4>Notion / Confluence</h4><p>文档读写、知识库检索</p></div>
+    <div class="sc"><div class="scc">浏览器</div><h4>Puppeteer / Browserbase</h4><p>网页浏览、截图、数据抓取</p></div>
+  </div>
+
+  <div class="co"><strong>关键洞察：</strong>MCP 的价值不仅是技术标准化，更是生态效应。当越来越多的工具实现 MCP Server，Agent 的能力边界就自动扩展——不需要为每个新工具写代码。这就是为什么说 MCP 是 Agent 生态的基础设施。</div>
+</div></div>
+</section>
+
+<!-- ====== CH10: TECH STACK ====== -->
+<section id="stack">
+<div class="container"><div class="cs fi">
+  <div class="slbl">第十章</div>
+  <h2>技术栈与实战</h2>
+  <div class="sub">RAG + Agent + MCP 统一选型与部署建议</div>
+
+  <h3>核心组件选型</h3>
+  <div class="sg">
+    <div class="sc"><div class="scc">向量数据库</div><h4>Milvus / Qdrant / Pinecone</h4><p>Milvus 开源高性能；Qdrant Rust 实现快；Pinecone 全托管。小规模用 Chroma 或 pgvector。</p></div>
+    <div class="sc"><div class="scc">Embedding</div><h4>BGE / E5 / OpenAI</h4><p>开源首选 BGE-M3（多语言）；商用首选 OpenAI text-embedding-3。</p></div>
+    <div class="sc"><div class="scc">编排框架</div><h4>LangChain / LlamaIndex</h4><p>LangChain 生态大；LlamaIndex 专注 RAG；LangGraph 做 Agent 状态机。</p></div>
+    <div class="sc"><div class="scc">Re-ranking</div><h4>Cohere / BGE-Reranker</h4><p>商用首选 Cohere Rerank API；开源用 bge-reranker-v2。</p></div>
+    <div class="sc"><div class="scc">LLM</div><h4>Claude / GPT-4 / 开源</h4><p>商用首选 Claude 或 GPT-4o；开源用 Llama 3、Qwen 2.5。</p></div>
+    <div class="sc"><div class="scc">Agent 框架</div><h4>LangGraph / CrewAI</h4><p>LangGraph 灵活度最高；CrewAI 多智能体协作上手快。</p></div>
+    <div class="sc"><div class="scc">MCP SDK</div><h4>官方 TypeScript / Python SDK</h4><p>快速构建自定义 MCP Server，接入任何内部工具。</p></div>
+    <div class="sc"><div class="scc">评估工具</div><h4>Ragas / TruLens / Phoenix</h4><p>RAG 效果评估、Agent trace 分析、可观测性。</p></div>
+  </div>
+
+  <h3>推荐架构</h3>
+  <div class="flw">
+    <div class="fb fb-p">文档解析</div><div class="fa">→</div>
+    <div class="fb fb-t">Chunk + Embed</div><div class="fa">→</div>
+    <div class="fb fb-a">向量数据库</div><div class="fa">→</div>
+    <div class="fb fb-c">检索 + Re-rank</div><div class="fa">→</div>
+    <div class="fb fb-b">Agent 编排</div><div class="fa">→</div>
+    <div class="fb fb-g">MCP 工具层</div>
+  </div>
+
+  <h3>分阶段实施</h3>
+  <div class="tl">
+    <div class="tli"><div class="tld" style="border-color:var(--teal)"></div><h4>MVP（1-2 周）</h4><p>Chroma + LangChain + OpenAI Embedding + Claude。固定 chunk，无 re-ranking。跑通端到端。</p></div>
+    <div class="tli"><div class="tld" style="border-color:var(--amber)"></div><h4>优化（2-4 周）</h4><p>混合检索 + re-ranking + 语义 chunking + overlap 优化 + 元数据过滤。</p></div>
+    <div class="tli"><div class="tld" style="border-color:var(--coral)"></div><h4>Agent 化（4-8 周）</h4><p>引入 Agent 循环 + MCP 工具接入 + query 改写 + CRAG 评估模块 + 用户反馈循环。</p></div>
+    <div class="tli"><div class="tld" style="border-color:var(--purple)"></div><h4>生产级（8+ 周）</h4><p>生产向量库（Milvus/Qdrant）+ 权限控制 + Guardrails + 日志监控 + A/B 测试 + 自动化数据更新。</p></div>
+  </div>
+
+  <h3>评估体系</h3>
+  <div class="cg">
+    <div class="cc">
+      <h4 style="font-size:14px;">检索质量</h4>
+      <ul style="margin-left:0;font-size:13px;">
+        <li><strong>Recall@K</strong> — Top-K 包含正确文档的比例</li>
+        <li><strong>MRR</strong> — 正确文档排名倒数均值</li>
+        <li><strong>NDCG</strong> — 归一化折损累积增益</li>
+      </ul>
+    </div>
+    <div class="cc">
+      <h4 style="font-size:14px;">生成质量</h4>
+      <ul style="margin-left:0;font-size:13px;">
+        <li><strong>Faithfulness</strong> — 回答是否忠于文档</li>
+        <li><strong>Relevance</strong> — 回答是否切题</li>
+        <li><strong>Groundedness</strong> — 是否有依据</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="co"><strong>最重要的建议：</strong>不要试图一步到位。先用最简单的方案跑通，再用真实查询找瓶颈，有针对性地优化。RAG 效果 80% 取决于数据质量和 chunking 策略，而非框架选型。Agent 的核心挑战是可靠性，先确保每一步都可控。</div>
+</div></div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <p><a href="/" style="color:var(--teal);text-decoration:none;font-weight:500;">SkillNav</a> · AI 架构深度指南 · <a href="/learn" style="color:inherit;text-decoration:underline;">更多概念 →</a></p>
+</footer>
+
+<script>
+/* Demo Tabs */
+function showD(g,i){
+  const p=document.querySelectorAll(`.dpnl[data-g="${g}"]`);
+  const t=p[0].closest('.db').querySelectorAll('.dtab');
+  p.forEach((x,j)=>x.classList.toggle('active',j===i));
+  t.forEach((x,j)=>x.classList.toggle('active',j===i));
+}
+/* Expand */
+function togE(el){el.classList.toggle('open')}
+
+/* Chunking */
+const CKD="用户在下单后30天内可以申请退货。退货时商品需保持原始包装完好且不影响二次销售。电子产品类目需要额外提供购买凭证和产品序列号。退货运费方面如因质量问题由公司承担运费否则由消费者自行承担。审核通过后退款将在3至5个工作日内原路退回。";
+function ckR(){
+  const cs=+document.getElementById('ck-s').value,op=+document.getElementById('ck-o').value;
+  document.getElementById('ck-sv').textContent=cs;
+  document.getElementById('ck-ov').textContent=op+'%';
+  const ol=Math.round(cs*op/100),step=Math.max(cs-ol,1),chunks=[];
+  for(let i=0;i<CKD.length;i+=step){chunks.push({s:i,e:Math.min(i+cs,CKD.length)});if(i+cs>=CKD.length)break;}
+  document.getElementById('ck-t').textContent=CKD;
+  const tot=chunks.reduce((s,c)=>s+c.e-c.s,0),bl=Math.round((tot/CKD.length-1)*100);
+  document.getElementById('ck-st').innerHTML=
+    `<div style="flex:1;min-width:70px;padding:8px 12px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--rs)"><div style="font-size:10px;color:var(--text-3)">Chunks</div><div style="font-size:18px;font-weight:700">${chunks.length}</div></div>`+
+    `<div style="flex:1;min-width:70px;padding:8px 12px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--rs)"><div style="font-size:10px;color:var(--text-3)">每段 tokens</div><div style="font-size:18px;font-weight:700">~${Math.round(cs*0.6)}</div></div>`+
+    `<div style="flex:1;min-width:70px;padding:8px 12px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--rs)"><div style="font-size:10px;color:var(--text-3)">重叠</div><div style="font-size:18px;font-weight:700">~${Math.round(ol*0.6)}</div></div>`+
+    `<div style="flex:1;min-width:70px;padding:8px 12px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--rs)"><div style="font-size:10px;color:var(--text-3)">膨胀</div><div style="font-size:18px;font-weight:700">+${bl}%</div></div>`;
+}
+ckR();
+
+/* Agent Simulation */
+const SIM=[
+  {t:'user',x:'帮我规划一个 3 天的东京旅行，预算 8000 元，我喜欢美食和动漫。'},
+  {t:'lbl',x:'🧠 THOUGHT #1'},
+  {t:'agent',x:'需要：1) 查机票 2) 查酒店 3) 根据兴趣规划景点 4) 预算分配。先查机票。'},
+  {t:'lbl',x:'🔧 ACTION — 航班搜索 API'},
+  {t:'tool',x:'search_flights(from="上海", to="东京")\n→ 春秋航空 ¥1,280 | 吉祥 ¥1,560 | ANA ¥2,340'},
+  {t:'lbl',x:'🧠 THOUGHT #2'},
+  {t:'agent',x:'春秋 ¥1,280 最优。剩余 6720。查秋叶原附近酒店。'},
+  {t:'lbl',x:'🔧 ACTION — 酒店搜索 API'},
+  {t:'tool',x:'search_hotels(location="秋叶原", nights=3)\n→ 东横INN ¥780/晚 | APA ¥920/晚'},
+  {t:'lbl',x:'🧠 THOUGHT #3'},
+  {t:'agent',x:'东横INN 3晚=¥2,340。机票+酒店=¥3,620。剩余 ¥4,380 用于餐饮门票。'},
+  {t:'lbl',x:'🔧 ACTION — 景点推荐 API'},
+  {t:'tool',x:'recommend(interests=["美食","动漫"])\n→ D1:筑地+浅草寺+秋叶原 D2:涩谷+原宿 D3:台场+吉卜力'},
+  {t:'lbl',x:'✅ FINAL OUTPUT'},
+  {t:'agent',x:'🗼 东京 3 日方案\n\n✈️ 春秋航空 ¥1,280\n🏨 东横INN ¥2,340\n🍜 餐饮 ¥2,880\n🎫 门票 ¥1,500\n\nD1: 筑地→浅草寺→秋叶原\nD2: 涩谷→原宿→新宿\nD3: 台场→吉卜力美术馆\n\n总计 ¥8,000 ✓'},
+];
+let simR=false;
+function runSim(){
+  if(simR)return;simR=true;
+  const a=document.getElementById('sim-area');a.innerHTML='';
+  let i=0;
+  function nx(){
+    if(i>=SIM.length){simR=false;return}
+    const s=SIM[i],d=document.createElement('div');
+    if(s.t==='lbl'){d.className='sim-lbl';d.textContent=s.x}
+    else{d.className='sim-msg sim-'+s.t;d.style.whiteSpace='pre-wrap';d.textContent=s.x}
+    d.style.opacity='0';d.style.transform='translateY(6px)';d.style.transition='all .3s ease';
+    a.appendChild(d);a.scrollTop=a.scrollHeight;
+    requestAnimationFrame(()=>{d.style.opacity='1';d.style.transform='translateY(0)'});
+    i++;setTimeout(nx,s.t==='lbl'?350:s.t==='tool'?1100:800);
+  }
+  nx();
+}
+
+/* Scroll Anim */
+const obs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible')})},{threshold:0.08});
+document.querySelectorAll('.fi').forEach(el=>obs.observe(el));
+
+/* Active Nav */
+const secs=document.querySelectorAll('section[id]'),nls=document.querySelectorAll('.nav-lk a');
+window.addEventListener('scroll',()=>{
+  let c='';secs.forEach(s=>{if(scrollY>=s.offsetTop-90)c=s.id});
+  nls.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+c));
+});
+</script>
+</body>
+</html>

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { SectionHeader } from "@/components/shared/section-header";
 import { BreadcrumbJsonLd } from "@/components/shared/json-ld";
 import { ConceptCard } from "@/components/learn/concept-card";
@@ -71,6 +72,42 @@ export default function LearnPage() {
             </div>
           </section>
         )}
+        {/* Interactive deep guides */}
+        <section className="mt-10">
+          <h2 className="mb-4 text-lg font-semibold text-foreground">
+            交互式深度指南
+          </h2>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Link
+              href="/guides/ai-guide.html"
+              className="group rounded-xl border border-border bg-card p-5 transition-colors hover:border-primary/40"
+            >
+              <div className="text-xs font-medium text-primary/70">
+                10 章完整体系
+              </div>
+              <h3 className="mt-1 text-base font-bold group-hover:text-primary">
+                AI 架构深度指南
+              </h3>
+              <p className="mt-1.5 text-sm text-muted-foreground">
+                从提示词工程到 Agent 系统，从 RAG 到 MCP，交互式演示掌握全貌
+              </p>
+            </Link>
+            <Link
+              href="/guides/rag-deep-guide.html"
+              className="group rounded-xl border border-border bg-card p-5 transition-colors hover:border-primary/40"
+            >
+              <div className="text-xs font-medium text-primary/70">
+                6 章交互演示
+              </div>
+              <h3 className="mt-1 text-base font-bold group-hover:text-primary">
+                RAG 深度指南
+              </h3>
+              <p className="mt-1.5 text-sm text-muted-foreground">
+                检索增强生成的核心原理、优化策略与工程实践
+              </p>
+            </Link>
+          </div>
+        </section>
       </div>
     </>
   );
