@@ -19,16 +19,20 @@ import { cn } from "@/lib/utils";
 interface SkillsToolbarProps {
   categories: string[];
   totalCount: number;
+  isRepoView?: boolean;
 }
 
 const TAB_OPTIONS = [
-  { value: "", label: "全部" },
+  { value: "", label: "按仓库" },
   { value: "featured", label: "精选" },
   { value: "latest", label: "最新" },
-  { value: "repo", label: "按仓库" },
 ];
 
-export function SkillsToolbar({ categories, totalCount }: SkillsToolbarProps) {
+export function SkillsToolbar({
+  categories,
+  totalCount,
+  isRepoView,
+}: SkillsToolbarProps) {
   const [isPending, startTransition] = useTransition();
 
   const [q, setQ] = useQueryState(
@@ -122,8 +126,13 @@ export function SkillsToolbar({ categories, totalCount }: SkillsToolbarProps) {
         </div>
       </div>
 
-      {/* Search + sort */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+      {/* Search + sort — hidden in repo index view */}
+      <div
+        className={cn(
+          "flex flex-col gap-3 sm:flex-row sm:items-center",
+          isRepoView && "hidden",
+        )}
+      >
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -159,8 +168,8 @@ export function SkillsToolbar({ categories, totalCount }: SkillsToolbarProps) {
         </div>
       </div>
 
-      {/* Category filters */}
-      <ScrollFade>
+      {/* Category filters — hidden in repo index view */}
+      <ScrollFade className={isRepoView ? "hidden" : undefined}>
         <Button
           variant={!category ? "default" : "outline"}
           size="sm"
@@ -182,17 +191,19 @@ export function SkillsToolbar({ categories, totalCount }: SkillsToolbarProps) {
         ))}
       </ScrollFade>
 
-      {/* Results count */}
-      <p
-        className={cn(
-          "text-sm text-muted-foreground transition-opacity",
-          isPending && "opacity-50",
-        )}
-      >
-        {q || category || tab
-          ? `找到 ${totalCount} 个 Skills`
-          : `共 ${totalCount} 个 Skills`}
-      </p>
+      {/* Results count — hidden in repo index view */}
+      {!isRepoView && (
+        <p
+          className={cn(
+            "text-sm text-muted-foreground transition-opacity",
+            isPending && "opacity-50",
+          )}
+        >
+          {q || category || tab
+            ? `找到 ${totalCount} 个 Skills`
+            : `共 ${totalCount} 个 Skills`}
+        </p>
+      )}
     </div>
   );
 }

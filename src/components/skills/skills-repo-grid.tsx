@@ -1,21 +1,57 @@
 import Link from "next/link";
-import { Github, Star, ChevronRight } from "lucide-react";
+import { Github, Star, ChevronRight, Package, ArrowLeft } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { SkillCard } from "./skill-card";
 import { formatNumber } from "@/lib/utils";
 import { getSkillsWithCount } from "@/lib/data";
 import type { Skill } from "@/data/types";
 
-interface RepoGroup {
+export interface RepoGroup {
   repo: string;
   org: string;
   repoName: string;
   githubUrl: string;
   skills: Skill[];
   totalStars: number;
+  description: string;
+  isOfficial: boolean;
 }
 
-function groupByRepo(skills: Skill[]): RepoGroup[] {
+// Well-known repo metadata
+const REPO_META: Record<string, { description: string; isOfficial?: boolean }> =
+  {
+    "anthropics/skills": {
+      description:
+        "Anthropic 官方 Skills 合集 — 文档处理、品牌设计、Web 开发等",
+      isOfficial: true,
+    },
+    "openai/codex": {
+      description: "OpenAI Codex CLI 官方 Skills — PR 管理、TUI 测试",
+      isOfficial: true,
+    },
+    "neondatabase/agent-skills": {
+      description: "Neon 数据库官方 Skills — 一键创建 Postgres 实例",
+      isOfficial: true,
+    },
+    "alirezarezvani/claude-skills": {
+      description:
+        "全栈开发 Skills 合集 — 覆盖前后端、DevOps、安全、AI 多个领域",
+    },
+    "daymade/claude-code-skills": {
+      description: "开发者工具集 — CLI 工具生成、代码阅读器、社交媒体自动化等",
+    },
+    "giuseppe-trisciuoglio/developer-kit": {
+      description:
+        "Developer Kit — NestJS、React、Terraform 等全栈框架的脚手架和最佳实践",
+    },
+    "levnikolaevich/claude-code-skills": {
+      description: "系统化工程 Skills — 需求分解、项目引导、代码审计、依赖升级",
+    },
+  };
+
+export function groupByRepo(skills: Skill[]): RepoGroup[] {
   const groups = new Map<string, RepoGroup>();
 
   for (const skill of skills) {
@@ -25,6 +61,7 @@ function groupByRepo(skills: Skill[]): RepoGroup[] {
 
     const [, org, repoName] = match;
     const repo = `${org}/${repoName}`;
+    const meta = REPO_META[repo];
 
     if (!groups.has(repo)) {
       groups.set(repo, {
@@ -34,110 +71,205 @@ function groupByRepo(skills: Skill[]): RepoGroup[] {
         githubUrl: `https://github.com/${repo}`,
         skills: [],
         totalStars: 0,
+        description: meta?.description || "",
+        isOfficial: meta?.isOfficial || false,
       });
     }
 
     const group = groups.get(repo)!;
     group.skills.push(skill);
-    // Use the max stars from any skill in this repo
     if (skill.stars > group.totalStars) {
       group.totalStars = skill.stars;
     }
   }
 
-  // Sort by total stars descending
-  return [...groups.values()].sort((a, b) => b.totalStars - a.totalStars);
+  // Official repos first, then by stars
+  return [...groups.values()].sort((a, b) => {
+    if (a.isOfficial !== b.isOfficial) return a.isOfficial ? -1 : 1;
+    return b.totalStars - a.totalStars;
+  });
 }
 
-// Well-known repo descriptions
-const REPO_DESCRIPTIONS: Record<string, string> = {
-  "anthropics/skills": "Anthropic 官方 Skills 合集",
-  "openai/codex": "OpenAI Codex CLI 官方 Skills",
-  "neondatabase/agent-skills": "Neon 数据库 Agent Skills",
-  "alirezarezvani/claude-skills":
-    "全栈开发 Skills 合集（46 个工程/运维/安全技能）",
-  "daymade/claude-code-skills":
-    "开发者工具 Skills 合集（CLI 工具、阅读器、自动化）",
-  "giuseppe-trisciuoglio/developer-kit":
-    "Developer Kit 插件（全栈框架、DevOps、数据库）",
-  "levnikolaevich/claude-code-skills":
-    "系统化工程 Skills（分解、引导、审计、重构）",
-};
+/**
+ * Default view: repo cards as primary navigation
+ */
+export async function SkillsRepoIndex() {
+  const { skills } = await getSkillsWithCount({
+    limit: 500,
+    offset: 0,
+  });
 
-interface SkillsRepoGridProps {
+  const repos = groupByRepo(skills);
+
+  return (
+    <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {repos.map((repo) => {
+        const topSkills = repo.skills.slice(0, 4);
+        return (
+          <Link
+            key={repo.repo}
+            href={`/skills?repo=${encodeURIComponent(repo.repo)}`}
+          >
+            <Card className="group h-full transition-all hover:border-primary/40 hover:shadow-md">
+              <CardContent className="pt-6">
+                <div className="flex items-start justify-between">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <Github className="size-4 shrink-0 text-muted-foreground" />
+                      <h3 className="truncate text-base font-semibold group-hover:text-primary">
+                        {repo.org}/{repo.repoName}
+                      </h3>
+                    </div>
+                    <div className="mt-1.5 flex items-center gap-2">
+                      {repo.isOfficial && (
+                        <Badge
+                          variant="secondary"
+                          className="border-blue-200 bg-blue-50 text-blue-700 text-xs dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300"
+                        >
+                          官方
+                        </Badge>
+                      )}
+                      <Badge variant="secondary" className="text-xs">
+                        <Package className="mr-0.5 size-3" />
+                        {repo.skills.length} Skills
+                      </Badge>
+                      {repo.totalStars > 0 && (
+                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <Star className="size-3" />
+                          {formatNumber(repo.totalStars)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <ChevronRight className="mt-1 size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+                </div>
+                {repo.description && (
+                  <p className="mt-3 line-clamp-2 text-sm text-muted-foreground">
+                    {repo.description}
+                  </p>
+                )}
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {topSkills.map((sk) => (
+                    <span
+                      key={sk.id}
+                      className="rounded-md bg-muted px-2 py-0.5 text-xs"
+                    >
+                      {sk.nameZh ?? sk.name}
+                    </span>
+                  ))}
+                  {repo.skills.length > 4 && (
+                    <span className="rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                      +{repo.skills.length - 4}
+                    </span>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
+ * Repo detail view: all skills in a specific repo
+ */
+interface SkillsRepoDetailProps {
+  repo: string;
   q: string;
   category: string;
 }
 
-export async function SkillsRepoGrid({ q, category }: SkillsRepoGridProps) {
-  // Fetch all published skills (no pagination for repo view)
+export async function SkillsRepoDetail({
+  repo,
+  q,
+  category,
+}: SkillsRepoDetailProps) {
   const { skills } = await getSkillsWithCount({
     limit: 500,
     offset: 0,
     category: category || undefined,
     search: q || undefined,
-    tab: undefined,
-    sort: undefined,
   });
 
   const repos = groupByRepo(skills);
+  const current = repos.find((r) => r.repo === repo);
 
-  if (repos.length === 0) {
+  if (!current) {
     return (
-      <p className="mt-12 text-center text-muted-foreground">
-        未找到匹配的仓库
-      </p>
+      <div className="mt-8 text-center">
+        <p className="text-muted-foreground">未找到该仓库</p>
+        <Button variant="outline" className="mt-4" asChild>
+          <Link href="/skills">返回仓库列表</Link>
+        </Button>
+      </div>
     );
   }
 
   return (
-    <div className="mt-6 space-y-10">
-      {repos.map((repo) => (
-        <div key={repo.repo}>
-          {/* Repo header */}
-          <div className="mb-4 flex items-center gap-3">
-            <a
-              href={repo.githubUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 text-lg font-semibold hover:text-primary"
-            >
-              <Github className="size-5" />
-              <span className="text-muted-foreground">{repo.org}/</span>
-              {repo.repoName}
-            </a>
-            {repo.totalStars > 0 && (
-              <span className="flex items-center gap-1 text-sm text-muted-foreground">
+    <div className="mt-6">
+      {/* Repo header */}
+      <div className="mb-6 rounded-lg border border-border/40 bg-muted/30 p-4">
+        <div className="flex items-start justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" className="h-7 px-2" asChild>
+                <Link href="/skills">
+                  <ArrowLeft className="size-3.5" />
+                </Link>
+              </Button>
+              <a
+                href={current.githubUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-lg font-semibold hover:text-primary"
+              >
+                <Github className="size-5" />
+                {current.org}/{current.repoName}
+              </a>
+              {current.isOfficial && (
+                <Badge
+                  variant="secondary"
+                  className="border-blue-200 bg-blue-50 text-blue-700 text-xs dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300"
+                >
+                  官方
+                </Badge>
+              )}
+            </div>
+            {current.description && (
+              <p className="mt-2 text-sm text-muted-foreground">
+                {current.description}
+              </p>
+            )}
+          </div>
+          <div className="flex items-center gap-3 text-sm text-muted-foreground">
+            {current.totalStars > 0 && (
+              <span className="flex items-center gap-1">
                 <Star className="size-3.5" />
-                {formatNumber(repo.totalStars)}
+                {formatNumber(current.totalStars)}
               </span>
             )}
-            <Badge variant="secondary" className="text-xs">
-              {repo.skills.length} Skills
-            </Badge>
+            <span>{current.skills.length} Skills</span>
           </div>
-          {REPO_DESCRIPTIONS[repo.repo] && (
-            <p className="mb-4 text-sm text-muted-foreground">
-              {REPO_DESCRIPTIONS[repo.repo]}
-            </p>
-          )}
-          {/* Skills grid */}
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {repo.skills.slice(0, 6).map((skill) => (
-              <SkillCard key={skill.id} skill={skill} />
-            ))}
-          </div>
-          {repo.skills.length > 6 && (
-            <Link
-              href={`/skills?q=${encodeURIComponent(repo.org)}`}
-              className="mt-3 inline-flex items-center gap-1 text-sm text-primary hover:underline"
-            >
-              查看全部 {repo.skills.length} 个 Skills
-              <ChevronRight className="size-3.5" />
-            </Link>
-          )}
         </div>
-      ))}
+        {/* Install all */}
+        <div className="mt-3 rounded-md bg-background p-3">
+          <p className="mb-1 text-xs text-muted-foreground">
+            安装整个仓库（包含所有 Skills）
+          </p>
+          <code className="text-sm">
+            claude skill add --url github.com/{current.repo}
+          </code>
+        </div>
+      </div>
+
+      {/* Skills grid */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {current.skills.map((skill) => (
+          <SkillCard key={skill.id} skill={skill} />
+        ))}
+      </div>
     </div>
   );
 }

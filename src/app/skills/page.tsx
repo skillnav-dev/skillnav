@@ -5,7 +5,10 @@ import { BreadcrumbJsonLd } from "@/components/shared/json-ld";
 import { siteConfig } from "@/lib/constants";
 import { SkillsToolbar } from "@/components/skills/skills-toolbar";
 import { SkillsGrid } from "@/components/skills/skills-grid";
-import { SkillsRepoGrid } from "@/components/skills/skills-repo-grid";
+import {
+  SkillsRepoIndex,
+  SkillsRepoDetail,
+} from "@/components/skills/skills-repo-grid";
 import { SkillsSkeleton } from "@/components/skills/skills-skeleton";
 import { getSkillCategories, getSkillsWithCount } from "@/lib/data";
 import { skillsParamsCache, PAGE_SIZE } from "@/lib/skills-search-params";
@@ -48,20 +51,29 @@ export async function generateMetadata({
 }
 
 export default async function SkillsPage({ searchParams }: PageProps) {
-  const { q, category, tab, sort, page } =
+  const { q, category, tab, sort, repo, page } =
     await skillsParamsCache.parse(searchParams);
 
-  // Parallel fetch: categories + count for toolbar display
-  const [categories, { total }] = await Promise.all([
+  // Determine view mode:
+  // - repo param set → show skills in that repo
+  // - tab set (featured/latest) or search active → flat grid
+  // - default → repo index (cards)
+  const isRepoDetail = !!repo;
+  const isFlatView = !!tab || !!q || !!category || !!sort;
+
+  // Only fetch categories + count for flat view
+  const [categories, countResult] = await Promise.all([
     getSkillCategories(),
-    getSkillsWithCount({
-      limit: PAGE_SIZE,
-      offset: (Math.max(1, page) - 1) * PAGE_SIZE,
-      category: category || undefined,
-      search: q || undefined,
-      tab: tab || undefined,
-      sort: sort || undefined,
-    }),
+    isFlatView || isRepoDetail
+      ? getSkillsWithCount({
+          limit: PAGE_SIZE,
+          offset: (Math.max(1, page) - 1) * PAGE_SIZE,
+          category: category || undefined,
+          search: q || undefined,
+          tab: tab || undefined,
+          sort: sort || undefined,
+        })
+      : Promise.resolve({ skills: [], total: 0 }),
   ]);
 
   return (
@@ -76,18 +88,22 @@ export default async function SkillsPage({ searchParams }: PageProps) {
         <SectionHeader
           as="h1"
           title="Skills 导航"
-          description="浏览和发现最好用的 AI Agent Skills"
+          description="浏览和发现最好用的 AI Agent Skills，按 GitHub 仓库分类展示"
         />
         <div className="mt-6">
-          <SkillsToolbar categories={categories} totalCount={total} />
+          <SkillsToolbar
+            categories={categories}
+            totalCount={countResult.total}
+            isRepoView={!isFlatView && !isRepoDetail}
+          />
         </div>
         <Suspense
-          key={`${q}-${category}-${tab}-${sort}-${page}`}
+          key={`${q}-${category}-${tab}-${sort}-${repo}-${page}`}
           fallback={<SkillsSkeleton />}
         >
-          {tab === "repo" ? (
-            <SkillsRepoGrid q={q} category={category} />
-          ) : (
+          {isRepoDetail ? (
+            <SkillsRepoDetail repo={repo} q={q} category={category} />
+          ) : isFlatView ? (
             <SkillsGrid
               q={q}
               category={category}
@@ -95,6 +111,8 @@ export default async function SkillsPage({ searchParams }: PageProps) {
               sort={sort}
               page={page}
             />
+          ) : (
+            <SkillsRepoIndex />
           )}
         </Suspense>
       </div>

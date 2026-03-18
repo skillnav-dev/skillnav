@@ -9,6 +9,7 @@ export const skillsSearchParams = {
   category: parseAsString.withDefault(""),
   tab: parseAsString.withDefault(""),
   sort: parseAsString.withDefault(""),
+  repo: parseAsString.withDefault(""),
   page: parseAsInteger.withDefault(1),
 };
 
