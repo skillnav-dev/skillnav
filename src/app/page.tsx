@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+import { siteConfig } from "@/lib/constants";
 import { HeroSection } from "@/components/home/hero-section";
 import { StatsBar } from "@/components/home/stats-bar";
 import { ScenarioShortcuts } from "@/components/home/scenario-shortcuts";
@@ -7,6 +9,12 @@ import { LatestArticles } from "@/components/home/latest-articles";
 import { NewsletterCta } from "@/components/home/newsletter-cta";
 import { WebsiteJsonLd } from "@/components/shared/json-ld";
 import { getFeaturedSkills, getFeaturedMcpServers } from "@/lib/data";
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: siteConfig.url,
+  },
+};
 
 export default async function Home() {
   const [skills, mcpServers] = await Promise.all([

@@ -13,6 +13,12 @@ export const metadata: Metadata = {
   title: "MCP Server 精选导航",
   description:
     "精选高质量 MCP (Model Context Protocol) Server，让 AI 连接文件系统、数据库、搜索引擎等外部工具。",
+  openGraph: {
+    title: "MCP Server 精选导航 | SkillNav",
+    description:
+      "精选高质量 MCP Server，让 AI 连接文件系统、数据库、搜索引擎等外部工具。",
+    url: `${siteConfig.url}/mcp`,
+  },
   alternates: {
     canonical: `${siteConfig.url}/mcp`,
     languages: {

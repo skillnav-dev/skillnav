@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { SectionHeader } from "@/components/shared/section-header";
 import { BreadcrumbJsonLd } from "@/components/shared/json-ld";
+import { siteConfig } from "@/lib/constants";
 import { ArticlesToolbar } from "@/components/articles/articles-toolbar";
 import { ArticlesGrid } from "@/components/articles/articles-grid";
 import { ArticlesSkeleton } from "@/components/articles/articles-skeleton";
@@ -28,9 +29,20 @@ export async function generateMetadata({
   if (q) parts.push(`「${q}」`);
   if (page > 1) parts.push(`第 ${page} 页`);
 
+  const title = parts.join(" - ");
+  const description = "AI Agent Skills 生态的最新动态、教程和深度分析。";
+
   return {
-    title: parts.join(" - "),
-    description: "AI Agent Skills 生态的最新动态、教程和深度分析。",
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: `${siteConfig.url}/articles`,
+    },
+    alternates: {
+      canonical: `${siteConfig.url}/articles`,
+    },
   };
 }
 

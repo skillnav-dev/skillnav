@@ -11,6 +11,11 @@ export const metadata: Metadata = {
   title: "周刊",
   description:
     "SkillNav 周刊 — 每周精选 AI Agent 工具动态、实战技巧和生态洞察。",
+  openGraph: {
+    title: "周刊 | SkillNav",
+    description: "每周精选 AI Agent 工具动态、实战技巧和生态洞察。",
+    url: `${siteConfig.url}/weekly`,
+  },
   alternates: {
     canonical: `${siteConfig.url}/weekly`,
   },

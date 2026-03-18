@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { SectionHeader } from "@/components/shared/section-header";
 import { BreadcrumbJsonLd } from "@/components/shared/json-ld";
+import { siteConfig } from "@/lib/constants";
 import { SkillsToolbar } from "@/components/skills/skills-toolbar";
 import { SkillsGrid } from "@/components/skills/skills-grid";
 import { SkillsSkeleton } from "@/components/skills/skills-skeleton";
@@ -23,10 +24,25 @@ export async function generateMetadata({
   if (q) parts.push(`「${q}」`);
   if (page > 1) parts.push(`第 ${page} 页`);
 
+  const title = parts.join(" - ");
+  const description =
+    "浏览和发现最好用的 AI Agent Skills，支持 Claude Code、Codex 等多平台。";
+
   return {
-    title: parts.join(" - "),
-    description:
-      "浏览和发现最好用的 AI Agent Skills，支持 Claude Code、Codex 等多平台。",
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: `${siteConfig.url}/skills`,
+    },
+    alternates: {
+      canonical: `${siteConfig.url}/skills`,
+      languages: {
+        "zh-CN": `${siteConfig.url}/skills`,
+        en: `${siteConfig.url}/en/skills`,
+      },
+    },
   };
 }
 
