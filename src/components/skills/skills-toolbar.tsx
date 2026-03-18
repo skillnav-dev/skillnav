@@ -25,6 +25,7 @@ const TAB_OPTIONS = [
   { value: "", label: "全部" },
   { value: "featured", label: "精选" },
   { value: "latest", label: "最新" },
+  { value: "repo", label: "按仓库" },
 ];
 
 export function SkillsToolbar({ categories, totalCount }: SkillsToolbarProps) {

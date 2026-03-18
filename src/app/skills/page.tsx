@@ -5,6 +5,7 @@ import { BreadcrumbJsonLd } from "@/components/shared/json-ld";
 import { siteConfig } from "@/lib/constants";
 import { SkillsToolbar } from "@/components/skills/skills-toolbar";
 import { SkillsGrid } from "@/components/skills/skills-grid";
+import { SkillsRepoGrid } from "@/components/skills/skills-repo-grid";
 import { SkillsSkeleton } from "@/components/skills/skills-skeleton";
 import { getSkillCategories, getSkillsWithCount } from "@/lib/data";
 import { skillsParamsCache, PAGE_SIZE } from "@/lib/skills-search-params";
@@ -84,13 +85,17 @@ export default async function SkillsPage({ searchParams }: PageProps) {
           key={`${q}-${category}-${tab}-${sort}-${page}`}
           fallback={<SkillsSkeleton />}
         >
-          <SkillsGrid
-            q={q}
-            category={category}
-            tab={tab}
-            sort={sort}
-            page={page}
-          />
+          {tab === "repo" ? (
+            <SkillsRepoGrid q={q} category={category} />
+          ) : (
+            <SkillsGrid
+              q={q}
+              category={category}
+              tab={tab}
+              sort={sort}
+              page={page}
+            />
+          )}
         </Suspense>
       </div>
     </>
