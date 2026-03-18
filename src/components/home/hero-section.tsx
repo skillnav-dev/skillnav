@@ -2,23 +2,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Compass } from "lucide-react";
 import { HeroSearch } from "./hero-search";
-import { getSkillsCount, getMcpServersCount } from "@/lib/data";
 
-// Format total as friendly string: 5481 → "5,400+"
-function formatTotal(n: number): string {
-  if (n >= 1000) {
-    const hundreds = Math.floor(n / 100) * 100;
-    return `${hundreds.toLocaleString("en-US")}+`;
-  }
-  return String(n);
-}
-
-export async function HeroSection() {
-  const [skillsCount, mcpCount] = await Promise.all([
-    getSkillsCount(),
-    getMcpServersCount(),
-  ]);
-  const totalCount = formatTotal(skillsCount + mcpCount);
+export function HeroSection() {
   return (
     <section className="relative overflow-hidden py-20 sm:py-28">
       {/* Subtle gradient background */}
@@ -35,15 +20,15 @@ export async function HeroSection() {
             <span className="text-primary">AI 工具生态指南</span>
           </h1>
           <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
-            {totalCount} AI 开发工具收录 · 每日更新
+            帮你找到最好用的 AI Agent 工具 — 精选推荐，不是简单罗列
           </p>
           <div className="mt-8">
             <HeroSearch />
           </div>
           <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
             <Button size="lg" className="w-full sm:w-auto" asChild>
-              <Link href="/skills">
-                浏览工具
+              <Link href="/mcp">
+                浏览 MCP 工具
                 <ArrowRight className="ml-2 size-4" />
               </Link>
             </Button>
@@ -53,7 +38,7 @@ export async function HeroSection() {
               className="w-full sm:w-auto"
               asChild
             >
-              <Link href="/weekly">阅读周刊</Link>
+              <Link href="/skills">浏览 Skills</Link>
             </Button>
           </div>
         </div>

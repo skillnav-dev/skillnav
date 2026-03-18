@@ -1,46 +1,90 @@
 import Link from "next/link";
 import {
+  Database,
+  FolderOpen,
+  Search,
   Code,
   Bot,
-  Database,
-  Search,
-  Cloud,
-  Pencil,
-  Zap,
-  Shield,
-  Plug,
-  Building2,
+  BookOpen,
+  Newspaper,
+  Globe,
 } from "lucide-react";
 
 const SCENARIOS = [
-  { label: "编码与调试", slug: "编码与调试", icon: Code },
-  { label: "AI 与智能体", slug: "AI 与智能体", icon: Bot },
-  { label: "数据与存储", slug: "数据与存储", icon: Database },
-  { label: "搜索与获取", slug: "搜索与获取", icon: Search },
-  { label: "DevOps", slug: "DevOps", icon: Cloud },
-  { label: "内容与创意", slug: "内容与创意", icon: Pencil },
-  { label: "效率与工作流", slug: "效率与工作流", icon: Zap },
-  { label: "安全与合规", slug: "安全与合规", icon: Shield },
-  { label: "平台与服务", slug: "平台与服务", icon: Plug },
-  { label: "行业场景", slug: "行业场景", icon: Building2 },
+  {
+    label: "让 AI 操作数据库",
+    description: "PostgreSQL · SQLite · Supabase",
+    href: "/mcp?category=数据与存储",
+    icon: Database,
+  },
+  {
+    label: "让 AI 读写文件",
+    description: "Filesystem · Google Drive · S3",
+    href: "/mcp?category=数据与存储&q=file",
+    icon: FolderOpen,
+  },
+  {
+    label: "让 AI 搜索互联网",
+    description: "Exa · Brave Search · Tavily",
+    href: "/mcp?category=搜索与获取",
+    icon: Search,
+  },
+  {
+    label: "让 AI 操作浏览器",
+    description: "Puppeteer · Playwright · Browserbase",
+    href: "/mcp?q=browser",
+    icon: Globe,
+  },
+  {
+    label: "给 Claude Code 加技能",
+    description: "7 个仓库 · 168 个 Skills",
+    href: "/skills",
+    icon: Code,
+  },
+  {
+    label: "构建 AI Agent",
+    description: "LangChain · CrewAI · Agent SDK",
+    href: "/mcp?category=AI 与智能体",
+    icon: Bot,
+  },
+  {
+    label: "了解 AI Agent 基础",
+    description: "MCP · RAG · Agent · Tool Use",
+    href: "/learn",
+    icon: BookOpen,
+  },
+  {
+    label: "本周有什么新工具",
+    description: "每周一更新",
+    href: "/weekly",
+    icon: Newspaper,
+  },
 ] as const;
 
 export function ScenarioShortcuts() {
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
-      <div className="grid grid-cols-5 gap-3 sm:grid-cols-10">
-        {SCENARIOS.map(({ label, slug, icon: Icon }) => (
+    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+      <p className="mb-4 text-center text-sm font-medium text-muted-foreground">
+        你想做什么？
+      </p>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {SCENARIOS.map(({ label, description, href, icon: Icon }) => (
           <Link
-            key={slug}
-            href={`/skills?category=${encodeURIComponent(slug)}`}
-            className="group flex flex-col items-center gap-1.5 rounded-lg p-2 text-center transition-colors hover:bg-muted/50"
+            key={label}
+            href={href}
+            className="group flex items-start gap-3 rounded-xl border border-border/40 p-3 transition-all hover:border-primary/40 hover:bg-muted/30 hover:shadow-sm"
           >
-            <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 transition-colors group-hover:bg-primary/20">
-              <Icon className="size-5 text-primary" />
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 transition-colors group-hover:bg-primary/20">
+              <Icon className="size-4.5 text-primary" />
             </div>
-            <span className="text-xs text-muted-foreground group-hover:text-foreground">
-              {label}
-            </span>
+            <div className="min-w-0">
+              <p className="text-sm font-medium leading-tight group-hover:text-primary">
+                {label}
+              </p>
+              <p className="mt-0.5 text-xs leading-tight text-muted-foreground">
+                {description}
+              </p>
+            </div>
           </Link>
         ))}
       </div>
