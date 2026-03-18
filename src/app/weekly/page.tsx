@@ -5,11 +5,15 @@ import { SectionHeader } from "@/components/shared/section-header";
 import { BreadcrumbJsonLd } from "@/components/shared/json-ld";
 import { Button } from "@/components/ui/button";
 import { getWeeklyArticles } from "@/lib/data";
+import { siteConfig } from "@/lib/constants";
 
 export const metadata: Metadata = {
   title: "周刊",
   description:
     "SkillNav 周刊 — 每周精选 AI Agent 工具动态、实战技巧和生态洞察。",
+  alternates: {
+    canonical: `${siteConfig.url}/weekly`,
+  },
 };
 
 export default async function WeeklyPage() {

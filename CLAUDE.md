@@ -69,11 +69,13 @@ src/
 │   ├── layout.tsx              # Root layout (zh lang, fonts, Header/Footer)
 │   ├── globals.css             # Brand color variables (deep indigo theme)
 │   ├── robots.ts / sitemap.ts  # SEO
-│   └── not-found.tsx           # Custom 404
+│   ├── not-found.tsx           # Custom 404
+│   └── error.tsx               # Root error boundary (500)
 ├── components/
 │   ├── home/                   # Homepage sections (hero, stats, featured, articles, newsletter)
 │   ├── articles/               # Article card, meta, content, series-nav
 │   ├── skills/                 # Skill card
+│   ├── mcp/                    # MCP card, sidebar, content sections (what-is/how-to/tools), FAQ
 │   ├── learn/                  # Concept card, related concepts, visual diagrams
 │   ├── layout/                 # Header, footer, mobile nav, theme toggle
 │   ├── shared/                 # Section header, security badge, JSON-LD

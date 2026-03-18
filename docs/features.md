@@ -10,7 +10,7 @@
 | SKL-04 | Skills 编辑评论 | shipped | Wirecutter 风格一句话推荐 |
 | ART-01 | 文章列表 + 详情页 | shipped | 194 篇 published，RSS 采集 + 编译翻译 |
 | ART-02 | 文章封面图提取 | shipped | 从 source_url 提取 og:image |
-| MCP-01 | MCP 列表 + 详情页 | shipped | 5,172+ servers，三层分级（S/A/Hidden） |
+| MCP-01 | MCP 列表 + 详情页 | shipped | 5,172+ servers，三层分级（S/A/Hidden），结构化模板（什么是/如何使用/核心功能/FAQ） |
 | MCP-02 | MCP 工具定义（tools JSONB） | shipped | 从 Smithery API 回填 |
 | MCP-03 | MCP 自动分级治理 | shipped | 基于星数/工具数/验证状态 |
 | MCP-04 | S-tier 编辑精选 | shipped | 从 A-tier 中精选 + 编辑评论 |
@@ -43,13 +43,14 @@
 | UI-03 | 移动端适配 | shipped | 响应式 + 触控优化 |
 | UI-04 | Admin 后台 | shipped | Skills/Articles/MCP 统一管理 |
 | UI-05 | 英文路由（/en/） | shipped | 双语内容 |
+| UI-06 | 错误边界（error.tsx） | shipped | 根级 500 错误页，重试 + 返回首页 |
 
 ## SEO & 分发
 
 | ID | 功能 | 状态 | 说明 |
 |----|------|------|------|
-| SEO-01 | Sitemap + robots.txt | shipped | 精选质量页面，含 /learn |
-| SEO-02 | JSON-LD 结构化数据 | shipped | |
+| SEO-01 | Sitemap + robots.txt + canonical | shipped | 精选质量页面，含 /learn，全页面 canonical 覆盖 |
+| SEO-02 | JSON-LD 结构化数据 | shipped | 含 MCP FAQ 可见化（JSON-LD + 页面同步） |
 | SEO-03 | llms.txt / llms-full.txt | shipped | AI 可读摘要 |
 | SEO-04 | Umami + GA + GSC | shipped | 三重分析 |
 

@@ -20,6 +20,9 @@ export const metadata: Metadata = {
   title: "关于",
   description:
     "SkillNav 是中文开发者的 AI 工具生态指南。精选信源、持续过滤、编辑策展，解决 AI 资讯碎片化问题。",
+  alternates: {
+    canonical: `${siteConfig.url}/about`,
+  },
   openGraph: {
     title: "关于 SkillNav",
     description:

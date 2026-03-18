@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { Star, Github, Award } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { PageBreadcrumb } from "@/components/shared/page-breadcrumb";
-import { CopyButton } from "@/components/shared/copy-button";
 import { GiscusComments } from "@/components/shared/giscus-comments";
 import {
   BreadcrumbJsonLd,
@@ -11,7 +10,13 @@ import {
   FAQJsonLd,
 } from "@/components/shared/json-ld";
 import { MCPCard } from "@/components/mcp/mcp-card";
+import {
+  McpWhatIs,
+  McpHowToUse,
+  McpToolsList,
+} from "@/components/mcp/mcp-content-sections";
 import { McpDetailSidebar } from "@/components/mcp/mcp-detail-sidebar";
+import { McpFaq } from "@/components/mcp/mcp-faq";
 import { McpReadme } from "@/components/mcp/mcp-readme";
 import { SkillCard } from "@/components/skills/skill-card";
 import { siteConfig } from "@/lib/constants";
@@ -124,6 +129,17 @@ export default async function McpDetailPage({ params }: PageProps) {
                 },
               ]
             : []),
+          ...(server.tools && server.tools.length > 0
+            ? [
+                {
+                  question: `${server.nameZh ?? server.name} 提供哪些工具？`,
+                  answer: `提供 ${server.tools.length} 个工具，包括 ${server.tools
+                    .slice(0, 5)
+                    .map((t) => t.name)
+                    .join("、")}${server.tools.length > 5 ? " 等" : ""}。`,
+                },
+              ]
+            : []),
         ]}
       />
 
@@ -216,92 +232,11 @@ export default async function McpDetailPage({ params }: PageProps) {
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_280px]">
           {/* Left: main content */}
           <div className="min-w-0 space-y-6">
-            {/* Install command block */}
-            {server.installCommand && (
-              <div className="rounded-xl border border-border/40 bg-card p-6">
-                <h2 className="mb-3 text-lg font-semibold">安装命令</h2>
-                <div className="flex items-center gap-2 rounded-md border bg-muted/50 px-3 py-2.5 font-mono text-sm">
-                  <code className="min-w-0 flex-1 truncate text-muted-foreground">
-                    {server.installCommand}
-                  </code>
-                  <CopyButton text={server.installCommand} />
-                </div>
-              </div>
-            )}
-
-            {/* Install config JSON (if present) */}
-            {server.installConfig && (
-              <div className="rounded-xl border border-border/40 bg-card p-6">
-                <h2 className="mb-3 text-lg font-semibold">配置示例</h2>
-                <pre className="overflow-x-auto rounded-md border bg-muted/50 p-3 text-xs">
-                  <code>{JSON.stringify(server.installConfig, null, 2)}</code>
-                </pre>
-              </div>
-            )}
-
-            {/* Intro */}
-            {server.introZh && (
-              <div className="rounded-xl border border-border/40 bg-card p-6">
-                <h2 className="mb-3 text-lg font-semibold">简介</h2>
-                <div className="prose prose-sm max-w-none text-foreground/85">
-                  {server.introZh.split("\n").map((p, i) => (
-                    <p key={i}>{p}</p>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Tools list */}
-            {server.tools && server.tools.length > 0 ? (
-              <div className="rounded-xl border border-border/40 bg-card p-6">
-                <h2 className="mb-3 text-lg font-semibold">
-                  提供的工具 ({server.tools.length})
-                </h2>
-                <div className="space-y-3">
-                  {server.tools.map((tool) => (
-                    <div
-                      key={tool.name}
-                      className="rounded-md border border-border/40 bg-muted/30 px-4 py-3"
-                    >
-                      <code className="text-sm font-semibold text-primary">
-                        {tool.name}
-                      </code>
-                      {tool.description && (
-                        <p className="mt-1 text-sm text-foreground/75">
-                          {tool.description}
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : server.toolsCount > 0 ? (
-              <div className="rounded-xl border border-border/40 bg-card p-6">
-                <h2 className="mb-3 text-lg font-semibold">提供的工具</h2>
-                <p className="text-sm text-foreground/85">
-                  该 MCP Server 提供{" "}
-                  <span className="font-semibold">{server.toolsCount}</span>{" "}
-                  个工具。
-                  {server.githubUrl && (
-                    <>
-                      查看{" "}
-                      <a
-                        href={server.githubUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary hover:underline"
-                      >
-                        GitHub 仓库
-                      </a>{" "}
-                      了解详细工具列表。
-                    </>
-                  )}
-                </p>
-              </div>
-            ) : null}
-
-            {/* README from GitHub */}
+            <McpWhatIs server={server} />
+            <McpHowToUse server={server} />
+            <McpToolsList server={server} />
             {readme && <McpReadme content={readme} />}
+            <McpFaq server={server} />
           </div>
 
           {/* Right: sidebar */}
