@@ -462,7 +462,8 @@ async function translateArticleSingle({ title, summary, content }) {
   "contentZh": "Compiled Chinese content — restructured for readability, sub-headings added where needed, filler cut, natural Chinese flow (preserve markdown formatting)",
   "articleType": "one of: tutorial, analysis, guide (see definitions below)",
   "readingTime": <estimated minutes to read the Chinese version>,
-  "relevanceScore": <1-5 integer, see criteria below>
+  "relevanceScore": <1-5 integer, see criteria below>,
+  "isAdvertorial": <true/false, see detection rules below>
 }
 
 Article type definitions:
@@ -476,6 +477,13 @@ Relevance scoring criteria:
 3 = AI industry trends (insightful analysis articles)
 2 = Generic AI news (product announcements, brief updates)
 1 = Not related to AI Agent ecosystem (company PR, hiring, policy)
+
+Advertorial detection (isAdvertorial=true if ANY apply):
+- Primary purpose is promoting a webinar, event, or product trial signup
+- Contains CTAs like "register now", "sign up", "join us for [event]"
+- Sponsored content or paid promotion disguised as editorial
+- Thin content whose main goal is driving signups/purchases
+NOTE: Articles that mention ads/events in passing context are NOT advertorials
 
 Article to compile:
 
@@ -507,7 +515,8 @@ async function translateArticleChunked({ title, summary, content }) {
   "contentZh": "Compiled Chinese content — restructured for readability, sub-headings added where needed, filler cut, natural Chinese flow (preserve markdown formatting)",
   "articleType": "one of: tutorial, analysis, guide (see definitions below)",
   "readingTime": <estimated minutes to read the FULL Chinese version, not just this part>,
-  "relevanceScore": <1-5 integer, see criteria below>
+  "relevanceScore": <1-5 integer, see criteria below>,
+  "isAdvertorial": <true/false, see detection rules below>
 }
 
 Article type definitions:
@@ -521,6 +530,12 @@ Relevance scoring criteria:
 3 = AI industry trends (insightful analysis articles)
 2 = Generic AI news (product announcements, brief updates)
 1 = Not related to AI Agent ecosystem (company PR, hiring, policy)
+
+Advertorial detection (isAdvertorial=true if ANY apply):
+- Primary purpose is promoting a webinar, event, or product trial signup
+- Contains CTAs like "register now", "sign up", "join us for [event]"
+- Sponsored content or paid promotion disguised as editorial
+NOTE: Articles that mention ads/events in passing context are NOT advertorials
 
 Note: This is part 1 of ${chunks.length} of a multi-part article. Compile this portion completely.
 
@@ -579,7 +594,8 @@ Return JSON with these exact fields:
   "contentZh": "Structured Chinese summary using ## headings for each key topic, include direct quotes where impactful",
   "articleType": "one of: tutorial, analysis, guide (see definitions below)",
   "readingTime": <estimated minutes to read the Chinese summary>,
-  "relevanceScore": <1-5 integer, see criteria below>
+  "relevanceScore": <1-5 integer, see criteria below>,
+  "isAdvertorial": <true/false>
 }
 
 Article type definitions:
@@ -593,6 +609,8 @@ Relevance scoring criteria:
 3 = AI industry trends (insightful analysis articles)
 2 = Generic AI news (product announcements, brief updates)
 1 = Not related to AI Agent ecosystem (company PR, hiring, policy)
+
+Advertorial: set isAdvertorial=true if the article is primarily promoting a webinar/event/product signup.
 
 Important: Start contentZh with this notice line:
 > 本文为长文精华摘要，完整内容请查看原文。
@@ -643,19 +661,27 @@ export async function scoreArticleRelevance({ title, summary, content }) {
 
   const systemPrompt = `You are an AI content relevance scorer for a site focused on AI Agent Skills, MCP, and AI developer tools. Respond with valid JSON only.`;
 
-  const userPrompt = `Score this article's relevance to the AI Agent ecosystem. Return JSON:
+  const userPrompt = `Score this article's relevance to the AI Agent ecosystem AND check if it's an advertorial. Return JSON:
 
 {
   "relevanceScore": <1-5 integer>,
+  "isAdvertorial": <true/false>,
   "reason": "brief explanation in English"
 }
 
-Scoring criteria:
+Relevance scoring:
 5 = Core AI Agent/Skills/MCP content (tutorials, deep analysis)
 4 = AI dev tools (Claude Code, Cursor, Codex practices)
 3 = AI industry trends (insightful analysis articles)
 2 = Generic AI news (product announcements, brief updates)
 1 = Not related to AI Agent ecosystem (company PR, hiring, policy)
+
+Advertorial detection (isAdvertorial=true if ANY apply):
+- Primary purpose is promoting a webinar, event registration, or product trial
+- Contains CTAs like "register now", "sign up", "join us for [event]"
+- Sponsored content or paid promotion disguised as editorial
+- Thin content whose main goal is driving signups/purchases
+NOTE: Articles that MENTION ads/events in context (e.g. "ad-free product") are NOT advertorials.
 
 Title: ${title}
 Summary: ${summary || "N/A"}
@@ -668,7 +694,11 @@ Content preview: ${contentPreview}`;
     ? Math.max(1, Math.min(5, Math.round(parsed.relevanceScore)))
     : 3;
 
-  return { relevanceScore: score, reason: parsed.reason || "" };
+  return {
+    relevanceScore: score,
+    isAdvertorial: !!parsed.isAdvertorial,
+    reason: parsed.reason || "",
+  };
 }
 
 // ── Response Parsing ─────────────────────────────────────────────────

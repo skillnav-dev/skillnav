@@ -775,8 +775,9 @@ async function main() {
           ? translation.articleType
           : (source.defaultType || "analysis");
 
-        // Extract relevance score from LLM response
+        // Extract relevance score + advertorial flag from LLM response
         const relevanceScore = translation.relevanceScore || 3;
+        const isAdvertorial = !!translation.isAdvertorial;
 
         // Fallback: RSS enclosure as cover image (e.g. GitHub Blog)
         if (!coverImage && item.enclosure?.url) {
@@ -800,7 +801,7 @@ async function main() {
           reading_time: translation.readingTime,
           relevance_score: relevanceScore,
           content_tier: "translated",
-          status: "draft",
+          status: isAdvertorial ? "hidden" : "draft",
           published_at: item.pubDate
             ? new Date(item.pubDate).toISOString()
             : new Date().toISOString(),
