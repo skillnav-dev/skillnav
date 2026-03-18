@@ -365,29 +365,19 @@ export async function getSitemapMcpServers(): Promise<
   const { createStaticClient } = await import("@/lib/supabase/static");
   const supabase = createStaticClient();
 
-  // Supabase default limit is 1000 rows — paginate to get all published servers
-  const PAGE_SIZE = 1000;
-  const all: { slug: string; updated_at: string }[] = [];
-  let offset = 0;
+  // Only include S/A tier in sitemap — B-tier pages are too thin for indexing
+  // and waste Google's crawl budget (3,521 B-tier vs 426 S/A)
+  const { data, error } = (await supabase
+    .from("mcp_servers")
+    .select("slug, updated_at")
+    .eq("status", "published")
+    .in("quality_tier", ["S", "A"])) as {
+    data: { slug: string; updated_at: string }[] | null;
+    error: unknown;
+  };
 
-  while (true) {
-    const { data, error } = (await supabase
-      .from("mcp_servers")
-      .select("slug, updated_at")
-      .eq("status", "published")
-      .range(offset, offset + PAGE_SIZE - 1)) as {
-      data: { slug: string; updated_at: string }[] | null;
-      error: unknown;
-    };
-
-    if (error) throw error;
-    const rows = data ?? [];
-    all.push(...rows);
-    if (rows.length < PAGE_SIZE) break;
-    offset += PAGE_SIZE;
-  }
-
-  return all.map((r) => ({
+  if (error) throw error;
+  return (data ?? []).map((r) => ({
     slug: r.slug,
     updatedAt: r.updated_at,
   }));

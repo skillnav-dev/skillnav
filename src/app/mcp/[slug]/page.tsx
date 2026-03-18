@@ -54,9 +54,15 @@ export async function generateMetadata({
     server.description ??
     `${server.name} MCP Server 详情`;
 
+  // B-tier pages have thin content — tell Google not to index them
+  const isThinPage = server.qualityTier === "B" || server.qualityTier === "C";
+
   return {
     title,
     description,
+    ...(isThinPage && {
+      robots: { index: false, follow: true },
+    }),
     openGraph: {
       title,
       description,

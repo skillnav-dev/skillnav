@@ -42,9 +42,14 @@ export async function generateMetadata({
   const title = `${server.name} — MCP Server`;
   const description = server.description ?? `${server.name} MCP Server details`;
 
+  const isThinPage = server.qualityTier === "B" || server.qualityTier === "C";
+
   return {
     title,
     description,
+    ...(isThinPage && {
+      robots: { index: false, follow: true },
+    }),
     openGraph: {
       title,
       description,
