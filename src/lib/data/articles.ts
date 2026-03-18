@@ -71,6 +71,25 @@ export async function getArticleBySlug(slug: string): Promise<Article | null> {
 }
 
 /**
+ * Check if a slug exists with non-published status (hidden/draft).
+ * Used to distinguish "redirect" from "404" for SEO.
+ */
+export async function isArticleSlugHidden(slug: string): Promise<boolean> {
+  if (!isSupabaseConfigured()) return false;
+
+  const { createServerClient } = await import("@/lib/supabase/server");
+  const supabase = await createServerClient();
+
+  const { count } = await supabase
+    .from("articles")
+    .select("id", { count: "exact", head: true })
+    .eq("slug", slug)
+    .neq("status", "published");
+
+  return (count ?? 0) > 0;
+}
+
+/**
  * Get latest articles for homepage.
  */
 export async function getLatestArticles(limit = 3): Promise<Article[]> {

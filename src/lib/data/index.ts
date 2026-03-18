@@ -24,6 +24,7 @@ export {
 export {
   getArticles,
   getArticleBySlug,
+  isArticleSlugHidden,
   getArticlesCount,
   getArticlesWithCount,
   getArticleSources,

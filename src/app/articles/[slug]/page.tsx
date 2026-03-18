@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { PageBreadcrumb } from "@/components/shared/page-breadcrumb";
 import { ArticleMeta } from "@/components/articles/article-meta";
 import { ArticleContent } from "@/components/articles/article-content";
@@ -16,6 +16,7 @@ import {
   getArticles,
   getAllArticleSlugs,
   getSeriesArticles,
+  isArticleSlugHidden,
 } from "@/lib/data";
 import { getSkills } from "@/lib/data/skills";
 import { SERIES_META } from "@/data/series";
@@ -91,7 +92,13 @@ export async function generateMetadata({
 export default async function ArticlePage({ params }: PageProps) {
   const { slug } = await params;
   const article = await getArticleBySlug(slug);
-  if (!article) notFound();
+  if (!article) {
+    // Hidden/draft articles → 301 to list (not 404) for SEO
+    if (await isArticleSlugHidden(slug)) {
+      redirect("/articles");
+    }
+    notFound();
+  }
 
   // Parallel fetch: related articles + related skills + series siblings
   const articleTitle = article.titleZh ?? article.title;
