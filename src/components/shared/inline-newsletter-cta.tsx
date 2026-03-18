@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Rss } from "lucide-react";
 import { siteConfig } from "@/lib/constants";
 
@@ -22,12 +23,12 @@ export function InlineNewsletterCta() {
             >
               关注 @skillnav_dev →
             </a>
-            <a
+            <Link
               href="/weekly"
               className="text-sm text-muted-foreground hover:text-foreground"
             >
               阅读周刊
-            </a>
+            </Link>
           </div>
         </div>
       </div>

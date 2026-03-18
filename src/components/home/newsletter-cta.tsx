@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Rss } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { siteConfig } from "@/lib/constants";
@@ -28,7 +29,7 @@ export function NewsletterCta() {
                 </a>
               </Button>
               <Button variant="outline" asChild>
-                <a href="/weekly">阅读周刊</a>
+                <Link href="/weekly">阅读周刊</Link>
               </Button>
             </div>
           </div>
