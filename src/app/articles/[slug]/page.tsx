@@ -218,7 +218,12 @@ export default async function ArticlePage({ params }: PageProps) {
           agent: ["agent", "智能体", "agentic"],
           mcp: ["mcp", "model context protocol"],
           rag: ["rag", "检索增强", "retrieval-augmented"],
-          "tool-use": ["tool use", "function calling", "工具调用"],
+          "tool-use": ["tool use", "function calling", "工具调用", "函数调用"],
+          "agentic-engineering": [
+            "agentic engineering",
+            "智能体工程",
+            "agent framework",
+          ],
           "context-window": ["context window", "上下文窗口", "context length"],
           "prompt-engineering": [
             "prompt engineering",
@@ -226,6 +231,12 @@ export default async function ArticlePage({ params }: PageProps) {
             "prompt 技巧",
           ],
           guardrails: ["guardrail", "安全护栏", "safety"],
+          "human-in-the-loop": [
+            "human-in-the-loop",
+            "人机协同",
+            "human oversight",
+            "人工审核",
+          ],
           hallucination: ["hallucination", "幻觉", "编造"],
           llm: ["large language model", "大语言模型", "大模型"],
           grounding: ["grounding", "事实对齐", "citation"],
