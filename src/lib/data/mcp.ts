@@ -365,16 +365,29 @@ export async function getSitemapMcpServers(): Promise<
   const { createStaticClient } = await import("@/lib/supabase/static");
   const supabase = createStaticClient();
 
-  const { data, error } = (await supabase
-    .from("mcp_servers")
-    .select("slug, updated_at")
-    .eq("status", "published")) as {
-    data: { slug: string; updated_at: string }[] | null;
-    error: unknown;
-  };
+  // Supabase default limit is 1000 rows — paginate to get all published servers
+  const PAGE_SIZE = 1000;
+  const all: { slug: string; updated_at: string }[] = [];
+  let offset = 0;
 
-  if (error) throw error;
-  return (data ?? []).map((r) => ({
+  while (true) {
+    const { data, error } = (await supabase
+      .from("mcp_servers")
+      .select("slug, updated_at")
+      .eq("status", "published")
+      .range(offset, offset + PAGE_SIZE - 1)) as {
+      data: { slug: string; updated_at: string }[] | null;
+      error: unknown;
+    };
+
+    if (error) throw error;
+    const rows = data ?? [];
+    all.push(...rows);
+    if (rows.length < PAGE_SIZE) break;
+    offset += PAGE_SIZE;
+  }
+
+  return all.map((r) => ({
     slug: r.slug,
     updatedAt: r.updated_at,
   }));
