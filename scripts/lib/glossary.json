@@ -2,7 +2,7 @@
   "meta": {
     "version": "1.0.0",
     "description": "Centralized terminology glossary for content pipeline. Policies: keep = always English, translate = always Chinese, bracket = first occurrence 中文（English）then Chinese only.",
-    "updatedAt": "2026-03-17"
+    "updatedAt": "2026-03-18"
   },
   "keep": [
     "API",
@@ -50,6 +50,14 @@
     "context window": "上下文窗口（Context Window）",
     "hallucination": "模型幻觉（Hallucination）",
     "grounding": "事实对齐（Grounding）",
-    "retrieval-augmented generation": "检索增强生成（RAG）"
+    "retrieval-augmented generation": "检索增强生成（RAG）",
+    "control plane": "控制平面（Control Plane）",
+    "embedding": "向量嵌入（Embedding）",
+    "vector database": "向量数据库（Vector Database）",
+    "function calling": "函数调用（Function Calling）",
+    "streaming": "流式输出（Streaming）",
+    "chunking": "分块（Chunking）",
+    "orchestration": "编排（Orchestration）",
+    "observability": "可观测性（Observability）"
   }
 }
