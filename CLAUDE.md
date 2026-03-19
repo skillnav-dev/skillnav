@@ -43,6 +43,13 @@ node scripts/sync-articles.mjs --retranslate-drafts      # Re-compile draft arti
 node scripts/backfill-mcp-description-zh.mjs --tier B --apply  # Backfill B-tier Chinese descriptions
 node scripts/govern-articles.mjs --audit                 # Article status/score report
 node scripts/audit-content.mjs                           # Skills content quality audit
+
+# Daily brief pipeline
+node scripts/generate-daily.mjs                          # Generate today's daily brief
+node scripts/generate-daily.mjs --dry-run                # Preview without writing to DB
+node scripts/generate-daily.mjs --hours 48               # Look back 48h instead of 24h
+node scripts/publish-daily.mjs                           # Publish today's approved brief
+node scripts/publish-daily.mjs --channel rss             # Publish to specific channel only
 ```
 
 ## Development Conventions
@@ -66,6 +73,9 @@ src/
 │   ├── skills/                 # Skills listing + [slug] detail
 │   ├── mcp/                    # MCP Server 精选导航 (static curated data)
 │   ├── learn/                  # Learning Center: /learn index + /learn/what-is-[slug] detail
+│   ├── admin/daily/            # Daily Brief admin: list + [id] detail (preview/edit/approve/publish)
+│   ├── api/admin/daily/        # Admin API: PATCH update, POST approve, POST publish
+│   ├── api/rss/daily/          # RSS feed for daily briefs
 │   ├── layout.tsx              # Root layout (zh lang, fonts, Header/Footer)
 │   ├── globals.css             # Brand color variables (deep indigo theme)
 │   ├── robots.ts / sitemap.ts  # SEO
@@ -94,6 +104,10 @@ public/
 └── guides/                     # Interactive deep guides (static HTML)
     └── ai-guide.html           # 10-chapter AI architecture guide
 
+scripts/
+├── generate-daily.mjs          # Daily brief generator (query → LLM curate → multi-format → upsert)
+├── publish-daily.mjs           # Multi-channel publisher (RSS auto, WeChat/X copy-ready)
+├── lib/publishers/             # Platform format adapters (wechat.mjs, twitter.mjs, rss.mjs)
 scripts/lib/
 ├── llm.mjs                     # LLM providers + compile prompt (imports glossary)
 └── glossary.json               # Centralized terminology (keep/translate/bracket policies)
