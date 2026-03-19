@@ -99,9 +99,9 @@ function buildGlossaryPrompt() {
 // ── Retry & Fallback State ──────────────────────────────────────────
 // Retry with backoff on transient failures (502, timeout, network).
 // Only switch to fallback after FALLBACK_THRESHOLD consecutive failures.
-const RETRY_COUNT = 3;              // retries per call before giving up
-const RETRY_BASE_DELAY_MS = 5_000;  // 5s, 10s, 20s backoff
-const FALLBACK_THRESHOLD = 15;      // switch provider after 15 consecutive failures (3 calls × 5 rounds)
+const RETRY_COUNT = 5;              // retries per call before giving up
+const RETRY_BASE_DELAY_MS = 10_000; // 10s, 20s, 40s, 80s, 160s backoff
+const FALLBACK_THRESHOLD = 75;      // switch provider after 75 consecutive failures (5 retries × 5 calls × 3 rounds)
 let consecutiveFailures = 0;
 let usingFallback = false;
 
