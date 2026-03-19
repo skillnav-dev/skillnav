@@ -96,9 +96,12 @@ function buildGlossaryPrompt() {
   return lines.join("\n");
 }
 
-// ── Fallback State ──────────────────────────────────────────────────
-// Track consecutive primary failures; switch to fallback after threshold
-const FALLBACK_THRESHOLD = 3;
+// ── Retry & Fallback State ──────────────────────────────────────────
+// Retry with backoff on transient failures (502, timeout, network).
+// Only switch to fallback after FALLBACK_THRESHOLD consecutive failures.
+const RETRY_COUNT = 3;              // retries per call before giving up
+const RETRY_BASE_DELAY_MS = 5_000;  // 5s, 10s, 20s backoff
+const FALLBACK_THRESHOLD = 15;      // switch provider after 15 consecutive failures (3 calls × 5 rounds)
 let consecutiveFailures = 0;
 let usingFallback = false;
 
@@ -269,18 +272,54 @@ async function callAnthropic(provider, systemPrompt, userPrompt, maxTokens) {
 }
 
 /**
+ * Check if an error is transient (worth retrying).
+ */
+function isTransientError(err) {
+  const msg = err.message || "";
+  return /502|503|504|timeout|fetch failed|ECONNRESET|ETIMEDOUT|socket hang up/i.test(msg);
+}
+
+/**
+ * Sleep for a given number of milliseconds.
+ */
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Call with retry + exponential backoff for transient errors.
+ */
+async function callWithRetry(provider, systemPrompt, userPrompt, maxTokens, jsonMode) {
+  let lastErr;
+  for (let attempt = 0; attempt <= RETRY_COUNT; attempt++) {
+    try {
+      const result = await dispatchCall(provider, systemPrompt, userPrompt, maxTokens, jsonMode);
+      onCallSuccess();
+      return result;
+    } catch (err) {
+      lastErr = err;
+      onCallFailure();
+      if (attempt < RETRY_COUNT && isTransientError(err)) {
+        const delay = RETRY_BASE_DELAY_MS * Math.pow(2, attempt); // 5s, 10s, 20s
+        console.log(
+          `\x1b[33m[llm] Transient error (attempt ${attempt + 1}/${RETRY_COUNT + 1}): ${err.message.slice(0, 100)}. Retrying in ${delay / 1000}s...\x1b[0m`
+        );
+        await sleep(delay);
+        continue;
+      }
+      break;
+    }
+  }
+  throw lastErr;
+}
+
+/**
  * Unified LLM call dispatcher (JSON mode for openai-compatible providers).
+ * Retries transient errors (502, timeout) with exponential backoff.
  */
 export async function callLLM(systemPrompt, userPrompt, maxTokens = 16384) {
   const provider = getProvider();
-  try {
-    const result = await dispatchCall(provider, systemPrompt, userPrompt, maxTokens, true);
-    onCallSuccess();
-    return result;
-  } catch (err) {
-    onCallFailure();
-    throw err;
-  }
+  return callWithRetry(provider, systemPrompt, userPrompt, maxTokens, true);
 }
 
 /**
@@ -289,14 +328,7 @@ export async function callLLM(systemPrompt, userPrompt, maxTokens = 16384) {
  */
 export async function callLLMText(systemPrompt, userPrompt, maxTokens = 4096) {
   const provider = getProvider();
-  try {
-    const result = await dispatchCall(provider, systemPrompt, userPrompt, maxTokens, false);
-    onCallSuccess();
-    return result;
-  } catch (err) {
-    onCallFailure();
-    throw err;
-  }
+  return callWithRetry(provider, systemPrompt, userPrompt, maxTokens, false);
 }
 
 /**
