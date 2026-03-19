@@ -2,6 +2,15 @@
 
 Milestone-level changes only. For full commit history see `git log`.
 
+## 2026-03-19
+
+### Added
+- feat(daily): AI daily brief pipeline — auto-generate daily digest from articles
+- feat(daily): multi-channel publishing — WeChat HTML, X thread, RSS feed
+- feat(admin): daily brief admin dashboard — preview, edit, approve, publish
+- feat(api): RSS feed endpoint at `/api/rss/daily`
+- feat(db): `daily_briefs` + `brief_publications` tables
+
 ## 2026-03-14
 
 - fix(ops): GPT Proxy stability — 60s fetch timeout + retryable error classification

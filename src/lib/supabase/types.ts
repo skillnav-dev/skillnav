@@ -177,6 +177,49 @@ export interface Database {
         };
         Update: Partial<Database["public"]["Tables"]["mcp_servers"]["Insert"]>;
       };
+      daily_briefs: {
+        Row: {
+          id: string;
+          brief_date: string;
+          title: string;
+          summary: string | null;
+          content_md: string;
+          content_wechat: string | null;
+          content_x: string | null;
+          article_ids: string[];
+          status: "draft" | "approved" | "published";
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Omit<
+          Database["public"]["Tables"]["daily_briefs"]["Row"],
+          "id" | "created_at" | "updated_at"
+        > & {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["daily_briefs"]["Insert"]>;
+      };
+      brief_publications: {
+        Row: {
+          id: string;
+          brief_id: string;
+          channel: "wechat" | "x" | "rss" | "xiaohongshu" | "zhihu" | "email" | "openclaw";
+          status: "pending" | "published" | "failed";
+          published_at: string | null;
+          external_url: string | null;
+          created_at: string;
+        };
+        Insert: Omit<
+          Database["public"]["Tables"]["brief_publications"]["Row"],
+          "id" | "created_at"
+        > & {
+          id?: string;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["brief_publications"]["Insert"]>;
+      };
       submissions: {
         Row: {
           id: string;
@@ -206,3 +249,5 @@ export type SkillRow = Database["public"]["Tables"]["skills"]["Row"];
 export type ArticleRow = Database["public"]["Tables"]["articles"]["Row"];
 export type McpServerRow = Database["public"]["Tables"]["mcp_servers"]["Row"];
 export type SubmissionRow = Database["public"]["Tables"]["submissions"]["Row"];
+export type DailyBriefRow = Database["public"]["Tables"]["daily_briefs"]["Row"];
+export type BriefPublicationRow = Database["public"]["Tables"]["brief_publications"]["Row"];
