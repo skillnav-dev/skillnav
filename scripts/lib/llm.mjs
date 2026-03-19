@@ -99,8 +99,9 @@ function buildGlossaryPrompt() {
 // ── Retry & Fallback State ──────────────────────────────────────────
 // Retry with backoff on transient failures (502, timeout, network).
 // Only switch to fallback after FALLBACK_THRESHOLD consecutive failures.
-const RETRY_COUNT = 5;              // retries per call before giving up
-const RETRY_BASE_DELAY_MS = 30_000; // 30s, 60s, 120s, 240s, 480s backoff (~15min total)
+const RETRY_COUNT = 10;             // retries per call before giving up
+const RETRY_BASE_DELAY_MS = 30_000; // 30s → 60s → 120s → 240s → 480s × 6 (~56min total)
+const RETRY_MAX_DELAY_MS = 480_000; // cap individual delay at 8 min
 const FALLBACK_THRESHOLD = 150;     // switch provider after 150 consecutive failures (practically never)
 let consecutiveFailures = 0;
 let usingFallback = false;
@@ -300,7 +301,7 @@ async function callWithRetry(provider, systemPrompt, userPrompt, maxTokens, json
       lastErr = err;
       onCallFailure();
       if (attempt < RETRY_COUNT && isTransientError(err)) {
-        const delay = RETRY_BASE_DELAY_MS * Math.pow(2, attempt); // 5s, 10s, 20s
+        const delay = Math.min(RETRY_BASE_DELAY_MS * Math.pow(2, attempt), RETRY_MAX_DELAY_MS);
         console.log(
           `\x1b[33m[llm] Transient error (attempt ${attempt + 1}/${RETRY_COUNT + 1}): ${err.message.slice(0, 100)}. Retrying in ${delay / 1000}s...\x1b[0m`
         );
