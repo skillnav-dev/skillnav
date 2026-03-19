@@ -76,8 +76,15 @@ async function main() {
 
   log.info(`Brief: "${brief.title}" (status: ${brief.status})`);
 
-  // Determine channels to publish
-  const allChannels = ["rss", "wechat", "x", "zhihu", "xhs"];
+  // Determine channels to publish — only include channels that have content
+  const contentMap = {
+    rss: true, // always available (auto-served)
+    wechat: !!brief.content_wechat,
+    x: !!brief.content_x,
+    zhihu: !!brief.content_zhihu,
+    xhs: !!brief.content_xhs,
+  };
+  const allChannels = Object.keys(contentMap).filter((ch) => contentMap[ch]);
   const channels = channelFilter ? [channelFilter] : allChannels;
 
   for (const channel of channels) {

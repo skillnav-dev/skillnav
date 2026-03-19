@@ -211,7 +211,7 @@ export interface Database {
             | "wechat"
             | "x"
             | "rss"
-            | "xiaohongshu"
+            | "xhs"
             | "zhihu"
             | "email"
             | "openclaw";

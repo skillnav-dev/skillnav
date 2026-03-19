@@ -22,7 +22,7 @@ create index if not exists idx_daily_briefs_status on daily_briefs (status);
 create table if not exists brief_publications (
   id uuid primary key default gen_random_uuid(),
   brief_id uuid not null references daily_briefs(id) on delete cascade,
-  channel text not null check (channel in ('wechat', 'x', 'rss', 'xiaohongshu', 'zhihu', 'email', 'openclaw')),
+  channel text not null check (channel in ('wechat', 'x', 'rss', 'xhs', 'zhihu', 'email', 'openclaw')),
   status text not null default 'pending' check (status in ('pending', 'published', 'failed')),
   published_at timestamptz,
   external_url text,

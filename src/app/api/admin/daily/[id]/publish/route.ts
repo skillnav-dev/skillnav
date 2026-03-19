@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 // POST /api/admin/daily/[id]/publish — mark a channel as published
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const cookieStore = await cookies();
   const session = cookieStore.get("admin_session");
@@ -16,7 +16,7 @@ export async function POST(
   const { id } = await params;
   const { channel } = await request.json();
 
-  if (!channel || !["rss", "wechat", "x"].includes(channel)) {
+  if (!channel || !["rss", "wechat", "x", "zhihu", "xhs"].includes(channel)) {
     return NextResponse.json({ error: "Invalid channel" }, { status: 400 });
   }
 
@@ -31,7 +31,7 @@ export async function POST(
         status: "published",
         published_at: new Date().toISOString(),
       } as never,
-      { onConflict: "brief_id,channel" }
+      { onConflict: "brief_id,channel" },
     );
 
   if (error) {
