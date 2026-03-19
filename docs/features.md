@@ -65,3 +65,5 @@
 | USER-01 | 用户系统 | planned | |
 | PAY-01 | 付费 Skill 套件 | planned | LemonSqueezy |
 | DIST-01 | X 社交分发 | wip | @skillnav_dev 已建立，API CreditsDepleted 待解决 |
+| DAILY-01 | 每日简报生成 + Admin Dashboard | shipped | LLM 策划 + 5 格式输出（MD/WeChat/X/Zhihu/XHS）+ 审核/编辑/发布 |
+| DAILY-02 | 每日简报多渠道发布 | shipped | RSS auto + WeChat/X/Zhihu/XHS copy-ready，publication tracking |

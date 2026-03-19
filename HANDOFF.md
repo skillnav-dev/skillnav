@@ -1,30 +1,28 @@
 # HANDOFF
-<!-- /checkpoint at 2026-03-19 -->
+<!-- /checkpoint at 2026-03-19 session 2 -->
 
 ## Active Plans
-- daily-brief-pipeline — `docs/plans/daily-brief-pipeline.md`（Phase 1 done, Phase 2 planned）
-- 产品转型 "目录→指南" — `docs/adr/002-product-direction-guide-over-directory.md`
+- 30-Day Growth Sprint — `~/.gstack/projects/skillnav-dev-skillnav/apple-main-design-20260319-182224.md`（APPROVED, Week 1）
+- GSC 索引率修复 — `docs/research/2026-03-19-gsc-indexing-diagnosis.md`（调研完成，待执行）
 
 ## Session Tasks
-- [x] Daily Brief Pipeline Phase 1: 引擎+3渠道+Admin+API+DB migration+管线验证
-- [x] Vibe Physics 封面文章样板（翻译修复 + 编辑按语 + editorial tier + 发布）
-- [x] 三层内容架构决策（ADR-003: flagship/standard/not-worth）
-- [x] 封面文章候选名单（5 篇已选定）
-- [ ] 逐篇审读候选封面文章（反模式/工程模式/20亿次/多智能体/子智能体）
-- [ ] Daily Brief Phase 2: 小红书/知乎/邮件/OpenClaw Skill 适配器
-- [ ] Phase 2: 做厚 S-tier 详情页（66 MCP + 17 Skills）
-- [ ] Phase 3: 编辑原创（"最佳 X" 指南 5-10 篇）
-- [ ] Phase 4: 分发节奏（X 周 3 条 + V2EX/掘金）
+- [x] Daily Brief Phase 2: 知乎 + 小红书适配器 + Admin tabs + DB migration
+- [x] Codex review: xhs constraint + false published + API allowlist
+- [x] QA: skillnav.dev 12 页 100/100
+- [x] Office Hours: 30-Day Growth Sprint 设计（APPROVED）
+- [x] 翻译 prompt 优化（消灭"本文"开头 + 语感样本）
+- [x] 重翻译 168/214 篇（46 篇因超时未完成，可再跑一次）
+- [ ] Growth Sprint Week 1: 生成 daily brief → 发 X/知乎/小红书 → 掘金介绍帖 → V2EX 介绍帖
+- [ ] SEO 修复: sitemap 移除 /en/ 路由 + robots.txt disallow _next/
+- [ ] 重翻译剩余 46 篇（`node scripts/sync-articles.mjs --retranslate-published`）
+- [ ] 逐篇审读 5 篇封面文章候选
 
 ## Pending User Actions
-- [ ] 配置 crontab（sync 6am → generate 7am → 人工审核 → publish）
-- [ ] GSC 提交 sitemap
-- [ ] 发置顶推文 + 首条推文
-- [ ] X API Free tier 额度激活
+- [ ] .env.local 设 `LLM_PROVIDER=gpt`
+- [ ] 配置 crontab（sync 6am → generate 7am → 审核 → publish）
+- [ ] 买 Anthropic API key（$20，可选）
 
 ## Key Files
-- `docs/adr/003-editorial-content-tiers.md` — 封面文章编辑流程定义
-- `scripts/generate-daily.mjs` — 每日简报生成
-- `scripts/publish-daily.mjs` — 简报多渠道发布
-- `src/app/admin/daily/` — Admin Dashboard
-- Vibe Physics article ID: `7a0d9e18-175a-4528-a012-29795d2fe158`
+- `scripts/lib/llm.mjs` — 翻译 prompt（刚优化，commit 98410d7）
+- `scripts/lib/publishers/zhihu.mjs` + `xiaohongshu.mjs` — 新渠道适配器
+- `docs/troubleshooting/2026-03-19-translation-quality.md` — 翻译质量修复记录

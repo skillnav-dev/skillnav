@@ -6,7 +6,7 @@ Feature: daily-brief
 
 ## 概述
 
-AI 驱动的每日简报自动生成 + 多渠道分发管线。从 SkillNav 已有的文章库中抓取最近 24h 内容，LLM 策划生成每日精选，输出 3 种格式（Markdown / 公众号 HTML / X Thread），通过 Admin Dashboard 审核后发布。
+AI 驱动的每日简报自动生成 + 多渠道分发管线。从 SkillNav 已有的文章库中抓取最近 24h 内容，LLM 策划生成每日精选，输出 5 种格式（Markdown / 公众号 HTML / X Thread / 知乎 Markdown / 小红书文案），通过 Admin Dashboard 审核后发布。
 
 ```
 sync-articles (daily cron)  ──→  articles (translated)
@@ -32,10 +32,13 @@ sync-articles (daily cron)  ──→  articles (translated)
 - [x] RSS feed API route — `/api/rss/daily`
 - [x] 代码审查 — 8 个问题全部修复（XSS、状态机竞态、输入验证等）
 
-## Phase 2 待办
+## Phase 2 任务
 
-- [ ] 小红书适配器（图卡生成）
-- [ ] 知乎适配器（长文格式）
+- [x] 小红书适配器（文案格式 + Admin tab + copy-ready 输出）
+- [x] 知乎适配器（Markdown 长文 + Admin tab + 文件输出）
+- [x] DB: `content_zhihu` + `content_xhs` 列 + channel constraint 更新（xhs 统一命名）
+- [x] Admin Dashboard: Zhihu/XHS tab + publication status tracking
+- [x] Codex review 修复: channel name mismatch + false published + API allowlist
 - [ ] 邮件 Newsletter（Resend 集成 + 订阅管理）
 - [ ] OpenClaw Skill（IM 渠道分发）
 - [ ] 用户账号体系 + 个性化推荐
