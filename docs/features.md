@@ -8,7 +8,8 @@
 | SKL-02 | Skills 中文翻译（name_zh/description_zh） | shipped | LLM 批量翻译 |
 | SKL-03 | Skills 标签系统 | shipped | LLM 生成 3-5 标签 |
 | SKL-04 | Skills 编辑评论 | shipped | Wirecutter 风格一句话推荐 |
-| ART-01 | 文章列表 + 详情页 | shipped | 194 篇 published，RSS 采集 + 编译翻译 |
+| ART-01 | 文章列表 + 详情页 | shipped | 213+ 篇 published，RSS 采集 + 编译翻译 |
+| ART-03 | 封面文章（编辑精选） | wip | 三层内容架构：flagship(editorial)/standard(translated)/not-worth。首篇 Vibe Physics 已发布。ADR-003 |
 | ART-02 | 文章封面图提取 | shipped | 从 source_url 提取 og:image |
 | MCP-01 | MCP 列表 + 详情页 | shipped | 3,947 published（S/A/B 三层），B-tier noindex，结构化模板（什么是/如何使用/核心功能/FAQ） |
 | MCP-02 | MCP 工具定义（tools JSONB） | shipped | 从 Smithery API 回填 |

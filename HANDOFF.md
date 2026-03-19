@@ -1,29 +1,30 @@
 # HANDOFF
 <!-- /checkpoint at 2026-03-19 -->
 
-## Active Plan
-daily-brief-pipeline — `docs/plans/daily-brief-pipeline.md`（7/7, 100% Phase 1 done）
+## Active Plans
+- daily-brief-pipeline — `docs/plans/daily-brief-pipeline.md`（Phase 1 done, Phase 2 planned）
+- 产品转型 "目录→指南" — `docs/adr/002-product-direction-guide-over-directory.md`
 
 ## Session Tasks
-- [x] 设计文档（/office-hours）— 全渠道简报引擎
-- [x] 工程审查（/plan-eng-review）— Phase 1 范围锁定（引擎+3渠道）
-- [x] 设计审查（/plan-design-review）— Admin Dashboard UI 规范 2/10→8/10
-- [x] Build — DB migration + 管线脚本 + 适配器 + Admin Dashboard + API
-- [x] 代码审查（/review）— 8 个问题全部修复
-- [x] Ship — PR #1 merged, 17 files +1481 lines
-- [x] DB migration 执行 — `daily_briefs` + `brief_publications` 已创建
-- [x] 管线验证 — 第一期简报已生成入库
-- [x] LLM retry 优化 — 56min backoff, 150 failures to fallback
-- [ ] Phase 2: 小红书/知乎/邮件/OpenClaw Skill 适配器
-- [ ] Phase 2-3 from prior session: S-tier 详情页 / 编辑原创 / 分发节奏
+- [x] Daily Brief Pipeline Phase 1: 引擎+3渠道+Admin+API+DB migration+管线验证
+- [x] Vibe Physics 封面文章样板（翻译修复 + 编辑按语 + editorial tier + 发布）
+- [x] 三层内容架构决策（ADR-003: flagship/standard/not-worth）
+- [x] 封面文章候选名单（5 篇已选定）
+- [ ] 逐篇审读候选封面文章（反模式/工程模式/20亿次/多智能体/子智能体）
+- [ ] Daily Brief Phase 2: 小红书/知乎/邮件/OpenClaw Skill 适配器
+- [ ] Phase 2: 做厚 S-tier 详情页（66 MCP + 17 Skills）
+- [ ] Phase 3: 编辑原创（"最佳 X" 指南 5-10 篇）
+- [ ] Phase 4: 分发节奏（X 周 3 条 + V2EX/掘金）
 
 ## Pending User Actions
 - [ ] 配置 crontab（sync 6am → generate 7am → 人工审核 → publish）
-- [ ] GSC 提交 sitemap（上次会话遗留）
+- [ ] GSC 提交 sitemap
+- [ ] 发置顶推文 + 首条推文
+- [ ] X API Free tier 额度激活
 
 ## Key Files
-- `scripts/generate-daily.mjs` — `node scripts/generate-daily.mjs` 生成今日简报
-- `scripts/publish-daily.mjs` — `node scripts/publish-daily.mjs` 发布已审核简报
-- `src/app/admin/daily/` — Admin Dashboard（/admin/daily）
-- `scripts/lib/llm.mjs` — LLM retry + fallback 逻辑
-- `docs/plans/daily-brief-pipeline.md` — Phase 1 done + Phase 2 待办
+- `docs/adr/003-editorial-content-tiers.md` — 封面文章编辑流程定义
+- `scripts/generate-daily.mjs` — 每日简报生成
+- `scripts/publish-daily.mjs` — 简报多渠道发布
+- `src/app/admin/daily/` — Admin Dashboard
+- Vibe Physics article ID: `7a0d9e18-175a-4528-a012-29795d2fe158`
