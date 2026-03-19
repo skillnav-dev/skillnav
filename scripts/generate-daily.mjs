@@ -22,6 +22,8 @@ import { validateEnv } from "./lib/validate-env.mjs";
 import { getProviderInfo } from "./lib/llm.mjs";
 import { markdownToWechatHtml } from "./lib/publishers/wechat.mjs";
 import { formatXThread, threadToText } from "./lib/publishers/twitter.mjs";
+import { formatZhihuArticle } from "./lib/publishers/zhihu.mjs";
+import { formatXhsCaption } from "./lib/publishers/xiaohongshu.mjs";
 
 const log = createLogger("daily");
 
@@ -274,6 +276,26 @@ async function main() {
   const tweets = formatXThread(threadItems, { date: dateLabel });
   const contentX = threadToText(tweets);
 
+  // Generate Zhihu article
+  const contentZhihu = formatZhihuArticle(contentMd, {
+    title: editorialBrief.title,
+    date: formatDateChinese(briefDate),
+    articleCount: editorialBrief.highlights.length,
+  });
+
+  // Generate Xiaohongshu caption
+  const xhsHighlights = editorialBrief.highlights.map((h) => {
+    const article = articles.find((a) => a.slug === h.slug);
+    return {
+      title: article?.title_zh || article?.title || h.slug,
+      oneLiner: h.oneLiner,
+    };
+  });
+  const contentXhs = formatXhsCaption(xhsHighlights, {
+    title: editorialBrief.title,
+    date: formatDateChinese(briefDate),
+  });
+
   // Collect article IDs
   const articleIds = editorialBrief.highlights
     .map((h) => articles.find((a) => a.slug === h.slug)?.id)
@@ -287,6 +309,8 @@ async function main() {
     content_md: contentMd,
     content_wechat: contentWechat,
     content_x: contentX,
+    content_zhihu: contentZhihu,
+    content_xhs: contentXhs,
     article_ids: articleIds,
     status: "draft",
   };
@@ -296,6 +320,10 @@ async function main() {
     console.log(contentMd);
     log.info("\n── X Thread Preview ─────────────────────────");
     console.log(contentX);
+    log.info("\n── Xiaohongshu Preview ──────────────────────");
+    console.log(contentXhs);
+    log.info("\n── Zhihu Preview (first 20 lines) ───────────");
+    console.log(contentZhihu.split("\n").slice(0, 20).join("\n"));
     log.info("── End Preview ──────────────────────────────\n");
     log.info(`Title: ${record.title}`);
     log.info(`Summary: ${record.summary}`);

@@ -186,6 +186,8 @@ export interface Database {
           content_md: string;
           content_wechat: string | null;
           content_x: string | null;
+          content_zhihu: string | null;
+          content_xhs: string | null;
           article_ids: string[];
           status: "draft" | "approved" | "published";
           created_at: string;
@@ -205,7 +207,14 @@ export interface Database {
         Row: {
           id: string;
           brief_id: string;
-          channel: "wechat" | "x" | "rss" | "xiaohongshu" | "zhihu" | "email" | "openclaw";
+          channel:
+            | "wechat"
+            | "x"
+            | "rss"
+            | "xiaohongshu"
+            | "zhihu"
+            | "email"
+            | "openclaw";
           status: "pending" | "published" | "failed";
           published_at: string | null;
           external_url: string | null;
@@ -218,7 +227,9 @@ export interface Database {
           id?: string;
           created_at?: string;
         };
-        Update: Partial<Database["public"]["Tables"]["brief_publications"]["Insert"]>;
+        Update: Partial<
+          Database["public"]["Tables"]["brief_publications"]["Insert"]
+        >;
       };
       submissions: {
         Row: {
@@ -250,4 +261,5 @@ export type ArticleRow = Database["public"]["Tables"]["articles"]["Row"];
 export type McpServerRow = Database["public"]["Tables"]["mcp_servers"]["Row"];
 export type SubmissionRow = Database["public"]["Tables"]["submissions"]["Row"];
 export type DailyBriefRow = Database["public"]["Tables"]["daily_briefs"]["Row"];
-export type BriefPublicationRow = Database["public"]["Tables"]["brief_publications"]["Row"];
+export type BriefPublicationRow =
+  Database["public"]["Tables"]["brief_publications"]["Row"];

@@ -18,6 +18,8 @@ interface Brief {
   content_md: string;
   content_wechat: string | null;
   content_x: string | null;
+  content_zhihu: string | null;
+  content_xhs: string | null;
   status: string;
   article_ids: string[] | null;
   created_at: string;
@@ -33,13 +35,34 @@ interface Publication {
   external_url: string | null;
 }
 
-const statusConfig: Record<string, { label: string; variant: "secondary" | "outline" | "default"; className?: string }> = {
+const statusConfig: Record<
+  string,
+  {
+    label: string;
+    variant: "secondary" | "outline" | "default";
+    className?: string;
+  }
+> = {
   draft: { label: "Draft", variant: "secondary" },
-  approved: { label: "Approved", variant: "outline", className: "border-blue-500 text-blue-600" },
-  published: { label: "Published", variant: "default", className: "bg-green-600" },
+  approved: {
+    label: "Approved",
+    variant: "outline",
+    className: "border-blue-500 text-blue-600",
+  },
+  published: {
+    label: "Published",
+    variant: "default",
+    className: "bg-green-600",
+  },
 };
 
-export function BriefDetail({ brief: initialBrief, publications }: { brief: Brief; publications: Publication[] }) {
+export function BriefDetail({
+  brief: initialBrief,
+  publications,
+}: {
+  brief: Brief;
+  publications: Publication[];
+}) {
   const [brief, setBrief] = useState(initialBrief);
   const [editContent, setEditContent] = useState(brief.content_md);
   const [saving, setSaving] = useState(false);
@@ -47,7 +70,9 @@ export function BriefDetail({ brief: initialBrief, publications }: { brief: Brie
   const sc = statusConfig[brief.status] || statusConfig.draft;
 
   async function handleApprove() {
-    const res = await fetch(`/api/admin/daily/${brief.id}/approve`, { method: "POST" });
+    const res = await fetch(`/api/admin/daily/${brief.id}/approve`, {
+      method: "POST",
+    });
     if (res.ok) {
       setBrief({ ...brief, status: "approved" });
       toast.success("已审核通过");
@@ -103,14 +128,22 @@ export function BriefDetail({ brief: initialBrief, publications }: { brief: Brie
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <Link href="/admin/daily">
-            <Button variant="ghost" size="sm">← Back</Button>
+            <Button variant="ghost" size="sm">
+              ← Back
+            </Button>
           </Link>
-          <Badge variant={sc.variant} className={sc.className}>{sc.label}</Badge>
-          <span className="text-sm text-muted-foreground">{brief.brief_date}</span>
+          <Badge variant={sc.variant} className={sc.className}>
+            {sc.label}
+          </Badge>
+          <span className="text-sm text-muted-foreground">
+            {brief.brief_date}
+          </span>
         </div>
         <div className="flex gap-2">
           {brief.status === "draft" && (
-            <Button onClick={handleApprove} size="sm">Approve</Button>
+            <Button onClick={handleApprove} size="sm">
+              Approve
+            </Button>
           )}
         </div>
       </div>
@@ -123,6 +156,8 @@ export function BriefDetail({ brief: initialBrief, publications }: { brief: Brie
           <TabsTrigger value="preview">Preview</TabsTrigger>
           <TabsTrigger value="wechat">WeChat</TabsTrigger>
           <TabsTrigger value="x">X Thread</TabsTrigger>
+          <TabsTrigger value="zhihu">Zhihu</TabsTrigger>
+          <TabsTrigger value="xhs">XHS</TabsTrigger>
           <TabsTrigger value="edit">Edit Source</TabsTrigger>
         </TabsList>
 
@@ -141,7 +176,9 @@ export function BriefDetail({ brief: initialBrief, publications }: { brief: Brie
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => copyToClipboard(brief.content_wechat || "", "公众号 HTML")}
+                onClick={() =>
+                  copyToClipboard(brief.content_wechat || "", "公众号 HTML")
+                }
                 disabled={!brief.content_wechat}
               >
                 Copy HTML
@@ -169,7 +206,9 @@ export function BriefDetail({ brief: initialBrief, publications }: { brief: Brie
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => copyToClipboard(brief.content_x || "", "X Thread")}
+                onClick={() =>
+                  copyToClipboard(brief.content_x || "", "X Thread")
+                }
                 disabled={!brief.content_x}
               >
                 Copy All
@@ -178,29 +217,91 @@ export function BriefDetail({ brief: initialBrief, publications }: { brief: Brie
             <CardContent>
               {brief.content_x ? (
                 <div className="space-y-3">
-                  {brief.content_x.split(/--- Tweet \d+\/\d+ ---/).filter(Boolean).map((tweet, i) => (
-                    <div
-                      key={i}
-                      className="rounded-lg border p-3 text-sm"
-                    >
-                      <div className="mb-1 text-xs text-muted-foreground">Tweet {i + 1}</div>
-                      <p className="whitespace-pre-wrap">{tweet.trim()}</p>
-                      <div className="mt-2 text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 text-xs"
-                          onClick={() => copyToClipboard(tweet.trim(), `Tweet ${i + 1}`)}
-                        >
-                          Copy
-                        </Button>
+                  {brief.content_x
+                    .split(/--- Tweet \d+\/\d+ ---/)
+                    .filter(Boolean)
+                    .map((tweet, i) => (
+                      <div key={i} className="rounded-lg border p-3 text-sm">
+                        <div className="mb-1 text-xs text-muted-foreground">
+                          Tweet {i + 1}
+                        </div>
+                        <p className="whitespace-pre-wrap">{tweet.trim()}</p>
+                        <div className="mt-2 text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 text-xs"
+                            onClick={() =>
+                              copyToClipboard(tweet.trim(), `Tweet ${i + 1}`)
+                            }
+                          >
+                            Copy
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               ) : (
                 <p className="py-8 text-center text-muted-foreground">
                   未生成 Thread。请先 Approve 后重新生成。
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="zhihu">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <span className="text-sm font-medium">知乎专栏预览</span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  copyToClipboard(brief.content_zhihu || "", "知乎文章")
+                }
+                disabled={!brief.content_zhihu}
+              >
+                Copy Markdown
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {brief.content_zhihu ? (
+                <div className="prose prose-sm max-w-none dark:prose-invert">
+                  <ReactMarkdown>{brief.content_zhihu}</ReactMarkdown>
+                </div>
+              ) : (
+                <p className="py-8 text-center text-muted-foreground">
+                  未生成知乎格式。重新运行 generate-daily。
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="xhs">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <span className="text-sm font-medium">小红书文案预览</span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  copyToClipboard(brief.content_xhs || "", "小红书文案")
+                }
+                disabled={!brief.content_xhs}
+              >
+                Copy Caption
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {brief.content_xhs ? (
+                <div className="whitespace-pre-wrap rounded-lg border bg-pink-50 p-4 text-sm dark:bg-pink-950/20">
+                  {brief.content_xhs}
+                </div>
+              ) : (
+                <p className="py-8 text-center text-muted-foreground">
+                  未生成小红书格式。重新运行 generate-daily。
                 </p>
               )}
             </CardContent>
@@ -233,16 +334,25 @@ export function BriefDetail({ brief: initialBrief, publications }: { brief: Brie
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            {["rss", "wechat", "x"].map((channel) => {
+            {["rss", "wechat", "x", "zhihu", "xhs"].map((channel) => {
               const pub = pubMap.get(channel);
               const isPublished = pub?.status === "published";
               return (
-                <div key={channel} className="flex items-center justify-between rounded-lg border p-3">
+                <div
+                  key={channel}
+                  className="flex items-center justify-between rounded-lg border p-3"
+                >
                   <div className="flex items-center gap-3">
-                    <span className={isPublished ? "text-green-600" : "text-muted-foreground"}>
+                    <span
+                      className={
+                        isPublished ? "text-green-600" : "text-muted-foreground"
+                      }
+                    >
                       {isPublished ? "✅" : "⚪"}
                     </span>
-                    <span className="text-sm font-medium uppercase">{channel}</span>
+                    <span className="text-sm font-medium uppercase">
+                      {channel}
+                    </span>
                     <span className="text-xs text-muted-foreground">
                       {isPublished
                         ? `Published ${pub?.published_at ? new Date(pub.published_at).toLocaleString("zh-CN") : ""}`

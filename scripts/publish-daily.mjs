@@ -37,7 +37,7 @@ async function main() {
   const channelIdx = args.indexOf("--channel");
   const channelFilter = channelIdx !== -1 ? args[channelIdx + 1] : null;
 
-  const validChannels = ["rss", "wechat", "x"];
+  const validChannels = ["rss", "wechat", "x", "zhihu", "xhs"];
   if (channelFilter && !validChannels.includes(channelFilter)) {
     log.error(`Invalid channel: ${channelFilter}. Valid: ${validChannels.join(", ")}`);
     process.exit(1);
@@ -77,7 +77,7 @@ async function main() {
   log.info(`Brief: "${brief.title}" (status: ${brief.status})`);
 
   // Determine channels to publish
-  const allChannels = ["rss", "wechat", "x"];
+  const allChannels = ["rss", "wechat", "x", "zhihu", "xhs"];
   const channels = channelFilter ? [channelFilter] : allChannels;
 
   for (const channel of channels) {
@@ -112,6 +112,30 @@ async function main() {
         }
         console.log("\n" + brief.content_x + "\n");
         log.info("Copy each tweet above and post as a thread on X.");
+        break;
+      }
+      case "zhihu": {
+        if (!brief.content_zhihu) {
+          log.warn("No Zhihu content found. Re-run generate-daily.mjs.");
+          continue;
+        }
+        const zhihuPath = join(process.cwd(), `daily-${dateLabel}-zhihu.md`);
+        if (!dryRun) {
+          writeFileSync(zhihuPath, brief.content_zhihu, "utf-8");
+          log.success(`Zhihu article written to: ${zhihuPath}`);
+          log.info("Copy content and paste into Zhihu editor (supports Markdown).");
+        } else {
+          log.info("[DRY RUN] Would write Zhihu article to: " + zhihuPath);
+        }
+        break;
+      }
+      case "xhs": {
+        if (!brief.content_xhs) {
+          log.warn("No Xiaohongshu content found. Re-run generate-daily.mjs.");
+          continue;
+        }
+        console.log("\n" + brief.content_xhs + "\n");
+        log.info("Copy caption above, pair with image card, and post on Xiaohongshu.");
         break;
       }
       default:
