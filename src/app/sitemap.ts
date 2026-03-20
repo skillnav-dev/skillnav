@@ -80,50 +80,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  // English static pages (tools only — no English articles)
-  const enStaticPages: MetadataRoute.Sitemap = [
-    {
-      url: `${siteConfig.url}/en/skills`,
-      lastModified: new Date(),
-      changeFrequency: "daily",
-      priority: 0.8,
-    },
-    {
-      url: `${siteConfig.url}/en/mcp`,
-      changeFrequency: "weekly",
-      priority: 0.7,
-    },
-  ];
+  const skillPages: MetadataRoute.Sitemap = skills.map((s) => ({
+    url: `${siteConfig.url}/skills/${s.slug}`,
+    lastModified: new Date(s.updatedAt),
+    changeFrequency: "weekly" as const,
+    priority: 0.7,
+  }));
 
-  const skillPages: MetadataRoute.Sitemap = skills.flatMap((s) => [
-    {
-      url: `${siteConfig.url}/skills/${s.slug}`,
-      lastModified: new Date(s.updatedAt),
-      changeFrequency: "weekly" as const,
-      priority: 0.7,
-    },
-    {
-      url: `${siteConfig.url}/en/skills/${s.slug}`,
-      lastModified: new Date(s.updatedAt),
-      changeFrequency: "weekly" as const,
-      priority: 0.6,
-    },
-  ]);
-
-  const mcpPages: MetadataRoute.Sitemap = mcpServers.flatMap((m) => [
-    {
-      url: `${siteConfig.url}/mcp/${m.slug}`,
-      lastModified: new Date(m.updatedAt),
-      changeFrequency: "weekly" as const,
-      priority: 0.7,
-    },
-    {
-      url: `${siteConfig.url}/en/mcp/${m.slug}`,
-      lastModified: new Date(m.updatedAt),
-      changeFrequency: "weekly" as const,
-      priority: 0.6,
-    },
-  ]);
+  const mcpPages: MetadataRoute.Sitemap = mcpServers.map((m) => ({
+    url: `${siteConfig.url}/mcp/${m.slug}`,
+    lastModified: new Date(m.updatedAt),
+    changeFrequency: "weekly" as const,
+    priority: 0.7,
+  }));
 
   const articlePages: MetadataRoute.Sitemap = articles.map((a) => ({
     url: `${siteConfig.url}/articles/${a.slug}`,
@@ -141,7 +110,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [
     ...staticPages,
-    ...enStaticPages,
     ...skillPages,
     ...mcpPages,
     ...articlePages,
