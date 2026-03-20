@@ -172,7 +172,7 @@ export function BriefDetail({
         <TabsContent value="wechat">
           {/* WeChat header card */}
           {(() => {
-            const cardUrl = `/daily-cards/${brief.brief_date}/wechat-header-card.png`;
+            const cardUrl = `/daily-cards/${brief.brief_date}/wechat-header.png`;
             return (
               <Card className="mb-4">
                 <CardHeader className="flex flex-row items-center justify-between">
