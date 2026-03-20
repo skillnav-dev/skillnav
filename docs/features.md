@@ -68,3 +68,5 @@
 | DIST-01 | X 社交分发 | wip | @skillnav_dev 已建立，API CreditsDepleted 待解决 |
 | DAILY-01 | 每日简报生成 + Admin Dashboard | shipped | LLM 策划 + 5 格式输出（MD/WeChat/X/Zhihu/XHS）+ 审核/编辑/发布 |
 | DAILY-02 | 每日简报多渠道发布 | shipped | RSS auto + WeChat/X/Zhihu/XHS copy-ready，publication tracking |
+| DAILY-03 | 简报配图卡片生成 | shipped | HTML 模板 + gstack browse 渲染：6 张 XHS 卡片 (1080x1350) + WeChat 头图 (1080x608)，admin 内预览下载 |
+| SIGNAL-01 | 内容信号层 | spec | 5 大日报热度交叉验证，规范完成待手动验证。`docs/specs/content-signals-spec.md` |

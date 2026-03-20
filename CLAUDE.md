@@ -50,6 +50,12 @@ node scripts/generate-daily.mjs --dry-run                # Preview without writi
 node scripts/generate-daily.mjs --hours 48               # Look back 48h instead of 24h
 node scripts/publish-daily.mjs                           # Publish today's approved brief
 node scripts/publish-daily.mjs --channel rss             # Publish to specific channel only
+
+# Card image generation (requires gstack browse)
+python3 -m http.server 8765 --directory scripts/templates &  # Serve card template
+$B goto http://localhost:8765/daily-card.html                 # Render in browser
+$B screenshot --clip 0,0,1080,1350 xhs-1.png                 # Capture XHS cards (6 total)
+$B screenshot --clip 0,8240,1080,608 wechat-header.png        # Capture WeChat header
 ```
 
 ## Development Conventions
@@ -101,6 +107,8 @@ src/
     └── fonts.ts                # Font configuration
 
 public/
+├── daily-cards/                # Generated card images for social distribution
+│   └── YYYY-MM-DD/             # Per-date: xhs-{1-6}.png (1080x1350) + wechat-header.png (1080x608)
 └── guides/                     # Interactive deep guides (11 standalone HTML)
     ├── ai-guide.html           # 10-chapter AI architecture guide
     ├── mcp-interactive-guide.html      # MCP config simulator
@@ -117,6 +125,7 @@ public/
 scripts/
 ├── generate-daily.mjs          # Daily brief generator (query → LLM curate → multi-format → upsert)
 ├── publish-daily.mjs           # Multi-channel publisher (RSS auto, WeChat/X copy-ready)
+├── templates/daily-card.html   # Card image template (6 XHS cards + WeChat header, rendered via gstack browse)
 ├── lib/publishers/             # Platform format adapters (wechat.mjs, twitter.mjs, rss.mjs)
 scripts/lib/
 ├── llm.mjs                     # LLM providers + compile prompt (imports glossary)
