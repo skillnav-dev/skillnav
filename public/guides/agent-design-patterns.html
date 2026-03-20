@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent 设计模式图鉴 — 交互式流程动画</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap');
+
+:root {
+  --bg:#050508;--bg2:#0a0a10;--bg3:#0f0f18;--bg4:#151520;--bg5:#1b1b28;
+  --text:#e0ddf0;--dim:#8886a0;--muted:#504e68;
+  --border:#1a1a2e;--border2:#282840;
+  --cyan:#06d6a0;--cyan-bg:rgba(6,214,160,.07);--cyan-b:rgba(6,214,160,.3);
+  --amber:#ffd166;--amber-bg:rgba(255,209,102,.07);--amber-b:rgba(255,209,102,.3);
+  --rose:#ef476f;--rose-bg:rgba(239,71,111,.07);--rose-b:rgba(239,71,111,.3);
+  --violet:#8338ec;--violet-bg:rgba(131,56,236,.07);--violet-b:rgba(131,56,236,.3);
+  --blue:#118ab2;--blue-bg:rgba(17,138,178,.07);--blue-b:rgba(17,138,178,.3);
+  --orange:#f77f00;--orange-bg:rgba(247,127,0,.07);--orange-b:rgba(247,127,0,.3);
+  --r:10px;--mono:'IBM Plex Mono',monospace;--sans:'Noto Sans SC',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.65;-webkit-font-smoothing:antialiased}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 20% 15%,rgba(6,214,160,.03) 0%,transparent 50%),radial-gradient(ellipse at 80% 85%,rgba(131,56,236,.03) 0%,transparent 50%);pointer-events:none}
+
+.w{max-width:1020px;margin:0 auto;padding:0 20px;position:relative;z-index:1}
+
+/* Hero */
+.hero{padding:60px 0 36px;text-align:center}
+.hero .pill{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:100px;background:var(--violet-bg);border:1px solid var(--violet-b);font-size:12px;font-family:var(--mono);color:var(--violet);margin-bottom:16px}
+.hero .pill i{width:5px;height:5px;border-radius:50%;background:var(--violet);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.hero h1{font-size:clamp(28px,5vw,48px);font-weight:900;line-height:1.15;margin-bottom:10px}
+.hero h1 em{font-style:normal;background:linear-gradient(135deg,var(--cyan),var(--violet),var(--amber));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{color:var(--dim);font-size:16px;max-width:640px;margin:0 auto;font-weight:300}
+
+/* Pattern selector */
+.pat-nav{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:32px 0 36px}
+.pat-btn{background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r);padding:16px 18px;cursor:pointer;transition:all .3s;text-align:left;position:relative;overflow:hidden}
+.pat-btn::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent);opacity:0;transition:opacity .3s}
+.pat-btn:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.4)}
+.pat-btn.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 6%,var(--bg2))}
+.pat-btn.on::before{opacity:1}
+.pat-btn .p-icon{font-size:22px;margin-bottom:6px;display:block}
+.pat-btn .p-name{font-size:15px;font-weight:700;margin-bottom:2px}
+.pat-btn .p-sub{font-size:11px;color:var(--dim);font-family:var(--mono)}
+
+/* Main content area */
+.main-area{animation:up .4s ease}
+@keyframes up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* Section cards */
+.sec{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:28px;margin-bottom:20px}
+.sec h2{font-size:20px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:10px}
+.sec h2 .badge{font-size:10px;padding:3px 8px;border-radius:4px;font-family:var(--mono);font-weight:600}
+.sec .sub{color:var(--dim);font-size:14px;margin-bottom:20px;line-height:1.7}
+
+/* ══ Flow Diagram ══ */
+.flow-canvas{position:relative;width:100%;min-height:340px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:20px}
+
+.flow-controls{display:flex;gap:8px;padding:10px 14px;background:var(--bg4);border-bottom:1px solid var(--border)}
+.flow-ctrl{padding:5px 14px;border-radius:6px;border:1px solid var(--border);background:none;color:var(--dim);font-size:12px;font-family:var(--mono);cursor:pointer;transition:all .3s}
+.flow-ctrl:hover{border-color:var(--border2);color:var(--text)}
+.flow-ctrl.play{background:var(--cyan);color:var(--bg);border-color:var(--cyan)}
+.flow-ctrl.play:hover{box-shadow:0 0 14px rgba(6,214,160,.3)}
+.flow-speed{color:var(--muted);font-size:11px;font-family:var(--mono);display:flex;align-items:center;margin-left:auto;gap:6px}
+
+.flow-stage{position:relative;padding:20px;min-height:280px;display:flex;align-items:center;justify-content:center}
+
+/* Nodes */
+.node{position:absolute;padding:10px 16px;border-radius:8px;font-size:12px;font-weight:600;text-align:center;transition:all .5s ease;opacity:.4;transform:scale(.92);min-width:90px;z-index:2}
+.node.active{opacity:1;transform:scale(1);box-shadow:0 0 20px color-mix(in srgb,var(--n-color) 30%,transparent)}
+.node .n-label{font-size:10px;color:color-mix(in srgb,var(--n-color) 70%,white);margin-top:2px;font-family:var(--mono);font-weight:400}
+
+/* Edges */
+.edge{position:absolute;z-index:1;pointer-events:none}
+.edge line,.edge path{stroke:var(--border);stroke-width:2;fill:none;transition:stroke .5s}
+.edge.active line,.edge.active path{stroke:var(--cyan);filter:drop-shadow(0 0 4px rgba(6,214,160,.4))}
+.edge .arrow{fill:var(--border);transition:fill .5s}
+.edge.active .arrow{fill:var(--cyan)}
+
+/* Message packet animation */
+.packet{position:absolute;width:8px;height:8px;border-radius:50%;background:var(--cyan);box-shadow:0 0 10px var(--cyan);z-index:3;opacity:0;pointer-events:none}
+
+/* Step indicator */
+.step-indicator{padding:12px 14px;background:var(--bg4);border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;font-size:12px;min-height:44px}
+.step-indicator .step-num{font-family:var(--mono);color:var(--cyan);font-weight:600}
+.step-indicator .step-text{color:var(--dim);flex:1}
+
+/* Comparison table */
+.cmp-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:16px}
+.cmp-table th,.cmp-table td{padding:10px 14px;text-align:left;border-bottom:1px solid var(--border)}
+.cmp-table thead th{background:var(--bg4);font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--dim);font-family:var(--mono);font-weight:600}
+.cmp-table tbody tr:hover td{background:var(--bg3)}
+.cmp-table .tag{display:inline-block;padding:2px 7px;border-radius:3px;font-size:10px;font-family:var(--mono);font-weight:600}
+
+/* Use cases */
+.use-cases{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.use-case{padding:6px 14px;border-radius:100px;font-size:12px;border:1px solid var(--border);color:var(--dim);background:var(--bg3)}
+
+/* Code snippet */
+.pseudo{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:16px;font-family:var(--mono);font-size:12px;line-height:1.9;color:var(--dim);overflow-x:auto;white-space:pre;margin-top:12px}
+.pseudo .kw{color:var(--violet)}
+.pseudo .fn{color:var(--cyan)}
+.pseudo .cm{color:var(--muted);font-style:italic}
+.pseudo .str{color:var(--amber)}
+.pseudo .hl{color:var(--rose)}
+
+/* Decision helper */
+.decision-box{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:24px;margin-top:36px;margin-bottom:24px}
+.decision-box h2{font-size:20px;font-weight:700;margin-bottom:16px}
+
+.dec-flow{display:flex;flex-direction:column;gap:12px}
+.dec-q{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:16px 20px}
+.dec-q .q-text{font-size:14px;font-weight:600;margin-bottom:10px}
+.dec-q .q-opts{display:flex;gap:8px;flex-wrap:wrap}
+.dec-q .q-opt{padding:7px 16px;border-radius:100px;border:1.5px solid var(--border);background:none;color:var(--dim);font-size:13px;cursor:pointer;font-family:var(--sans);transition:all .3s}
+.dec-q .q-opt:hover{border-color:var(--border2);color:var(--text)}
+.dec-q .q-opt.chosen{border-color:var(--cyan);background:var(--cyan-bg);color:var(--cyan)}
+
+.dec-result{background:var(--bg3);border:2px solid var(--cyan-b);border-radius:var(--r);padding:20px;display:none;animation:up .4s ease}
+.dec-result.show{display:block}
+.dec-result .rec{font-size:20px;font-weight:700;margin-bottom:6px}
+.dec-result .rec-why{font-size:14px;color:var(--dim);line-height:1.7}
+
+.footer{text-align:center;padding:32px 0 52px;color:var(--muted);font-size:12px;border-top:1px solid var(--border);margin-top:16px}
+
+@media(max-width:640px){
+  .pat-nav{grid-template-columns:1fr 1fr}
+  .flow-stage{min-height:320px}
+  .node{font-size:11px;padding:8px 12px;min-width:70px}
+}
+</style>
+</head>
+<body>
+<div class="w">
+
+<div class="hero">
+  <div class="pill"><i></i> SkillNav 交互指南 · P1</div>
+  <h1>Agent 设计模式<em>图鉴</em></h1>
+  <p>4 种核心 Agent 架构模式的交互式流程动画。点击播放，观察消息在组件间如何流转。</p>
+</div>
+
+<div class="pat-nav" id="patNav"></div>
+<div id="mainArea"></div>
+
+<div class="decision-box">
+  <h2>🧭 选型决策助手</h2>
+  <p style="color:var(--dim);font-size:14px;margin-bottom:16px">回答 3 个问题，推荐最适合的 Agent 模式</p>
+  <div class="dec-flow" id="decFlow"></div>
+  <div class="dec-result" id="decResult"></div>
+</div>
+
+<div class="footer">Agent 设计模式图鉴 · SkillNav · 基于 Anthropic / LangGraph / Google Cloud 架构文档 · 2026.03</div>
+</div>
+
+<script>
+// ═══════════════════════════════
+// PATTERN DATA
+// ═══════════════════════════════
+
+const PATTERNS = [
+  {
+    id:'react', name:'ReAct', icon:'🔄', accent:'var(--cyan)',
+    tagline:'Reason + Act 交替循环',
+    summary:'最基础也最通用的 Agent 模式。将推理（Thought）与行动（Action）在每一步交替进行，通过观察（Observation）反馈修正方向，直到任务完成。',
+    keyInsight:'ReAct 的核心价值在于<strong>推理的外显化</strong> — 每个决策都可追踪审计。当 Agent 出错时，你能精确看到逻辑在哪里断裂。',
+    flow:{
+      nodes:[
+        {id:'user',x:50,y:140,label:'User',sub:'输入任务',color:'var(--blue)',bg:'var(--blue-bg)',bc:'var(--blue-b)'},
+        {id:'think',x:220,y:60,label:'Thought',sub:'推理分析',color:'var(--violet)',bg:'var(--violet-bg)',bc:'var(--violet-b)'},
+        {id:'act',x:400,y:60,label:'Action',sub:'调用工具',color:'var(--cyan)',bg:'var(--cyan-bg)',bc:'var(--cyan-b)'},
+        {id:'observe',x:400,y:220,label:'Observe',sub:'获取结果',color:'var(--amber)',bg:'var(--amber-bg)',bc:'var(--amber-b)'},
+        {id:'done',x:580,y:140,label:'Done',sub:'输出答案',color:'var(--cyan)',bg:'var(--cyan-bg)',bc:'var(--cyan-b)'},
+      ],
+      edges:[
+        {from:'user',to:'think'},{from:'think',to:'act'},{from:'act',to:'observe'},
+        {from:'observe',to:'think',label:'继续'},{from:'think',to:'done',label:'完成'},
+      ],
+      steps:[
+        {active:['user'],edges:[],msg:'用户提出任务请求'},
+        {active:['think'],edges:[0],msg:'Thought：分析当前信息，判断下一步该做什么'},
+        {active:['act'],edges:[1],msg:'Action：选择并调用合适的工具（搜索/API/数据库）'},
+        {active:['observe'],edges:[2],msg:'Observation：获取工具返回结果，存入 Scratchpad'},
+        {active:['think'],edges:[3],msg:'再次推理：根据新信息，决定是否需要更多信息'},
+        {active:['act'],edges:[1],msg:'继续行动：调用另一个工具补充信息'},
+        {active:['observe'],edges:[2],msg:'获取新结果，信息已充分'},
+        {active:['think'],edges:[3],msg:'最终推理：信息充分，准备输出答案'},
+        {active:['done'],edges:[4],msg:'✅ 任务完成，返回结构化结果'},
+      ]
+    },
+    pros:['逻辑可追踪，便于调试','适应性强，处理开放性问题','是大多数框架的默认模式'],
+    cons:['每步都需 LLM 调用，延迟较高','错误可能沿推理链传播','依赖底层模型的推理能力'],
+    useCases:['研究型搜索 Agent','IT 故障排查','客服问题诊断','数据分析探索'],
+    pseudo:`<span class="kw">while</span> <span class="fn">not</span> done:
+  thought = <span class="fn">LLM</span>(<span class="str">"分析当前状态，决定下一步"</span>, scratchpad)
+  <span class="kw">if</span> thought.is_final:
+    <span class="kw">return</span> thought.answer
+  action = thought.tool_call
+  observation = <span class="fn">execute_tool</span>(action)
+  scratchpad.<span class="fn">append</span>(thought, action, observation)  <span class="cm">// 累积上下文</span>`
+  },
+  {
+    id:'plan', name:'Plan-and-Execute', icon:'📋', accent:'var(--amber)',
+    tagline:'先规划，后执行，失败时重规划',
+    summary:'将「想」和「做」分离为两个阶段。Planner 先生成完整计划，Executor 逐步执行。任务明确、步骤可预判时效率远高于 ReAct。',
+    keyInsight:'Plan-and-Execute 的优势在于<strong>减少无用的 LLM 调用</strong>。ReAct 在每步都推理，而 P&E 只在规划和重规划时调用大模型，执行阶段可用更小/更快的模型。',
+    flow:{
+      nodes:[
+        {id:'user',x:50,y:140,label:'User',sub:'输入目标',color:'var(--blue)',bg:'var(--blue-bg)',bc:'var(--blue-b)'},
+        {id:'planner',x:220,y:60,label:'Planner',sub:'生成计划',color:'var(--amber)',bg:'var(--amber-bg)',bc:'var(--amber-b)'},
+        {id:'exec',x:400,y:60,label:'Executor',sub:'执行步骤',color:'var(--cyan)',bg:'var(--cyan-bg)',bc:'var(--cyan-b)'},
+        {id:'check',x:400,y:220,label:'Checker',sub:'验证结果',color:'var(--violet)',bg:'var(--violet-bg)',bc:'var(--violet-b)'},
+        {id:'replan',x:220,y:220,label:'Replan',sub:'修正计划',color:'var(--rose)',bg:'var(--rose-bg)',bc:'var(--rose-b)'},
+        {id:'done',x:580,y:140,label:'Done',sub:'输出结果',color:'var(--cyan)',bg:'var(--cyan-bg)',bc:'var(--cyan-b)'},
+      ],
+      edges:[
+        {from:'user',to:'planner'},{from:'planner',to:'exec'},{from:'exec',to:'check'},
+        {from:'check',to:'replan',label:'失败'},{from:'replan',to:'exec',label:'重试'},
+        {from:'check',to:'done',label:'通过'},
+      ],
+      steps:[
+        {active:['user'],edges:[],msg:'用户描述最终目标'},
+        {active:['planner'],edges:[0],msg:'Planner 分解目标为 3-5 个有序步骤'},
+        {active:['exec'],edges:[1],msg:'Executor 执行步骤 1：获取数据'},
+        {active:['check'],edges:[2],msg:'Checker 验证：步骤 1 结果是否符合预期？'},
+        {active:['exec'],edges:[1],msg:'✓ 通过，执行步骤 2：数据处理'},
+        {active:['check'],edges:[2],msg:'Checker 验证步骤 2...'},
+        {active:['replan'],edges:[3],msg:'✗ 步骤 2 失败！触发重规划'},
+        {active:['exec'],edges:[4],msg:'用修正后的方案重新执行步骤 2'},
+        {active:['check'],edges:[2],msg:'再次验证... ✓ 通过'},
+        {active:['done'],edges:[5],msg:'✅ 所有步骤完成，输出最终结果'},
+      ]
+    },
+    pros:['适合结构化、多步骤任务','减少不必要的 LLM 调用','计划可审查/可人工介入'],
+    cons:['不适合高度不确定的探索任务','重规划本身有成本','计划质量依赖初始理解'],
+    useCases:['CI/CD 流水线编排','数据 ETL 管道','多步骤报告生成','项目任务分解'],
+    pseudo:`plan = <span class="fn">Planner</span>(<span class="str">"分解目标为可执行步骤"</span>, goal)
+<span class="kw">for</span> step <span class="kw">in</span> plan.steps:
+  result = <span class="fn">Executor</span>(step)
+  <span class="kw">if</span> <span class="fn">Checker</span>(result).failed:
+    plan = <span class="fn">Replanner</span>(plan, step, error)  <span class="cm">// 仅失败时重规划</span>
+    <span class="kw">continue</span>
+<span class="kw">return</span> <span class="fn">synthesize</span>(results)`
+  },
+  {
+    id:'multi', name:'Multi-Agent', icon:'👥', accent:'var(--violet)',
+    tagline:'多个专家协作，各司其职',
+    summary:'将复杂任务分配给多个专业化 Agent（如 Coder、Reviewer、Tester）。类比微服务架构：每个 Agent 有明确职责，通过 Orchestrator 协调。',
+    keyInsight:'Multi-Agent 的关键在于<strong>职责隔离</strong>。单个 Agent 工具过多（>10个）时性能急剧下降。拆分为专业 Agent 后，每个只需掌握 3-5 个工具，准确率大幅提升。',
+    flow:{
+      nodes:[
+        {id:'user',x:50,y:140,label:'User',sub:'复杂任务',color:'var(--blue)',bg:'var(--blue-bg)',bc:'var(--blue-b)'},
+        {id:'orch',x:220,y:140,label:'Orchestrator',sub:'任务分配',color:'var(--violet)',bg:'var(--violet-bg)',bc:'var(--violet-b)'},
+        {id:'coder',x:420,y:40,label:'Coder',sub:'编写代码',color:'var(--cyan)',bg:'var(--cyan-bg)',bc:'var(--cyan-b)'},
+        {id:'reviewer',x:420,y:140,label:'Reviewer',sub:'代码审查',color:'var(--amber)',bg:'var(--amber-bg)',bc:'var(--amber-b)'},
+        {id:'tester',x:420,y:240,label:'Tester',sub:'运行测试',color:'var(--cyan)',bg:'var(--cyan-bg)',bc:'var(--cyan-b)'},
+        {id:'done',x:600,y:140,label:'Done',sub:'交付结果',color:'var(--cyan)',bg:'var(--cyan-bg)',bc:'var(--cyan-b)'},
+      ],
+      edges:[
+        {from:'user',to:'orch'},{from:'orch',to:'coder'},{from:'coder',to:'reviewer'},
+        {from:'reviewer',to:'coder',label:'修改'},{from:'reviewer',to:'tester',label:'通过'},
+        {from:'tester',to:'done'},
+      ],
+      steps:[
+        {active:['user'],edges:[],msg:'用户提交：「给登录页添加 OAuth 认证」'},
+        {active:['orch'],edges:[0],msg:'Orchestrator 分析任务，分配给 Coder Agent'},
+        {active:['coder'],edges:[1],msg:'Coder Agent 编写 OAuth 集成代码'},
+        {active:['reviewer'],edges:[2],msg:'Reviewer Agent 审查代码质量和安全性'},
+        {active:['coder'],edges:[3],msg:'Reviewer 发现问题 → Coder 修改 → 重新提交'},
+        {active:['reviewer'],edges:[2],msg:'Reviewer 再次审查... ✓ 代码通过'},
+        {active:['tester'],edges:[4],msg:'Tester Agent 运行单元测试和集成测试'},
+        {active:['done'],edges:[5],msg:'✅ 全部测试通过，代码合并并交付'},
+      ]
+    },
+    pros:['每个 Agent 专注少量工具，准确率高','可并行执行，提升吞吐','职责清晰，易于维护和扩展'],
+    cons:['协调成本高，通信开销大','调试多 Agent 系统较复杂','需要设计清晰的通信协议'],
+    useCases:['软件开发流水线','内容创作（写→编辑→校对）','金融分析（数据→建模→报告）','客服升级链'],
+    pseudo:`orchestrator = <span class="fn">Orchestrator</span>(task)
+agents = {
+  <span class="str">"coder"</span>: <span class="fn">Agent</span>(tools=[edit, run]),
+  <span class="str">"reviewer"</span>: <span class="fn">Agent</span>(tools=[lint, review]),
+  <span class="str">"tester"</span>: <span class="fn">Agent</span>(tools=[test, coverage]),
+}
+<span class="kw">while</span> <span class="fn">not</span> done:
+  next_agent, subtask = orchestrator.<span class="fn">delegate</span>()
+  result = agents[next_agent].<span class="fn">run</span>(subtask)
+  orchestrator.<span class="fn">update</span>(result)  <span class="cm">// 更新共享状态</span>`
+  },
+  {
+    id:'router', name:'Router', icon:'🔀', accent:'var(--rose)',
+    tagline:'智能路由，分发到最优处理器',
+    summary:'一个轻量级 Router 分析输入意图，将请求路由到最匹配的专业处理器。不是让一个万能 Agent 解决所有问题，而是「问对的人」。',
+    keyInsight:'Router 模式的哲学是<strong>「对的问题找对的专家」</strong>。用一个小而快的分类模型做路由，比让大模型处理所有事情成本低 10-50 倍，且准确率更高。',
+    flow:{
+      nodes:[
+        {id:'user',x:50,y:140,label:'User',sub:'任意请求',color:'var(--blue)',bg:'var(--blue-bg)',bc:'var(--blue-b)'},
+        {id:'router',x:230,y:140,label:'Router',sub:'意图识别',color:'var(--rose)',bg:'var(--rose-bg)',bc:'var(--rose-b)'},
+        {id:'code',x:430,y:30,label:'Code Agent',sub:'编程问题',color:'var(--cyan)',bg:'var(--cyan-bg)',bc:'var(--cyan-b)'},
+        {id:'search',x:430,y:120,label:'Search Agent',sub:'信息检索',color:'var(--amber)',bg:'var(--amber-bg)',bc:'var(--amber-b)'},
+        {id:'chat',x:430,y:210,label:'Chat Agent',sub:'闲聊对话',color:'var(--violet)',bg:'var(--violet-bg)',bc:'var(--violet-b)'},
+        {id:'done',x:610,y:140,label:'Response',sub:'返回结果',color:'var(--cyan)',bg:'var(--cyan-bg)',bc:'var(--cyan-b)'},
+      ],
+      edges:[
+        {from:'user',to:'router'},{from:'router',to:'code'},{from:'router',to:'search'},
+        {from:'router',to:'chat'},{from:'code',to:'done'},{from:'search',to:'done'},
+        {from:'chat',to:'done'},
+      ],
+      steps:[
+        {active:['user'],edges:[],msg:'用户发来请求：「帮我优化这段 SQL」'},
+        {active:['router'],edges:[0],msg:'Router 分析意图 → 分类为「编程问题」'},
+        {active:['code'],edges:[1],msg:'路由到 Code Agent（配备数据库和代码工具）'},
+        {active:['done'],edges:[4],msg:'Code Agent 完成分析，返回优化建议'},
+        {active:['user'],edges:[],msg:'用户新请求：「最近有什么 AI 新闻？」'},
+        {active:['router'],edges:[0],msg:'Router 分析意图 → 分类为「信息检索」'},
+        {active:['search'],edges:[2],msg:'路由到 Search Agent（配备搜索和摘要工具）'},
+        {active:['done'],edges:[5],msg:'✅ Search Agent 返回最新 AI 新闻摘要'},
+      ]
+    },
+    pros:['路由成本极低（可用小模型）','每个下游 Agent 专精特定领域','易于新增/替换处理器'],
+    cons:['路由错误会导致完全失败','需要清晰的意图分类体系','不适合需要跨领域协作的任务'],
+    useCases:['智能客服分流','企业知识助手','多功能 Chatbot','API 网关智能路由'],
+    pseudo:`intent = <span class="fn">Router</span>(user_input)  <span class="cm">// 轻量分类，可用小模型</span>
+agents = {
+  <span class="str">"code"</span>: CodeAgent,
+  <span class="str">"search"</span>: SearchAgent,
+  <span class="str">"chat"</span>: ChatAgent,
+  <span class="str">"escalate"</span>: HumanHandoff,
+}
+agent = agents[intent.category]
+<span class="kw">return</span> agent.<span class="fn">run</span>(user_input)  <span class="cm">// 直接分发，无循环</span>`
+  }
+];
+
+const DECISIONS = [
+  {
+    q:'你的任务路径是否可以提前规划？',
+    opts:[
+      {label:'是，步骤基本确定',weights:{react:0,plan:3,multi:1,router:0}},
+      {label:'否，需要边探索边调整',weights:{react:3,plan:0,multi:0,router:0}},
+      {label:'取决于输入类型',weights:{react:0,plan:0,multi:0,router:3}},
+    ]
+  },
+  {
+    q:'任务涉及多少种不同的技能/工具？',
+    opts:[
+      {label:'3-5 个工具，单领域',weights:{react:3,plan:2,multi:0,router:0}},
+      {label:'10+ 工具，跨领域',weights:{react:0,plan:1,multi:3,router:1}},
+      {label:'按请求类型各不相同',weights:{react:0,plan:0,multi:0,router:3}},
+    ]
+  },
+  {
+    q:'对延迟和成本的敏感度？',
+    opts:[
+      {label:'追求低延迟，成本敏感',weights:{react:0,plan:2,multi:0,router:3}},
+      {label:'质量优先，可以接受较高成本',weights:{react:2,plan:1,multi:3,router:0}},
+      {label:'均衡考虑',weights:{react:2,plan:2,multi:1,router:1}},
+    ]
+  }
+];
+
+// ═══════════════════════════════
+// STATE
+// ═══════════════════════════════
+let currentPattern = 'react';
+let animating = false;
+let animTimer = null;
+let currentStep = 0;
+let speed = 1;
+let decAnswers = {};
+
+// ═══════════════════════════════
+// RENDER
+// ═══════════════════════════════
+function renderPatNav() {
+  document.getElementById('patNav').innerHTML = PATTERNS.map(p => `
+    <div class="pat-btn ${p.id===currentPattern?'on':''}" style="--accent:${p.accent}" onclick="selectPattern('${p.id}')">
+      <span class="p-icon">${p.icon}</span>
+      <div class="p-name">${p.name}</div>
+      <div class="p-sub">${p.tagline}</div>
+    </div>
+  `).join('');
+}
+
+function selectPattern(id) {
+  stopAnim();
+  currentPattern = id;
+  currentStep = 0;
+  renderPatNav();
+  renderMain();
+}
+
+function renderMain() {
+  const p = PATTERNS.find(x=>x.id===currentPattern);
+  const f = p.flow;
+
+  const nodesHtml = f.nodes.map(n => `
+    <div class="node" id="n-${n.id}" style="left:${n.x}px;top:${n.y}px;--n-color:${n.color};background:${n.bg};border:1.5px solid ${n.bc};color:${n.color}">
+      ${n.label}
+      <div class="n-label">${n.sub}</div>
+    </div>
+  `).join('');
+
+  // SVG edges
+  const svgEdges = f.edges.map((e,i) => {
+    const from = f.nodes.find(n=>n.id===e.from);
+    const to = f.nodes.find(n=>n.id===e.to);
+    const fx=from.x+50, fy=from.y+20, tx=to.x+50, ty=to.y+20;
+    // curved path for loops
+    if (e.from === 'observe' && e.to === 'think' || e.from === 'reviewer' && e.to === 'coder' || e.from === 'check' && e.to === 'replan') {
+      const mx=(fx+tx)/2, my=Math.max(fy,ty)+50;
+      return `<g class="edge" id="e-${i}"><path d="M${fx},${fy} Q${mx},${my} ${tx},${ty}" /><circle class="arrow" cx="${tx}" cy="${ty}" r="3" /></g>`;
+    }
+    return `<g class="edge" id="e-${i}"><line x1="${fx}" y1="${fy}" x2="${tx}" y2="${ty}" /><circle class="arrow" cx="${tx}" cy="${ty}" r="3" /></g>`;
+  }).join('');
+
+  document.getElementById('mainArea').innerHTML = `
+    <div class="sec" style="animation:up .4s ease">
+      <h2>${p.icon} ${p.name} <span class="badge" style="background:color-mix(in srgb,${p.accent} 12%,var(--bg4));color:${p.accent}">${p.tagline}</span></h2>
+      <div class="sub">${p.summary}</div>
+
+      <div class="flow-canvas">
+        <div class="flow-controls">
+          <button class="flow-ctrl play" onclick="playAnim()" id="playBtn">▶ 播放</button>
+          <button class="flow-ctrl" onclick="stepAnim()">⏭ 单步</button>
+          <button class="flow-ctrl" onclick="resetAnim()">↺ 重置</button>
+          <div class="flow-speed">速度 <button class="flow-ctrl" onclick="setSpeed(0.5)" ${speed===0.5?'style="color:var(--cyan)"':''}>0.5x</button><button class="flow-ctrl" onclick="setSpeed(1)" ${speed===1?'style="color:var(--cyan)"':''}>1x</button><button class="flow-ctrl" onclick="setSpeed(2)" ${speed===2?'style="color:var(--cyan)"':''}>2x</button></div>
+        </div>
+        <div class="flow-stage">
+          <svg style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none">${svgEdges}</svg>
+          ${nodesHtml}
+        </div>
+        <div class="step-indicator">
+          <span class="step-num" id="stepNum">0/${f.steps.length}</span>
+          <span class="step-text" id="stepText">点击「播放」或「单步」开始动画</span>
+        </div>
+      </div>
+
+      <div style="padding:4px 0 8px;border-left:3px solid ${p.accent};padding-left:16px;margin-bottom:20px;font-size:14px;color:var(--dim);line-height:1.7">
+        ${p.keyInsight}
+      </div>
+    </div>
+
+    <div class="sec">
+      <h2>📊 优劣对比</h2>
+      <table class="cmp-table">
+        <thead><tr><th>✅ 优势</th><th>⚠️ 劣势</th></tr></thead>
+        <tbody>
+          ${p.pros.map((pro,i) => `<tr><td style="color:var(--cyan)">${pro}</td><td style="color:var(--amber)">${p.cons[i]||''}</td></tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="sec">
+      <h2>🎯 适用场景</h2>
+      <div class="use-cases">${p.useCases.map(u => `<span class="use-case">${u}</span>`).join('')}</div>
+    </div>
+
+    <div class="sec">
+      <h2>💻 伪代码</h2>
+      <div class="pseudo">${p.pseudo}</div>
+    </div>
+  `;
+
+  updateStepUI();
+}
+
+// ═══════════════════════════════
+// ANIMATION
+// ═══════════════════════════════
+function updateStepUI() {
+  const p = PATTERNS.find(x=>x.id===currentPattern);
+  const f = p.flow;
+
+  // Reset all nodes and edges
+  f.nodes.forEach(n => {
+    const el = document.getElementById('n-'+n.id);
+    if(el) el.classList.remove('active');
+  });
+  f.edges.forEach((_,i) => {
+    const el = document.getElementById('e-'+i);
+    if(el) el.classList.remove('active');
+  });
+
+  if (currentStep > 0 && currentStep <= f.steps.length) {
+    const step = f.steps[currentStep-1];
+    step.active.forEach(nid => {
+      const el = document.getElementById('n-'+nid);
+      if(el) el.classList.add('active');
+    });
+    step.edges.forEach(eid => {
+      const el = document.getElementById('e-'+eid);
+      if(el) el.classList.add('active');
+    });
+    document.getElementById('stepText').textContent = step.msg;
+  } else {
+    document.getElementById('stepText').textContent = '点击「播放」或「单步」开始动画';
+  }
+  document.getElementById('stepNum').textContent = `${currentStep}/${f.steps.length}`;
+}
+
+function stepAnim() {
+  const p = PATTERNS.find(x=>x.id===currentPattern);
+  if (currentStep >= p.flow.steps.length) { currentStep = 0; }
+  currentStep++;
+  updateStepUI();
+}
+
+function playAnim() {
+  if (animating) { stopAnim(); return; }
+  const p = PATTERNS.find(x=>x.id===currentPattern);
+  if (currentStep >= p.flow.steps.length) currentStep = 0;
+  animating = true;
+  document.getElementById('playBtn').textContent = '⏸ 暂停';
+
+  function tick() {
+    if (!animating) return;
+    currentStep++;
+    updateStepUI();
+    if (currentStep >= p.flow.steps.length) {
+      stopAnim();
+      return;
+    }
+    animTimer = setTimeout(tick, 1200 / speed);
+  }
+  tick();
+}
+
+function stopAnim() {
+  animating = false;
+  clearTimeout(animTimer);
+  const btn = document.getElementById('playBtn');
+  if(btn) btn.textContent = '▶ 播放';
+}
+
+function resetAnim() {
+  stopAnim();
+  currentStep = 0;
+  updateStepUI();
+}
+
+function setSpeed(s) {
+  speed = s;
+  renderMain();
+  if (animating) { stopAnim(); playAnim(); }
+}
+
+// ═══════════════════════════════
+// DECISION HELPER
+// ═══════════════════════════════
+function renderDecisions() {
+  document.getElementById('decFlow').innerHTML = DECISIONS.map((d,qi) => `
+    <div class="dec-q">
+      <div class="q-text">${qi+1}. ${d.q}</div>
+      <div class="q-opts">
+        ${d.opts.map((o,oi) => `
+          <button class="q-opt ${decAnswers[qi]===oi?'chosen':''}" onclick="chooseDec(${qi},${oi},this)">${o.label}</button>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+function chooseDec(qi, oi, btn) {
+  const siblings = btn.parentElement.querySelectorAll('.q-opt');
+  siblings.forEach(b => b.classList.remove('chosen'));
+  btn.classList.add('chosen');
+  decAnswers[qi] = oi;
+
+  if (Object.keys(decAnswers).length === DECISIONS.length) {
+    computeDecResult();
+  }
+}
+
+function computeDecResult() {
+  const scores = {react:0,plan:0,multi:0,router:0};
+  Object.entries(decAnswers).forEach(([qi,oi]) => {
+    const w = DECISIONS[qi].opts[oi].weights;
+    Object.entries(w).forEach(([k,v]) => scores[k]+=v);
+  });
+
+  const sorted = Object.entries(scores).sort((a,b)=>b[1]-a[1]);
+  const top = PATTERNS.find(p=>p.id===sorted[0][0]);
+  const runner = PATTERNS.find(p=>p.id===sorted[1][0]);
+
+  const whyMap = {
+    react:'你的任务需要动态探索和逐步推理，ReAct 的灵活性最适合。',
+    plan:'你的任务步骤明确，Plan-and-Execute 可以减少无用调用，效率最高。',
+    multi:'你的任务跨领域且复杂，Multi-Agent 协作的职责分离是最佳选择。',
+    router:'你的请求类型多样，Router 模式可以用最低成本实现精准分发。'
+  };
+
+  const box = document.getElementById('decResult');
+  box.className = 'dec-result show';
+  box.innerHTML = `
+    <div class="rec" style="color:${top.accent}">${top.icon} 推荐：${top.name}</div>
+    <div class="rec-why">${whyMap[top.id]}</div>
+    <div style="margin-top:12px;font-size:13px;color:var(--muted)">
+      备选方案：${runner.icon} ${runner.name} — 适合作为补充或在特定子任务中使用
+    </div>
+  `;
+  box.scrollIntoView({behavior:'smooth',block:'center'});
+}
+
+// ═══════════════════════════════
+// INIT
+// ═══════════════════════════════
+renderPatNav();
+renderMain();
+renderDecisions();
+</script>
+</body>
+</html>

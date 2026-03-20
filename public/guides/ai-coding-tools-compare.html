@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Coding 工具对比指南 — 交互式选型矩阵</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@300;400;500;700;900&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700&display=swap');
+
+:root {
+  --bg: #05060a;
+  --bg-card: #0c0e14;
+  --bg-card-hover: #111420;
+  --bg-surface: #0f1118;
+  --bg-elevated: #161925;
+  --text: #e4e2ee;
+  --text-dim: #8b89a0;
+  --text-muted: #55536a;
+  --border: #1e2030;
+  --border-hover: #2e3050;
+  --cyan: #22d3ee;
+  --cyan-bg: rgba(34,211,238,0.08);
+  --cyan-border: rgba(34,211,238,0.25);
+  --green: #34d399;
+  --green-bg: rgba(52,211,153,0.08);
+  --green-border: rgba(52,211,153,0.25);
+  --amber: #fbbf24;
+  --amber-bg: rgba(251,191,36,0.08);
+  --amber-border: rgba(251,191,36,0.25);
+  --rose: #fb7185;
+  --rose-bg: rgba(251,113,133,0.08);
+  --rose-border: rgba(251,113,133,0.25);
+  --violet: #a78bfa;
+  --violet-bg: rgba(167,139,250,0.08);
+  --violet-border: rgba(167,139,250,0.25);
+  --blue: #60a5fa;
+  --blue-bg: rgba(96,165,250,0.08);
+  --blue-border: rgba(96,165,250,0.25);
+  --orange: #fb923c;
+  --orange-bg: rgba(251,146,60,0.08);
+  --r: 10px;
+  --mono: 'IBM Plex Mono', monospace;
+  --sans: 'Noto Sans SC', 'DM Sans', sans-serif;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+body::before {
+  content:'';
+  position:fixed; inset:0;
+  background:
+    radial-gradient(ellipse at 15% 10%, rgba(34,211,238,0.05) 0%, transparent 45%),
+    radial-gradient(ellipse at 85% 90%, rgba(167,139,250,0.05) 0%, transparent 45%);
+  pointer-events:none; z-index:0;
+}
+
+.wrap { max-width:1080px; margin:0 auto; padding:0 20px; position:relative; z-index:1; }
+
+/* ── Hero ── */
+.hero { padding:72px 0 48px; text-align:center; }
+
+.hero .pill {
+  display:inline-flex; align-items:center; gap:7px;
+  padding:5px 15px; border-radius:100px;
+  background:var(--cyan-bg); border:1px solid var(--cyan-border);
+  font-size:12px; font-family:var(--mono); color:var(--cyan);
+  margin-bottom:20px; letter-spacing:0.5px;
+}
+
+.hero .pill i { width:5px;height:5px;border-radius:50%;background:var(--cyan);animation:blink 2s infinite; }
+@keyframes blink { 0%,100%{opacity:1}50%{opacity:.4} }
+
+.hero h1 {
+  font-size:clamp(32px,5.5vw,56px); font-weight:900; line-height:1.15; letter-spacing:-0.5px; margin-bottom:14px;
+}
+
+.hero h1 em {
+  font-style:normal;
+  background:linear-gradient(135deg,var(--cyan),var(--violet));
+  -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+}
+
+.hero p { color:var(--text-dim); font-size:17px; max-width:640px; margin:0 auto 36px; font-weight:300; }
+
+/* ── Tabs / Mode Switch ── */
+.mode-tabs {
+  display:flex; justify-content:center; gap:6px;
+  background:var(--bg-surface); border:1px solid var(--border); border-radius:100px;
+  padding:4px; margin:0 auto 40px; width:fit-content;
+}
+
+.mode-tab {
+  padding:8px 20px; border-radius:100px; border:none; background:none;
+  color:var(--text-dim); font-size:14px; font-weight:500; cursor:pointer;
+  font-family:var(--sans); transition:all .3s;
+}
+
+.mode-tab:hover { color:var(--text); }
+.mode-tab.active { background:var(--cyan); color:var(--bg); }
+
+/* ── Section headers ── */
+.section-head {
+  margin-bottom:28px;
+  padding-bottom:16px;
+  border-bottom:1px solid var(--border);
+}
+
+.section-head .tag {
+  font-family:var(--mono); font-size:11px; letter-spacing:1px; text-transform:uppercase;
+  color:var(--cyan); margin-bottom:6px;
+}
+
+.section-head h2 { font-size:24px; font-weight:700; }
+.section-head p { color:var(--text-dim); font-size:14px; margin-top:4px; }
+
+/* ── View: Matrix ── */
+.view { display:none; }
+.view.active { display:block; animation:fadeUp .4s ease; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)} }
+
+/* ── Tool Cards (Overview) ── */
+.tool-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px; margin-bottom:48px; }
+
+.tool-card {
+  background:var(--bg-card); border:1.5px solid var(--border); border-radius:var(--r);
+  padding:28px; transition:all .3s; position:relative; overflow:hidden;
+}
+.tool-card::after {
+  content:''; position:absolute; top:0; left:0; right:0; height:3px;
+  background:var(--tool-accent,var(--border)); opacity:0; transition:opacity .3s;
+}
+.tool-card:hover { border-color:var(--border-hover); transform:translateY(-2px); box-shadow:0 8px 32px rgba(0,0,0,.4); }
+.tool-card:hover::after { opacity:1; }
+
+.tool-card .head { display:flex; align-items:center; gap:14px; margin-bottom:14px; }
+.tool-card .icon { font-size:28px; }
+.tool-card .head h3 { font-size:18px; font-weight:700; }
+.tool-card .head .type {
+  font-family:var(--mono); font-size:11px; padding:3px 8px; border-radius:4px;
+  background:var(--tool-accent-bg,var(--bg-elevated)); color:var(--tool-accent,var(--text-dim));
+}
+.tool-card .tagline { color:var(--text-dim); font-size:13px; margin-bottom:16px; line-height:1.6; }
+
+.tool-card .meta-row { display:flex; gap:16px; flex-wrap:wrap; }
+.tool-card .meta {
+  font-size:12px; color:var(--text-muted); display:flex; align-items:center; gap:4px;
+}
+.tool-card .meta span { color:var(--text); font-weight:600; font-family:var(--mono); }
+
+/* ── Comparison Matrix ── */
+.matrix-wrap { overflow-x:auto; margin-bottom:48px; border:1px solid var(--border); border-radius:var(--r); }
+
+.matrix {
+  width:100%; border-collapse:collapse; font-size:13px; min-width:800px;
+}
+
+.matrix th, .matrix td {
+  padding:14px 16px; text-align:left; border-bottom:1px solid var(--border);
+}
+
+.matrix thead th {
+  background:var(--bg-elevated); position:sticky; top:0; z-index:2;
+  font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;
+  color:var(--text-dim); font-family:var(--mono);
+}
+
+.matrix thead th:first-child { border-right:1px solid var(--border); min-width:140px; }
+
+.matrix tbody td:first-child {
+  font-weight:600; color:var(--text); border-right:1px solid var(--border);
+  background:var(--bg-surface); position:sticky; left:0; z-index:1;
+}
+
+.matrix tbody tr:hover td { background:var(--bg-card-hover); }
+.matrix tbody tr:hover td:first-child { background:var(--bg-elevated); }
+
+.matrix .score {
+  display:inline-flex; align-items:center; gap:3px;
+}
+
+.matrix .bar {
+  display:inline-block; height:8px; border-radius:4px; min-width:4px;
+  transition: width .6s ease;
+}
+
+.bar.s5 { width:80px; background:var(--green); }
+.bar.s4 { width:64px; background:var(--cyan); }
+.bar.s3 { width:48px; background:var(--amber); }
+.bar.s2 { width:32px; background:var(--orange); }
+.bar.s1 { width:16px; background:var(--rose); }
+
+.matrix .label-score { font-family:var(--mono); font-size:11px; color:var(--text-dim); }
+
+/* ── Scenario Filter ── */
+.scenario-section { margin-bottom:48px; }
+
+.scenario-pills {
+  display:flex; gap:8px; flex-wrap:wrap; margin-bottom:24px;
+}
+
+.scenario-pill {
+  padding:7px 16px; border-radius:100px; border:1px solid var(--border);
+  background:none; color:var(--text-dim); font-size:13px; cursor:pointer;
+  font-family:var(--sans); transition:all .3s;
+}
+.scenario-pill:hover { border-color:var(--border-hover); color:var(--text); }
+.scenario-pill.active { background:var(--violet-bg); border-color:var(--violet-border); color:var(--violet); }
+
+.rec-cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:14px; }
+
+.rec-card {
+  background:var(--bg-card); border:1.5px solid var(--border); border-radius:var(--r);
+  padding:20px; display:flex; gap:14px; align-items:flex-start;
+}
+
+.rec-card .rank {
+  width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  font-family:var(--mono); font-weight:700; font-size:15px; flex-shrink:0;
+}
+.rec-card .rank.gold { background:var(--amber-bg); color:var(--amber); border:1.5px solid var(--amber-border); }
+.rec-card .rank.silver { background:var(--blue-bg); color:var(--blue); border:1.5px solid var(--blue-border); }
+.rec-card .rank.bronze { background:var(--bg-elevated); color:var(--text-dim); border:1.5px solid var(--border); }
+
+.rec-card .rec-info h4 { font-size:15px; font-weight:600; margin-bottom:4px; }
+.rec-card .rec-info p { font-size:12px; color:var(--text-dim); line-height:1.6; }
+.rec-card .rec-info .reason {
+  margin-top:8px; font-size:11px; padding:4px 10px; border-radius:4px;
+  background:var(--bg-elevated); color:var(--text-muted); font-family:var(--mono);
+  display:inline-block;
+}
+
+/* ── Personal Recommender ── */
+.quiz-section { margin-bottom:48px; }
+
+.quiz-card {
+  background:var(--bg-card); border:1.5px solid var(--border); border-radius:var(--r);
+  padding:32px; margin-bottom:16px;
+}
+
+.quiz-card h3 { font-size:16px; font-weight:600; margin-bottom:16px; display:flex; align-items:center; gap:10px; }
+.quiz-card h3 .qnum {
+  font-family:var(--mono); font-size:12px; color:var(--cyan);
+  padding:2px 8px; border-radius:4px; background:var(--cyan-bg);
+}
+
+.quiz-options { display:flex; flex-wrap:wrap; gap:10px; }
+
+.quiz-opt {
+  padding:10px 18px; border-radius:var(--r); border:1.5px solid var(--border);
+  background:none; color:var(--text-dim); font-size:13px; cursor:pointer;
+  font-family:var(--sans); transition:all .3s; text-align:left;
+}
+.quiz-opt:hover { border-color:var(--border-hover); color:var(--text); }
+.quiz-opt.chosen { background:var(--cyan-bg); border-color:var(--cyan-border); color:var(--cyan); }
+
+/* Result */
+.result-box {
+  background:var(--bg-card); border:2px solid var(--green-border); border-radius:var(--r);
+  padding:32px; display:none; animation:fadeUp .5s ease;
+}
+
+.result-box.show { display:block; }
+
+.result-box .verdict {
+  font-size:22px; font-weight:700; margin-bottom:8px;
+  display:flex; align-items:center; gap:10px;
+}
+
+.result-box .explanation { color:var(--text-dim); font-size:14px; line-height:1.7; margin-bottom:20px; }
+
+.result-box .combo {
+  display:flex; gap:12px; flex-wrap:wrap;
+}
+
+.combo-chip {
+  display:flex; align-items:center; gap:8px;
+  padding:10px 18px; border-radius:var(--r);
+  background:var(--bg-elevated); border:1px solid var(--border);
+  font-size:14px; font-weight:600;
+}
+
+.combo-chip .role {
+  font-family:var(--mono); font-size:10px; padding:2px 6px; border-radius:3px;
+  text-transform:uppercase; letter-spacing:0.5px;
+}
+
+/* ── Pricing Table ── */
+.price-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:14px; margin-bottom:48px; }
+
+.price-card {
+  background:var(--bg-card); border:1.5px solid var(--border); border-radius:var(--r);
+  padding:24px; text-align:center; transition:all .3s;
+}
+.price-card:hover { border-color:var(--border-hover); }
+.price-card .p-icon { font-size:28px; margin-bottom:8px; }
+.price-card .p-name { font-weight:700; font-size:16px; margin-bottom:4px; }
+.price-card .p-price { font-family:var(--mono); font-size:24px; font-weight:700; color:var(--green); }
+.price-card .p-price small { font-size:13px; color:var(--text-dim); font-weight:400; }
+.price-card .p-note { font-size:12px; color:var(--text-muted); margin-top:8px; line-height:1.5; }
+.price-card .p-tier { font-family:var(--mono); font-size:11px; color:var(--text-muted); margin-top:6px; }
+
+/* ── Footer ── */
+.footer {
+  text-align:center; padding:40px 0 60px; color:var(--text-muted); font-size:12px;
+  border-top:1px solid var(--border); margin-top:24px;
+}
+
+/* ── Responsive ── */
+@media(max-width:640px) {
+  .hero { padding:48px 0 32px; }
+  .tool-grid, .rec-cards, .price-grid { grid-template-columns:1fr; }
+  .mode-tabs { flex-wrap:wrap; border-radius:var(--r); }
+  .mode-tab { flex:1; min-width:100px; text-align:center; font-size:13px; padding:8px 12px; }
+  .quiz-options { flex-direction:column; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- Hero -->
+<div class="hero">
+  <div class="pill"><i></i> SkillNav 交互指南</div>
+  <h1>AI Coding <em>工具对比</em><br>交互式选型指南</h1>
+  <p>Cursor、Claude Code、GitHub Copilot、Windsurf、Cline — 按场景打分，获取个性化推荐。数据更新至 2026 年 3 月。</p>
+</div>
+
+<!-- Mode Tabs -->
+<div class="mode-tabs" id="modeTabs">
+  <button class="mode-tab active" onclick="switchView('overview')">工具总览</button>
+  <button class="mode-tab" onclick="switchView('matrix')">对比矩阵</button>
+  <button class="mode-tab" onclick="switchView('scenario')">场景推荐</button>
+  <button class="mode-tab" onclick="switchView('quiz')">个人选型</button>
+  <button class="mode-tab" onclick="switchView('pricing')">价格对比</button>
+</div>
+
+<!-- ═══════ VIEW: Overview ═══════ -->
+<div class="view active" id="view-overview">
+  <div class="section-head">
+    <div class="tag">Overview</div>
+    <h2>6 款主流 AI Coding 工具一览</h2>
+    <p>2026 年 AI 编程工具的三大范式：IDE 内置、终端 Agent、编辑器插件</p>
+  </div>
+
+  <div class="tool-grid" id="toolGrid"></div>
+</div>
+
+<!-- ═══════ VIEW: Matrix ═══════ -->
+<div class="view" id="view-matrix">
+  <div class="section-head">
+    <div class="tag">Comparison Matrix</div>
+    <h2>多维度对比矩阵</h2>
+    <p>7 个关键维度的量化评分，帮你看清每个工具的长板和短板</p>
+  </div>
+
+  <div class="matrix-wrap">
+    <table class="matrix" id="matrixTable"></table>
+  </div>
+</div>
+
+<!-- ═══════ VIEW: Scenario ═══════ -->
+<div class="view" id="view-scenario">
+  <div class="section-head">
+    <div class="tag">Scenario Recommendations</div>
+    <h2>按场景选工具</h2>
+    <p>不同使用场景下，哪些工具最适合？点击场景查看推荐排名</p>
+  </div>
+
+  <div class="scenario-section">
+    <div class="scenario-pills" id="scenarioPills"></div>
+    <div class="rec-cards" id="recCards"></div>
+  </div>
+</div>
+
+<!-- ═══════ VIEW: Quiz ═══════ -->
+<div class="view" id="view-quiz">
+  <div class="section-head">
+    <div class="tag">Personal Recommendation</div>
+    <h2>个性化选型测试</h2>
+    <p>回答 5 个问题，生成专属工具组合推荐</p>
+  </div>
+
+  <div class="quiz-section" id="quizSection"></div>
+  <div class="result-box" id="resultBox"></div>
+</div>
+
+<!-- ═══════ VIEW: Pricing ═══════ -->
+<div class="view" id="view-pricing">
+  <div class="section-head">
+    <div class="tag">Pricing Comparison</div>
+    <h2>价格与性价比</h2>
+    <p>月费、计费模式和实际成本对比（2026 年 3 月数据）</p>
+  </div>
+
+  <div class="price-grid" id="priceGrid"></div>
+</div>
+
+<div class="footer">
+  AI Coding 工具对比指南 · SkillNav · 数据来源：官方文档 & 开发者社区评测 · 2026.03
+</div>
+
+</div><!-- .wrap -->
+
+<script>
+// ═══════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════
+
+const TOOLS = [
+  {
+    id:'cursor', name:'Cursor', icon:'⚡', type:'AI IDE',
+    accent:'var(--cyan)', accentBg:'var(--cyan-bg)',
+    tagline:'VS Code 分支，AI 深度集成到编辑器每一层。Tab 补全 + Composer 多文件编辑 + Agent 模式，支持切换多种模型。',
+    price:'$20/月 Pro', priceNum:20, priceFull:'$20/月 Pro · $40/月 Pro+（更多 credits）· $200/月 Ultra',
+    priceNote:'credit 制，重度 Agent 使用可能超支\nPro+ 适合日常高强度开发',
+    meta:{ users:'开发者最爱', type:'IDE (VS Code fork)', mcp:'✅ 支持' },
+    scores:{ complete:5, refactor:4, debug:4, agent:4, context:5, ease:4, ecosystem:5 },
+    scenarios:{
+      autocomplete:'Tab 补全预测下一步编辑（非下一行），跨函数智能联动',
+      refactor:'Composer 模式可视化多文件重构，直观但需更多手动介入',
+      debug:'内置 Chat + 终端集成，调试体验流畅',
+      agent:'Agent 模式 + Background Agents，但自主性不及 Claude Code',
+      newproject:'Composer 脚手架生成 + 多模型切换，上手快',
+      review:'内联 Diff + Chat 对话式 review，集成度高'
+    }
+  },
+  {
+    id:'claude-code', name:'Claude Code', icon:'🔧', type:'Terminal Agent',
+    accent:'var(--violet)', accentBg:'var(--violet-bg)',
+    tagline:'Anthropic 出品的命令行 Agent。给定任务后自主读写文件、执行命令、提交 Git。2025 年 5 月发布，8 个月内成为开发者最爱。',
+    price:'$20/月 Pro', priceNum:20, priceFull:'$20/月 Pro · $100/月 Max · $200/月 Max（更高额度）· API 按量付费',
+    priceNote:'Pro 有 5h 滚动窗口限制\nMax 适合全天编码，API 模式最灵活',
+    meta:{ users:'46% 最爱评级', type:'CLI Agent', mcp:'✅ 支持' },
+    scores:{ complete:2, refactor:5, debug:5, agent:5, context:5, ease:3, ecosystem:3 },
+    scenarios:{
+      autocomplete:'❌ 无 Tab 补全 — 这是最大短板，不在编辑器内运行',
+      refactor:'王牌场景：描述一次，跨全仓库自主执行重构 + Git commit',
+      debug:'终端原生调试，可自主运行测试、分析报错、迭代修复',
+      agent:'最强自主性：规划 → 执行 → 测试 → 提交，完整闭环',
+      newproject:'可从零搭建项目，但需要熟悉 CLI 工作流',
+      review:'可分析 PR diff，生成 review 意见，但无可视化 UI'
+    }
+  },
+  {
+    id:'copilot', name:'GitHub Copilot', icon:'🤖', type:'IDE 插件',
+    accent:'var(--green)', accentBg:'var(--green-bg)',
+    tagline:'最广泛使用的 AI 编程助手，1500万+ 开发者。深度集成 GitHub 生态，VS Code / JetBrains / Neovim 全支持。2026 年新增 Agent Mode 和 MCP。',
+    price:'$10/月 Pro', priceNum:10, priceFull:'$10/月 Pro · $39/月 Pro+（Agent 模式）· $19/用户/月 Business',
+    priceNote:'最低价入门，无 credit 焦虑\n企业场景 GitHub 生态无缝衔接',
+    meta:{ users:'1500 万+', type:'IDE Extension', mcp:'✅ 支持' },
+    scores:{ complete:4, refactor:3, debug:3, agent:3, context:3, ease:5, ecosystem:5 },
+    scenarios:{
+      autocomplete:'行内补全体验流畅，模式匹配强，是最早让补全「有用」的工具',
+      refactor:'Agent Mode 可多文件编辑，但自主性和深度不及 Cursor/Claude Code',
+      debug:'Chat 可分析错误，但调试链路不如 IDE 原生集成的工具',
+      agent:'2026 年新增 Agent Mode + MCP，正在追赶但仍落后',
+      newproject:'Workspace 功能可从 Issue 到 PR 全流程，GitHub 原生',
+      review:'PR review 集成最成熟，与 GitHub Actions 联动'
+    }
+  },
+  {
+    id:'windsurf', name:'Windsurf', icon:'🏄', type:'AI IDE',
+    accent:'var(--amber)', accentBg:'var(--amber-bg)',
+    tagline:'前身 Codeium，VS Code 分支重建。Cascade 引擎支持自主多文件编辑和命令执行。Memories 功能跨会话记忆代码库上下文。',
+    price:'$15/月 Pro', priceNum:15, priceFull:'$15/月 Pro（500 credits）· $30/用户/月 Teams · $60/用户/月 Enterprise',
+    priceNote:'性价比最高的付费 IDE\n免费 25 credits/月太少，Pro 起步',
+    meta:{ users:'百万+', type:'IDE (VS Code fork)', mcp:'✅ 支持' },
+    scores:{ complete:4, refactor:4, debug:3, agent:4, context:4, ease:5, ecosystem:4 },
+    scenarios:{
+      autocomplete:'补全质量与 Cursor 相当（底层同模型），UI 更简洁',
+      refactor:'Cascade Agent 可跨文件重构，体验接近 Cursor Composer',
+      debug:'自动诊断错误 + 日志深挖，验证导向',
+      agent:'Cascade 是最早的 IDE Agent，支持并行多 Agent',
+      newproject:'开箱体验最友好，默认 Agent 模式，拖拽图片建 UI',
+      review:'基础 review 能力，不如 Copilot 的 GitHub 集成'
+    }
+  },
+  {
+    id:'cline', name:'Cline', icon:'🔌', type:'VS Code 插件',
+    accent:'var(--rose)', accentBg:'var(--rose-bg)',
+    tagline:'开源 VS Code Agent 插件，500万+ 安装量。BYOM（自带模型）零加价，Plan & Act 双模式。可自主浏览器检查、命令执行。',
+    price:'免费 + API', priceNum:0, priceFull:'免费开源 · API 按量付费（$5-40/天取决于模型）',
+    priceNote:'工具免费，成本全在 API\n成本透明，但需自管 key 和预算',
+    meta:{ users:'500 万安装', type:'VS Code Extension', mcp:'✅ 支持' },
+    scores:{ complete:3, refactor:4, debug:4, agent:4, context:3, ease:3, ecosystem:4 },
+    scenarios:{
+      autocomplete:'依赖底层模型的补全能力，非主打方向',
+      refactor:'Plan & Act 模式，可自主多步重构，每步需确认',
+      debug:'可自动运行命令验证、打开浏览器检查渲染',
+      agent:'真正的 Agent 行为：规划 → 执行 → 自检 → 修复',
+      newproject:'可搭建项目但需要更多指导，适合进阶用户',
+      review:'可分析代码但无原生 PR 集成'
+    }
+  },
+  {
+    id:'aider', name:'Aider', icon:'📟', type:'Terminal Agent',
+    accent:'var(--blue)', accentBg:'var(--blue-bg)',
+    tagline:'开源命令行 AI 编程工具，Git 原生集成。每次修改自动 commit，支持 70+ 模型。轻量、透明、社区驱动。',
+    price:'免费 + API', priceNum:0, priceFull:'免费开源 · API 按量付费',
+    priceNote:'完全免费 + 自选模型\n最适合追求透明度的终端用户',
+    meta:{ users:'开源热门', type:'CLI (Python)', mcp:'❌ 不支持' },
+    scores:{ complete:2, refactor:4, debug:3, agent:3, context:3, ease:2, ecosystem:3 },
+    scenarios:{
+      autocomplete:'❌ 无实时补全，纯对话式交互',
+      refactor:'Git-native 重构，每步自动 commit，回滚方便',
+      debug:'可分析错误但自主性不如 Claude Code',
+      agent:'支持多步操作但不如 Claude Code / Cline 成熟',
+      newproject:'适合增量开发，从零创建需较多指导',
+      review:'基于 Git diff 的分析，适合终端工作流'
+    }
+  }
+];
+
+const DIMENSIONS = [
+  { key:'complete', label:'代码补全', desc:'行内 Tab 补全、智能预测下一步编辑' },
+  { key:'refactor', label:'重构能力', desc:'多文件重构、跨模块修改、批量重命名' },
+  { key:'debug', label:'调试辅助', desc:'错误分析、日志解读、自动修复建议' },
+  { key:'agent', label:'Agent 自主性', desc:'自主规划 → 执行 → 验证的闭环能力' },
+  { key:'context', label:'上下文理解', desc:'全仓库索引、大 codebase 理解深度' },
+  { key:'ease', label:'易用性', desc:'上手难度、学习曲线、UI/UX 体验' },
+  { key:'ecosystem', label:'生态集成', desc:'插件市场、MCP、Git/CI 集成、IDE 兼容性' },
+];
+
+const SCENARIOS = [
+  {
+    id:'autocomplete', label:'💡 代码补全', emoji:'💡',
+    desc:'写代码时的实时补全和智能建议',
+    ranking:['cursor','windsurf','copilot','cline','claude-code','aider'],
+    reasons:{
+      cursor:'Tab 补全预测「下一步编辑」而非下一行，跨函数联动',
+      windsurf:'补全体验接近 Cursor，UI 更干净',
+      copilot:'行内补全的开创者，模式匹配稳定可靠',
+      cline:'非主打，依赖底层模型',
+      'claude-code':'无实时补全，不在编辑器内',
+      aider:'纯终端对话式，无补全'
+    }
+  },
+  {
+    id:'refactor', label:'🔄 代码重构', emoji:'🔄',
+    desc:'跨文件重构、API 迁移、数据模型变更',
+    ranking:['claude-code','cursor','cline','aider','windsurf','copilot'],
+    reasons:{
+      'claude-code':'描述目标即可自主跨仓库执行，最强重构能力',
+      cursor:'Composer 可视化多文件重构，直观高效',
+      cline:'Plan & Act 模式逐步重构，需确认但可靠',
+      aider:'Git 原生，每步自动 commit，回滚友好',
+      windsurf:'Cascade 可重构但复杂场景不如 Cursor',
+      copilot:'Agent Mode 在追赶，深度不够'
+    }
+  },
+  {
+    id:'debug', label:'🐛 调试排错', emoji:'🐛',
+    desc:'分析报错、定位根因、自动修复',
+    ranking:['claude-code','cursor','cline','windsurf','copilot','aider'],
+    reasons:{
+      'claude-code':'可自主运行测试、分析堆栈、迭代修复，最强调试链',
+      cursor:'IDE 内 Chat + 终端集成，调试体验连贯',
+      cline:'可运行命令验证 + 浏览器检查',
+      windsurf:'深度日志分析，验证导向型调试',
+      copilot:'Chat 可分析错误，但链路不够深',
+      aider:'终端分析能力有限'
+    }
+  },
+  {
+    id:'agent', label:'🤖 Agent 模式', emoji:'🤖',
+    desc:'自主规划、执行、测试的完整 AI Agent 能力',
+    ranking:['claude-code','cline','windsurf','cursor','copilot','aider'],
+    reasons:{
+      'claude-code':'最纯粹的 Agent：规划→执行→测试→提交全自主',
+      cline:'真正的 Agent 行为，每步可审批，平衡自主与可控',
+      windsurf:'Cascade 最早的 IDE Agent，支持多 Agent 并行',
+      cursor:'Agent Mode + Background Agents，快速追赶中',
+      copilot:'2026 新增 Agent Mode，功能在完善中',
+      aider:'多步操作但成熟度不如专业 Agent'
+    }
+  },
+  {
+    id:'newproject', label:'🚀 新项目搭建', emoji:'🚀',
+    desc:'从零开始创建项目、脚手架搭建',
+    ranking:['cursor','windsurf','claude-code','copilot','cline','aider'],
+    reasons:{
+      cursor:'Composer 快速脚手架 + 多模型切换，上手最快',
+      windsurf:'默认 Agent 模式，拖图片即可建 UI',
+      'claude-code':'可从零搭建但需熟悉 CLI',
+      copilot:'Workspace 从 Issue 到 PR 全流程',
+      cline:'可搭建但需更多指导',
+      aider:'增量开发为主，从零创建需较多指导'
+    }
+  },
+  {
+    id:'review', label:'👀 Code Review', emoji:'👀',
+    desc:'代码审查、PR review、质量把控',
+    ranking:['copilot','cursor','claude-code','cline','windsurf','aider'],
+    reasons:{
+      copilot:'PR review + GitHub Actions 集成最成熟',
+      cursor:'内联 Diff + Chat 对话式 review',
+      'claude-code':'可分析 diff 生成意见，无 GUI',
+      cline:'可分析代码但无 PR 集成',
+      windsurf:'基础 review，集成度一般',
+      aider:'基于 Git diff 的终端分析'
+    }
+  }
+];
+
+const QUIZ = [
+  {
+    q:'你的主要工作环境是？',
+    opts:[
+      { label:'VS Code / IDE', weights:{ cursor:3, windsurf:3, copilot:2, cline:2, aider:0, 'claude-code':0 }},
+      { label:'终端 / CLI', weights:{ cursor:0, windsurf:0, copilot:0, cline:0, aider:3, 'claude-code':3 }},
+      { label:'两者都用', weights:{ cursor:2, windsurf:1, copilot:1, cline:1, aider:1, 'claude-code':2 }},
+    ]
+  },
+  {
+    q:'你最看重哪种能力？',
+    opts:[
+      { label:'写代码时的实时补全', weights:{ cursor:3, windsurf:2, copilot:2, cline:0, aider:0, 'claude-code':0 }},
+      { label:'大规模重构 / 跨文件修改', weights:{ cursor:1, windsurf:1, copilot:0, cline:2, aider:1, 'claude-code':3 }},
+      { label:'自主完成整个任务', weights:{ cursor:1, windsurf:2, copilot:0, cline:2, aider:1, 'claude-code':3 }},
+      { label:'学习曲线低，开箱即用', weights:{ cursor:1, windsurf:2, copilot:3, cline:0, aider:0, 'claude-code':0 }},
+    ]
+  },
+  {
+    q:'你的月度预算是？',
+    opts:[
+      { label:'免费 / 只付 API', weights:{ cursor:0, windsurf:0, copilot:0, cline:3, aider:3, 'claude-code':0 }},
+      { label:'$10-20/月', weights:{ cursor:2, windsurf:3, copilot:3, cline:1, aider:1, 'claude-code':2 }},
+      { label:'$40+/月 无上限', weights:{ cursor:2, windsurf:1, copilot:1, cline:1, aider:0, 'claude-code':3 }},
+    ]
+  },
+  {
+    q:'你的代码库规模？',
+    opts:[
+      { label:'小型项目 / Side Project', weights:{ cursor:1, windsurf:2, copilot:2, cline:1, aider:2, 'claude-code':1 }},
+      { label:'中型（10K-100K 行）', weights:{ cursor:3, windsurf:2, copilot:1, cline:2, aider:1, 'claude-code':2 }},
+      { label:'大型（100K+ 行）', weights:{ cursor:2, windsurf:1, copilot:0, cline:1, aider:0, 'claude-code':3 }},
+    ]
+  },
+  {
+    q:'团队还是个人？',
+    opts:[
+      { label:'个人开发者', weights:{ cursor:2, windsurf:2, copilot:1, cline:2, aider:2, 'claude-code':2 }},
+      { label:'小团队 (2-10人)', weights:{ cursor:2, windsurf:2, copilot:2, cline:1, aider:0, 'claude-code':1 }},
+      { label:'企业团队 (10+人)', weights:{ cursor:1, windsurf:1, copilot:3, cline:0, aider:0, 'claude-code':1 }},
+    ]
+  }
+];
+
+
+// ═══════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════
+
+function switchView(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-'+id).classList.add('active');
+  document.querySelectorAll('.mode-tab').forEach((t,i) => {
+    t.classList.toggle('active', t === event.target);
+  });
+}
+
+// — Overview —
+function renderOverview() {
+  const grid = document.getElementById('toolGrid');
+  grid.innerHTML = TOOLS.map(t => `
+    <div class="tool-card" style="--tool-accent:${t.accent};--tool-accent-bg:${t.accentBg}">
+      <div class="head">
+        <span class="icon">${t.icon}</span>
+        <div>
+          <h3>${t.name}</h3>
+        </div>
+        <span class="type">${t.type}</span>
+      </div>
+      <div class="tagline">${t.tagline}</div>
+      <div class="meta-row">
+        <div class="meta">💰 <span>${t.price}</span></div>
+        <div class="meta">📡 <span>${t.meta.mcp}</span></div>
+        <div class="meta">👥 <span>${t.meta.users}</span></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// — Matrix —
+function renderMatrix() {
+  const table = document.getElementById('matrixTable');
+  const scoreLabel = s => ['','★','★★','★★★','★★★★','★★★★★'][s];
+  let html = '<thead><tr><th>维度</th>';
+  TOOLS.forEach(t => html += `<th>${t.icon} ${t.name}</th>`);
+  html += '</tr></thead><tbody>';
+  DIMENSIONS.forEach(d => {
+    html += `<tr><td title="${d.desc}">${d.label}</td>`;
+    TOOLS.forEach(t => {
+      const s = t.scores[d.key];
+      html += `<td><div class="score"><span class="bar s${s}"></span> <span class="label-score">${s}/5</span></div></td>`;
+    });
+    html += '</tr>';
+  });
+  // Total row
+  html += '<tr style="border-top:2px solid var(--border)"><td style="font-weight:700">综合均分</td>';
+  TOOLS.forEach(t => {
+    const vals = Object.values(t.scores);
+    const avg = (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1);
+    html += `<td><span style="font-family:var(--mono);font-size:16px;font-weight:700;color:${t.accent}">${avg}</span></td>`;
+  });
+  html += '</tr></tbody>';
+  table.innerHTML = html;
+}
+
+// — Scenarios —
+function renderScenarios() {
+  const pills = document.getElementById('scenarioPills');
+  pills.innerHTML = SCENARIOS.map((s,i) => `
+    <button class="scenario-pill ${i===0?'active':''}" onclick="selectScenario('${s.id}',this)">${s.label}</button>
+  `).join('');
+  selectScenario(SCENARIOS[0].id, pills.querySelector('.scenario-pill'));
+}
+
+function selectScenario(id, btn) {
+  document.querySelectorAll('.scenario-pill').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+
+  const scenario = SCENARIOS.find(s => s.id === id);
+  const cards = document.getElementById('recCards');
+  const rankClasses = ['gold','silver','bronze','','',''];
+
+  cards.innerHTML = scenario.ranking.map((tid,i) => {
+    const tool = TOOLS.find(t => t.id === tid);
+    return `
+      <div class="rec-card">
+        <div class="rank ${rankClasses[i]}">${i+1}</div>
+        <div class="rec-info">
+          <h4>${tool.icon} ${tool.name}</h4>
+          <p>${scenario.reasons[tid]}</p>
+          <span class="reason">${tool.type} · ${tool.price}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// — Quiz —
+let quizAnswers = {};
+
+function renderQuiz() {
+  const section = document.getElementById('quizSection');
+  section.innerHTML = QUIZ.map((q,qi) => `
+    <div class="quiz-card">
+      <h3><span class="qnum">Q${qi+1}</span> ${q.q}</h3>
+      <div class="quiz-options">
+        ${q.opts.map((o,oi) => `
+          <button class="quiz-opt" data-q="${qi}" data-o="${oi}" onclick="chooseQuiz(${qi},${oi},this)">${o.label}</button>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+function chooseQuiz(qi, oi, btn) {
+  // Toggle selection
+  const siblings = btn.parentElement.querySelectorAll('.quiz-opt');
+  siblings.forEach(b => b.classList.remove('chosen'));
+  btn.classList.add('chosen');
+  quizAnswers[qi] = oi;
+
+  // Check if all answered
+  if (Object.keys(quizAnswers).length === QUIZ.length) {
+    computeResult();
+  }
+}
+
+function computeResult() {
+  const scores = {};
+  TOOLS.forEach(t => scores[t.id] = 0);
+
+  Object.entries(quizAnswers).forEach(([qi, oi]) => {
+    const weights = QUIZ[qi].opts[oi].weights;
+    Object.entries(weights).forEach(([tid, w]) => {
+      scores[tid] += w;
+    });
+  });
+
+  const sorted = Object.entries(scores).sort((a,b) => b[1] - a[1]);
+  const top1 = TOOLS.find(t => t.id === sorted[0][0]);
+  const top2 = TOOLS.find(t => t.id === sorted[1][0]);
+
+  // Check if combining two tools
+  const isTerminal = top1.type.includes('Terminal') || top1.type.includes('CLI');
+  const isIDE = top1.type.includes('IDE') || top1.type.includes('插件');
+  let combo = false, comboTool = null;
+
+  if (isTerminal && sorted.length > 1) {
+    comboTool = TOOLS.find(t => t.id === sorted.find(([id]) => {
+      const tool = TOOLS.find(x => x.id === id);
+      return tool.type.includes('IDE') || tool.type.includes('插件');
+    })?.[0]);
+    combo = !!comboTool;
+  } else if (isIDE && sorted.length > 1) {
+    comboTool = TOOLS.find(t => t.id === sorted.find(([id]) => {
+      const tool = TOOLS.find(x => x.id === id);
+      return tool.type.includes('Terminal') || tool.type.includes('CLI');
+    })?.[0]);
+    combo = !!comboTool;
+  }
+
+  const box = document.getElementById('resultBox');
+  box.classList.add('show');
+
+  const explainMap = {
+    cursor: '日常编码流中 Tab 补全 + Composer 多文件编辑，效率最高',
+    'claude-code': '大型重构和 Agent 任务的首选，自主性无可匹敌',
+    copilot: '最低成本 + 最广 IDE 支持 + GitHub 生态无缝衔接',
+    windsurf: '性价比最优的 AI IDE，Cascade Agent 体验友好',
+    cline: '零订阅费 + 完全模型自由，成本透明度最高',
+    aider: '轻量终端工具，Git 原生集成，开源社区驱动'
+  };
+
+  box.innerHTML = `
+    <div class="verdict">🎯 推荐：${top1.icon} ${top1.name}</div>
+    <div class="explanation">${explainMap[top1.id]}</div>
+    ${combo && comboTool ? `
+      <div style="color:var(--text-dim);font-size:13px;margin-bottom:14px;">
+        💡 <strong>进阶组合建议</strong>：2026 年开发者平均使用 2.3 个 AI 工具。IDE + 终端 Agent 搭配效果最佳：
+      </div>
+      <div class="combo">
+        <div class="combo-chip">
+          ${top1.icon} ${top1.name}
+          <span class="role" style="background:var(--cyan-bg);color:var(--cyan);">
+            ${isTerminal ? '深度任务' : '日常编码'}
+          </span>
+        </div>
+        <span style="color:var(--text-muted);font-size:18px;">+</span>
+        <div class="combo-chip">
+          ${comboTool.icon} ${comboTool.name}
+          <span class="role" style="background:var(--violet-bg);color:var(--violet);">
+            ${isTerminal ? '日常编码' : '深度任务'}
+          </span>
+        </div>
+      </div>
+    ` : `
+      <div class="combo">
+        <div class="combo-chip">${top1.icon} ${top1.name} <span class="role" style="background:var(--green-bg);color:var(--green);">首选</span></div>
+        <span style="color:var(--text-muted);font-size:18px;">备选</span>
+        <div class="combo-chip">${top2.icon} ${top2.name} <span class="role" style="background:var(--bg-elevated);color:var(--text-muted);">备选</span></div>
+      </div>
+    `}
+  `;
+
+  box.scrollIntoView({ behavior:'smooth', block:'center' });
+}
+
+// — Pricing —
+function renderPricing() {
+  const grid = document.getElementById('priceGrid');
+  grid.innerHTML = TOOLS.map(t => `
+    <div class="price-card">
+      <div class="p-icon">${t.icon}</div>
+      <div class="p-name">${t.name}</div>
+      <div class="p-price">${t.priceNum === 0 ? '免费' : '$'+t.priceNum}<small>${t.priceNum===0 ? ' + API 费用' : '/月起'}</small></div>
+      <div class="p-tier">${t.priceFull}</div>
+      <div class="p-note">${t.priceNote.replace(/\n/g,'<br>')}</div>
+    </div>
+  `).join('');
+}
+
+// ═══════ INIT ═══════
+renderOverview();
+renderMatrix();
+renderScenarios();
+renderQuiz();
+renderPricing();
+</script>
+</body>
+</html>

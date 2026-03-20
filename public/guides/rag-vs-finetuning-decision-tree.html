@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAG vs Fine-tuning 决策树 — 交互式选型指南</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap');
+:root{
+  --bg:#060608;--bg2:#0b0b12;--bg3:#10101a;--bg4:#161622;--bg5:#1c1c2a;
+  --text:#e0def0;--dim:#8886a0;--muted:#504e68;
+  --border:#1a1a2e;--border2:#282840;
+  --rag:#06d6a0;--rag-bg:rgba(6,214,160,.07);--rag-b:rgba(6,214,160,.3);
+  --ft:#f77f00;--ft-bg:rgba(247,127,0,.07);--ft-b:rgba(247,127,0,.3);
+  --hybrid:#8338ec;--hybrid-bg:rgba(131,56,236,.07);--hybrid-b:rgba(131,56,236,.3);
+  --ctx:#118ab2;--ctx-bg:rgba(17,138,178,.07);--ctx-b:rgba(17,138,178,.3);
+  --rose:#ef476f;--amber:#ffd166;
+  --r:10px;--mono:'IBM Plex Mono',monospace;--sans:'Noto Sans SC',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.65;-webkit-font-smoothing:antialiased}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 20% 20%,rgba(6,214,160,.03) 0%,transparent 50%),radial-gradient(ellipse at 80% 80%,rgba(247,127,0,.03) 0%,transparent 50%);pointer-events:none}
+.w{max-width:960px;margin:0 auto;padding:0 20px;position:relative;z-index:1}
+
+/* Hero */
+.hero{padding:60px 0 36px;text-align:center}
+.hero .pill{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:100px;background:var(--hybrid-bg);border:1px solid var(--hybrid-b);font-size:12px;font-family:var(--mono);color:var(--hybrid);margin-bottom:16px}
+.hero .pill i{width:5px;height:5px;border-radius:50%;background:var(--hybrid);animation:p 2s infinite}
+@keyframes p{0%,100%{opacity:1}50%{opacity:.3}}
+.hero h1{font-size:clamp(28px,5vw,48px);font-weight:900;line-height:1.15;margin-bottom:10px}
+.hero h1 .g1{background:linear-gradient(135deg,var(--rag),#34d399);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.hero h1 .g2{background:linear-gradient(135deg,var(--ft),var(--amber));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{color:var(--dim);font-size:16px;max-width:620px;margin:0 auto;font-weight:300}
+
+/* Nav */
+.nav{display:flex;gap:4px;justify-content:center;background:var(--bg2);border:1px solid var(--border);border-radius:100px;padding:4px;margin:28px auto 32px;width:fit-content;flex-wrap:wrap}
+.nav button{padding:7px 18px;border-radius:100px;border:none;background:none;color:var(--dim);font-size:13px;font-weight:500;cursor:pointer;font-family:var(--sans);transition:all .3s;white-space:nowrap}
+.nav button:hover{color:var(--text)}
+.nav button.on{background:var(--hybrid);color:var(--bg)}
+
+.pnl{display:none;animation:up .4s ease}
+.pnl.on{display:block}
+@keyframes up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+.sh{margin-bottom:24px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+.sh .t{font-family:var(--mono);font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--hybrid);margin-bottom:4px}
+.sh h2{font-size:22px;font-weight:700}
+.sh p{color:var(--dim);font-size:14px;margin-top:2px}
+
+/* ══ Concept section ══ */
+.concept-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:28px}
+@media(max-width:640px){.concept-grid{grid-template-columns:1fr}}
+.concept-card{border-radius:var(--r);padding:24px;position:relative;overflow:hidden}
+.concept-card h3{font-size:18px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.concept-card .tagline{font-size:13px;font-weight:600;margin-bottom:12px;opacity:.8}
+.concept-card .body{font-size:13px;line-height:1.7;opacity:.85}
+.concept-card .metaphor{margin-top:12px;padding:10px 14px;border-radius:8px;font-size:12px;font-style:italic;line-height:1.6}
+
+.c-rag{background:var(--rag-bg);border:1.5px solid var(--rag-b);color:var(--rag)}
+.c-rag .metaphor{background:rgba(6,214,160,.08)}
+.c-ft{background:var(--ft-bg);border:1.5px solid var(--ft-b);color:var(--ft)}
+.c-ft .metaphor{background:rgba(247,127,0,.08)}
+
+.vs-badge{display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:var(--muted);padding:8px 0}
+
+/* Key insight */
+.insight{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--hybrid);border-radius:var(--r);padding:18px 22px;margin-bottom:28px;font-size:14px;color:var(--dim);line-height:1.7}
+.insight strong{color:var(--hybrid)}
+.insight code{font-family:var(--mono);font-size:12px;background:var(--bg4);padding:1px 5px;border-radius:3px}
+
+/* ══ Decision Tree ══ */
+.tree-container{max-width:700px;margin:0 auto}
+.tree-q{background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r);padding:24px;margin-bottom:16px;animation:up .4s ease}
+.tree-q .q-num{font-family:var(--mono);font-size:11px;color:var(--hybrid);margin-bottom:6px}
+.tree-q .q-text{font-size:16px;font-weight:600;margin-bottom:14px}
+.tree-q .q-context{font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.6}
+.tree-opts{display:flex;flex-direction:column;gap:8px}
+.tree-opt{padding:12px 18px;border-radius:var(--r);border:1.5px solid var(--border);background:none;color:var(--dim);font-size:14px;cursor:pointer;font-family:var(--sans);transition:all .3s;text-align:left;line-height:1.5}
+.tree-opt:hover{border-color:var(--border2);color:var(--text);background:var(--bg3)}
+.tree-opt.chosen{border-color:var(--hybrid);background:var(--hybrid-bg);color:var(--hybrid)}
+.tree-opt .opt-tag{display:inline-block;font-size:10px;font-family:var(--mono);padding:2px 6px;border-radius:3px;margin-left:8px;font-weight:600;vertical-align:middle}
+.tag-rag{background:var(--rag-bg);color:var(--rag);border:1px solid var(--rag-b)}
+.tag-ft{background:var(--ft-bg);color:var(--ft);border:1px solid var(--ft-b)}
+.tag-hybrid{background:var(--hybrid-bg);color:var(--hybrid);border:1px solid var(--hybrid-b)}
+.tag-ctx{background:var(--ctx-bg);color:var(--ctx);border:1px solid var(--ctx-b)}
+
+/* Path indicator */
+.path-strip{display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap;align-items:center}
+.path-dot{height:6px;border-radius:3px;transition:all .4s}
+.path-dot.done{background:var(--hybrid);width:32px}
+.path-dot.current{background:var(--amber);width:32px}
+.path-dot.pending{background:var(--border);width:16px}
+
+/* Result */
+.result-box{border-radius:var(--r);padding:28px;margin-bottom:24px;animation:up .5s ease;display:none}
+.result-box.show{display:block}
+.result-box .verdict{font-size:24px;font-weight:900;margin-bottom:8px}
+.result-box .verdict-sub{font-size:15px;font-weight:600;margin-bottom:16px;opacity:.85}
+.result-box .explanation{font-size:14px;line-height:1.8;margin-bottom:20px;opacity:.8}
+.result-box .next-steps{font-size:13px;line-height:1.7}
+.result-box .next-steps h4{font-size:14px;font-weight:700;margin-bottom:8px}
+.result-box .step-item{padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+.result-box .step-item:last-child{border:none}
+
+.res-rag{background:var(--rag-bg);border:2px solid var(--rag-b);color:var(--rag)}
+.res-ft{background:var(--ft-bg);border:2px solid var(--ft-b);color:var(--ft)}
+.res-hybrid{background:var(--hybrid-bg);border:2px solid var(--hybrid-b);color:var(--hybrid)}
+.res-ctx{background:var(--ctx-bg);border:2px solid var(--ctx-b);color:var(--ctx)}
+
+.btn-restart{padding:9px 20px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--dim);font-size:13px;cursor:pointer;font-family:var(--sans);transition:all .3s;margin-top:12px}
+.btn-restart:hover{border-color:var(--border2);color:var(--text)}
+
+/* ══ Comparison Table ══ */
+.cmp-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--r);margin-bottom:28px}
+.cmp{width:100%;border-collapse:collapse;font-size:13px;min-width:640px}
+.cmp th,.cmp td{padding:12px 16px;text-align:left;border-bottom:1px solid var(--border)}
+.cmp thead th{background:var(--bg4);font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-family:var(--mono);font-weight:600;position:sticky;top:0}
+.cmp thead th:first-child{min-width:120px}
+.cmp tbody td:first-child{font-weight:600;color:var(--text);background:var(--bg3);position:sticky;left:0;border-right:1px solid var(--border)}
+.cmp tbody tr:hover td{background:var(--bg3)}
+.cmp .c-rag-cell{color:var(--rag)}
+.cmp .c-ft-cell{color:var(--ft)}
+.cmp .c-hybrid-cell{color:var(--hybrid)}
+
+/* Hybrid section */
+.hybrid-sec{background:var(--bg2);border:1.5px solid var(--hybrid-b);border-radius:var(--r);padding:28px;margin-bottom:28px}
+.hybrid-sec h2{font-size:20px;font-weight:700;color:var(--hybrid);margin-bottom:12px}
+.hybrid-sec .body{font-size:14px;color:var(--dim);line-height:1.8}
+.hybrid-diagram{display:flex;align-items:center;justify-content:center;gap:12px;margin:20px 0;flex-wrap:wrap}
+.h-node{padding:10px 18px;border-radius:8px;font-size:13px;font-weight:600;text-align:center}
+.h-arrow{color:var(--muted);font-size:18px}
+
+.footer{text-align:center;padding:32px 0 52px;color:var(--muted);font-size:12px;border-top:1px solid var(--border);margin-top:16px}
+
+@media(max-width:600px){
+  .nav{border-radius:var(--r)}
+  .nav button{flex:1;text-align:center;font-size:12px;padding:7px 10px}
+  .hybrid-diagram{flex-direction:column}
+  .h-arrow{transform:rotate(90deg)}
+}
+</style>
+</head>
+<body>
+<div class="w">
+
+<div class="hero">
+  <div class="pill"><i></i> SkillNav 交互指南 · P1</div>
+  <h1><span class="g1">RAG</span> vs <span class="g2">Fine-tuning</span><br>交互式决策树</h1>
+  <p>回答 5-6 个关键问题，获得个性化架构推荐。附带完整的技术对比和 2026 年最佳实践。</p>
+</div>
+
+<div class="nav" id="mainNav">
+  <button class="on" onclick="sw('concept')">📖 核心概念</button>
+  <button onclick="sw('tree')">🌳 决策树</button>
+  <button onclick="sw('compare')">📊 详细对比</button>
+  <button onclick="sw('hybrid')">🔗 混合方案</button>
+</div>
+
+<!-- ══ CONCEPT ══ -->
+<div class="pnl on" id="pnl-concept">
+  <div class="sh">
+    <div class="t">Core Concepts</div>
+    <h2>一句话理解两者的本质区别</h2>
+  </div>
+
+  <div class="insight">
+    🧠 <strong>最核心的心智模型</strong>：RAG 改变模型<strong>当前能看到什么</strong>（运行时注入知识）。Fine-tuning 改变模型<strong>永久的行为方式</strong>（训练时调整权重）。把易变的知识放进检索，把稳定的行为烧进权重 — 这就是 2026 年的最佳实践。
+  </div>
+
+  <div class="concept-grid">
+    <div class="concept-card c-rag">
+      <h3>📚 RAG</h3>
+      <div class="tagline">检索增强生成</div>
+      <div class="body">
+        在推理时从外部知识库检索相关内容，注入 prompt 上下文，让模型基于最新信息生成回答。不修改模型本身。
+      </div>
+      <div class="metaphor">
+        💡 类比：开卷考试 — 考生（模型）能力不变，但允许翻书（检索），答案更准确且可溯源。
+      </div>
+    </div>
+    <div class="concept-card c-ft">
+      <h3>🔧 Fine-tuning</h3>
+      <div class="tagline">微调训练</div>
+      <div class="body">
+        用领域特定数据进一步训练预训练模型，调整模型权重，使其内化特定的行为模式、语气风格和推理方式。
+      </div>
+      <div class="metaphor">
+        💡 类比：专业培训 — 员工（模型）经过培训后，不需要看手册就能用正确的方式做事。
+      </div>
+    </div>
+  </div>
+
+  <div class="insight" style="border-left-color:var(--ctx)">
+    📐 <strong>2026 年新选项：长上下文 + Prompt Caching</strong>。如果知识库 < 200K tokens（约 15 万字），可以直接塞进上下文窗口 + 启用 prompt caching，比搭建 RAG 基础设施更快更便宜。这是很多团队忽略的「第三条路」。
+  </div>
+
+  <div class="insight" style="border-left-color:var(--amber)">
+    ⚠️ <strong>常见误区</strong>：「模型不知道我们的产品信息，需要 fine-tune。」— 错！这应该用 RAG。Fine-tuning 用来教模型<em>怎么说话</em>（风格/格式/推理模式），不是用来灌输<em>具体事实</em>。用 fine-tuning 记忆事实就像背百科全书 — 效率低且很快过时。
+  </div>
+</div>
+
+<!-- ══ DECISION TREE ══ -->
+<div class="pnl" id="pnl-tree">
+  <div class="sh">
+    <div class="t">Decision Tree</div>
+    <h2>5 步决策，找到你的最优方案</h2>
+    <p>每个问题都会收窄推荐范围，最终给出个性化建议</p>
+  </div>
+
+  <div class="path-strip" id="pathStrip"></div>
+  <div class="tree-container" id="treeContainer"></div>
+  <div class="result-box" id="resultBox"></div>
+</div>
+
+<!-- ══ COMPARE ══ -->
+<div class="pnl" id="pnl-compare">
+  <div class="sh">
+    <div class="t">Detailed Comparison</div>
+    <h2>10 个维度全面对比</h2>
+  </div>
+
+  <div class="cmp-wrap">
+    <table class="cmp" id="cmpTable"></table>
+  </div>
+</div>
+
+<!-- ══ HYBRID ══ -->
+<div class="pnl" id="pnl-hybrid">
+  <div class="sh">
+    <div class="t">Hybrid Architecture</div>
+    <h2>混合方案：两者兼得的最佳实践</h2>
+  </div>
+
+  <div class="hybrid-sec">
+    <h2>🔗 2026 年最佳实践：Composable Adaptation Stack</h2>
+    <div class="body">
+      不要把 RAG 和 Fine-tuning 当作非此即彼的选择。最成熟的团队使用<strong>分层适配架构</strong>：Fine-tuning 负责稳定的行为层（语气、格式、推理模式），RAG 负责动态的知识层（最新数据、领域文档）。两者各司其职，互不替代。
+    </div>
+
+    <div class="hybrid-diagram">
+      <div class="h-node" style="background:var(--ft-bg);border:1.5px solid var(--ft-b);color:var(--ft)">🔧 Fine-tuned 模型<br><small>行为 / 风格 / 推理</small></div>
+      <div class="h-arrow">+</div>
+      <div class="h-node" style="background:var(--rag-bg);border:1.5px solid var(--rag-b);color:var(--rag)">📚 RAG 知识层<br><small>实时数据 / 文档</small></div>
+      <div class="h-arrow">=</div>
+      <div class="h-node" style="background:var(--hybrid-bg);border:1.5px solid var(--hybrid-b);color:var(--hybrid)">✨ 生产级 AI 应用<br><small>准确 + 可控 + 可追踪</small></div>
+    </div>
+  </div>
+
+  <div class="insight">
+    📋 <strong>典型混合路径</strong>：大多数团队从 RAG 起步（快速部署），收集到足够的 prompt-response 数据后，再 fine-tune 一个更小、更快的模型处理高频场景。Fine-tuned 模型推理成本更低（无检索开销），RAG 兜底处理长尾问题。
+  </div>
+
+  <div class="insight" style="border-left-color:var(--rag)">
+    🏗️ <strong>混合架构三层设计</strong>：<br>
+    <strong>Layer 1 - Prompt Engineering</strong>：System Prompt + Few-shot，覆盖 80% 的场景<br>
+    <strong>Layer 2 - RAG</strong>：检索外部知识，处理动态信息需求<br>
+    <strong>Layer 3 - Fine-tuning</strong>：当 Layer 1+2 无法满足行为一致性要求时才引入<br>
+    大多数项目在 Layer 1-2 就够了。Layer 3 是优化手段，不是起步方案。
+  </div>
+</div>
+
+<div class="footer">RAG vs Fine-tuning 决策树 · SkillNav · 基于 2026 年行业最佳实践 · 数据来源：Anthropic / OpenAI / LangChain / ICML LaRA Benchmark</div>
+</div>
+
+<script>
+// ═══════════════════
+// NAV
+// ═══════════════════
+function sw(id){
+  document.querySelectorAll('.pnl').forEach(p=>p.classList.toggle('on',p.id==='pnl-'+id));
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('on'));
+  event.target.classList.add('on');
+  if(id==='tree'){resetTree();renderQuestion()}
+}
+
+// ═══════════════════
+// DECISION TREE
+// ═══════════════════
+const QUESTIONS = [
+  {
+    id:0,
+    text:'你的核心需求是什么？',
+    context:'这是最关键的分类问题。RAG 解决「知道什么」，Fine-tuning 解决「怎么做」。',
+    opts:[
+      {label:'让模型回答基于我们数据/文档的问题',tag:'tag-rag',tagText:'→ RAG',scores:{rag:3,ft:0,hybrid:0,ctx:1}},
+      {label:'让模型以特定风格/格式/推理方式输出',tag:'tag-ft',tagText:'→ FT',scores:{rag:0,ft:3,hybrid:0,ctx:0}},
+      {label:'两者都需要 — 既要领域知识又要行为控制',tag:'tag-hybrid',tagText:'→ 混合',scores:{rag:1,ft:1,hybrid:3,ctx:0}},
+    ]
+  },
+  {
+    id:1,
+    text:'你的知识/数据更新频率如何？',
+    context:'数据更新频率直接决定技术选择。Fine-tuning 是静态快照，RAG 可以实时更新。',
+    opts:[
+      {label:'每天或每周更新（新闻/库存/工单）',tag:'tag-rag',tagText:'→ RAG',scores:{rag:3,ft:-1,hybrid:1,ctx:0}},
+      {label:'每月或每季度更新',tag:'tag-hybrid',tagText:'灵活',scores:{rag:1,ft:1,hybrid:1,ctx:1}},
+      {label:'几乎不变（行业规范/专业术语）',tag:'tag-ft',tagText:'→ FT',scores:{rag:0,ft:3,hybrid:0,ctx:1}},
+    ]
+  },
+  {
+    id:2,
+    text:'你的知识库规模有多大？',
+    context:'知识库小于 200K tokens 可能不需要 RAG 基础设施。2026 年大模型支持百万级上下文窗口。',
+    opts:[
+      {label:'小型（< 15 万字 / 200K tokens）',tag:'tag-ctx',tagText:'长上下文',scores:{rag:0,ft:0,hybrid:0,ctx:3}},
+      {label:'中型（15 万 - 500 万字）',tag:'tag-rag',tagText:'→ RAG',scores:{rag:3,ft:0,hybrid:1,ctx:0}},
+      {label:'大型（500 万字+ / 百万级文档）',tag:'tag-rag',tagText:'→ RAG',scores:{rag:3,ft:-1,hybrid:1,ctx:-1}},
+    ]
+  },
+  {
+    id:3,
+    text:'你是否需要答案可溯源（引用来源）？',
+    context:'RAG 天然支持引用 — 可以指向原始文档。Fine-tuned 模型是黑箱，无法追踪答案来源。合规场景通常要求可溯源。',
+    opts:[
+      {label:'是，必须能引用原始文档',tag:'tag-rag',tagText:'→ RAG',scores:{rag:3,ft:-2,hybrid:1,ctx:1}},
+      {label:'最好有，但不是硬性要求',tag:'',tagText:'',scores:{rag:1,ft:0,hybrid:1,ctx:0}},
+      {label:'不需要，输出质量更重要',tag:'tag-ft',tagText:'→ FT',scores:{rag:0,ft:2,hybrid:0,ctx:0}},
+    ]
+  },
+  {
+    id:4,
+    text:'你的团队技术能力和资源？',
+    context:'RAG 需要软件工程能力（向量数据库/检索管道），Fine-tuning 需要 ML 专业知识和 GPU 资源。',
+    opts:[
+      {label:'软件工程为主，ML 经验有限',tag:'tag-rag',tagText:'→ RAG',scores:{rag:2,ft:-1,hybrid:0,ctx:2}},
+      {label:'有 ML/NLP 经验，有 GPU 预算',tag:'tag-ft',tagText:'→ FT',scores:{rag:0,ft:2,hybrid:1,ctx:0}},
+      {label:'全栈团队，两者都能做',tag:'tag-hybrid',tagText:'灵活',scores:{rag:1,ft:1,hybrid:2,ctx:1}},
+    ]
+  },
+  {
+    id:5,
+    text:'推理成本和延迟敏感度？',
+    context:'RAG 每次查询多消耗检索上下文的 tokens（成本更高），Fine-tuned 模型直接生成（延迟更低，单次成本低）。',
+    opts:[
+      {label:'成本敏感，查询量大（10K+/天）',tag:'tag-ft',tagText:'→ FT',scores:{rag:-1,ft:3,hybrid:1,ctx:0}},
+      {label:'延迟不敏感，更看重准确性',tag:'tag-rag',tagText:'→ RAG',scores:{rag:2,ft:0,hybrid:1,ctx:1}},
+      {label:'预算充足，质量优先',tag:'tag-hybrid',tagText:'灵活',scores:{rag:1,ft:1,hybrid:2,ctx:0}},
+    ]
+  }
+];
+
+const RESULTS = {
+  rag:{
+    cls:'res-rag',
+    verdict:'📚 推荐：RAG（检索增强生成）',
+    sub:'你的需求最适合 RAG 架构',
+    explanation:'你的场景以动态知识检索为核心 — 数据更新频繁、需要引用溯源、知识库规模较大。RAG 让你无需重新训练模型就能持续更新知识，且答案可追溯到原始文档。',
+    steps:[
+      '选择向量数据库：Pinecone（托管）/ Qdrant（自托管）/ pgvector（已有 PG）',
+      '设计 chunking 策略：按语义分块，建议 512-1024 tokens/chunk',
+      '实现 Contextual Retrieval：为每个 chunk 添加上下文描述（Anthropic 最佳实践）',
+      '搭建评估管道：用 RAGAs 或 TruLens 持续监控检索质量',
+      '考虑 Hybrid Search：向量检索 + BM25 关键词检索混合排序'
+    ]
+  },
+  ft:{
+    cls:'res-ft',
+    verdict:'🔧 推荐：Fine-tuning（微调训练）',
+    sub:'你的需求最适合 Fine-tuning',
+    explanation:'你的场景需要模型内化特定的行为模式 — 稳定的输出风格、领域推理能力、高吞吐低延迟。Fine-tuning 让模型「学会」你的方式，无需每次都在 prompt 里重复说明。',
+    steps:[
+      '准备训练数据：收集 200-1000 条高质量 prompt-response 对',
+      '选择方法：LoRA/QLoRA（资源高效）或全量微调（最强效果）',
+      '选择基座模型：Llama 3.2 / Mistral / GPT-4o-mini（根据预算）',
+      '设置评估基准：在 fine-tune 前后用相同测试集对比',
+      '注意灾难性遗忘：监控通用能力是否下降，必要时用 Elastic Weight Consolidation'
+    ]
+  },
+  hybrid:{
+    cls:'res-hybrid',
+    verdict:'🔗 推荐：混合方案（RAG + Fine-tuning）',
+    sub:'你需要两者配合的分层架构',
+    explanation:'你的场景同时需要领域知识和行为控制。最佳方案是 Fine-tuning 负责行为层（风格/格式/推理），RAG 负责知识层（动态数据/文档检索）。这是 2026 年生产级 AI 应用的黄金架构。',
+    steps:[
+      '先用 RAG 快速上线，验证产品价值',
+      '收集用户交互数据，筛选高质量 prompt-response 对',
+      '用 LoRA fine-tune 一个小模型处理高频标准场景',
+      'RAG 兜底处理长尾问题和需要最新信息的查询',
+      '持续 A/B 测试，动态调整 fine-tuned 模型和 RAG 的流量分配'
+    ]
+  },
+  ctx:{
+    cls:'res-ctx',
+    verdict:'📐 推荐：长上下文 + Prompt Caching',
+    sub:'你可能不需要 RAG 或 Fine-tuning',
+    explanation:'你的知识库足够小，可以直接放进大模型的上下文窗口。配合 Prompt Caching（Anthropic 可节省 90% 成本），这是最简单、部署最快的方案。当知识库增长超过上下文限制时再迁移到 RAG。',
+    steps:[
+      '将知识库整理为结构化文本（建议 XML 标签分区）',
+      '放入 System Prompt 的 <knowledge> 区域',
+      '启用 Prompt Caching：静态知识前置，用户查询后置',
+      '测量准确率和成本：对比 vs RAG 方案',
+      '设置知识库大小预警：超过 150K tokens 时启动 RAG 迁移计划'
+    ]
+  }
+};
+
+let treeAnswers = {};
+let treeStep = 0;
+
+function resetTree(){
+  treeAnswers={};
+  treeStep=0;
+  document.getElementById('resultBox').className='result-box';
+  document.getElementById('resultBox').style.display='none';
+}
+
+function renderQuestion(){
+  if(treeStep >= QUESTIONS.length){computeTreeResult();return}
+  const q = QUESTIONS[treeStep];
+  renderPath();
+
+  document.getElementById('treeContainer').innerHTML=`
+    <div class="tree-q">
+      <div class="q-num">问题 ${treeStep+1} / ${QUESTIONS.length}</div>
+      <div class="q-text">${q.text}</div>
+      <div class="q-context">${q.context}</div>
+      <div class="tree-opts">
+        ${q.opts.map((o,i)=>`
+          <button class="tree-opt" onclick="answerTree(${treeStep},${i})">
+            ${o.label}
+            ${o.tag?`<span class="opt-tag ${o.tag}">${o.tagText}</span>`:''}
+          </button>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function renderPath(){
+  const strip=document.getElementById('pathStrip');
+  strip.innerHTML=QUESTIONS.map((_,i)=>{
+    let cls='path-dot ';
+    if(i<treeStep) cls+='done';
+    else if(i===treeStep) cls+='current';
+    else cls+='pending';
+    return `<div class="${cls}"></div>`;
+  }).join('');
+}
+
+function answerTree(qi,oi){
+  treeAnswers[qi]=oi;
+  treeStep=qi+1;
+  renderQuestion();
+}
+
+function computeTreeResult(){
+  const scores={rag:0,ft:0,hybrid:0,ctx:0};
+  Object.entries(treeAnswers).forEach(([qi,oi])=>{
+    const s=QUESTIONS[qi].opts[oi].scores;
+    Object.entries(s).forEach(([k,v])=>scores[k]+=v);
+  });
+
+  const sorted=Object.entries(scores).sort((a,b)=>b[1]-a[1]);
+  const winner=sorted[0][0];
+  const r=RESULTS[winner];
+
+  renderPath();
+  document.getElementById('treeContainer').innerHTML=`
+    <div style="text-align:center;padding:20px 0">
+      <button class="btn-restart" onclick="resetTree();renderQuestion()">🔄 重新测试</button>
+    </div>
+  `;
+
+  const box=document.getElementById('resultBox');
+  box.className=`result-box ${r.cls} show`;
+  box.style.display='block';
+  box.innerHTML=`
+    <div class="verdict">${r.verdict}</div>
+    <div class="verdict-sub">${r.sub}</div>
+    <div class="explanation">${r.explanation}</div>
+    <div class="next-steps">
+      <h4>📋 下一步行动</h4>
+      ${r.steps.map((s,i)=>`<div class="step-item"><strong>${i+1}.</strong> ${s}</div>`).join('')}
+    </div>
+    <button class="btn-restart" onclick="resetTree();renderQuestion()">🔄 重新测试</button>
+  `;
+  box.scrollIntoView({behavior:'smooth',block:'center'});
+}
+
+// ═══════════════════
+// COMPARISON TABLE
+// ═══════════════════
+function renderCompare(){
+  const dims=[
+    {d:'知识更新',rag:'✅ 实时更新，改文档即生效',ft:'❌ 需重新训练，有延迟',note:'数据越动态，RAG 越适合'},
+    {d:'答案溯源',rag:'✅ 可引用原始文档和段落',ft:'❌ 黑箱，无法追踪来源',note:'合规/审计场景的决定性因素'},
+    {d:'行为控制',rag:'⚠️ 依赖 prompt 工程',ft:'✅ 内化风格/格式/推理',note:'Fine-tuning 改变模型「怎么说」'},
+    {d:'部署速度',rag:'✅ 天级（向量库+检索管道）',ft:'⚠️ 周级（数据准备+训练+评估）',note:'RAG 适合快速验证 MVP'},
+    {d:'推理成本',rag:'⚠️ 较高（检索+长上下文）',ft:'✅ 较低（无检索开销）',note:'高 QPS 场景 Fine-tuning 更经济'},
+    {d:'推理延迟',rag:'⚠️ 增加检索耗时（200-500ms）',ft:'✅ 直接生成，延迟最低',note:'实时对话场景需关注'},
+    {d:'技术门槛',rag:'中等（工程为主）',ft:'较高（需 ML 知识+GPU）',note:'RAG 对软件工程师更友好'},
+    {d:'数据隐私',rag:'✅ 数据留在自有基础设施',ft:'⚠️ 数据可能进入模型权重',note:'RAG 支持更细粒度的访问控制'},
+    {d:'知识容量',rag:'✅ 可扩展到百万级文档',ft:'⚠️ 受训练数据和记忆限制',note:'大规模知识库只能用 RAG'},
+    {d:'维护成本',rag:'持续（检索管道+知识库维护）',ft:'间歇（需要时重训练）',note:'RAG 更适合有运维团队的场景'},
+  ];
+
+  document.getElementById('cmpTable').innerHTML=`
+    <thead><tr><th>维度</th><th style="color:var(--rag)">📚 RAG</th><th style="color:var(--ft)">🔧 Fine-tuning</th><th>💡 关键判断</th></tr></thead>
+    <tbody>${dims.map(d=>`
+      <tr>
+        <td>${d.d}</td>
+        <td class="c-rag-cell">${d.rag}</td>
+        <td class="c-ft-cell">${d.ft}</td>
+        <td style="color:var(--muted);font-size:12px">${d.note}</td>
+      </tr>
+    `).join('')}</tbody>
+  `;
+}
+
+// ═══════════════════
+// INIT
+// ═══════════════════
+renderCompare();
+resetTree();
+renderQuestion();
+</script>
+</body>
+</html>

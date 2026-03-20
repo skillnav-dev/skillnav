@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Token 经济学计算器 — 实时成本估算</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap');
+:root{
+  --bg:#050508;--bg2:#0a0a11;--bg3:#0f0f18;--bg4:#151520;--bg5:#1c1c2a;
+  --text:#e0def0;--dim:#8886a0;--muted:#504e68;
+  --border:#1a1a2e;--border2:#282840;
+  --green:#06d6a0;--green-bg:rgba(6,214,160,.07);--green-b:rgba(6,214,160,.3);
+  --amber:#ffd166;--amber-bg:rgba(255,209,102,.07);--amber-b:rgba(255,209,102,.25);
+  --rose:#ef476f;--rose-bg:rgba(239,71,111,.07);--rose-b:rgba(239,71,111,.25);
+  --violet:#8338ec;--violet-bg:rgba(131,56,236,.07);--violet-b:rgba(131,56,236,.3);
+  --blue:#118ab2;--cyan:#22d3ee;
+  --r:10px;--mono:'IBM Plex Mono',monospace;--sans:'Noto Sans SC',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.65;-webkit-font-smoothing:antialiased}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 25% 15%,rgba(6,214,160,.03) 0%,transparent 50%),radial-gradient(ellipse at 75% 85%,rgba(255,209,102,.03) 0%,transparent 50%);pointer-events:none}
+.w{max-width:980px;margin:0 auto;padding:0 20px;position:relative;z-index:1}
+
+.hero{padding:56px 0 32px;text-align:center}
+.hero .pill{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:100px;background:var(--green-bg);border:1px solid var(--green-b);font-size:12px;font-family:var(--mono);color:var(--green);margin-bottom:16px}
+.hero .pill i{width:5px;height:5px;border-radius:50%;background:var(--green);animation:p 2s infinite}
+@keyframes p{0%,100%{opacity:1}50%{opacity:.3}}
+.hero h1{font-size:clamp(28px,5vw,46px);font-weight:900;line-height:1.15;margin-bottom:10px}
+.hero h1 em{font-style:normal;background:linear-gradient(135deg,var(--green),var(--amber));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{color:var(--dim);font-size:15px;max-width:600px;margin:0 auto;font-weight:300}
+
+/* Tabs */
+.tabs{display:flex;gap:4px;justify-content:center;background:var(--bg2);border:1px solid var(--border);border-radius:100px;padding:4px;margin:24px auto 28px;width:fit-content;flex-wrap:wrap}
+.tab{padding:7px 18px;border-radius:100px;border:none;background:none;color:var(--dim);font-size:13px;font-weight:500;cursor:pointer;font-family:var(--sans);transition:all .3s;white-space:nowrap}
+.tab:hover{color:var(--text)}
+.tab.on{background:var(--green);color:var(--bg)}
+
+.pnl{display:none;animation:up .4s ease}
+.pnl.on{display:block}
+@keyframes up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* Section */
+.sec{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:24px;margin-bottom:20px}
+.sec h2{font-size:18px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+
+/* ── Token Counter ── */
+.textarea-wrap{position:relative;margin-bottom:16px}
+.textarea-wrap textarea{width:100%;min-height:160px;padding:16px;padding-bottom:40px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.7;resize:vertical;outline:none;transition:border-color .3s}
+.textarea-wrap textarea:focus{border-color:var(--green)}
+.textarea-wrap textarea::placeholder{color:var(--muted)}
+.textarea-wrap .counter{position:absolute;bottom:10px;right:14px;font-family:var(--mono);font-size:12px;color:var(--muted);pointer-events:none}
+
+/* Stats row */
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px}
+.stat-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px 16px;text-align:center}
+.stat-card .sv{font-family:var(--mono);font-size:26px;font-weight:700}
+.stat-card .sv.green{color:var(--green)}
+.stat-card .sv.amber{color:var(--amber)}
+.stat-card .sv.violet{color:var(--violet)}
+.stat-card .sl{font-size:11px;color:var(--muted);margin-top:2px}
+
+/* Price comparison bar chart */
+.price-bars{margin-bottom:20px}
+.pbar-row{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.03)}
+.pbar-row:last-child{border:none}
+.pbar-name{font-size:12px;min-width:140px;font-weight:500;display:flex;align-items:center;gap:6px}
+.pbar-name .picon{font-size:14px}
+.pbar-track{flex:1;height:24px;background:var(--bg4);border-radius:4px;position:relative;overflow:hidden}
+.pbar-fill{height:100%;border-radius:4px;transition:width .6s ease;display:flex;align-items:center;padding-left:8px;font-family:var(--mono);font-size:11px;font-weight:600;color:var(--bg);min-width:fit-content;white-space:nowrap}
+.pbar-fill.tier-cheap{background:var(--green)}
+.pbar-fill.tier-mid{background:var(--amber)}
+.pbar-fill.tier-exp{background:var(--rose)}
+.pbar-val{font-family:var(--mono);font-size:12px;min-width:70px;text-align:right;color:var(--dim)}
+
+/* ── Monthly Estimator ── */
+.input-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+@media(max-width:600px){.input-grid{grid-template-columns:1fr}}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:12px;color:var(--dim)}
+.field input,.field select{padding:9px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-family:var(--mono);font-size:14px;outline:none;transition:border-color .3s}
+.field input:focus,.field select:focus{border-color:var(--green)}
+.field select{cursor:pointer}
+.field .hint{font-size:11px;color:var(--muted);margin-top:2px}
+
+/* Results table */
+.res-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:16px}
+.res-table th,.res-table td{padding:10px 14px;text-align:left;border-bottom:1px solid var(--border)}
+.res-table thead th{background:var(--bg4);font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-family:var(--mono)}
+.res-table tbody tr:hover td{background:var(--bg3)}
+.res-table .cost{font-family:var(--mono);font-weight:700}
+.res-table .cost.cheap{color:var(--green)}
+.res-table .cost.mid{color:var(--amber)}
+.res-table .cost.exp{color:var(--rose)}
+.res-table .savings{font-family:var(--mono);font-size:11px;color:var(--green)}
+.res-table .icon-col{font-size:16px}
+
+/* ── Knowledge section ── */
+.know-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:20px}
+.know-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:18px}
+.know-card h3{font-size:15px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.know-card .body{font-size:13px;color:var(--dim);line-height:1.7}
+.know-card code{font-family:var(--mono);font-size:12px;background:var(--bg4);padding:1px 5px;border-radius:3px;color:var(--amber)}
+
+/* Optimization tips */
+.tip-list{display:flex;flex-direction:column;gap:10px}
+.tip{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px 18px;display:flex;gap:12px;align-items:flex-start}
+.tip .tip-icon{font-size:20px;flex-shrink:0;margin-top:2px}
+.tip .tip-body h4{font-size:14px;font-weight:600;margin-bottom:3px}
+.tip .tip-body p{font-size:12px;color:var(--dim);line-height:1.6}
+.tip .tip-save{font-family:var(--mono);font-size:11px;color:var(--green);margin-top:4px}
+
+.footer{text-align:center;padding:32px 0 52px;color:var(--muted);font-size:12px;border-top:1px solid var(--border);margin-top:16px}
+
+@media(max-width:640px){
+  .stats-row{grid-template-columns:1fr 1fr}
+  .pbar-name{min-width:100px;font-size:11px}
+}
+</style>
+</head>
+<body>
+<div class="w">
+
+<div class="hero">
+  <div class="pill"><i></i> SkillNav 交互指南 · P2</div>
+  <h1>Token <em>经济学</em>计算器</h1>
+  <p>输入文本实时计数 Token，对比各模型价格，预估月度成本，掌握 5 大省钱策略。</p>
+</div>
+
+<div class="tabs">
+  <button class="tab on" onclick="sw('counter')">🔢 Token 计数器</button>
+  <button class="tab" onclick="sw('monthly')">📊 月度估算</button>
+  <button class="tab" onclick="sw('knowledge')">📖 Token 知识</button>
+  <button class="tab" onclick="sw('optimize')">💡 省钱策略</button>
+</div>
+
+<!-- ══ TOKEN COUNTER ══ -->
+<div class="pnl on" id="pnl-counter">
+  <div class="sec">
+    <h2>🔢 实时 Token 计数 & 价格对比</h2>
+    <div class="textarea-wrap">
+      <textarea id="inputText" placeholder="在此粘贴或输入文本，实时计算 Token 数量和各模型费用...&#10;&#10;提示：中文约 1.5-2 个 token/字，英文约 1.3 个 token/词。&#10;试试粘贴一段你的 System Prompt 或一篇文章看看成本。" oninput="countTokens()"></textarea>
+      <div class="counter" id="charCount">0 字符</div>
+    </div>
+  </div>
+
+  <div class="stats-row" id="statsRow">
+    <div class="stat-card"><div class="sv green" id="tokenCount">0</div><div class="sl">预估 Tokens</div></div>
+    <div class="stat-card"><div class="sv amber" id="charTotal">0</div><div class="sl">字符数</div></div>
+    <div class="stat-card"><div class="sv violet" id="wordTotal">0</div><div class="sl">词/字数</div></div>
+    <div class="stat-card"><div class="sv green" id="cheapestCost">$0</div><div class="sl">最低成本 (输入)</div></div>
+  </div>
+
+  <div class="sec">
+    <h2>💰 各模型输入成本对比</h2>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:14px">基于上方文本的 Token 数量，作为单次输入的费用</p>
+    <div class="price-bars" id="priceBars"></div>
+  </div>
+</div>
+
+<!-- ══ MONTHLY ESTIMATOR ══ -->
+<div class="pnl" id="pnl-monthly">
+  <div class="sec">
+    <h2>📊 月度成本估算器</h2>
+
+    <div class="input-grid">
+      <div class="field">
+        <label>日均请求数</label>
+        <input type="number" id="mReqs" value="5000" min="1" oninput="calcMonthly()">
+        <div class="hint">API 调用次数/天</div>
+      </div>
+      <div class="field">
+        <label>平均输入 Tokens / 请求</label>
+        <input type="number" id="mIn" value="1000" min="1" oninput="calcMonthly()">
+        <div class="hint">包含 System Prompt + 用户消息</div>
+      </div>
+      <div class="field">
+        <label>平均输出 Tokens / 请求</label>
+        <input type="number" id="mOut" value="500" min="1" oninput="calcMonthly()">
+        <div class="hint">模型生成的回复长度</div>
+      </div>
+      <div class="field">
+        <label>Prompt 缓存命中率</label>
+        <select id="mCache" onchange="calcMonthly()">
+          <option value="0">无缓存</option>
+          <option value="0.5">50% 命中</option>
+          <option value="0.7">70% 命中</option>
+          <option value="0.9" selected>90% 命中（推荐）</option>
+        </select>
+        <div class="hint">Claude/OpenAI 均支持 Prompt Caching</div>
+      </div>
+    </div>
+
+    <div style="font-size:12px;color:var(--muted);margin-bottom:8px;font-family:var(--mono)">
+      月请求量: <span id="mTotal" style="color:var(--text)">—</span> · 月消耗 Tokens: <span id="mTokens" style="color:var(--text)">—</span>
+    </div>
+
+    <table class="res-table" id="monthlyTable"></table>
+  </div>
+</div>
+
+<!-- ══ KNOWLEDGE ══ -->
+<div class="pnl" id="pnl-knowledge">
+  <div class="sec">
+    <h2>📖 Token 基础知识</h2>
+  </div>
+
+  <div class="know-grid">
+    <div class="know-card">
+      <h3>🔤 什么是 Token？</h3>
+      <div class="body">Token 是 LLM 处理文本的最小单位。不等于字符也不等于单词。一个英文单词通常是 1-3 个 token，一个中文字通常是 1.5-2 个 token。标点符号、空格也占 token。</div>
+    </div>
+    <div class="know-card">
+      <h3>📐 Token 估算经验</h3>
+      <div class="body">
+        英文：<code>1 token ≈ 4 字符 ≈ 0.75 词</code><br>
+        中文：<code>1 token ≈ 0.5-0.7 字</code><br>
+        代码：变量名和关键字通常各 1 token<br>
+        1000 tokens ≈ 750 英文词 ≈ 500-600 中文字
+      </div>
+    </div>
+    <div class="know-card">
+      <h3>💵 定价模型</h3>
+      <div class="body">
+        API 按 <code>$/百万 tokens</code> 计价。输入（prompt）和输出（completion）分开计费，输出通常贵 2-5 倍。因为输出需要逐 token 生成，计算量更大。
+      </div>
+    </div>
+    <div class="know-card">
+      <h3>📏 上下文窗口</h3>
+      <div class="body">
+        上下文窗口 = 输入 + 输出的 token 总上限。2026 年主流模型：128K-1M tokens。更大的窗口不等于更好 — 超长输入会增加成本和延迟，且「中间内容丢失」现象仍然存在。
+      </div>
+    </div>
+    <div class="know-card">
+      <h3>🔄 Prompt Caching</h3>
+      <div class="body">
+        将 System Prompt 等静态内容缓存，后续请求复用。Anthropic 可节省 <code>90% 输入成本</code> 和 <code>85% 延迟</code>。OpenAI 自动缓存可省 50%。<strong>这是 2026 年最重要的成本优化手段。</strong>
+      </div>
+    </div>
+    <div class="know-card">
+      <h3>📊 Batch API</h3>
+      <div class="body">
+        非实时任务（分析、分类、批量处理）可用 Batch API，24 小时内完成即可。Anthropic/OpenAI 均提供 <code>50% 折扣</code>，与 Prompt Caching 可叠加至 <code>95% 节省</code>。
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ OPTIMIZE ══ -->
+<div class="pnl" id="pnl-optimize">
+  <div class="sec">
+    <h2>💡 5 大省钱策略</h2>
+    <p style="font-size:13px;color:var(--dim);margin-bottom:16px">按 ROI 排序，从最容易实施到最复杂</p>
+  </div>
+
+  <div class="tip-list">
+    <div class="tip">
+      <div class="tip-icon">1️⃣</div>
+      <div class="tip-body">
+        <h4>选对模型 — 80% 任务不需要旗舰</h4>
+        <p>大多数生产负载（分类、摘要、简单对话）用 GPT-4.1 mini 或 Gemini Flash 就够了。只在需要深度推理时切到 Sonnet/Opus。实现模型路由：简单请求走便宜模型，复杂请求走旗舰。</p>
+        <div class="tip-save">💰 节省 80-95%（mini vs Opus）</div>
+      </div>
+    </div>
+    <div class="tip">
+      <div class="tip-icon">2️⃣</div>
+      <div class="tip-body">
+        <h4>启用 Prompt Caching — 零代码改动</h4>
+        <p>将 System Prompt、Few-shot 示例等静态内容放在消息最前面。Claude 和 OpenAI 自动识别可缓存内容。静态部分只计费一次，后续请求复用。</p>
+        <div class="tip-save">💰 节省 90% 输入成本 + 85% 延迟</div>
+      </div>
+    </div>
+    <div class="tip">
+      <div class="tip-icon">3️⃣</div>
+      <div class="tip-body">
+        <h4>Batch API — 非实时任务的杀手锏</h4>
+        <p>批量分类、数据标注、内容生成等不需要实时响应的任务，用 Batch API 提交。24 小时内完成，半价。可与 Prompt Caching 叠加。</p>
+        <div class="tip-save">💰 节省 50%，与缓存叠加最高 95%</div>
+      </div>
+    </div>
+    <div class="tip">
+      <div class="tip-icon">4️⃣</div>
+      <div class="tip-body">
+        <h4>压缩输入 — 少一个 token 就少一分钱</h4>
+        <p>在发送前压缩上下文：长文档先摘要再发给 LLM；去除无关的对话历史；用结构化格式（XML/JSON）替代冗长的自然语言描述。输入压缩 50% = 成本减半。</p>
+        <div class="tip-save">💰 节省 40-60% 输入成本</div>
+      </div>
+    </div>
+    <div class="tip">
+      <div class="tip-icon">5️⃣</div>
+      <div class="tip-body">
+        <h4>Fine-tune 小模型 — 终极成本优化</h4>
+        <p>当某类请求量极大且模式稳定时，收集数据 fine-tune 一个小模型（如 GPT-4o-mini 或 Llama 8B）。无需 RAG 检索开销，推理速度快 3-5 倍，成本降 10-50 倍。</p>
+        <div class="tip-save">💰 节省 90-98%（但需要前期投入）</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">Token 经济学计算器 · SkillNav · 定价数据来源：各厂商官方 API 文档 · 2026.03</div>
+</div>
+
+<script>
+// ═══════════════════
+// MODEL PRICING DATA (per 1M tokens, March 2026)
+// ═══════════════════
+const MODELS = [
+  {id:'ds32',name:'DeepSeek V3.2',icon:'🔷',input:0.14,output:0.28,cache:0.014},
+  {id:'gemflash',name:'Gemini 2.5 Flash',icon:'🔵',input:0.15,output:0.60,cache:0.02},
+  {id:'gpt41m',name:'GPT-4.1 mini',icon:'🟢',input:0.40,output:1.60,cache:0.04},
+  {id:'llama4',name:'Llama 4 Scout',icon:'🦙',input:0.11,output:0.34,cache:0},
+  {id:'haiku',name:'Claude Haiku 4.5',icon:'🟣',input:1.00,output:5.00,cache:0.10},
+  {id:'qwen',name:'Qwen 3.5',icon:'☁️',input:0.30,output:1.20,cache:0},
+  {id:'gpt41',name:'GPT-4.1',icon:'🟢',input:2.00,output:8.00,cache:0.20},
+  {id:'gemipro',name:'Gemini 2.5 Pro',icon:'🔵',input:1.25,output:10.00,cache:0.16},
+  {id:'sonnet',name:'Claude Sonnet 4.6',icon:'🟣',input:3.00,output:15.00,cache:0.30},
+  {id:'gpt54',name:'GPT-5.4',icon:'🟢',input:2.50,output:10.00,cache:0.25},
+  {id:'opus',name:'Claude Opus 4.6',icon:'🟣',input:5.00,output:25.00,cache:0.50},
+  {id:'o3',name:'o3',icon:'🟢',input:2.00,output:8.00,cache:0.20},
+];
+
+// ═══════════════════
+// NAV
+// ═══════════════════
+function sw(id){
+  document.querySelectorAll('.pnl').forEach(p=>p.classList.toggle('on',p.id==='pnl-'+id));
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));
+  event.target.classList.add('on');
+}
+
+// ═══════════════════
+// TOKEN COUNTER
+// ═══════════════════
+function estimateTokens(text){
+  if(!text) return 0;
+  // Heuristic: count Chinese chars, English words, punctuation
+  const chinese = (text.match(/[\u4e00-\u9fff\u3400-\u4dbf]/g)||[]).length;
+  const stripped = text.replace(/[\u4e00-\u9fff\u3400-\u4dbf]/g,' ');
+  const words = stripped.trim().split(/\s+/).filter(w=>w.length>0).length;
+  // Chinese: ~1.7 tokens/char, English: ~1.3 tokens/word
+  return Math.ceil(chinese * 1.7 + words * 1.3);
+}
+
+function countWords(text){
+  if(!text) return 0;
+  const chinese = (text.match(/[\u4e00-\u9fff\u3400-\u4dbf]/g)||[]).length;
+  const stripped = text.replace(/[\u4e00-\u9fff\u3400-\u4dbf]/g,' ');
+  const words = stripped.trim().split(/\s+/).filter(w=>w.length>0).length;
+  return chinese + words;
+}
+
+function countTokens(){
+  const text = document.getElementById('inputText').value;
+  const chars = text.length;
+  const tokens = estimateTokens(text);
+  const words = countWords(text);
+
+  document.getElementById('charCount').textContent = `${chars.toLocaleString()} 字符`;
+  document.getElementById('tokenCount').textContent = tokens.toLocaleString();
+  document.getElementById('charTotal').textContent = chars.toLocaleString();
+  document.getElementById('wordTotal').textContent = words.toLocaleString();
+
+  // Cheapest input cost
+  const cheapest = Math.min(...MODELS.map(m=>m.input));
+  const cheapCost = (tokens / 1_000_000 * cheapest);
+  document.getElementById('cheapestCost').textContent = cheapCost < 0.001 ? '<$0.001' : '$'+cheapCost.toFixed(4);
+
+  renderPriceBars(tokens);
+}
+
+function renderPriceBars(tokens){
+  const container = document.getElementById('priceBars');
+  if(tokens===0){
+    container.innerHTML='<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">输入文本后显示价格对比</div>';
+    return;
+  }
+
+  const costs = MODELS.map(m=>({...m, cost: tokens / 1_000_000 * m.input})).sort((a,b)=>a.cost-b.cost);
+  const maxCost = costs[costs.length-1].cost;
+
+  container.innerHTML = costs.map(m=>{
+    const pct = maxCost > 0 ? Math.max((m.cost/maxCost)*100, 8) : 8;
+    const tier = m.cost < maxCost*0.15 ? 'tier-cheap' : m.cost < maxCost*0.5 ? 'tier-mid' : 'tier-exp';
+    const costStr = m.cost < 0.001 ? '<$0.001' : '$'+m.cost.toFixed(4);
+    return `
+      <div class="pbar-row">
+        <div class="pbar-name"><span class="picon">${m.icon}</span>${m.name}</div>
+        <div class="pbar-track">
+          <div class="pbar-fill ${tier}" style="width:${pct}%">${costStr}</div>
+        </div>
+        <div class="pbar-val">$${m.input}/M</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ═══════════════════
+// MONTHLY ESTIMATOR
+// ═══════════════════
+function calcMonthly(){
+  const reqs = parseInt(document.getElementById('mReqs').value)||0;
+  const inTok = parseInt(document.getElementById('mIn').value)||0;
+  const outTok = parseInt(document.getElementById('mOut').value)||0;
+  const cacheRate = parseFloat(document.getElementById('mCache').value);
+
+  const monthly = reqs * 30;
+  const totalTokens = monthly * (inTok + outTok);
+
+  document.getElementById('mTotal').textContent = monthly.toLocaleString() + ' 次';
+  document.getElementById('mTokens').textContent = (totalTokens/1_000_000).toFixed(1) + 'M tokens';
+
+  const inM = (monthly * inTok) / 1_000_000;
+  const outM = (monthly * outTok) / 1_000_000;
+
+  const rows = MODELS.map(m=>{
+    const cachedIn = inM * cacheRate;
+    const uncachedIn = inM * (1 - cacheRate);
+    const inputCost = uncachedIn * m.input + cachedIn * (m.cache || m.input * 0.1);
+    const outputCost = outM * m.output;
+    const total = inputCost + outputCost;
+    const noCacheTotal = inM * m.input + outM * m.output;
+    const saved = noCacheTotal > 0 ? ((1 - total/noCacheTotal)*100).toFixed(0) : 0;
+    return {...m, total, noCacheTotal, saved};
+  }).sort((a,b)=>a.total-b.total);
+
+  const cheapest = rows[0].total;
+
+  document.getElementById('monthlyTable').innerHTML = `
+    <thead><tr>
+      <th></th><th>模型</th><th>无缓存/月</th><th>含缓存/月</th><th>缓存节省</th><th>vs 最便宜</th>
+    </tr></thead>
+    <tbody>${rows.map((m,i)=>{
+      const cls = m.total < 50 ? 'cheap' : m.total < 500 ? 'mid' : 'exp';
+      const mult = cheapest > 0 ? (m.total/cheapest).toFixed(1) : '-';
+      return `<tr>
+        <td class="icon-col">${m.icon}</td>
+        <td style="font-weight:600">${m.name}</td>
+        <td style="color:var(--muted);font-family:var(--mono);font-size:12px">$${m.noCacheTotal.toFixed(2)}</td>
+        <td><span class="cost ${cls}">$${m.total < 1 ? m.total.toFixed(3) : m.total.toFixed(2)}</span></td>
+        <td class="savings">${cacheRate > 0 && m.cache > 0 ? '-'+m.saved+'%' : m.cache > 0 ? '—' : '不支持'}</td>
+        <td style="font-family:var(--mono);font-size:12px;color:var(--muted)">${i===0?'基准':mult+'x'}</td>
+      </tr>`;
+    }).join('')}</tbody>
+  `;
+}
+
+// ═══════════════════
+// INIT
+// ═══════════════════
+countTokens();
+renderPriceBars(0);
+calcMonthly();
+</script>
+</body>
+</html>

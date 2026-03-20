@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LLM 选型指南 — 交互式筛选器</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap');
+:root{
+  --bg:#050508;--bg2:#0a0a12;--bg3:#0f0f18;--bg4:#151520;--bg5:#1c1c2a;
+  --text:#e0def0;--dim:#8886a0;--muted:#504e68;
+  --border:#1a1a2e;--border2:#282840;
+  --cyan:#06d6a0;--cyan-bg:rgba(6,214,160,.07);--cyan-b:rgba(6,214,160,.3);
+  --amber:#ffd166;--amber-bg:rgba(255,209,102,.07);--amber-b:rgba(255,209,102,.3);
+  --rose:#ef476f;--rose-bg:rgba(239,71,111,.07);
+  --violet:#8338ec;--violet-bg:rgba(131,56,236,.07);--violet-b:rgba(131,56,236,.3);
+  --blue:#118ab2;--blue-bg:rgba(17,138,178,.07);
+  --orange:#f77f00;--orange-bg:rgba(247,127,0,.07);
+  --green:#34d399;
+  --r:10px;--mono:'IBM Plex Mono',monospace;--sans:'Noto Sans SC',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.65;-webkit-font-smoothing:antialiased}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 30% 20%,rgba(6,214,160,.03) 0%,transparent 50%),radial-gradient(ellipse at 70% 80%,rgba(131,56,236,.03) 0%,transparent 50%);pointer-events:none}
+.w{max-width:1060px;margin:0 auto;padding:0 20px;position:relative;z-index:1}
+
+.hero{padding:56px 0 32px;text-align:center}
+.hero .pill{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:100px;background:var(--cyan-bg);border:1px solid var(--cyan-b);font-size:12px;font-family:var(--mono);color:var(--cyan);margin-bottom:16px}
+.hero .pill i{width:5px;height:5px;border-radius:50%;background:var(--cyan);animation:p 2s infinite}
+@keyframes p{0%,100%{opacity:1}50%{opacity:.3}}
+.hero h1{font-size:clamp(28px,5vw,46px);font-weight:900;line-height:1.15;margin-bottom:10px}
+.hero h1 em{font-style:normal;background:linear-gradient(135deg,var(--cyan),var(--amber),var(--violet));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{color:var(--dim);font-size:15px;max-width:600px;margin:0 auto;font-weight:300}
+
+/* Filters */
+.filter-bar{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:24px}
+.filter-row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.filter-row:last-child{margin-bottom:0}
+.filter-label{font-size:12px;color:var(--muted);font-family:var(--mono);min-width:70px;text-transform:uppercase;letter-spacing:.5px}
+.filter-pills{display:flex;gap:6px;flex-wrap:wrap}
+.fpill{padding:5px 13px;border-radius:100px;border:1px solid var(--border);background:none;color:var(--dim);font-size:12px;cursor:pointer;font-family:var(--sans);transition:all .3s}
+.fpill:hover{border-color:var(--border2);color:var(--text)}
+.fpill.on{background:var(--cyan-bg);border-color:var(--cyan-b);color:var(--cyan)}
+
+/* Sort */
+.sort-row{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.sort-label{font-size:12px;color:var(--muted);font-family:var(--mono)}
+.sort-btn{padding:4px 12px;border-radius:6px;border:1px solid var(--border);background:none;color:var(--dim);font-size:11px;cursor:pointer;font-family:var(--mono);transition:all .3s}
+.sort-btn:hover{border-color:var(--border2)}
+.sort-btn.on{background:var(--violet-bg);border-color:var(--violet-b);color:var(--violet)}
+.result-count{margin-left:auto;font-size:12px;color:var(--muted);font-family:var(--mono)}
+
+/* Cards */
+.model-list{display:flex;flex-direction:column;gap:12px;margin-bottom:32px}
+
+.model-card{background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r);padding:20px;transition:all .3s;cursor:default}
+.model-card:hover{border-color:var(--border2);box-shadow:0 4px 20px rgba(0,0,0,.3)}
+
+.mc-top{display:flex;align-items:center;gap:14px;margin-bottom:12px;flex-wrap:wrap}
+.mc-icon{font-size:24px}
+.mc-name{font-size:17px;font-weight:700;flex:1}
+.mc-tier{font-size:10px;font-family:var(--mono);padding:3px 8px;border-radius:4px;font-weight:600}
+.tier-s{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-b)}
+.tier-a{background:var(--cyan-bg);color:var(--cyan);border:1px solid var(--cyan-b)}
+.tier-b{background:var(--violet-bg);color:var(--violet);border:1px solid var(--violet-b)}
+.tier-c{background:rgba(255,255,255,.05);color:var(--dim);border:1px solid var(--border)}
+.mc-provider{font-size:12px;color:var(--muted);font-family:var(--mono)}
+
+.mc-stats{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px}
+.mc-stat{font-size:12px;color:var(--dim)}
+.mc-stat span{color:var(--text);font-weight:600;font-family:var(--mono)}
+.mc-stat .price-val{color:var(--green)}
+
+.mc-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.mc-tag{padding:3px 10px;border-radius:100px;font-size:11px;border:1px solid var(--border);color:var(--muted)}
+
+.mc-desc{font-size:13px;color:var(--dim);line-height:1.6}
+.mc-best{font-size:12px;color:var(--cyan);margin-top:8px;font-weight:500}
+
+/* Quick rec */
+.quick-rec{background:var(--bg2);border:1.5px solid var(--cyan-b);border-radius:var(--r);padding:24px;margin-bottom:28px}
+.quick-rec h2{font-size:18px;font-weight:700;margin-bottom:14px;color:var(--cyan)}
+.rec-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.rec-item{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px 16px}
+.rec-item .rec-scene{font-size:11px;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.rec-item .rec-model{font-size:15px;font-weight:700;margin-bottom:2px}
+.rec-item .rec-why{font-size:12px;color:var(--dim);line-height:1.5}
+.rec-item .rec-price{font-size:11px;color:var(--green);font-family:var(--mono);margin-top:4px}
+
+/* Cost calculator */
+.calc-box{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:24px;margin-bottom:28px}
+.calc-box h2{font-size:18px;font-weight:700;margin-bottom:16px}
+.calc-row{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+.calc-row label{font-size:13px;color:var(--dim);min-width:140px}
+.calc-input{padding:7px 12px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-family:var(--mono);font-size:13px;width:140px;outline:none}
+.calc-input:focus{border-color:var(--cyan)}
+.calc-result{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:16px;margin-top:12px}
+.calc-result .cr-total{font-size:28px;font-weight:900;font-family:var(--mono);color:var(--green)}
+.calc-result .cr-label{font-size:12px;color:var(--muted)}
+.calc-models{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:12px}
+.calc-m{padding:10px 14px;border-radius:8px;background:var(--bg4);border:1px solid var(--border)}
+.calc-m .cm-name{font-size:13px;font-weight:600;margin-bottom:2px}
+.calc-m .cm-cost{font-family:var(--mono);font-size:16px;font-weight:700}
+.calc-m .cm-cost.cheap{color:var(--green)}
+.calc-m .cm-cost.mid{color:var(--amber)}
+.calc-m .cm-cost.expensive{color:var(--rose)}
+
+.footer{text-align:center;padding:32px 0 52px;color:var(--muted);font-size:12px;border-top:1px solid var(--border);margin-top:16px}
+
+@media(max-width:640px){
+  .mc-stats{flex-direction:column;gap:6px}
+  .calc-row{flex-direction:column;gap:6px}
+  .calc-row label{min-width:auto}
+  .calc-input{width:100%}
+}
+</style>
+</head>
+<body>
+<div class="w">
+
+<div class="hero">
+  <div class="pill"><i></i> SkillNav 交互指南 · P1</div>
+  <h1>LLM <em>选型指南</em></h1>
+  <p>按用途、预算、延迟需求筛选，实时对比 14 款主流大模型。数据更新至 2026 年 3 月。</p>
+</div>
+
+<!-- Quick Recommendations -->
+<div class="quick-rec">
+  <h2>⚡ 快速推荐（2026.03）</h2>
+  <div class="rec-grid">
+    <div class="rec-item">
+      <div class="rec-scene">极致性价比</div>
+      <div class="rec-model">DeepSeek V3.2</div>
+      <div class="rec-why">$0.14/M 输入，质量接近 GPT-4o，80% 场景够用</div>
+      <div class="rec-price">$0.14 / $0.28 per 1M tokens</div>
+    </div>
+    <div class="rec-item">
+      <div class="rec-scene">最强编程</div>
+      <div class="rec-model">Claude Sonnet 4.6</div>
+      <div class="rec-why">SWE-bench 领先，Agent 编程首选</div>
+      <div class="rec-price">$3.00 / $15.00 per 1M tokens</div>
+    </div>
+    <div class="rec-item">
+      <div class="rec-scene">最强推理</div>
+      <div class="rec-model">Claude Opus 4.6</div>
+      <div class="rec-why">复杂分析、研究、长文档处理</div>
+      <div class="rec-price">$5.00 / $25.00 per 1M tokens</div>
+    </div>
+    <div class="rec-item">
+      <div class="rec-scene">免费原型</div>
+      <div class="rec-model">Gemini 2.5 Flash</div>
+      <div class="rec-why">免费层慷慨，多模态支持强</div>
+      <div class="rec-price">免费层可用 / $0.15 per 1M</div>
+    </div>
+    <div class="rec-item">
+      <div class="rec-scene">私有部署</div>
+      <div class="rec-model">Llama 4 Scout</div>
+      <div class="rec-why">10M 上下文，开源可自托管</div>
+      <div class="rec-price">开源免费 / API ~$0.11</div>
+    </div>
+    <div class="rec-item">
+      <div class="rec-scene">企业安全首选</div>
+      <div class="rec-model">GPT-4.1</div>
+      <div class="rec-why">Azure 合规，企业级 SLA</div>
+      <div class="rec-price">$2.00 / $8.00 per 1M tokens</div>
+    </div>
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="filter-bar">
+  <div class="filter-row">
+    <span class="filter-label">用途</span>
+    <div class="filter-pills" id="filterUse"></div>
+  </div>
+  <div class="filter-row">
+    <span class="filter-label">预算</span>
+    <div class="filter-pills" id="filterBudget"></div>
+  </div>
+  <div class="filter-row">
+    <span class="filter-label">来源</span>
+    <div class="filter-pills" id="filterSource"></div>
+  </div>
+</div>
+
+<div class="sort-row">
+  <span class="sort-label">排序：</span>
+  <button class="sort-btn on" onclick="setSort('tier')">综合评级</button>
+  <button class="sort-btn" onclick="setSort('price')">价格低→高</button>
+  <button class="sort-btn" onclick="setSort('context')">上下文大→小</button>
+  <span class="result-count" id="resultCount"></span>
+</div>
+
+<div class="model-list" id="modelList"></div>
+
+<!-- Cost Calculator -->
+<div class="calc-box">
+  <h2>💰 月度成本估算器</h2>
+  <div class="calc-row">
+    <label>日均请求数</label>
+    <input class="calc-input" type="number" id="calcReqs" value="1000" min="1" oninput="calcCost()">
+  </div>
+  <div class="calc-row">
+    <label>平均输入 tokens/次</label>
+    <input class="calc-input" type="number" id="calcIn" value="800" min="1" oninput="calcCost()">
+  </div>
+  <div class="calc-row">
+    <label>平均输出 tokens/次</label>
+    <input class="calc-input" type="number" id="calcOut" value="400" min="1" oninput="calcCost()">
+  </div>
+  <div class="calc-result">
+    <div class="cr-label">月度成本对比（30 天）</div>
+    <div class="calc-models" id="calcModels"></div>
+  </div>
+</div>
+
+<div class="footer">LLM 选型指南 · SkillNav · 定价数据来源：各厂商官方 API 文档 · 2026.03</div>
+</div>
+
+<script>
+// ═══════════════════
+// MODEL DATA
+// ═══════════════════
+const MODELS = [
+  {
+    id:'opus46',name:'Claude Opus 4.6',provider:'Anthropic',icon:'🟣',
+    tier:'S',tierLabel:'S 级',
+    input:5,output:25,context:200,contextLabel:'200K',
+    open:false,
+    tags:['编程','推理','写作','Agent','多模态'],
+    uses:['coding','reasoning','writing','agent','multimodal'],
+    budget:'premium',source:'closed',
+    desc:'Anthropic 最强模型。复杂推理、研究分析、长文档处理顶级。Adaptive Reasoning 支持动态调整思考深度。',
+    best:'复杂分析、研究任务、需要最高质量输出的场景'
+  },
+  {
+    id:'sonnet46',name:'Claude Sonnet 4.6',provider:'Anthropic',icon:'🟣',
+    tier:'S',tierLabel:'S 级',
+    input:3,output:15,context:200,contextLabel:'200K',
+    open:false,
+    tags:['编程','推理','Agent','写作'],
+    uses:['coding','reasoning','agent','writing'],
+    budget:'mid',source:'closed',
+    desc:'编程和 Agent 任务的标杆。SWE-bench 持续领先，是 Claude Code 和 Cursor 的默认模型。性能/成本最佳平衡。',
+    best:'日常编程、Agent 开发、生产级应用的首选'
+  },
+  {
+    id:'haiku45',name:'Claude Haiku 4.5',provider:'Anthropic',icon:'🟣',
+    tier:'A',tierLabel:'A 级',
+    input:1,output:5,context:200,contextLabel:'200K',
+    open:false,
+    tags:['分类','摘要','速度快'],
+    uses:['writing','reasoning'],
+    budget:'budget',source:'closed',
+    desc:'Claude 家族的预算选项。适合分类、摘要、简单对话等不需要深度推理的高吞吐任务。',
+    best:'高 QPS 场景、分类/摘要、成本敏感的生产部署'
+  },
+  {
+    id:'gpt54',name:'GPT-5.4',provider:'OpenAI',icon:'🟢',
+    tier:'S',tierLabel:'S 级',
+    input:2.5,output:10,context:1000,contextLabel:'1M',
+    open:false,
+    tags:['推理','编程','多模态','写作'],
+    uses:['coding','reasoning','writing','multimodal'],
+    budget:'mid',source:'closed',
+    desc:'OpenAI 最新旗舰。1M 上下文窗口，多模态原生支持。AIME 2026 数学推理满分。路由式架构自动调度推理深度。',
+    best:'需要超长上下文、多模态输入、通用型旗舰任务'
+  },
+  {
+    id:'gpt41',name:'GPT-4.1',provider:'OpenAI',icon:'🟢',
+    tier:'A',tierLabel:'A 级',
+    input:2,output:8,context:1000,contextLabel:'1M',
+    open:false,
+    tags:['编程','写作','企业'],
+    uses:['coding','writing'],
+    budget:'mid',source:'closed',
+    desc:'OpenAI 的可靠工作马。1M 上下文，Azure 企业级 SLA。指令遵循能力强，长文本处理稳定。',
+    best:'企业级部署、Azure 生态用户、需要稳定 SLA 的场景'
+  },
+  {
+    id:'gpt41mini',name:'GPT-4.1 mini',provider:'OpenAI',icon:'🟢',
+    tier:'B',tierLabel:'B 级',
+    input:0.4,output:1.6,context:1000,contextLabel:'1M',
+    open:false,
+    tags:['速度快','低成本','分类'],
+    uses:['writing','reasoning'],
+    budget:'budget',source:'closed',
+    desc:'OpenAI 的性价比之选。1M 上下文 + 极低价格。70-80% 的生产负载用 mini 即可完成。',
+    best:'高吞吐生产环境、成本敏感、快速分类/摘要'
+  },
+  {
+    id:'o3',name:'o3',provider:'OpenAI',icon:'🟢',
+    tier:'S',tierLabel:'S 级',
+    input:2,output:8,context:200,contextLabel:'200K',
+    open:false,
+    tags:['深度推理','数学','科学'],
+    uses:['reasoning'],
+    budget:'premium',source:'closed',
+    desc:'OpenAI 推理专用模型。用于数学证明、科学推理、复杂逻辑等需要深度思考的任务。注意：thinking tokens 额外计费。',
+    best:'数学/科学推理、复杂逻辑问题、研究用途'
+  },
+  {
+    id:'gemini25pro',name:'Gemini 2.5 Pro',provider:'Google',icon:'🔵',
+    tier:'A',tierLabel:'A 级',
+    input:1.25,output:10,context:1000,contextLabel:'1M',
+    open:false,
+    tags:['多模态','推理','长上下文'],
+    uses:['reasoning','multimodal','writing'],
+    budget:'mid',source:'closed',
+    desc:'Google 旗舰。1M 原生上下文，多模态能力强（文本/图像/视频/音频）。Google Workspace 生态深度集成。',
+    best:'多模态任务、Google 生态用户、需要超长上下文的分析'
+  },
+  {
+    id:'gemini25flash',name:'Gemini 2.5 Flash',provider:'Google',icon:'🔵',
+    tier:'A',tierLabel:'A 级',
+    input:0.15,output:0.60,context:1000,contextLabel:'1M',
+    open:false,
+    tags:['速度快','低成本','免费层','多模态'],
+    uses:['writing','multimodal'],
+    budget:'free',source:'closed',
+    desc:'Google 性价比怪兽。1M 上下文 + 免费层（5-15 RPM）。原型开发和低流量应用的最佳起点。',
+    best:'原型开发、免费起步、需要多模态但预算有限'
+  },
+  {
+    id:'deepseek',name:'DeepSeek V3.2',provider:'DeepSeek',icon:'🔷',
+    tier:'A',tierLabel:'A 级',
+    input:0.14,output:0.28,context:128,contextLabel:'128K',
+    open:true,
+    tags:['极低成本','推理','编程','开源'],
+    uses:['coding','reasoning','writing'],
+    budget:'free',source:'open',
+    desc:'极致性价比。统一了 chat 和 reasoning 能力，缓存命中再省 90%。开源可自部署。质量接近 GPT-4o 级别。',
+    best:'成本敏感的生产环境、高 QPS 场景、需要性价比最大化'
+  },
+  {
+    id:'deepseekr1',name:'DeepSeek R1',provider:'DeepSeek',icon:'🔷',
+    tier:'A',tierLabel:'A 级',
+    input:0.55,output:2.19,context:128,contextLabel:'128K',
+    open:true,
+    tags:['深度推理','数学','开源'],
+    uses:['reasoning'],
+    budget:'budget',source:'open',
+    desc:'开源推理模型标杆。671B 参数 MoE 架构，数学和逻辑推理接近 o1 水平。可自托管。',
+    best:'需要强推理能力但不想用闭源模型、学术研究'
+  },
+  {
+    id:'llama4',name:'Llama 4 Scout',provider:'Meta',icon:'🦙',
+    tier:'B',tierLabel:'B 级',
+    input:0.11,output:0.34,context:10000,contextLabel:'10M',
+    open:true,
+    tags:['开源','超长上下文','速度快','自托管'],
+    uses:['writing','coding'],
+    budget:'free',source:'open',
+    desc:'Meta 最新开源。10M 超长上下文窗口（业界最大）。2600 tokens/s 的极快推理速度。可完全自托管。',
+    best:'需要超长上下文、私有部署、数据不出境的场景'
+  },
+  {
+    id:'mistral',name:'Mistral Large',provider:'Mistral',icon:'Ⓜ️',
+    tier:'A',tierLabel:'A 级',
+    input:2,output:6,context:128,contextLabel:'128K',
+    open:false,
+    tags:['多语言','编程','欧洲合规'],
+    uses:['coding','writing','reasoning'],
+    budget:'mid',source:'closed',
+    desc:'欧洲领先的 AI 厂商。多语言能力突出，GDPR 友好。适合需要欧洲数据驻留的企业。',
+    best:'欧洲市场、GDPR 合规要求、多语言场景'
+  },
+  {
+    id:'qwen35',name:'Qwen 3.5',provider:'阿里云',icon:'☁️',
+    tier:'A',tierLabel:'A 级',
+    input:0.30,output:1.20,context:128,contextLabel:'128K',
+    open:true,
+    tags:['中文强','编程','开源','推理'],
+    uses:['coding','reasoning','writing'],
+    budget:'budget',source:'open',
+    desc:'中文领域最强开源模型之一。397B MoE 架构，中英双语能力均衡。阿里云生态集成紧密。',
+    best:'中文场景首选、阿里云用户、需要开源且中文能力强'
+  },
+];
+
+const FILTERS = {
+  use:[
+    {id:'coding',label:'💻 编程'},{id:'reasoning',label:'🧠 推理'},
+    {id:'writing',label:'✍️ 写作'},{id:'agent',label:'🤖 Agent'},
+    {id:'multimodal',label:'🖼️ 多模态'},
+  ],
+  budget:[
+    {id:'free',label:'🆓 免费/极低'},{id:'budget',label:'💰 预算型 (<$5/M)'},
+    {id:'mid',label:'💎 中端 ($5-20/M)'},{id:'premium',label:'👑 旗舰 ($20+/M)'},
+  ],
+  source:[
+    {id:'closed',label:'🔒 闭源 API'},{id:'open',label:'🔓 开源可部署'},
+  ]
+};
+
+// ═══════════════════
+// STATE
+// ═══════════════════
+let activeFilters = {use:new Set(),budget:new Set(),source:new Set()};
+let sortBy = 'tier';
+
+// ═══════════════════
+// RENDER
+// ═══════════════════
+function renderFilters(){
+  Object.entries(FILTERS).forEach(([key, items])=>{
+    const container = document.getElementById('filter'+key.charAt(0).toUpperCase()+key.slice(1));
+    container.innerHTML = items.map(f=>`
+      <button class="fpill ${activeFilters[key].has(f.id)?'on':''}" onclick="toggleFilter('${key}','${f.id}',this)">${f.label}</button>
+    `).join('');
+  });
+}
+
+function toggleFilter(key,id,btn){
+  if(activeFilters[key].has(id)) activeFilters[key].delete(id);
+  else activeFilters[key].add(id);
+  btn.classList.toggle('on');
+  renderModels();
+}
+
+function setSort(s){
+  sortBy=s;
+  document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('on'));
+  event.target.classList.add('on');
+  renderModels();
+}
+
+function renderModels(){
+  let filtered = MODELS.filter(m=>{
+    if(activeFilters.use.size>0 && !m.uses.some(u=>activeFilters.use.has(u))) return false;
+    if(activeFilters.budget.size>0 && !activeFilters.budget.has(m.budget)) return false;
+    if(activeFilters.source.size>0){
+      const src = m.open?'open':'closed';
+      if(!activeFilters.source.has(src)) return false;
+    }
+    return true;
+  });
+
+  const tierOrder={S:0,A:1,B:2,C:3};
+  if(sortBy==='tier') filtered.sort((a,b)=>tierOrder[a.tier]-tierOrder[b.tier]);
+  else if(sortBy==='price') filtered.sort((a,b)=>a.input-b.input);
+  else if(sortBy==='context') filtered.sort((a,b)=>b.context-a.context);
+
+  document.getElementById('resultCount').textContent=`${filtered.length} / ${MODELS.length} 个模型`;
+
+  document.getElementById('modelList').innerHTML = filtered.length===0
+    ? '<div style="text-align:center;padding:40px;color:var(--muted)">没有匹配的模型，请调整筛选条件</div>'
+    : filtered.map(m=>{
+    const tierCls = {S:'tier-s',A:'tier-a',B:'tier-b',C:'tier-c'}[m.tier];
+    const blended = ((m.input*3+m.output)/4).toFixed(2);
+    return `
+      <div class="model-card">
+        <div class="mc-top">
+          <span class="mc-icon">${m.icon}</span>
+          <span class="mc-name">${m.name}</span>
+          <span class="mc-tier ${tierCls}">${m.tierLabel}</span>
+          <span class="mc-provider">${m.provider}</span>
+        </div>
+        <div class="mc-stats">
+          <div class="mc-stat">输入 <span class="price-val">$${m.input}/M</span></div>
+          <div class="mc-stat">输出 <span class="price-val">$${m.output}/M</span></div>
+          <div class="mc-stat">混合 <span class="price-val">~$${blended}/M</span></div>
+          <div class="mc-stat">上下文 <span>${m.contextLabel}</span></div>
+          <div class="mc-stat">${m.open?'🔓 开源':'🔒 闭源'}</div>
+        </div>
+        <div class="mc-tags">${m.tags.map(t=>`<span class="mc-tag">${t}</span>`).join('')}</div>
+        <div class="mc-desc">${m.desc}</div>
+        <div class="mc-best">🎯 最佳场景：${m.best}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ═══════════════════
+// COST CALCULATOR
+// ═══════════════════
+function calcCost(){
+  const reqs = parseInt(document.getElementById('calcReqs').value)||0;
+  const inTok = parseInt(document.getElementById('calcIn').value)||0;
+  const outTok = parseInt(document.getElementById('calcOut').value)||0;
+  const monthly = reqs * 30;
+  const inM = (monthly * inTok) / 1_000_000;
+  const outM = (monthly * outTok) / 1_000_000;
+
+  const calcModels = [
+    {name:'DeepSeek V3.2',i:0.14,o:0.28,icon:'🔷'},
+    {name:'Gemini 2.5 Flash',i:0.15,o:0.60,icon:'🔵'},
+    {name:'GPT-4.1 mini',i:0.40,o:1.60,icon:'🟢'},
+    {name:'Claude Haiku 4.5',i:1.00,o:5.00,icon:'🟣'},
+    {name:'Claude Sonnet 4.6',i:3.00,o:15.00,icon:'🟣'},
+    {name:'GPT-5.4',i:2.50,o:10.00,icon:'🟢'},
+    {name:'Claude Opus 4.6',i:5.00,o:25.00,icon:'🟣'},
+  ];
+
+  const results = calcModels.map(m=>{
+    const cost = inM * m.i + outM * m.o;
+    return {...m, cost};
+  }).sort((a,b)=>a.cost-b.cost);
+
+  const maxCost = results[results.length-1].cost;
+
+  document.getElementById('calcModels').innerHTML = results.map(m=>{
+    const cls = m.cost < 10 ? 'cheap' : m.cost < 100 ? 'mid' : 'expensive';
+    return `
+      <div class="calc-m">
+        <div class="cm-name">${m.icon} ${m.name}</div>
+        <div class="cm-cost ${cls}">$${m.cost<1?m.cost.toFixed(3):m.cost.toFixed(2)}/月</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ═══════════════════
+// INIT
+// ═══════════════════
+renderFilters();
+renderModels();
+calcCost();
+</script>
+</body>
+</html>

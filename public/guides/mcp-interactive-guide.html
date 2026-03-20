@@ -1,0 +1,1475 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MCP 实战手册 — 交互式配置模拟器</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-primary: #0a0a0f;
+  --bg-secondary: #12121a;
+  --bg-tertiary: #1a1a26;
+  --bg-card: #16161f;
+  --bg-hover: #1e1e2a;
+  --text-primary: #e8e6f0;
+  --text-secondary: #9896a8;
+  --text-muted: #5e5c6e;
+  --accent-cyan: #00d4ff;
+  --accent-cyan-dim: #00d4ff33;
+  --accent-green: #00ff88;
+  --accent-green-dim: #00ff8833;
+  --accent-orange: #ff8c42;
+  --accent-orange-dim: #ff8c4233;
+  --accent-purple: #a78bfa;
+  --accent-purple-dim: #a78bfa33;
+  --accent-red: #ff5f6d;
+  --accent-yellow: #ffd700;
+  --border: #2a2a3a;
+  --border-light: #3a3a4a;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --radius-lg: 16px;
+  --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  --shadow-glow-cyan: 0 0 30px rgba(0,212,255,0.15);
+  --shadow-glow-green: 0 0 30px rgba(0,255,136,0.15);
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-sans: 'Noto Sans SC', sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  line-height: 1.7;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Animated background */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background:
+    radial-gradient(ellipse at 20% 20%, rgba(0,212,255,0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, rgba(167,139,250,0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(0,255,136,0.03) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ─── Hero ─── */
+.hero {
+  position: relative;
+  padding: 80px 24px 60px;
+  text-align: center;
+  z-index: 1;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  background: var(--accent-cyan-dim);
+  border: 1px solid rgba(0,212,255,0.3);
+  border-radius: 100px;
+  font-size: 13px;
+  color: var(--accent-cyan);
+  font-weight: 500;
+  margin-bottom: 24px;
+  font-family: var(--font-mono);
+  letter-spacing: 0.5px;
+}
+
+.hero-badge .dot {
+  width: 6px; height: 6px;
+  background: var(--accent-cyan);
+  border-radius: 50%;
+  animation: pulse-dot 2s infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.5); }
+}
+
+.hero h1 {
+  font-size: clamp(36px, 6vw, 64px);
+  font-weight: 900;
+  line-height: 1.15;
+  margin-bottom: 16px;
+  letter-spacing: -1px;
+}
+
+.hero h1 .gradient {
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple), var(--accent-green));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hero p {
+  font-size: 18px;
+  color: var(--text-secondary);
+  max-width: 600px;
+  margin: 0 auto 40px;
+  font-weight: 300;
+}
+
+/* ─── Container ─── */
+.container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 24px 80px;
+  position: relative;
+  z-index: 1;
+}
+
+/* ─── Progress Bar ─── */
+.progress-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 48px;
+}
+
+.progress-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.progress-step .num {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  background: var(--bg-tertiary);
+  border: 2px solid var(--border);
+  color: var(--text-muted);
+  transition: all 0.4s;
+  flex-shrink: 0;
+}
+
+.progress-step.active .num {
+  background: var(--accent-cyan);
+  border-color: var(--accent-cyan);
+  color: var(--bg-primary);
+  box-shadow: 0 0 20px rgba(0,212,255,0.4);
+}
+
+.progress-step.done .num {
+  background: var(--accent-green);
+  border-color: var(--accent-green);
+  color: var(--bg-primary);
+}
+
+.progress-step .label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  transition: color 0.3s;
+  white-space: nowrap;
+}
+
+.progress-step.active .label,
+.progress-step.done .label {
+  color: var(--text-primary);
+}
+
+.progress-line {
+  width: 48px;
+  height: 2px;
+  background: var(--border);
+  margin: 0 8px;
+  transition: background 0.4s;
+  flex-shrink: 0;
+}
+
+.progress-line.filled {
+  background: var(--accent-green);
+}
+
+/* ─── Panels ─── */
+.panel {
+  display: none;
+  animation: fadeSlideIn 0.5s ease;
+}
+
+.panel.active {
+  display: block;
+}
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.panel-header {
+  margin-bottom: 32px;
+}
+
+.panel-header .step-label {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--accent-cyan);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.panel-header h2 {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.panel-header p {
+  color: var(--text-secondary);
+  font-size: 15px;
+}
+
+/* ─── Cards Grid ─── */
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.card {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: transparent;
+  transition: background 0.3s;
+}
+
+.card:hover {
+  border-color: var(--border-light);
+  background: var(--bg-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+.card.selected {
+  border-color: var(--accent-cyan);
+  background: rgba(0,212,255,0.05);
+}
+
+.card.selected::before {
+  background: var(--accent-cyan);
+}
+
+.card .icon {
+  font-size: 32px;
+  margin-bottom: 12px;
+  display: block;
+}
+
+.card h3 {
+  font-size: 17px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.card .desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.card .tag {
+  display: inline-block;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  padding: 3px 8px;
+  border-radius: 4px;
+  margin-top: 10px;
+  background: var(--accent-cyan-dim);
+  color: var(--accent-cyan);
+}
+
+.card .tag.green { background: var(--accent-green-dim); color: var(--accent-green); }
+.card .tag.orange { background: var(--accent-orange-dim); color: var(--accent-orange); }
+.card .tag.purple { background: var(--accent-purple-dim); color: var(--accent-purple); }
+
+/* ─── Server selector ─── */
+.server-card {
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.server-card .server-icon {
+  width: 44px; height: 44px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.server-card .server-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.server-card .server-info h3 {
+  font-size: 15px;
+  margin-bottom: 2px;
+}
+
+.server-card .server-info .desc {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.server-card .check {
+  width: 22px; height: 22px;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.3s;
+  font-size: 12px;
+  color: transparent;
+}
+
+.server-card.selected .check {
+  border-color: var(--accent-green);
+  background: var(--accent-green);
+  color: var(--bg-primary);
+}
+
+.server-categories {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.cat-btn {
+  padding: 6px 14px;
+  border-radius: 100px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-family: var(--font-sans);
+}
+
+.cat-btn:hover { border-color: var(--border-light); color: var(--text-primary); }
+.cat-btn.active {
+  background: var(--accent-cyan-dim);
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+}
+
+/* ─── Config Output ─── */
+.config-block {
+  background: #0d0d14;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.config-block .toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border);
+}
+
+.config-block .toolbar .file-name {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.config-block .toolbar .file-name .dot-group {
+  display: flex; gap: 6px;
+}
+
+.config-block .toolbar .file-name .dot-group span {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+}
+
+.config-block .toolbar .file-name .dot-group span:nth-child(1) { background: #ff5f57; }
+.config-block .toolbar .file-name .dot-group span:nth-child(2) { background: #febc2e; }
+.config-block .toolbar .file-name .dot-group span:nth-child(3) { background: #28c840; }
+
+.copy-btn {
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-family: var(--font-mono);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.copy-btn:hover {
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+}
+
+.copy-btn.copied {
+  border-color: var(--accent-green);
+  color: var(--accent-green);
+}
+
+.config-block pre {
+  padding: 20px;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--text-primary);
+  tab-size: 2;
+}
+
+/* syntax colors */
+.syn-key { color: #7dcfff; }
+.syn-str { color: #9ece6a; }
+.syn-bracket { color: #9896a8; }
+.syn-comment { color: #565f89; font-style: italic; }
+.syn-special { color: var(--accent-orange); }
+
+/* ─── Terminal Demo ─── */
+.terminal {
+  background: #0c0c12;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.terminal .term-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border);
+}
+
+.terminal .term-bar .dots {
+  display: flex; gap: 6px;
+}
+
+.terminal .term-bar .dots span {
+  width: 10px; height: 10px; border-radius: 50%;
+}
+
+.terminal .term-bar .dots span:nth-child(1) { background: #ff5f57; }
+.terminal .term-bar .dots span:nth-child(2) { background: #febc2e; }
+.terminal .term-bar .dots span:nth-child(3) { background: #28c840; }
+
+.terminal .term-bar .title {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-left: 8px;
+}
+
+.terminal .term-body {
+  padding: 16px 20px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.8;
+  min-height: 240px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.term-line {
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.term-prompt { color: var(--accent-green); }
+.term-cmd { color: var(--text-primary); }
+.term-output { color: var(--text-secondary); }
+.term-success { color: var(--accent-green); }
+.term-error { color: var(--accent-red); }
+.term-info { color: var(--accent-cyan); }
+.term-warn { color: var(--accent-yellow); }
+
+.term-cursor {
+  display: inline-block;
+  width: 8px;
+  height: 16px;
+  background: var(--accent-green);
+  animation: blink 1s step-end infinite;
+  vertical-align: text-bottom;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* ─── Buttons ─── */
+.btn-row {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+.btn {
+  padding: 10px 24px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  border: none;
+  font-family: var(--font-sans);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-primary {
+  background: var(--accent-cyan);
+  color: var(--bg-primary);
+}
+
+.btn-primary:hover {
+  box-shadow: 0 0 24px rgba(0,212,255,0.4);
+  transform: translateY(-1px);
+}
+
+.btn-primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+  border-color: var(--border-light);
+  color: var(--text-primary);
+}
+
+.btn-play {
+  background: var(--accent-green);
+  color: var(--bg-primary);
+}
+
+.btn-play:hover {
+  box-shadow: 0 0 24px rgba(0,255,136,0.4);
+}
+
+/* ─── Info boxes ─── */
+.info-box {
+  padding: 16px 20px;
+  border-radius: var(--radius-sm);
+  border-left: 3px solid;
+  margin-bottom: 20px;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.info-box.tip {
+  background: var(--accent-cyan-dim);
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+}
+
+.info-box.warn {
+  background: var(--accent-orange-dim);
+  border-color: var(--accent-orange);
+  color: var(--accent-orange);
+}
+
+.info-box.success {
+  background: var(--accent-green-dim);
+  border-color: var(--accent-green);
+  color: var(--accent-green);
+}
+
+.info-box code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: rgba(0,0,0,0.3);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* ─── Concept diagram ─── */
+.concept-diagram {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin: 32px 0;
+  flex-wrap: wrap;
+}
+
+.concept-node {
+  padding: 14px 22px;
+  border-radius: var(--radius);
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  min-width: 120px;
+}
+
+.concept-node.host {
+  background: var(--accent-cyan-dim);
+  border: 1.5px solid rgba(0,212,255,0.4);
+  color: var(--accent-cyan);
+}
+
+.concept-node.protocol {
+  background: var(--accent-purple-dim);
+  border: 1.5px solid rgba(167,139,250,0.4);
+  color: var(--accent-purple);
+}
+
+.concept-node.server {
+  background: var(--accent-green-dim);
+  border: 1.5px solid rgba(0,255,136,0.4);
+  color: var(--accent-green);
+}
+
+.concept-arrow {
+  font-size: 20px;
+  color: var(--text-muted);
+}
+
+/* ─── Env var editor ─── */
+.env-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 10px;
+  align-items: center;
+}
+
+.env-row label {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--accent-orange);
+  min-width: 200px;
+  flex-shrink: 0;
+}
+
+.env-row input {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.3s;
+}
+
+.env-row input:focus {
+  border-color: var(--accent-cyan);
+}
+
+.env-row input::placeholder {
+  color: var(--text-muted);
+}
+
+/* ─── Selection summary ─── */
+.selection-summary {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.sel-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 100px;
+  font-size: 13px;
+  font-family: var(--font-mono);
+}
+
+.sel-chip.host {
+  background: var(--accent-cyan-dim);
+  color: var(--accent-cyan);
+  border: 1px solid rgba(0,212,255,0.3);
+}
+
+.sel-chip.server {
+  background: var(--accent-green-dim);
+  color: var(--accent-green);
+  border: 1px solid rgba(0,255,136,0.3);
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 600px) {
+  .hero { padding: 48px 16px 32px; }
+  .progress-step .label { display: none; }
+  .progress-line { width: 24px; }
+  .cards-grid { grid-template-columns: 1fr; }
+  .env-row { flex-direction: column; }
+  .env-row label { min-width: auto; }
+  .btn-row { flex-direction: column; }
+  .btn { width: 100%; justify-content: center; }
+  .concept-diagram { flex-direction: column; }
+  .concept-arrow { transform: rotate(90deg); }
+}
+</style>
+</head>
+<body>
+
+<!-- ─── Hero ─── -->
+<div class="hero">
+  <div class="hero-badge">
+    <span class="dot"></span>
+    SkillNav 交互指南
+  </div>
+  <h1>
+    <span class="gradient">MCP 实战手册</span><br>
+    交互式配置模拟器
+  </h1>
+  <p>从零开始，4 步搞定 MCP 配置。选择你的宿主应用和服务器，生成可用配置，体验调用流程。</p>
+</div>
+
+<!-- ─── Main ─── -->
+<div class="container">
+
+  <!-- Progress -->
+  <div class="progress-bar" id="progressBar">
+    <div class="progress-step active" data-step="0" onclick="goToStep(0)">
+      <span class="num">1</span>
+      <span class="label">了解 MCP</span>
+    </div>
+    <div class="progress-line" id="line0"></div>
+    <div class="progress-step" data-step="1" onclick="goToStep(1)">
+      <span class="num">2</span>
+      <span class="label">选择宿主</span>
+    </div>
+    <div class="progress-line" id="line1"></div>
+    <div class="progress-step" data-step="2" onclick="goToStep(2)">
+      <span class="num">3</span>
+      <span class="label">选择服务器</span>
+    </div>
+    <div class="progress-line" id="line2"></div>
+    <div class="progress-step" data-step="3" onclick="goToStep(3)">
+      <span class="num">4</span>
+      <span class="label">生成 & 演示</span>
+    </div>
+  </div>
+
+  <!-- ═══════════ STEP 0: MCP概念 ═══════════ -->
+  <div class="panel active" id="panel0">
+    <div class="panel-header">
+      <div class="step-label">Step 1 / 4</div>
+      <h2>什么是 MCP？</h2>
+      <p>Model Context Protocol — 让 AI 模型安全访问外部工具和数据的开放协议</p>
+    </div>
+
+    <div class="concept-diagram">
+      <div class="concept-node host">🖥️ 宿主应用<br><small>Claude / Cursor / VS Code</small></div>
+      <div class="concept-arrow">⟷</div>
+      <div class="concept-node protocol">📡 MCP 协议<br><small>标准化通信层</small></div>
+      <div class="concept-arrow">⟷</div>
+      <div class="concept-node server">⚙️ MCP 服务器<br><small>GitHub / DB / 文件系统</small></div>
+    </div>
+
+    <div class="info-box tip">
+      💡 <strong>类比理解</strong>：MCP 就像 USB-C 接口 — 一个标准协议连接所有设备。无需为每个 AI + 工具组合编写专用代码。
+    </div>
+
+    <div class="cards-grid">
+      <div class="card" style="cursor:default">
+        <span class="icon">🔌</span>
+        <h3>即插即用</h3>
+        <div class="desc">同一个 MCP 服务器可以被 Claude Desktop、Cursor、VS Code 等任何兼容客户端调用，配置格式统一。</div>
+      </div>
+      <div class="card" style="cursor:default">
+        <span class="icon">🔒</span>
+        <h3>安全可控</h3>
+        <div class="desc">每次工具调用需用户授权，服务器通过 stdio 本地通信，不暴露给外部网络。</div>
+      </div>
+      <div class="card" style="cursor:default">
+        <span class="icon">🧩</span>
+        <h3>生态丰富</h3>
+        <div class="desc">官方 + 社区已有 7000+ 个 MCP 服务器，覆盖数据库、API、文件系统、搜索、自动化等场景。</div>
+      </div>
+    </div>
+
+    <div class="info-box warn">
+      ⚠️ <strong>前置要求</strong>：需要安装 <code>Node.js ≥ 18</code>（用于 npx 运行服务器），以及对应的宿主应用。
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="goToStep(1)">理解了，开始配置 →</button>
+    </div>
+  </div>
+
+  <!-- ═══════════ STEP 1: 选宿主 ═══════════ -->
+  <div class="panel" id="panel1">
+    <div class="panel-header">
+      <div class="step-label">Step 2 / 4</div>
+      <h2>选择你的宿主应用</h2>
+      <p>MCP 服务器需要一个「宿主」来连接和调用。选择你日常使用的工具：</p>
+    </div>
+
+    <div class="cards-grid" id="hostCards">
+      <div class="card" data-host="claude" onclick="selectHost(this)">
+        <span class="icon">🤖</span>
+        <h3>Claude Desktop</h3>
+        <div class="desc">Anthropic 官方桌面端，最早支持 MCP。适合对话式调用工具、分析文件。</div>
+        <span class="tag">推荐入门</span>
+      </div>
+      <div class="card" data-host="cursor" onclick="selectHost(this)">
+        <span class="icon">⚡</span>
+        <h3>Cursor</h3>
+        <div class="desc">AI-first 代码编辑器，MCP 配置与 VS Code 相似。适合编码场景下扩展 AI 能力。</div>
+        <span class="tag green">开发者最爱</span>
+      </div>
+      <div class="card" data-host="vscode" onclick="selectHost(this)">
+        <span class="icon">💻</span>
+        <h3>VS Code</h3>
+        <div class="desc">通过 GitHub Copilot Chat 扩展支持 MCP。工作区或用户级配置均可。</div>
+        <span class="tag purple">生态最广</span>
+      </div>
+      <div class="card" data-host="claude-code" onclick="selectHost(this)">
+        <span class="icon">🔧</span>
+        <h3>Claude Code (CLI)</h3>
+        <div class="desc">Anthropic 命令行 Agent 工具。通过 <code>/mcp</code> 命令管理服务器，适合终端工作流。</div>
+        <span class="tag orange">高级用户</span>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="goToStep(0)">← 返回</button>
+      <button class="btn btn-primary" id="btn-to-step2" disabled onclick="goToStep(2)">下一步：选服务器 →</button>
+    </div>
+  </div>
+
+  <!-- ═══════════ STEP 2: 选服务器 ═══════════ -->
+  <div class="panel" id="panel2">
+    <div class="panel-header">
+      <div class="step-label">Step 3 / 4</div>
+      <h2>选择 MCP 服务器</h2>
+      <p>勾选你想启用的服务器（可多选），我们将为你生成完整配置：</p>
+    </div>
+
+    <div class="server-categories" id="serverCategories">
+      <button class="cat-btn active" data-cat="all" onclick="filterServers('all', this)">全部</button>
+      <button class="cat-btn" data-cat="official" onclick="filterServers('official', this)">官方推荐</button>
+      <button class="cat-btn" data-cat="database" onclick="filterServers('database', this)">数据库</button>
+      <button class="cat-btn" data-cat="dev" onclick="filterServers('dev', this)">开发工具</button>
+      <button class="cat-btn" data-cat="search" onclick="filterServers('search', this)">搜索 & 网络</button>
+      <button class="cat-btn" data-cat="productivity" onclick="filterServers('productivity', this)">效率工具</button>
+    </div>
+
+    <div class="cards-grid" id="serverCards"></div>
+
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="goToStep(1)">← 返回</button>
+      <button class="btn btn-primary" id="btn-to-step3" disabled onclick="goToStep(3)">生成配置 →</button>
+    </div>
+  </div>
+
+  <!-- ═══════════ STEP 3: 生成配置 + 演示 ═══════════ -->
+  <div class="panel" id="panel3">
+    <div class="panel-header">
+      <div class="step-label">Step 4 / 4</div>
+      <h2>生成配置 & 调用演示</h2>
+      <p>以下是你的个性化 MCP 配置和模拟调用演示</p>
+    </div>
+
+    <div class="selection-summary" id="selectionSummary"></div>
+
+    <!-- Config file path hint -->
+    <div class="info-box tip" id="configPathHint"></div>
+
+    <!-- Env vars (if needed) -->
+    <div id="envVarsSection" style="display:none; margin-bottom: 24px;">
+      <h3 style="font-size:15px; margin-bottom:12px; color: var(--accent-orange);">🔑 填写环境变量（可选，不影响演示）</h3>
+      <div id="envVarsContainer"></div>
+    </div>
+
+    <!-- Generated config -->
+    <div class="config-block">
+      <div class="toolbar">
+        <div class="file-name">
+          <div class="dot-group"><span></span><span></span><span></span></div>
+          <span id="configFileName">config.json</span>
+        </div>
+        <button class="copy-btn" onclick="copyConfig(this)">📋 复制</button>
+      </div>
+      <pre id="configOutput"></pre>
+    </div>
+
+    <!-- Terminal demo -->
+    <h3 style="font-size:15px; margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+      🎬 调用演示
+      <button class="btn btn-play" style="padding:5px 14px; font-size:12px;" onclick="runDemo()">▶ 运行</button>
+      <button class="btn btn-secondary" style="padding:5px 14px; font-size:12px;" onclick="resetDemo()">↺ 重置</button>
+    </h3>
+
+    <div class="terminal">
+      <div class="term-bar">
+        <div class="dots"><span></span><span></span><span></span></div>
+        <div class="title" id="termTitle">Terminal</div>
+      </div>
+      <div class="term-body" id="termBody">
+        <div class="term-line"><span class="term-prompt">$ </span><span class="term-cursor"></span></div>
+      </div>
+    </div>
+
+    <div class="info-box success">
+      ✅ <strong>配置完成！</strong>将上方 JSON 粘贴到对应配置文件，重启宿主应用即可使用 MCP 服务器。
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="goToStep(2)">← 修改服务器</button>
+      <button class="btn btn-secondary" onclick="resetAll()">🔄 重新开始</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ─── State ───
+let currentStep = 0;
+let selectedHost = null;
+let selectedServers = [];
+let demoRunning = false;
+
+// ─── Server data ───
+const SERVERS = [
+  {
+    id: 'filesystem',
+    name: 'Filesystem',
+    desc: '安全的本地文件操作（读/写/搜索/目录管理）',
+    icon: '📁',
+    cat: ['official'],
+    pkg: '@modelcontextprotocol/server-filesystem',
+    args: ['-y', '@modelcontextprotocol/server-filesystem', '/Users/你的用户名/Projects'],
+    env: {},
+    demoTool: 'list_directory',
+    demoInput: '{"path": "/Users/demo/Projects"}',
+    demoOutput: '📂 src/\n📂 docs/\n📄 package.json\n📄 README.md\n📄 tsconfig.json'
+  },
+  {
+    id: 'github',
+    name: 'GitHub',
+    desc: '仓库管理、Issue/PR 操作、代码搜索',
+    icon: '🐙',
+    cat: ['official', 'dev'],
+    pkg: '@modelcontextprotocol/server-github',
+    args: ['-y', '@modelcontextprotocol/server-github'],
+    env: { 'GITHUB_PERSONAL_ACCESS_TOKEN': '<YOUR_TOKEN>' },
+    demoTool: 'search_repositories',
+    demoInput: '{"query": "MCP server language:typescript"}',
+    demoOutput: '找到 2,847 个仓库：\n⭐ modelcontextprotocol/servers — 68.2k stars\n⭐ punkpeye/awesome-mcp-servers — 12.1k stars\n⭐ anthropics/claude-code — 34.5k stars'
+  },
+  {
+    id: 'memory',
+    name: 'Memory',
+    desc: '基于知识图谱的持久化记忆系统',
+    icon: '🧠',
+    cat: ['official'],
+    pkg: '@modelcontextprotocol/server-memory',
+    args: ['-y', '@modelcontextprotocol/server-memory'],
+    env: {},
+    demoTool: 'create_entities',
+    demoInput: '{"entities": [{"name": "MCP项目", "type": "project"}]}',
+    demoOutput: '✅ 实体已创建：MCP项目 (type: project)\n🔗 知识图谱已更新，当前共 1 个实体，0 条关系'
+  },
+  {
+    id: 'fetch',
+    name: 'Fetch',
+    desc: '抓取网页内容并转换为 LLM 友好格式',
+    icon: '🌐',
+    cat: ['official', 'search'],
+    pkg: '@modelcontextprotocol/server-fetch',
+    args: ['-y', '@modelcontextprotocol/server-fetch'],
+    env: {},
+    demoTool: 'fetch',
+    demoInput: '{"url": "https://modelcontextprotocol.io"}',
+    demoOutput: '📄 已获取页面内容 (12.4 KB)\n标题: Model Context Protocol\n摘要: MCP 是连接 AI 模型与外部工具的开放标准...'
+  },
+  {
+    id: 'postgres',
+    name: 'PostgreSQL',
+    desc: '数据库查询、表结构检查、Schema 分析',
+    icon: '🐘',
+    cat: ['database'],
+    pkg: '@modelcontextprotocol/server-postgres',
+    args: ['-y', '@modelcontextprotocol/server-postgres', 'postgresql://localhost:5432/mydb'],
+    env: {},
+    demoTool: 'query',
+    demoInput: '{"sql": "SELECT count(*) FROM users WHERE active = true"}',
+    demoOutput: '┌──────────┐\n│  count   │\n├──────────┤\n│  1,247   │\n└──────────┘\n查询耗时: 3.2ms'
+  },
+  {
+    id: 'sqlite',
+    name: 'SQLite',
+    desc: '轻量级 SQLite 数据库操作和分析',
+    icon: '💾',
+    cat: ['database'],
+    pkg: '@modelcontextprotocol/server-sqlite',
+    args: ['-y', '@modelcontextprotocol/server-sqlite', '/path/to/database.db'],
+    env: {},
+    demoTool: 'read_query',
+    demoInput: '{"query": "SELECT name FROM sqlite_master WHERE type=\'table\'"}',
+    demoOutput: '┌─────────────┐\n│    name     │\n├─────────────┤\n│  users      │\n│  orders     │\n│  products   │\n└─────────────┘'
+  },
+  {
+    id: 'brave-search',
+    name: 'Brave Search',
+    desc: '隐私优先的网络搜索，无需 Google API',
+    icon: '🦁',
+    cat: ['search'],
+    pkg: '@modelcontextprotocol/server-brave-search',
+    args: ['-y', '@modelcontextprotocol/server-brave-search'],
+    env: { 'BRAVE_API_KEY': '<YOUR_API_KEY>' },
+    demoTool: 'brave_web_search',
+    demoInput: '{"query": "MCP Model Context Protocol 最新进展"}',
+    demoOutput: '🔍 搜索结果 (前3条)：\n1. MCP 生态在 2025 年爆发式增长 — techcrunch.com\n2. Anthropic 发布 MCP 远程服务器支持 — anthropic.com\n3. 7000+ MCP 服务器目录 — awesome-mcp-servers'
+  },
+  {
+    id: 'slack',
+    name: 'Slack',
+    desc: '频道消息搜索、发送消息、获取线程',
+    icon: '💬',
+    cat: ['productivity'],
+    pkg: '@modelcontextprotocol/server-slack',
+    args: ['-y', '@modelcontextprotocol/server-slack'],
+    env: { 'SLACK_BOT_TOKEN': 'xoxb-your-token', 'SLACK_TEAM_ID': 'T0123456789' },
+    demoTool: 'search_messages',
+    demoInput: '{"query": "MCP 部署进度"}',
+    demoOutput: '💬 找到 3 条消息：\n#engineering (2h前): "MCP 服务器已部署到 staging"\n#engineering (5h前): "Postgres MCP 测试通过"\n#general (1d前): "下周启动 MCP 集成"'
+  },
+  {
+    id: 'git',
+    name: 'Git',
+    desc: '读取、搜索和操作 Git 仓库',
+    icon: '📝',
+    cat: ['official', 'dev'],
+    pkg: '@modelcontextprotocol/server-git',
+    args: ['-y', '@modelcontextprotocol/server-git'],
+    env: {},
+    demoTool: 'git_log',
+    demoInput: '{"repo_path": "/Users/demo/project", "max_count": 3}',
+    demoOutput: 'commit a3f7b2c (HEAD -> main)\n  feat: 添加 MCP 服务器配置\n\ncommit 8e1d4f9\n  fix: 修复数据库连接池泄漏\n\ncommit 2c9a8b1\n  docs: 更新 README'
+  },
+  {
+    id: 'sequential-thinking',
+    name: 'Sequential Thinking',
+    desc: '动态、反思性的问题解决思维链',
+    icon: '💭',
+    cat: ['official'],
+    pkg: '@modelcontextprotocol/server-sequential-thinking',
+    args: ['-y', '@modelcontextprotocol/server-sequential-thinking'],
+    env: {},
+    demoTool: 'create_thinking_chain',
+    demoInput: '{"problem": "如何设计一个高可用的微服务架构?"}',
+    demoOutput: '🧠 思维链启动 (4步)：\n→ 分析需求：高可用 = 99.99% uptime\n→ 架构选型：服务网格 + 断路器模式\n→ 数据层：读写分离 + 多副本\n→ 结论：推荐 Kubernetes + Istio + CockroachDB'
+  },
+  {
+    id: 'playwright',
+    name: 'Playwright',
+    desc: '浏览器自动化，无需视觉模型即可操作网页',
+    icon: '🎭',
+    cat: ['dev', 'search'],
+    pkg: '@anthropic-ai/mcp-server-playwright',
+    args: ['-y', '@anthropic-ai/mcp-server-playwright'],
+    env: {},
+    demoTool: 'browser_navigate',
+    demoInput: '{"url": "https://github.com/trending"}',
+    demoOutput: '🌐 导航至 github.com/trending\n📸 页面已加载 (1.2s)\n🏷️ 检测到 25 个趋势仓库\n📊 可用操作: 点击、截图、提取文本...'
+  },
+  {
+    id: 'supabase',
+    name: 'Supabase',
+    desc: 'Supabase 项目管理、数据库、Auth、存储',
+    icon: '⚡',
+    cat: ['database', 'dev'],
+    pkg: 'supabase-mcp',
+    args: ['-y', 'supabase-mcp'],
+    env: { 'SUPABASE_ACCESS_TOKEN': '<YOUR_TOKEN>' },
+    demoTool: 'list_tables',
+    demoInput: '{"project_ref": "my-project-id"}',
+    demoOutput: '📊 数据库表 (my-project):\n├─ public.users (1,247 rows)\n├─ public.posts (8,932 rows)\n├─ public.comments (24,105 rows)\n└─ auth.users (1,247 rows)'
+  }
+];
+
+// ─── Host config metadata ───
+const HOST_META = {
+  claude: {
+    configFile: 'claude_desktop_config.json',
+    configPath: {
+      mac: '~/Library/Application Support/Claude/claude_desktop_config.json',
+      win: '%APPDATA%\\Claude\\claude_desktop_config.json'
+    },
+    wrapper: 'mcpServers',
+    termTitle: 'Claude Desktop',
+    note: '修改后需完全退出并重启 Claude Desktop（不仅仅是关闭窗口）'
+  },
+  cursor: {
+    configFile: '.cursor/mcp.json',
+    configPath: {
+      global: '~/.cursor/mcp.json',
+      project: '.cursor/mcp.json（项目级）'
+    },
+    wrapper: 'mcpServers',
+    termTitle: 'Cursor',
+    note: '可在 Cursor Settings → Tools & MCP 查看服务器状态（绿点 = 已连接）'
+  },
+  vscode: {
+    configFile: '.vscode/mcp.json',
+    configPath: {
+      user: 'Cmd+Shift+P → "MCP: Open User Configuration"',
+      workspace: '.vscode/mcp.json（工作区级）'
+    },
+    wrapper: 'servers',
+    termTitle: 'VS Code + Copilot Chat',
+    note: '需安装 GitHub Copilot Chat 扩展，并启用 Chat > MCP 设置'
+  },
+  'claude-code': {
+    configFile: '~/.claude/settings.json',
+    configPath: {
+      global: '~/.claude/settings.json',
+      cli: '也可通过 claude mcp add <name> 命令添加'
+    },
+    wrapper: 'mcpServers',
+    termTitle: 'Claude Code CLI',
+    note: '在 Claude Code 中输入 /mcp 可查看和管理已配置的服务器'
+  }
+};
+
+// ─── Step navigation ───
+function goToStep(step) {
+  if (step > currentStep + 1) return;
+  if (step === 2 && !selectedHost) return;
+  if (step === 3 && selectedServers.length === 0) return;
+
+  currentStep = step;
+
+  // Update panels
+  document.querySelectorAll('.panel').forEach((p, i) => {
+    p.classList.toggle('active', i === step);
+  });
+
+  // Update progress
+  document.querySelectorAll('.progress-step').forEach((s, i) => {
+    s.classList.remove('active', 'done');
+    if (i === step) s.classList.add('active');
+    else if (i < step) s.classList.add('done');
+  });
+
+  document.querySelectorAll('.progress-line').forEach((l, i) => {
+    l.classList.toggle('filled', i < step);
+  });
+
+  // Generate config on step 3
+  if (step === 3) {
+    generateConfig();
+    renderSelectionSummary();
+    resetDemo();
+  }
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ─── Host selection ───
+function selectHost(el) {
+  document.querySelectorAll('#hostCards .card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedHost = el.dataset.host;
+  document.getElementById('btn-to-step2').disabled = false;
+}
+
+// ─── Server rendering ───
+function renderServers(filter = 'all') {
+  const container = document.getElementById('serverCards');
+  const filtered = filter === 'all' ? SERVERS : SERVERS.filter(s => s.cat.includes(filter));
+
+  container.innerHTML = filtered.map(s => `
+    <div class="card server-card ${selectedServers.includes(s.id) ? 'selected' : ''}"
+         data-server="${s.id}" onclick="toggleServer('${s.id}', this)">
+      <div class="server-icon" style="background:var(--bg-tertiary);">${s.icon}</div>
+      <div class="server-info">
+        <h3>${s.name}</h3>
+        <div class="desc">${s.desc}</div>
+      </div>
+      <div class="check">✓</div>
+    </div>
+  `).join('');
+}
+
+function filterServers(cat, btn) {
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderServers(cat);
+}
+
+function toggleServer(id, el) {
+  const idx = selectedServers.indexOf(id);
+  if (idx > -1) {
+    selectedServers.splice(idx, 1);
+    el.classList.remove('selected');
+  } else {
+    selectedServers.push(id);
+    el.classList.add('selected');
+  }
+  document.getElementById('btn-to-step3').disabled = selectedServers.length === 0;
+}
+
+// ─── Config generation ───
+function generateConfig() {
+  const meta = HOST_META[selectedHost];
+  const servers = selectedServers.map(id => SERVERS.find(s => s.id === id));
+
+  // Config path hint
+  const pathHint = document.getElementById('configPathHint');
+  const paths = Object.entries(meta.configPath).map(([k, v]) => `<strong>${k}</strong>: <code>${v}</code>`).join('<br>');
+  pathHint.innerHTML = `📁 <strong>配置文件位置</strong><br>${paths}<br><br>💡 ${meta.note}`;
+
+  // Config file name
+  document.getElementById('configFileName').textContent = meta.configFile;
+
+  // Build JSON object
+  const wrapper = meta.wrapper;
+  const configObj = {};
+  configObj[wrapper] = {};
+
+  servers.forEach(s => {
+    const entry = { command: 'npx', args: [...s.args] };
+    if (Object.keys(s.env).length > 0) {
+      entry.env = { ...s.env };
+    }
+    configObj[wrapper][s.id] = entry;
+  });
+
+  // Env vars section
+  const allEnvVars = [];
+  servers.forEach(s => {
+    Object.entries(s.env).forEach(([key, val]) => {
+      if (val.startsWith('<')) {
+        allEnvVars.push({ server: s.name, key, placeholder: val });
+      }
+    });
+  });
+
+  const envSection = document.getElementById('envVarsSection');
+  const envContainer = document.getElementById('envVarsContainer');
+  if (allEnvVars.length > 0) {
+    envSection.style.display = 'block';
+    envContainer.innerHTML = allEnvVars.map(e => `
+      <div class="env-row">
+        <label>${e.key}</label>
+        <input type="text" placeholder="${e.placeholder}" data-key="${e.key}"
+               oninput="updateEnvVar(this)" />
+      </div>
+    `).join('');
+  } else {
+    envSection.style.display = 'none';
+  }
+
+  // Syntax-highlighted JSON
+  renderConfigJSON(configObj);
+
+  // Terminal title
+  document.getElementById('termTitle').textContent = meta.termTitle;
+}
+
+function renderConfigJSON(obj) {
+  const json = JSON.stringify(obj, null, 2);
+  const highlighted = json
+    .replace(/("(?:[^"\\]|\\.)*")(\s*:)/g, '<span class="syn-key">$1</span>$2')
+    .replace(/:(\s*)("(?:[^"\\]|\\.)*")/g, ':$1<span class="syn-str">$2</span>')
+    .replace(/([{}[\]])/g, '<span class="syn-bracket">$1</span>')
+    .replace(/(&lt;[A-Z_]+&gt;)/g, '<span class="syn-special">$1</span>');
+
+  document.getElementById('configOutput').innerHTML = highlighted;
+}
+
+function updateEnvVar(input) {
+  // Visual update only - real config would need full regeneration
+}
+
+function renderSelectionSummary() {
+  const container = document.getElementById('selectionSummary');
+  const hostName = { claude: 'Claude Desktop', cursor: 'Cursor', vscode: 'VS Code', 'claude-code': 'Claude Code' };
+  const chips = [`<span class="sel-chip host">🖥️ ${hostName[selectedHost]}</span>`];
+  selectedServers.forEach(id => {
+    const s = SERVERS.find(x => x.id === id);
+    chips.push(`<span class="sel-chip server">${s.icon} ${s.name}</span>`);
+  });
+  container.innerHTML = chips.join('');
+}
+
+function copyConfig(btn) {
+  const text = document.getElementById('configOutput').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✅ 已复制';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = '📋 复制';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+
+// ─── Terminal Demo ───
+async function runDemo() {
+  if (demoRunning) return;
+  demoRunning = true;
+
+  const body = document.getElementById('termBody');
+  body.innerHTML = '';
+
+  const servers = selectedServers.map(id => SERVERS.find(s => s.id === id));
+  const firstServer = servers[0];
+
+  const lines = [
+    { type: 'prompt-cmd', text: `npx ${firstServer.pkg}`, delay: 60 },
+    { type: 'output', text: `\n⏳ 正在启动 ${firstServer.name} MCP 服务器...`, delay: 800 },
+    { type: 'success', text: `✅ ${firstServer.name} 服务器已启动 (stdio 模式)`, delay: 600 },
+    { type: 'info', text: `📡 已注册工具: ${firstServer.demoTool}`, delay: 400 },
+    { type: 'output', text: '\n───── 模拟调用 ─────\n', delay: 300 },
+    { type: 'prompt-cmd', text: `调用工具: ${firstServer.demoTool}`, delay: 40 },
+    { type: 'info', text: `→ 输入: ${firstServer.demoInput}`, delay: 500 },
+    { type: 'output', text: '\n⏳ 执行中...', delay: 1000 },
+    { type: 'success', text: `\n${firstServer.demoOutput}`, delay: 50 },
+    { type: 'output', text: '\n───── 调用完成 ─────', delay: 400 },
+    { type: 'success', text: `\n🎉 ${firstServer.name} MCP 服务器运行正常！`, delay: 200 },
+  ];
+
+  if (servers.length > 1) {
+    lines.push({ type: 'info', text: `\n📦 其余 ${servers.length - 1} 个服务器（${servers.slice(1).map(s => s.name).join('、')}）配置方式相同`, delay: 300 });
+  }
+
+  for (const line of lines) {
+    await appendTermLine(body, line);
+  }
+
+  // Final cursor
+  const cursorLine = document.createElement('div');
+  cursorLine.className = 'term-line';
+  cursorLine.innerHTML = '<span class="term-prompt">$ </span><span class="term-cursor"></span>';
+  body.appendChild(cursorLine);
+  body.scrollTop = body.scrollHeight;
+
+  demoRunning = false;
+}
+
+function appendTermLine(container, line) {
+  return new Promise(resolve => {
+    const div = document.createElement('div');
+    div.className = 'term-line';
+
+    if (line.type === 'prompt-cmd') {
+      // Typing effect
+      div.innerHTML = '<span class="term-prompt">$ </span><span class="term-cmd"></span>';
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+
+      const cmdSpan = div.querySelector('.term-cmd');
+      let i = 0;
+      const typingInterval = setInterval(() => {
+        cmdSpan.textContent += line.text[i];
+        i++;
+        container.scrollTop = container.scrollHeight;
+        if (i >= line.text.length) {
+          clearInterval(typingInterval);
+          setTimeout(resolve, 200);
+        }
+      }, line.delay);
+    } else {
+      const classMap = {
+        output: 'term-output',
+        success: 'term-success',
+        error: 'term-error',
+        info: 'term-info',
+        warn: 'term-warn'
+      };
+      div.innerHTML = `<span class="${classMap[line.type] || 'term-output'}">${escapeHtml(line.text)}</span>`;
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+      setTimeout(resolve, line.delay);
+    }
+  });
+}
+
+function escapeHtml(text) {
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function resetDemo() {
+  demoRunning = false;
+  const body = document.getElementById('termBody');
+  body.innerHTML = '<div class="term-line"><span class="term-prompt">$ </span><span class="term-cursor"></span></div>';
+}
+
+function resetAll() {
+  selectedHost = null;
+  selectedServers = [];
+  document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('btn-to-step2').disabled = true;
+  document.getElementById('btn-to-step3').disabled = true;
+  goToStep(0);
+}
+
+// ─── Init ───
+renderServers();
+</script>
+</body>
+</html>

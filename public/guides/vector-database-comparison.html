@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>向量数据库选型对比 — 交互式推荐</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap');
+:root{
+  --bg:#050508;--bg2:#0a0a11;--bg3:#0f0f18;--bg4:#151520;
+  --text:#e0def0;--dim:#8886a0;--muted:#504e68;
+  --border:#1a1a2e;--border2:#282840;
+  --cyan:#06d6a0;--cyan-bg:rgba(6,214,160,.07);--cyan-b:rgba(6,214,160,.3);
+  --amber:#ffd166;--amber-bg:rgba(255,209,102,.07);--amber-b:rgba(255,209,102,.25);
+  --rose:#ef476f;--rose-bg:rgba(239,71,111,.07);--rose-b:rgba(239,71,111,.25);
+  --violet:#8338ec;--violet-bg:rgba(131,56,236,.07);--violet-b:rgba(131,56,236,.3);
+  --blue:#118ab2;--blue-bg:rgba(17,138,178,.07);--blue-b:rgba(17,138,178,.3);
+  --orange:#f77f00;--orange-bg:rgba(247,127,0,.07);--orange-b:rgba(247,127,0,.25);
+  --r:10px;--mono:'IBM Plex Mono',monospace;--sans:'Noto Sans SC',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.65;-webkit-font-smoothing:antialiased}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 25% 15%,rgba(6,214,160,.03) 0%,transparent 50%),radial-gradient(ellipse at 75% 85%,rgba(131,56,236,.03) 0%,transparent 50%);pointer-events:none}
+.w{max-width:1000px;margin:0 auto;padding:0 20px;position:relative;z-index:1}
+
+.hero{padding:56px 0 28px;text-align:center}
+.hero .pill{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:100px;background:var(--violet-bg);border:1px solid var(--violet-b);font-size:12px;font-family:var(--mono);color:var(--violet);margin-bottom:16px}
+.hero .pill i{width:5px;height:5px;border-radius:50%;background:var(--violet);animation:p 2s infinite}
+@keyframes p{0%,100%{opacity:1}50%{opacity:.3}}
+.hero h1{font-size:clamp(26px,5vw,44px);font-weight:900;line-height:1.15;margin-bottom:10px}
+.hero h1 em{font-style:normal;background:linear-gradient(135deg,var(--violet),var(--cyan));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{color:var(--dim);font-size:15px;max-width:620px;margin:0 auto;font-weight:300}
+
+.tabs{display:flex;gap:4px;justify-content:center;background:var(--bg2);border:1px solid var(--border);border-radius:100px;padding:4px;margin:24px auto 28px;width:fit-content;flex-wrap:wrap}
+.tab{padding:7px 16px;border-radius:100px;border:none;background:none;color:var(--dim);font-size:13px;font-weight:500;cursor:pointer;font-family:var(--sans);transition:all .3s;white-space:nowrap}
+.tab:hover{color:var(--text)}
+.tab.on{background:var(--violet);color:white}
+
+.pnl{display:none;animation:up .4s ease}
+.pnl.on{display:block}
+@keyframes up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+.sec{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:24px;margin-bottom:20px}
+.sec h2{font-size:18px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+
+/* Quick rec */
+.qrec{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:24px}
+.qr{background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r);padding:16px;text-align:center;transition:all .3s}
+.qr:hover{border-color:var(--border2);transform:translateY(-2px)}
+.qr .qr-scene{font-size:10px;font-family:var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.qr .qr-name{font-size:16px;font-weight:700;margin-bottom:2px}
+.qr .qr-why{font-size:11px;color:var(--dim);line-height:1.5}
+
+/* DB Cards */
+.db-list{display:flex;flex-direction:column;gap:14px;margin-bottom:24px}
+.db-card{background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r);padding:22px;transition:all .3s}
+.db-card:hover{border-color:var(--border2)}
+.db-top{display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+.db-icon{font-size:24px}
+.db-name{font-size:18px;font-weight:700;flex:1}
+.db-type{font-size:10px;font-family:var(--mono);padding:3px 8px;border-radius:4px;font-weight:600}
+.type-managed{background:var(--cyan-bg);color:var(--cyan);border:1px solid var(--cyan-b)}
+.type-oss{background:var(--violet-bg);color:var(--violet);border:1px solid var(--violet-b)}
+.type-ext{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-b)}
+
+.db-stats{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:10px}
+.db-stat{font-size:12px;color:var(--dim)}
+.db-stat span{color:var(--text);font-weight:600;font-family:var(--mono)}
+.db-desc{font-size:13px;color:var(--dim);line-height:1.7;margin-bottom:8px}
+.db-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.db-tag{padding:3px 10px;border-radius:100px;font-size:11px;border:1px solid var(--border);color:var(--muted)}
+.db-best{font-size:12px;color:var(--cyan);font-weight:500}
+.db-caveat{font-size:11px;color:var(--amber);margin-top:4px}
+
+/* Comparison table */
+.cmp-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--r);margin-bottom:24px}
+.cmp{width:100%;border-collapse:collapse;font-size:12px;min-width:800px}
+.cmp th,.cmp td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--border)}
+.cmp thead th{background:var(--bg4);font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-family:var(--mono);position:sticky;top:0}
+.cmp tbody td:first-child{font-weight:600;color:var(--text);background:var(--bg3);position:sticky;left:0;border-right:1px solid var(--border)}
+.cmp tbody tr:hover td{background:var(--bg3)}
+.cmp .yes{color:var(--cyan)}
+.cmp .no{color:var(--rose)}
+.cmp .partial{color:var(--amber)}
+
+/* Decision quiz */
+.quiz-area{max-width:700px;margin:0 auto}
+.qcard{background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r);padding:22px;margin-bottom:14px;animation:up .4s ease}
+.qcard .qnum{font-family:var(--mono);font-size:11px;color:var(--violet);margin-bottom:4px}
+.qcard .qtxt{font-size:15px;font-weight:600;margin-bottom:12px}
+.qopts{display:flex;flex-direction:column;gap:8px}
+.qopt{padding:10px 16px;border-radius:8px;border:1.5px solid var(--border);background:none;color:var(--dim);font-size:13px;cursor:pointer;font-family:var(--sans);transition:all .3s;text-align:left;line-height:1.5}
+.qopt:hover{border-color:var(--border2);color:var(--text)}
+.qopt.chosen{border-color:var(--violet);background:var(--violet-bg);color:var(--violet)}
+
+.result-box{border-radius:var(--r);padding:24px;display:none;animation:up .5s ease}
+.result-box.show{display:block}
+.result-box .verdict{font-size:22px;font-weight:900;margin-bottom:6px}
+.result-box .explanation{font-size:14px;line-height:1.8;margin-bottom:16px;opacity:.85}
+.result-box .next-steps{font-size:13px;line-height:1.7}
+.result-box .step-item{padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.res-pinecone{background:var(--cyan-bg);border:2px solid var(--cyan-b);color:var(--cyan)}
+.res-qdrant{background:var(--orange-bg);border:2px solid var(--orange-b);color:var(--orange)}
+.res-weaviate{background:var(--violet-bg);border:2px solid var(--violet-b);color:var(--violet)}
+.res-milvus{background:var(--blue-bg);border:2px solid var(--blue-b);color:var(--blue)}
+.res-pgvector{background:var(--amber-bg);border:2px solid var(--amber-b);color:var(--amber)}
+.res-chroma{background:var(--rose-bg);border:2px solid var(--rose-b);color:var(--rose)}
+
+.btn-reset{padding:8px 18px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--dim);font-size:12px;cursor:pointer;font-family:var(--sans);transition:all .3s;margin-top:10px}
+.btn-reset:hover{border-color:var(--border2);color:var(--text)}
+
+.insight{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--violet);border-radius:var(--r);padding:16px 20px;margin-bottom:20px;font-size:13px;color:var(--dim);line-height:1.7}
+.insight strong{color:var(--violet)}
+.insight code{font-family:var(--mono);font-size:11px;background:var(--bg4);padding:1px 5px;border-radius:3px;color:var(--amber)}
+
+.footer{text-align:center;padding:32px 0 52px;color:var(--muted);font-size:12px;border-top:1px solid var(--border);margin-top:16px}
+</style>
+</head>
+<body>
+<div class="w">
+
+<div class="hero">
+  <div class="pill"><i></i> SkillNav 交互指南 · P2</div>
+  <h1>向量数据库<em>选型对比</em></h1>
+  <p>Pinecone / Qdrant / Weaviate / Milvus / pgvector / Chroma — 按场景推荐，附带成本估算和决策树。</p>
+</div>
+
+<div class="tabs">
+  <button class="tab on" onclick="sw('overview')">📋 总览</button>
+  <button class="tab" onclick="sw('compare')">📊 对比矩阵</button>
+  <button class="tab" onclick="sw('quiz')">🧭 选型决策</button>
+</div>
+
+<!-- ══ OVERVIEW ══ -->
+<div class="pnl on" id="pnl-overview">
+  <div class="qrec">
+    <div class="qr"><div class="qr-scene">初创 / 快速上线</div><div class="qr-name" style="color:var(--cyan)">Pinecone</div><div class="qr-why">全托管零运维，Serverless 按量付费</div></div>
+    <div class="qr"><div class="qr-scene">最强过滤 / 自托管</div><div class="qr-name" style="color:var(--orange)">Qdrant</div><div class="qr-why">Rust 高性能，ACORN 过滤算法领先</div></div>
+    <div class="qr"><div class="qr-scene">混合搜索最佳</div><div class="qr-name" style="color:var(--violet)">Weaviate</div><div class="qr-why">向量+BM25 原生融合，内置向量化模块</div></div>
+    <div class="qr"><div class="qr-scene">十亿级规模</div><div class="qr-name" style="color:var(--blue)">Milvus</div><div class="qr-why">DiskANN 磁盘索引，超大规模成本最优</div></div>
+    <div class="qr"><div class="qr-scene">已有 Postgres</div><div class="qr-name" style="color:var(--amber)">pgvector</div><div class="qr-why">零额外基础设施，ACID 事务一致性</div></div>
+    <div class="qr"><div class="qr-scene">原型 / 开发</div><div class="qr-name" style="color:var(--rose)">Chroma</div><div class="qr-why">嵌入式零配置，pip install 即用</div></div>
+  </div>
+
+  <div class="insight">
+    🧠 <strong>2026 年关键趋势</strong>：纯向量搜索已不够。生产级 RAG 需要<strong>混合搜索</strong>（向量 + BM25 关键词），因为专有名词、编号、法条等无法被向量准确编码。Weaviate、Milvus 2.5+、Qdrant 1.9+ 已原生支持。Chroma 和基础 pgvector 尚不支持。
+  </div>
+
+  <div class="db-list" id="dbList"></div>
+
+  <div class="insight" style="border-left-color:var(--amber)">
+    ⚠️ <strong>迁移成本警告</strong>：在云上将 1 亿向量从一个数据库迁到另一个，出站流量费用可能高达数千美元。<strong>最佳实践</strong>：始终将源向量存储在冷存储（S3/GCS/Parquet），这样可以直接从冷存储导入新数据库，而不用从旧数据库导出。
+  </div>
+</div>
+
+<!-- ══ COMPARE ══ -->
+<div class="pnl" id="pnl-compare">
+  <div class="sec">
+    <h2>📊 功能矩阵对比</h2>
+  </div>
+  <div class="cmp-wrap"><table class="cmp" id="cmpTable"></table></div>
+
+  <div class="sec">
+    <h2>💰 10M 向量成本估算（1536维，OpenAI 嵌入）</h2>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:14px">假设 5M 查询/月，50GB 元数据</p>
+    <div class="cmp-wrap"><table class="cmp" id="costTable"></table></div>
+  </div>
+</div>
+
+<!-- ══ QUIZ ══ -->
+<div class="pnl" id="pnl-quiz">
+  <div class="sec">
+    <h2>🧭 5 步选型决策</h2>
+    <p style="font-size:13px;color:var(--dim)">回答 5 个问题，获得个性化推荐</p>
+  </div>
+  <div class="quiz-area" id="quizArea"></div>
+  <div class="result-box" id="resultBox"></div>
+</div>
+
+<div class="footer">向量数据库选型对比 · SkillNav · 数据来源：VectorDBBench / 官方文档 / 2026.03</div>
+</div>
+
+<script>
+const DBS=[
+  {id:'pinecone',name:'Pinecone',icon:'🌲',type:'managed',typeLabel:'全托管',accent:'var(--cyan)',cls:'res-pinecone',
+   scale:'十亿级',hybrid:'✅ 原生',oss:'否',selfHost:'否',lang:'Rust',
+   pricing:'Serverless 按量付费',priceCost:'~$64/月',
+   desc:'全托管向量数据库，零运维。创建 Index、插入向量、查询 — 三步完成。Serverless 模式按存储+读写计费，初创团队首选。',
+   pros:['上手最快，API 简洁','零运维，自动扩缩','延迟低且稳定'],
+   cons:['闭源，数据锁定','高 QPS 下成本快速增长','元数据过滤能力有限（无 JOIN）'],
+   best:'初创团队快速上线、不想管基础设施、需要可预测延迟'},
+  {id:'qdrant',name:'Qdrant',icon:'🔶',type:'oss',typeLabel:'开源',accent:'var(--orange)',cls:'res-qdrant',
+   scale:'十亿级',hybrid:'✅ v1.9+',oss:'是（Rust）',selfHost:'是',lang:'Rust',
+   pricing:'自托管免费 / 云 ~$27-102/月',priceCost:'~$27-102/月（云）',
+   desc:'Rust 编写的高性能开源向量数据库。2025 年 ACORN 算法解决了过滤型 HNSW 的性能难题，元数据过滤能力业界领先。支持自托管和托管云。',
+   pros:['过滤性能最强（ACORN 算法）','Rust 高性能 + 低内存','int8 量化大幅降低存储成本','可完全自托管'],
+   cons:['大规模并发写入需调优','社区规模小于 Pinecone/Weaviate','自托管需要运维投入'],
+   best:'需要复杂元数据过滤、数据驻留要求、追求性能/成本比'},
+  {id:'weaviate',name:'Weaviate',icon:'🔷',type:'oss',typeLabel:'开源',accent:'var(--violet)',cls:'res-weaviate',
+   scale:'亿级',hybrid:'✅ BlockMax WAND',oss:'是（Go）',selfHost:'是',lang:'Go',
+   pricing:'Serverless ~$25-153/月',priceCost:'~$85/月',
+   desc:'以混合搜索闻名的开源向量数据库。内置向量化模块（直接传文本即可，自动调用 OpenAI/Cohere 嵌入）。GraphQL API。BlockMax WAND 让 BM25 性能提升 10 倍。',
+   pros:['混合搜索实现最成熟','内置向量化模块（免写 Embedding 代码）','GraphQL API 灵活'],
+   cons:['Go 运行时内存占用较大','自托管资源需求高','定价结构复杂'],
+   best:'RAG 场景需要混合搜索（向量+关键词）、不想自己管 Embedding 流程'},
+  {id:'milvus',name:'Milvus / Zilliz',icon:'💠',type:'oss',typeLabel:'开源',accent:'var(--blue)',cls:'res-milvus',
+   scale:'百亿级',hybrid:'✅ Sparse-BM25',oss:'是（Go/C++）',selfHost:'是',lang:'Go/C++',
+   pricing:'Zilliz 云 ~$0.15/CU/小时',priceCost:'~$150/月起',
+   desc:'为超大规模设计的云原生向量数据库。DiskANN 技术让你用 SSD 存储替代昂贵的 RAM，十亿级向量时成本优势碾压竞品。Milvus 2.5 混合搜索比 Elasticsearch 快 30 倍。',
+   pros:['十亿级规模时成本最优（DiskANN）','混合搜索速度领先','索引类型最丰富（HNSW/IVF/DiskANN）'],
+   cons:['架构复杂（etcd+MinIO+多组件）','自托管运维成本高','小规模场景杀鸡用牛刀'],
+   best:'数据量极大（1亿+向量）、需要超大规模弹性、已有 K8s 基础设施'},
+  {id:'pgvector',name:'pgvector',icon:'🐘',type:'ext',typeLabel:'PG 扩展',accent:'var(--amber)',cls:'res-pgvector',
+   scale:'千万级',hybrid:'❌ 需外部工具',oss:'是',selfHost:'是',lang:'C',
+   pricing:'随 Postgres 部署',priceCost:'$0（已有 PG）',
+   desc:'PostgreSQL 原生向量搜索扩展。最大优势：零额外基础设施。向量和业务数据在同一个事务中操作，ACID 一致性。pgvectorscale 在 50M 向量时达到 471 QPS@99% recall。',
+   pros:['零额外基础设施成本','ACID 事务一致性','SQL 查询，无需学新 API','pgvectorscale 大幅提升性能'],
+   cons:['1 亿向量后性能下降明显','无原生混合搜索','向量索引消耗 PG 主库内存','ORM（如 Prisma）支持不完善'],
+   best:'已有 PostgreSQL、数据量 <5000万、需要事务一致性'},
+  {id:'chroma',name:'ChromaDB',icon:'🎨',type:'oss',typeLabel:'开源',accent:'var(--rose)',cls:'res-chroma',
+   scale:'百万级',hybrid:'❌ 不支持',oss:'是（Python）',selfHost:'是',lang:'Python',
+   pricing:'免费开源',priceCost:'$0',
+   desc:'嵌入式向量数据库，pip install 即可使用。专为 AI 开发者设计，与 LangChain/LlamaIndex 深度集成。本地运行无需任何外部服务。',
+   pros:['上手最快（pip install chromadb）','嵌入式运行，开发体验极佳','LangChain/LlamaIndex 一级集成'],
+   cons:['不适合生产环境（性能/规模限制）','无混合搜索','100K 向量后性能下降','缺少企业级特性'],
+   best:'原型开发、POC 验证、学习/教学用途'},
+];
+
+const COMPARE_DIMS=[
+  {d:'开源',vals:{'pinecone':'<span class="no">否</span>','qdrant':'<span class="yes">是 (Rust)</span>','weaviate':'<span class="yes">是 (Go)</span>','milvus':'<span class="yes">是 (Go/C++)</span>','pgvector':'<span class="yes">是 (C)</span>','chroma':'<span class="yes">是 (Python)</span>'}},
+  {d:'自托管',vals:{'pinecone':'<span class="no">否</span>','qdrant':'<span class="yes">Docker/K8s</span>','weaviate':'<span class="yes">Docker/K8s</span>','milvus':'<span class="yes">K8s</span>','pgvector':'<span class="yes">随 PG</span>','chroma':'<span class="yes">嵌入式</span>'}},
+  {d:'混合搜索',vals:{'pinecone':'<span class="yes">原生</span>','qdrant':'<span class="yes">v1.9+</span>','weaviate':'<span class="yes">最强</span>','milvus':'<span class="yes">Sparse-BM25</span>','pgvector':'<span class="no">需外部</span>','chroma':'<span class="no">不支持</span>'}},
+  {d:'最大规模',vals:{'pinecone':'十亿+','qdrant':'十亿+','weaviate':'亿级','milvus':'百亿+','pgvector':'~5千万','chroma':'~10万'}},
+  {d:'延迟(1M向量)',vals:{'pinecone':'<10ms','qdrant':'<10ms','weaviate':'~15ms','milvus':'<10ms','pgvector':'~20ms','chroma':'~20ms'}},
+  {d:'元数据过滤',vals:{'pinecone':'<span class="partial">基础</span>','qdrant':'<span class="yes">最强 (ACORN)</span>','weaviate':'<span class="yes">GraphQL</span>','milvus':'<span class="yes">丰富</span>','pgvector':'<span class="yes">SQL 全功能</span>','chroma':'<span class="partial">基础</span>'}},
+  {d:'内置向量化',vals:{'pinecone':'<span class="no">否</span>','qdrant':'<span class="no">否</span>','weaviate':'<span class="yes">OpenAI/Cohere等</span>','milvus':'<span class="no">否</span>','pgvector':'<span class="no">否</span>','chroma':'<span class="partial">基础</span>'}},
+  {d:'ACID 事务',vals:{'pinecone':'<span class="no">最终一致</span>','qdrant':'<span class="yes">是</span>','weaviate':'<span class="no">否</span>','milvus':'<span class="partial">可调</span>','pgvector':'<span class="yes">完整 ACID</span>','chroma':'<span class="no">否</span>'}},
+  {d:'LangChain集成',vals:{'pinecone':'<span class="yes">✅</span>','qdrant':'<span class="yes">✅</span>','weaviate':'<span class="yes">✅</span>','milvus':'<span class="yes">✅</span>','pgvector':'<span class="yes">✅</span>','chroma':'<span class="yes">✅</span>'}},
+  {d:'MCP 服务器',vals:{'pinecone':'<span class="yes">有</span>','qdrant':'<span class="yes">有</span>','weaviate':'<span class="partial">社区</span>','milvus':'<span class="yes">有</span>','pgvector':'<span class="yes">PG MCP</span>','chroma':'<span class="partial">社区</span>'}},
+];
+
+const COST_DATA=[
+  {name:'Pinecone',cost:'~$64',note:'Serverless 按量'},
+  {name:'Weaviate',cost:'~$85',note:'Serverless 维度计费'},
+  {name:'Qdrant Cloud',cost:'~$27-102',note:'量化可降至 $27'},
+  {name:'Zilliz (Milvus)',cost:'~$150+',note:'DiskANN 大规模更省'},
+  {name:'pgvector',cost:'~$0 (已有PG)',note:'需 PG 调优'},
+  {name:'Chroma',cost:'$0',note:'仅限开发环境'},
+];
+
+const QUIZ=[
+  {q:'你目前的基础设施？',opts:[
+    {label:'已有 PostgreSQL，不想加新服务',w:{pinecone:0,qdrant:0,weaviate:0,milvus:0,pgvector:4,chroma:0}},
+    {label:'想用全托管服务，不碰运维',w:{pinecone:4,qdrant:1,weaviate:2,milvus:0,pgvector:0,chroma:0}},
+    {label:'有 K8s 集群，可以自托管',w:{pinecone:0,qdrant:3,weaviate:2,milvus:3,pgvector:0,chroma:0}},
+    {label:'只是本地开发/原型验证',w:{pinecone:0,qdrant:0,weaviate:0,milvus:0,pgvector:1,chroma:4}},
+  ]},
+  {q:'预计向量数量级？',opts:[
+    {label:'< 100 万',w:{pinecone:1,qdrant:1,weaviate:1,milvus:0,pgvector:2,chroma:3}},
+    {label:'100 万 - 5000 万',w:{pinecone:3,qdrant:3,weaviate:2,milvus:1,pgvector:2,chroma:0}},
+    {label:'5000 万 - 10 亿',w:{pinecone:2,qdrant:2,weaviate:1,milvus:3,pgvector:0,chroma:0}},
+    {label:'10 亿+',w:{pinecone:1,qdrant:1,weaviate:0,milvus:4,pgvector:0,chroma:0}},
+  ]},
+  {q:'是否需要混合搜索（向量 + 关键词）？',opts:[
+    {label:'是，核心需求',w:{pinecone:1,qdrant:2,weaviate:4,milvus:3,pgvector:0,chroma:0}},
+    {label:'不确定，可能以后需要',w:{pinecone:1,qdrant:2,weaviate:2,milvus:1,pgvector:0,chroma:0}},
+    {label:'不需要，纯向量搜索即可',w:{pinecone:2,qdrant:2,weaviate:0,milvus:1,pgvector:2,chroma:1}},
+  ]},
+  {q:'对数据隐私/驻留的要求？',opts:[
+    {label:'数据必须留在自己的基础设施',w:{pinecone:-2,qdrant:3,weaviate:2,milvus:2,pgvector:3,chroma:1}},
+    {label:'可以用云服务，但需特定地区',w:{pinecone:1,qdrant:2,weaviate:1,milvus:1,pgvector:0,chroma:0}},
+    {label:'没有特殊要求',w:{pinecone:2,qdrant:1,weaviate:1,milvus:1,pgvector:1,chroma:1}},
+  ]},
+  {q:'是否需要复杂的元数据过滤？',opts:[
+    {label:'是（如：相似向量 + 价格范围 + 类别 + 时间）',w:{pinecone:0,qdrant:4,weaviate:2,milvus:2,pgvector:2,chroma:0}},
+    {label:'基础过滤即可',w:{pinecone:2,qdrant:1,weaviate:1,milvus:1,pgvector:1,chroma:1}},
+    {label:'不需要过滤',w:{pinecone:1,qdrant:0,weaviate:0,milvus:0,pgvector:1,chroma:1}},
+  ]},
+];
+
+const RESULTS={
+  pinecone:{verdict:'🌲 推荐：Pinecone',exp:'全托管零运维，最快上线。Serverless 按量计费，初期成本可控。API 简洁优雅，适合快速验证产品价值。注意高 QPS 下成本增长较快。',steps:['注册 Pinecone 账号（有免费层）','创建 Serverless Index（选择维度和度量方式）','用 SDK 导入向量和元数据','集成到 LangChain/LlamaIndex RAG 管道','监控 Read Units 消耗，避免成本超支']},
+  qdrant:{verdict:'🔶 推荐：Qdrant',exp:'Rust 高性能 + 开源可控。ACORN 过滤算法让它在复杂元数据查询上无敌。int8 量化可将存储成本降低 4 倍。自托管完全掌控数据。',steps:['Docker 一键部署：docker run qdrant/qdrant','创建 Collection 并配置 HNSW + 量化','用 Python/JS SDK 批量导入向量','配置 Payload Index 优化过滤查询','可选：迁移到 Qdrant Cloud 省运维']},
+  weaviate:{verdict:'🔷 推荐：Weaviate',exp:'混合搜索实现最成熟。BlockMax WAND + RSF 融合让向量+关键词搜索无缝协作。内置向量化模块省去 Embedding 代码。GraphQL API 灵活强大。',steps:['选择部署方式（Docker 或 Weaviate Cloud）','配置向量化模块（text2vec-openai 等）','定义 Schema（Class + Properties）','导入文本数据（Weaviate 自动向量化）','启用 Hybrid Search 并调整 alpha 融合权重']},
+  milvus:{verdict:'💠 推荐：Milvus / Zilliz',exp:'十亿级规模的终极方案。DiskANN 让大数据量的存储成本降低 10 倍。Sparse-BM25 混合搜索比 Elasticsearch 快 30 倍。需要 K8s 经验。',steps:['用 Helm Chart 部署到 Kubernetes','创建 Collection 并选择索引类型（DiskANN 推荐）','批量导入向量（支持多线程/GPU 加速）','配置 Sparse-BM25 索引启用混合搜索','可选：使用 Zilliz Cloud 托管服务']},
+  pgvector:{verdict:'🐘 推荐：pgvector',exp:'已有 PostgreSQL 的最优选择。零额外基础设施，向量和业务数据在同一事务中操作。pgvectorscale 在 5000 万向量时仍有 471 QPS。数据量超过 1 亿时考虑迁移。',steps:['在现有 PG 上安装：CREATE EXTENSION vector','创建向量列和 HNSW 索引','用 SQL 插入和查询（与业务逻辑同一事务）','安装 pgvectorscale 提升大数据集性能','设置监控：当索引占用内存过大时预警']},
+  chroma:{verdict:'🎨 推荐：ChromaDB',exp:'开发和原型验证的最佳起点。pip install 即用，与 LangChain 深度集成。在本地快速验证 RAG 效果后，再迁移到生产级数据库。',steps:['pip install chromadb','3 行代码创建 Collection + 插入文档','集成到 LangChain/LlamaIndex 快速搭建 RAG','验证检索质量和 prompt 效果','规模增长后迁移到 Pinecone/Qdrant/pgvector']},
+};
+
+// ═══════ STATE ═══════
+let quizAnswers={};
+let quizStep=0;
+
+function sw(id){
+  document.querySelectorAll('.pnl').forEach(p=>p.classList.toggle('on',p.id==='pnl-'+id));
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));
+  event.target.classList.add('on');
+  if(id==='quiz'){quizAnswers={};quizStep=0;renderQuiz();}
+}
+
+// ═══════ OVERVIEW ═══════
+function renderDBList(){
+  document.getElementById('dbList').innerHTML=DBS.map(db=>`
+    <div class="db-card">
+      <div class="db-top">
+        <span class="db-icon">${db.icon}</span>
+        <span class="db-name">${db.name}</span>
+        <span class="db-type type-${db.type}">${db.typeLabel}</span>
+      </div>
+      <div class="db-stats">
+        <div class="db-stat">规模 <span>${db.scale}</span></div>
+        <div class="db-stat">混合搜索 <span>${db.hybrid}</span></div>
+        <div class="db-stat">语言 <span>${db.lang}</span></div>
+        <div class="db-stat">参考成本 <span style="color:var(--cyan)">${db.priceCost}</span></div>
+      </div>
+      <div class="db-desc">${db.desc}</div>
+      <div class="db-tags">
+        ${db.pros.map(p=>`<span class="db-tag" style="border-color:rgba(6,214,160,.2);color:var(--cyan)">✓ ${p}</span>`).join('')}
+      </div>
+      <div class="db-best">🎯 最佳场景：${db.best}</div>
+      <div class="db-caveat">⚠️ 注意：${db.cons[0]}</div>
+    </div>
+  `).join('');
+}
+
+// ═══════ COMPARE ═══════
+function renderCompare(){
+  const dbIds=['pinecone','qdrant','weaviate','milvus','pgvector','chroma'];
+  let h='<thead><tr><th>维度</th>'+dbIds.map(id=>{const db=DBS.find(d=>d.id===id);return`<th>${db.icon} ${db.name}</th>`}).join('')+'</tr></thead><tbody>';
+  COMPARE_DIMS.forEach(d=>{
+    h+=`<tr><td>${d.d}</td>`+dbIds.map(id=>`<td>${d.vals[id]}</td>`).join('')+'</tr>';
+  });
+  h+='</tbody>';
+  document.getElementById('cmpTable').innerHTML=h;
+
+  document.getElementById('costTable').innerHTML=`
+    <thead><tr><th>数据库</th><th>月度成本</th><th>备注</th></tr></thead>
+    <tbody>${COST_DATA.map(c=>`<tr><td>${c.name}</td><td style="font-family:var(--mono);color:var(--cyan)">${c.cost}</td><td style="color:var(--muted)">${c.note}</td></tr>`).join('')}</tbody>
+  `;
+}
+
+// ═══════ QUIZ ═══════
+function renderQuiz(){
+  if(quizStep>=QUIZ.length){computeResult();return;}
+  const q=QUIZ[quizStep];
+  document.getElementById('quizArea').innerHTML=`
+    <div class="qcard">
+      <div class="qnum">问题 ${quizStep+1} / ${QUIZ.length}</div>
+      <div class="qtxt">${q.q}</div>
+      <div class="qopts">${q.opts.map((o,i)=>`
+        <button class="qopt" onclick="answerQuiz(${quizStep},${i})">${o.label}</button>
+      `).join('')}</div>
+    </div>
+  `;
+  document.getElementById('resultBox').className='result-box';
+  document.getElementById('resultBox').style.display='none';
+}
+
+function answerQuiz(qi,oi){quizAnswers[qi]=oi;quizStep=qi+1;renderQuiz();}
+
+function computeResult(){
+  const scores={pinecone:0,qdrant:0,weaviate:0,milvus:0,pgvector:0,chroma:0};
+  Object.entries(quizAnswers).forEach(([qi,oi])=>{
+    const w=QUIZ[qi].opts[oi].w;
+    Object.entries(w).forEach(([k,v])=>scores[k]+=v);
+  });
+  const sorted=Object.entries(scores).sort((a,b)=>b[1]-a[1]);
+  const top=sorted[0][0];
+  const r=RESULTS[top];
+  const db=DBS.find(d=>d.id===top);
+
+  document.getElementById('quizArea').innerHTML=`<div style="text-align:center"><button class="btn-reset" onclick="quizAnswers={};quizStep=0;renderQuiz()">🔄 重新测试</button></div>`;
+
+  const box=document.getElementById('resultBox');
+  box.className=`result-box ${db.cls} show`;
+  box.style.display='block';
+  box.innerHTML=`
+    <div class="verdict">${r.verdict}</div>
+    <div class="explanation">${r.exp}</div>
+    <div class="next-steps">
+      <strong>📋 快速上手</strong>
+      ${r.steps.map((s,i)=>`<div class="step-item"><strong>${i+1}.</strong> ${s}</div>`).join('')}
+    </div>
+    <button class="btn-reset" onclick="quizAnswers={};quizStep=0;renderQuiz()" style="margin-top:12px">🔄 重新测试</button>
+  `;
+  box.scrollIntoView({behavior:'smooth',block:'center'});
+}
+
+// ═══════ INIT ═══════
+renderDBList();
+renderCompare();
+renderQuiz();
+</script>
+</body>
+</html>
