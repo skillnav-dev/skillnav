@@ -101,8 +101,18 @@ src/
     └── fonts.ts                # Font configuration
 
 public/
-└── guides/                     # Interactive deep guides (static HTML)
-    └── ai-guide.html           # 10-chapter AI architecture guide
+└── guides/                     # Interactive deep guides (11 standalone HTML)
+    ├── ai-guide.html           # 10-chapter AI architecture guide
+    ├── mcp-interactive-guide.html      # MCP config simulator
+    ├── ai-coding-tools-compare.html    # Cursor/Copilot/Claude Code matrix
+    ├── prompt-engineering-workshop.html # Prompt playground
+    ├── agent-design-patterns.html      # ReAct/PaE/Multi-Agent flow animation
+    ├── rag-vs-finetuning-decision-tree.html # Decision tree
+    ├── llm-selection-guide.html        # Interactive filter
+    ├── token-economics-calculator.html # Cost calculator
+    ├── ai-safety-guardrails-simulator.html # Attack/defense demo
+    ├── vector-database-comparison.html # DB recommendation
+    └── embedding-dimensions.html       # Dimension visualization + cost calc
 
 scripts/
 ├── generate-daily.mjs          # Daily brief generator (query → LLM curate → multi-format → upsert)
