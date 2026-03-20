@@ -44,8 +44,13 @@ node scripts/backfill-mcp-description-zh.mjs --tier B --apply  # Backfill B-tier
 node scripts/govern-articles.mjs --audit                 # Article status/score report
 node scripts/audit-content.mjs                           # Skills content quality audit
 
+# Signal layer
+node scripts/scrape-signals.mjs                          # Scrape 5 newsletters for heat signals
+node scripts/scrape-signals.mjs --date 2026-03-19        # Specific date
+node scripts/scrape-signals.mjs --dry-run                # Preview without writing file
+
 # Daily brief pipeline
-node scripts/generate-daily.mjs                          # Generate today's daily brief
+node scripts/generate-daily.mjs                          # Generate today's daily brief (reads signals automatically)
 node scripts/generate-daily.mjs --dry-run                # Preview without writing to DB
 node scripts/generate-daily.mjs --hours 48               # Look back 48h instead of 24h
 node scripts/publish-daily.mjs                           # Publish today's approved brief
@@ -123,7 +128,8 @@ public/
     └── embedding-dimensions.html       # Dimension visualization + cost calc
 
 scripts/
-├── generate-daily.mjs          # Daily brief generator (query → LLM curate → multi-format → upsert)
+├── scrape-signals.mjs          # Signal layer: scrape 5 newsletters → heat aggregation → JSON
+├── generate-daily.mjs          # Daily brief generator (signals + articles → LLM curate → multi-format → upsert)
 ├── publish-daily.mjs           # Multi-channel publisher (RSS auto, WeChat/X copy-ready)
 ├── templates/daily-card.html   # Card image template (6 XHS cards + WeChat header, rendered via gstack browse)
 ├── lib/publishers/             # Platform format adapters (wechat.mjs, twitter.mjs, rss.mjs)

@@ -1,5 +1,5 @@
 # 内容信号层规范 (Content Signals Specification)
-Status: draft
+Status: active
 Date: 2026-03-20
 
 > 上游依赖: content-sources-audit.md (翻译管线源), content-pipeline-spec.md (采集标准)

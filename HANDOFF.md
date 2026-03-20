@@ -1,26 +1,25 @@
 # HANDOFF
 <!-- /checkpoint at 2026-03-20 -->
 
-## Active Plans
-- 30-Day Growth Sprint — Week 1（APPROVED）
-- 内容信号层 — `docs/specs/content-signals-spec.md`（规范完成，待手动验证）
+## Active Plan
+30-Day Growth Sprint — Week 1（APPROVED）
 
 ## Session Tasks
-- [x] 内容信号层设计：5 日报源验证 + 3 天回测 + 规范文档
-- [x] QA 全站测试：健康分 72/100，修复 About 页 + SEO（sitemap/robots）
-- [x] 25 篇 draft 文章批量发布（published 213 → 239）
-- [x] Daily Brief 多平台格式调研 + V3 优化（X/微信/知乎/小红书）
-- [x] 配图卡片系统：HTML 模板 + gstack browse 渲染，6 张 XHS + 1 张微信头图
-- [x] Admin 配图预览：WeChat tab 头图 + XHS tab 6 图网格，点击下载
-- [ ] X 首发帖 — 格式和配图都已准备好，复制 X Thread 内容发到 @skillnav_dev
-- [ ] 503 Worker 资源限制排查（间歇性，/weekly 最易触发）
-- [ ] 信号层手动验证（每天看 TLDR + Ben's Bites 5 分钟）
-- [ ] 重翻译 46 篇存量文章（`--retranslate-published`）
-- [ ] generate-daily 集成信号层输入 + 自动生成配图
+- [x] CI 修复：sync-clawhub 假阳性、github rate limit 死等、weekly cron 时间
+- [x] CI 新增：generate-daily.yml（UTC 22:30 自动生成 Daily Brief）
+- [x] SOP 时间线优化：双窗口→单窗口 07:30-09:00，按平台高峰排发布
+- [x] 信号层实现：scrape-signals.mjs（5 源抓取 + URL 归一化 + heat 聚合）
+- [x] 信号层集成：generate-daily 自动读取信号 JSON 注入 LLM prompt
+- [x] CI：scrape-signals.yml + generate-daily 先抓信号再生成
+- [ ] 重翻译 239 篇存量文章（DeepSeek，后台跑中）
+- [ ] X 首发帖 — 格式和配图都已准备好，复制发到 @skillnav_dev
+- [ ] 掘金介绍帖 — Sprint 计划 Week 1 关键任务
+- [ ] V2EX 介绍帖
+- [ ] 每天发 Daily Brief 到各平台（形成节奏）
 
 ## Key Files
-- `docs/specs/content-signals-spec.md` — 信号层规范
-- `docs/research/2026-03-20-daily-brief-format-research.md` — 格式调研
-- `scripts/templates/daily-card.html` — 配图模板
-- `public/daily-cards/2026-03-20/` — 今日 7 张卡片图
-- `.gstack/qa-reports/qa-report-skillnav-dev-2026-03-20.md` — QA 报告
+- `scripts/scrape-signals.mjs` — 信号层抓取脚本（5 源并行 + heat 聚合）
+- `scripts/generate-daily.mjs` — Daily Brief 生成（已集成信号层）
+- `docs/specs/content-operations-spec.md` — SOP 时间线（已更新）
+- `docs/specs/content-signals-spec.md` — 信号层规范（Status: active）
+- `.github/workflows/generate-daily.yml` — 每天 CST 06:30 自动跑
