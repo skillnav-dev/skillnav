@@ -1,0 +1,57 @@
+name: Scrape Daily Signals
+
+on:
+  schedule:
+    - cron: "30 13 * * *" # UTC 13:30 = CST 21:30, after all newsletters published
+  workflow_dispatch:
+    inputs:
+      date:
+        description: "Target date (YYYY-MM-DD, defaults to today)"
+        required: false
+      dry_run:
+        description: "Dry run mode"
+        type: boolean
+        default: false
+
+concurrency:
+  group: scrape-signals
+  cancel-in-progress: false
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - run: npm ci
+
+      - name: Scrape signals
+        run: |
+          ARGS=""
+          if [ "${{ inputs.date }}" ]; then ARGS="$ARGS --date ${{ inputs.date }}"; fi
+          if [ "${{ inputs.dry_run }}" = "true" ]; then ARGS="$ARGS --dry-run"; fi
+          node scripts/scrape-signals.mjs $ARGS
+
+      - name: Upload signals artifact
+        if: success() && inputs.dry_run != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: daily-signals
+          path: data/daily-signals/
+          retention-days: 30
+
+      - name: Notify Slack on failure
+        if: failure()
+        run: |
+          curl -sS -X POST -H 'Content-type: application/json' \
+            --data "{\"text\":\"❌ *Scrape Daily Signals* failed\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>\"}" \
+            ${{ secrets.SLACK_WEBHOOK_URL }}

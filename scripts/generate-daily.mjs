@@ -24,6 +24,8 @@ import { markdownToWechatHtml } from "./lib/publishers/wechat.mjs";
 import { formatXThread, threadToText } from "./lib/publishers/twitter.mjs";
 import { formatZhihuArticle } from "./lib/publishers/zhihu.mjs";
 import { formatXhsCaption } from "./lib/publishers/xiaohongshu.mjs";
+import fs from "fs";
+import pathMod from "path";
 
 const log = createLogger("daily");
 
@@ -57,6 +59,25 @@ function formatDateChinese(date) {
 // ── Data Query ──────────────────────────────────────────────────────
 
 async function queryRecentArticles(supabase, since, until, limit = 20) {
+  // Dedup: collect article IDs already used in recent briefs (past 3 days)
+  const dedupSince = new Date(since);
+  dedupSince.setDate(dedupSince.getDate() - 3);
+  const { data: recentBriefs } = await supabase
+    .from("daily_briefs")
+    .select("article_ids")
+    .gte("brief_date", formatDate(dedupSince))
+    .lt("brief_date", formatDate(since));
+
+  const usedArticleIds = new Set();
+  for (const brief of recentBriefs || []) {
+    for (const id of brief.article_ids || []) {
+      usedArticleIds.add(id);
+    }
+  }
+  if (usedArticleIds.size) {
+    log.info(`Dedup: excluding ${usedArticleIds.size} articles from recent briefs`);
+  }
+
   const { data, error } = await supabase
     .from("articles")
     .select("id, slug, title, title_zh, summary, summary_zh, source, source_url, relevance_score, published_at")
@@ -72,12 +93,75 @@ async function queryRecentArticles(supabase, since, until, limit = 20) {
     log.error(`Articles query failed: ${error.message}`);
     return [];
   }
-  return data || [];
+
+  // Filter out already-used articles
+  const filtered = (data || []).filter((a) => !usedArticleIds.has(a.id));
+  if (data && filtered.length < data.length) {
+    log.info(`Dedup: ${data.length} -> ${filtered.length} articles after filtering`);
+  }
+  return filtered;
+}
+
+// ── Signal Layer ───────────────────────────────────────────────────
+
+function loadSignals(dateLabel) {
+  const filePath = pathMod.join(process.cwd(), "data", "daily-signals", `${dateLabel}.json`);
+  if (!fs.existsSync(filePath)) {
+    // Try previous day (signals scraped the evening before)
+    const prev = new Date(dateLabel);
+    prev.setDate(prev.getDate() - 1);
+    const prevLabel = formatDate(prev);
+    const prevPath = pathMod.join(process.cwd(), "data", "daily-signals", `${prevLabel}.json`);
+    if (!fs.existsSync(prevPath)) return null;
+    return JSON.parse(fs.readFileSync(prevPath, "utf8"));
+  }
+  return JSON.parse(fs.readFileSync(filePath, "utf8"));
+}
+
+function formatSignalContext(signals) {
+  if (!signals?.signals?.length) return "";
+
+  const hot = signals.signals.filter((s) => s.heat >= 3);
+  const warm = signals.signals.filter((s) => s.heat === 2);
+
+  if (!hot.length && !warm.length) return "";
+
+  const lines = [
+    "\n## 今日外部热度信号（来自 5 个头部 AI 日报的交叉分析）\n",
+  ];
+
+  if (hot.length) {
+    lines.push("🔥 高热度（3+ 个日报同时报道）:");
+    for (const s of hot) {
+      const covered = s.in_our_pipeline ? "✅ 我们已覆盖" : "❌ 我们未覆盖";
+      const summary = Object.values(s.summaries)[0]?.slice(0, 100) || "";
+      lines.push(`- ${s.title} (heat: ${s.heat}, ${covered}) — ${summary}`);
+    }
+    lines.push("");
+  }
+
+  if (warm.length) {
+    lines.push("⭐ 关注度较高（2 个日报报道）:");
+    for (const s of warm.slice(0, 8)) {
+      const covered = s.in_our_pipeline ? "✅" : "❌";
+      lines.push(`- ${s.title} (${covered})`);
+    }
+    lines.push("");
+  }
+
+  lines.push(
+    "选题指引：",
+    "- 对于我们已有文章的高热度话题，优先选入 Daily Brief",
+    "- 对于我们未覆盖的高热度话题，在 headlines 或 quickLinks 中用简讯形式报道（使用 slug 'signal-N'）",
+    ""
+  );
+
+  return lines.join("\n");
 }
 
 // ── LLM Curation ───────────────────────────────────────────────────
 
-async function generateEditorialBrief(articles) {
+async function generateEditorialBrief(articles, signalContext = "") {
   const { callLLM } = await import("./lib/llm.mjs");
 
   const articleList = articles
@@ -126,6 +210,7 @@ Key principle: don't just report WHAT happened, explain WHY IT MATTERS to develo
   const userPrompt = `Generate a structured daily brief from these ${articles.length} articles:
 
 ${articleList}
+${signalContext}
 
 Return a JSON object with THREE sections:
 {
@@ -383,6 +468,17 @@ async function main() {
 
   log.info(`Found ${articles.length} articles`);
 
+  // Load signal layer data
+  const signals = loadSignals(dateLabel);
+  const signalContext = formatSignalContext(signals);
+  if (signals) {
+    const hot = signals.signals.filter((s) => s.heat >= 3).length;
+    const warm = signals.signals.filter((s) => s.heat === 2).length;
+    log.info(`Signal layer: ${hot} hot + ${warm} warm topics from ${signals.sources_scraped.length} sources`);
+  } else {
+    log.info("Signal layer: no data available, using articles only");
+  }
+
   // Generate editorial brief
   let editorialBrief;
   if (noLlm) {
@@ -391,7 +487,7 @@ async function main() {
   } else {
     log.info("Generating editorial brief via LLM...");
     try {
-      editorialBrief = await generateEditorialBrief(articles);
+      editorialBrief = await generateEditorialBrief(articles, signalContext);
       log.success(`Brief: "${editorialBrief.title}" with ${editorialBrief.highlights.length} highlights`);
     } catch (e) {
       log.warn(`LLM failed: ${e.message}. Using fallback.`);

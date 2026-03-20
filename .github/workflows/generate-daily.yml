@@ -2,12 +2,16 @@ name: Generate Daily Brief
 
 on:
   schedule:
-    - cron: "0 23 * * *" # UTC 23:00 = CST 07:00, after morning article sync
+    - cron: "30 22 * * *" # UTC 22:30 = CST 06:30, after morning article sync
   workflow_dispatch:
     inputs:
       hours:
         description: "Look back hours (default 24)"
         required: false
+      skip_signals:
+        description: "Skip signal scraping"
+        type: boolean
+        default: false
       dry_run:
         description: "Dry run mode"
         type: boolean
@@ -37,6 +41,10 @@ jobs:
           cache: "npm"
 
       - run: npm ci
+
+      - name: Scrape daily signals
+        if: inputs.skip_signals != 'true'
+        run: node scripts/scrape-signals.mjs || echo "Signal scraping failed, continuing without signals"
 
       - name: Generate daily brief
         run: |
