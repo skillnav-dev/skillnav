@@ -11,6 +11,7 @@
 | [specs/content-strategy-v2.md](specs/content-strategy-v2.md) | 内容战略：从翻译聚合→编辑策展品牌 | 已确认 |
 | [specs/content-pipeline-spec.md](specs/content-pipeline-spec.md) | 内容管线：采集标准、内容类型、源准入 | 生效中 |
 | [specs/content-operations-spec.md](specs/content-operations-spec.md) | 内容运营：端到端时序编排 | 生效中（Phase 1） |
+| [specs/content-signals-spec.md](specs/content-signals-spec.md) | 内容信号层：5 大日报热度感知 + 选题增强 | 草案 |
 | [specs/content-distribution-spec.md](specs/content-distribution-spec.md) | 分发规范：一鱼多吃模型 | 待审批 |
 | [specs/ui-ux-redesign-v1.md](specs/ui-ux-redesign-v1.md) | UX 诊断报告 + 改进方案 | 待审批 |
 
