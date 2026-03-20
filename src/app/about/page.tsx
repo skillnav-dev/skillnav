@@ -78,8 +78,8 @@ const solutions = [
 // Data stats
 const stats = [
   { icon: Sparkles, label: "精选 Skills", value: "168+" },
-  { icon: Newspaper, label: "翻译资讯", value: "270+" },
-  { icon: Rss, label: "一手信源", value: "13" },
+  { icon: Newspaper, label: "翻译资讯", value: "200+" },
+  { icon: Rss, label: "一手信源", value: "14" },
   { icon: RefreshCw, label: "更新频率", value: "每日" },
 ];
 
@@ -149,7 +149,7 @@ export default function AboutPage() {
           <div className="flex flex-col gap-3 text-sm text-muted-foreground sm:flex-row sm:items-center sm:gap-2">
             <span className="inline-flex items-center gap-1.5 rounded-md bg-primary/10 px-2.5 py-1 font-medium text-primary">
               <Rss className="size-3.5" />
-              13 个一手信源
+              14 个一手信源
             </span>
             <span className="hidden text-muted-foreground/50 sm:inline">→</span>
             <span className="inline-flex items-center gap-1.5 rounded-md bg-primary/10 px-2.5 py-1 font-medium text-primary">
@@ -168,8 +168,8 @@ export default function AboutPage() {
             </span>
           </div>
           <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-            信源覆盖 Anthropic、OpenAI、Google AI、LangChain、Vercel、GitHub
-            等官方博客及 Latent Space、Ars Technica
+            信源覆盖 Anthropic、OpenAI、Google AI、LangChain、GitHub
+            等官方博客及 Latent Space
             等深度技术媒体。我们持续评估每个信源的信噪比，淘汰低质量源，引入新发现的高价值渠道，并通过关键词过滤自动排除与
             AI 工具生态无关的内容。
           </p>
