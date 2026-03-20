@@ -486,7 +486,8 @@ async function main() {
 
   log.done();
 
-  if (errors > 0) process.exit(1);
+  // Only fail if >10% errors (parse errors on a few entries are expected)
+  if (errors > dedupedSkills.length * 0.1) process.exit(1);
 }
 
 main().catch((e) => {

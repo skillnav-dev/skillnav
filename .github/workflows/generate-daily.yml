@@ -1,33 +1,26 @@
-name: Generate Weekly Newsletter
+name: Generate Daily Brief
 
 on:
   schedule:
-    - cron: "0 0 * * 1" # UTC 00:00 Monday = CST 08:00, after morning sync
+    - cron: "0 23 * * *" # UTC 23:00 = CST 07:00, after morning article sync
   workflow_dispatch:
     inputs:
-      week_of:
-        description: "Week start date (YYYY-MM-DD, defaults to last Monday)"
-        required: false
-      limit:
-        description: "Max articles to include (default 15)"
+      hours:
+        description: "Look back hours (default 24)"
         required: false
       dry_run:
         description: "Dry run mode"
         type: boolean
         default: false
-      no_llm:
-        description: "Skip LLM editor's note"
-        type: boolean
-        default: false
 
 concurrency:
-  group: generate-weekly
+  group: generate-daily
   cancel-in-progress: false
 
 jobs:
   generate:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 15
     env:
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
@@ -45,18 +38,16 @@ jobs:
 
       - run: npm ci
 
-      - name: Generate weekly newsletter
+      - name: Generate daily brief
         run: |
           ARGS=""
-          if [ "${{ inputs.week_of }}" ]; then ARGS="$ARGS --week-of ${{ inputs.week_of }}"; fi
-          if [ "${{ inputs.limit }}" ]; then ARGS="$ARGS --limit ${{ inputs.limit }}"; fi
+          if [ "${{ inputs.hours }}" ]; then ARGS="$ARGS --hours ${{ inputs.hours }}"; fi
           if [ "${{ inputs.dry_run }}" = "true" ]; then ARGS="$ARGS --dry-run"; fi
-          if [ "${{ inputs.no_llm }}" = "true" ]; then ARGS="$ARGS --no-llm"; fi
-          node scripts/generate-weekly.mjs $ARGS
+          node scripts/generate-daily.mjs $ARGS
 
       - name: Notify Slack on failure
         if: failure()
         run: |
           curl -sS -X POST -H 'Content-type: application/json' \
-            --data "{\"text\":\"❌ *Generate Weekly* failed\\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>\"}" \
+            --data "{\"text\":\"❌ *Generate Daily Brief* failed\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>\"}" \
             ${{ secrets.SLACK_WEBHOOK_URL }}

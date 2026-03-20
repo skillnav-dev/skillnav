@@ -29,6 +29,10 @@ export async function githubFetch(path, options = {}) {
     const resetTime = response.headers.get("x-ratelimit-reset");
     if (resetTime) {
       const waitMs = Number(resetTime) * 1000 - Date.now() + 1000;
+      const MAX_WAIT_MS = 5 * 60 * 1000; // 5 min max wait in CI
+      if (waitMs > MAX_WAIT_MS) {
+        throw new Error(`Rate limited. Reset in ${Math.ceil(waitMs / 1000)}s — too long, aborting.`);
+      }
       console.log(`Rate limited. Waiting ${Math.ceil(waitMs / 1000)}s...`);
       await new Promise((r) => setTimeout(r, Math.max(waitMs, 1000)));
       return githubFetch(path, options);
