@@ -315,41 +315,38 @@ export function BriefDetail({
         </TabsContent>
 
         <TabsContent value="xhs">
-          {/* XHS cover card */}
-          {(() => {
-            const cardUrl = `/daily-cards/${brief.brief_date}/xhs-cover-card.png`;
-            return (
-              <Card className="mb-4">
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <span className="text-sm font-medium">封面配图（4:5）</span>
+          {/* XHS card gallery */}
+          <Card className="mb-4">
+            <CardHeader>
+              <span className="text-sm font-medium">
+                配图卡片（6 张 · 4:5）— 点击下载
+              </span>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-3 gap-3">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
                   <a
-                    href={cardUrl}
+                    key={i}
+                    href={`/daily-cards/${brief.brief_date}/xhs-${i}.png`}
                     download
-                    className="text-xs text-primary hover:underline"
+                    className="block overflow-hidden rounded-lg border transition-opacity hover:opacity-80"
                   >
-                    下载封面
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={`/daily-cards/${brief.brief_date}/xhs-${i}.png`}
+                      alt={`小红书配图 ${i}`}
+                      className="w-full"
+                      onError={(e) => {
+                        (
+                          e.target as HTMLImageElement
+                        ).parentElement!.style.display = "none";
+                      }}
+                    />
                   </a>
-                </CardHeader>
-                <CardContent>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={cardUrl}
-                    alt="小红书封面"
-                    className="mx-auto max-h-[500px] rounded-lg border"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = "none";
-                      (
-                        e.target as HTMLImageElement
-                      ).nextElementSibling?.classList.remove("hidden");
-                    }}
-                  />
-                  <p className="hidden py-4 text-center text-sm text-muted-foreground">
-                    封面未生成。运行卡片生成脚本后刷新。
-                  </p>
-                </CardContent>
-              </Card>
-            );
-          })()}
+                ))}
+              </div>
+            </CardContent>
+          </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <span className="text-sm font-medium">小红书文案预览</span>
