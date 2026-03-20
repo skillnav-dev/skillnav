@@ -38,23 +38,43 @@ export function markdownToWechatHtml(markdown, meta = {}) {
 
   let html = markdown;
 
-  // Headers
-  html = html.replace(/^#### (.+)$/gm, (_, text) =>
-    `<h4 style="font-size:16px;font-weight:bold;color:#1a1a2e;margin:16px 0 8px;line-height:1.4">${text}</h4>`
+  // Section headers — distinct visual styles per section
+  html = html.replace(/^## 🚀 (.+)$/gm, (_, text) =>
+    `<h2 style="font-size:18px;font-weight:bold;color:#1a1a2e;margin:28px 0 16px;padding:10px 16px;background:linear-gradient(135deg,#eff6ff,#dbeafe);border-radius:8px;line-height:1.4">🚀 ${text}</h2>`
   );
-  html = html.replace(/^### (.+)$/gm, (_, text) =>
-    `<h3 style="font-size:17px;font-weight:bold;color:#1a1a2e;margin:20px 0 10px;line-height:1.4">${text}</h3>`
+  html = html.replace(/^## 🛠️ (.+)$/gm, (_, text) =>
+    `<h2 style="font-size:16px;font-weight:bold;color:#1a1a2e;margin:28px 0 12px;padding-bottom:8px;border-bottom:2px solid #e5e7eb;line-height:1.4">🛠️ ${text}</h2>`
   );
+  html = html.replace(/^## ⚡ (.+)$/gm, (_, text) =>
+    `<h2 style="font-size:15px;font-weight:bold;color:#666;margin:24px 0 10px;line-height:1.4">⚡ ${text}</h2>`
+  );
+
+  // Fallback for other ## headers
   html = html.replace(/^## (.+)$/gm, (_, text) =>
     `<h2 style="font-size:18px;font-weight:bold;color:#1a1a2e;margin:24px 0 12px;line-height:1.4">${text}</h2>`
   );
 
-  // Blockquotes (multi-line support)
-  html = html.replace(/^> (.+)$/gm, (_, text) =>
-    `<blockquote style="margin:12px 0;padding:10px 16px;border-left:3px solid #2563eb;background:#f8f9fa;color:#555;font-size:14px;line-height:1.7">${text}</blockquote>`
+  // Article titles in headlines (### with links)
+  html = html.replace(/^### (.+)$/gm, (_, text) =>
+    `<h3 style="font-size:17px;font-weight:bold;color:#1a1a2e;margin:20px 0 6px;line-height:1.4">${text}</h3>`
   );
 
-  // Bold
+  // Source italic lines (*Source*)
+  html = html.replace(/^\*([^*]+)\*$/gm, (_, text) =>
+    `<p style="font-size:12px;color:#999;margin:0 0 8px;line-height:1.4">${text}</p>`
+  );
+
+  // "Why it matters" bold paragraphs — highlight with accent
+  html = html.replace(/\*\*为什么重要：\*\* (.+)/g,
+    '<p style="font-size:14px;color:#2563eb;margin:8px 0 16px;padding:8px 12px;background:#f0f7ff;border-radius:6px;line-height:1.6"><strong>💡 为什么重要：</strong>$1</p>'
+  );
+
+  // Blockquotes (hook line)
+  html = html.replace(/^> (.+)$/gm, (_, text) =>
+    `<blockquote style="margin:0 0 20px;padding:12px 16px;border-left:3px solid #2563eb;background:#f8f9fa;color:#444;font-size:15px;font-weight:500;line-height:1.7">${text}</blockquote>`
+  );
+
+  // Remaining bold text
   html = html.replace(/\*\*(.+?)\*\*/g, '<strong style="color:#1a1a2e">$1</strong>');
 
   // Inline code
@@ -64,15 +84,15 @@ export function markdownToWechatHtml(markdown, meta = {}) {
 
   // Links — convert markdown links, strip relative paths to skillnav.dev
   html = html.replace(/\[([^\]]+)\]\(\/([^)]+)\)/g,
-    '<a style="color:#2563eb;text-decoration:none" href="https://skillnav.dev/$2">$1</a>'
+    '<a style="color:#2563eb;text-decoration:none;font-weight:500" href="https://skillnav.dev/$2">$1</a>'
   );
   html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g,
-    '<a style="color:#2563eb;text-decoration:none" href="$2">$1</a>'
+    '<a style="color:#2563eb;text-decoration:none;font-weight:500" href="$2">$1</a>'
   );
 
-  // Unordered list items
+  // Unordered list items — compact style for tools & quick links
   html = html.replace(/^- (.+)$/gm, (_, text) =>
-    `<p style="font-size:15px;color:#333;line-height:1.8;margin:4px 0;padding-left:16px">• ${text}</p>`
+    `<p style="font-size:14px;color:#333;line-height:1.7;margin:6px 0;padding:6px 0 6px 16px;border-bottom:1px solid #f5f5f5">• ${text}</p>`
   );
 
   // Horizontal rule
@@ -90,9 +110,9 @@ export function markdownToWechatHtml(markdown, meta = {}) {
   html = html.replace(/\n{2,}/g, "\n");
 
   // Wrap in container
-  const header = `<div style="text-align:center;margin-bottom:24px">
+  const header = `<div style="text-align:center;margin-bottom:20px">
 <h1 style="font-size:20px;font-weight:bold;color:#1a1a2e;margin:0">${escapeHtml(title)}</h1>
-${date ? `<p style="font-size:13px;color:#999;margin:4px 0">${escapeHtml(date)}${articleCount ? ` · ${articleCount} 篇精选` : ""}</p>` : ""}
+${date ? `<p style="font-size:13px;color:#999;margin:6px 0">${escapeHtml(date)}${articleCount ? ` · ${articleCount} 篇精选` : ""}</p>` : ""}
 </div>`;
 
   const footer = `<div style="text-align:center;margin-top:32px;padding-top:16px;border-top:1px solid #eee">

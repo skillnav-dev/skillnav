@@ -50,3 +50,4 @@ cloudflare-env.d.ts
 
 # generated data
 /data
+.gstack/

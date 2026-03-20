@@ -23,37 +23,65 @@ const HASHTAGS = [
 ];
 
 /**
- * @typedef {object} BriefHighlight
- * @property {string} title - Article title (Chinese)
- * @property {string} oneLiner - One-line summary
- */
-
-/**
- * Generate a Xiaohongshu caption from brief highlights.
+ * Generate a Xiaohongshu caption with layered sections.
+ * Headlines get more space, quick links are compressed.
  *
- * @param {BriefHighlight[]} highlights - Curated highlights
- * @param {object} meta - { title, date }
+ * @param {object} sections - { headlines, tools, quickLinks }
+ * @param {object} meta - { title, date, totalCount }
  * @returns {string} Copy-ready caption text
  */
-export function formatXhsCaption(highlights, meta = {}) {
-  const { title = "AI 日报", date = "" } = meta;
+export function formatXhsCaption(sections, meta = {}) {
+  const { title = "AI 日报", date = "", totalCount = 0 } = meta;
+  const { headlines = [], tools = [], quickLinks = [] } = sections;
+
+  // Backward compat: if sections is an array, use flat format
+  if (Array.isArray(sections)) {
+    return formatXhsCaptionFlat(sections, meta);
+  }
 
   const lines = [];
+  const count = totalCount || headlines.length + tools.length + quickLinks.length;
 
   // Hook (first 2 lines shown in preview)
   lines.push(title);
-  lines.push(`${date ? date + " " : ""}${highlights.length} 个值得关注的 AI 动态`);
+  lines.push(`${date ? date + " " : ""}${count} 条 AI 动态速览`);
   lines.push("");
 
-  // Highlights as emoji bullet points
-  const emojis = ["🔥", "⚡", "🚀", "💡", "🛠️", "📦", "🧠", "✨", "🎯", "📊"];
+  // Headlines — full treatment with summary
+  if (headlines.length) {
+    lines.push("📌 今日重点");
+    lines.push("");
+    for (const h of headlines) {
+      lines.push(`🔥 ${h.title}`);
+      if (h.whyItMatters) {
+        lines.push(`💡 ${h.whyItMatters}`);
+      } else if (h.summary) {
+        lines.push(`   ${h.summary.slice(0, 60)}`);
+      }
+      lines.push("");
+    }
+  }
 
-  for (let i = 0; i < highlights.length; i++) {
-    const h = highlights[i];
-    const emoji = emojis[i % emojis.length];
-    lines.push(`${emoji} ${h.title}`);
-    if (h.oneLiner) {
-      lines.push(`   ${h.oneLiner}`);
+  // Tools — one line each with emoji
+  if (tools.length) {
+    lines.push("🛠️ 工具动态");
+    lines.push("");
+    const toolEmojis = ["⚡", "🚀", "💡", "📦"];
+    for (let i = 0; i < tools.length; i++) {
+      const emoji = toolEmojis[i % toolEmojis.length];
+      lines.push(`${emoji} ${tools[i].title}`);
+      if (tools[i].oneLiner) {
+        lines.push(`   ${tools[i].oneLiner}`);
+      }
+      lines.push("");
+    }
+  }
+
+  // Quick Links — compressed, no sub-lines
+  if (quickLinks.length) {
+    lines.push("📋 速览");
+    for (const q of quickLinks) {
+      lines.push(`· ${q.title}${q.oneLiner ? " — " + q.oneLiner : ""}`);
     }
     lines.push("");
   }
@@ -67,14 +95,44 @@ export function formatXhsCaption(highlights, meta = {}) {
 
   let caption = lines.join("\n");
 
-  // Trim if over limit (cut highlights from bottom)
+  // Trim if over limit (cut quick links first, then tools)
+  if (caption.length > MAX_CAPTION_LENGTH && quickLinks.length > 0) {
+    const trimmed = { ...sections, quickLinks: quickLinks.slice(0, -1) };
+    return formatXhsCaption(trimmed, meta);
+  }
+  if (caption.length > MAX_CAPTION_LENGTH && tools.length > 0) {
+    const trimmed = { ...sections, quickLinks: [], tools: tools.slice(0, -1) };
+    return formatXhsCaption(trimmed, meta);
+  }
+
+  return caption;
+}
+
+/**
+ * Flat format fallback for backward compatibility.
+ */
+function formatXhsCaptionFlat(highlights, meta = {}) {
+  const { title = "AI 日报", date = "" } = meta;
+  const lines = [];
+  lines.push(title);
+  lines.push(`${date ? date + " " : ""}${highlights.length} 个值得关注的 AI 动态`);
+  lines.push("");
+  const emojis = ["🔥", "⚡", "🚀", "💡", "🛠️", "📦", "🧠", "✨", "🎯", "📊"];
+  for (let i = 0; i < highlights.length; i++) {
+    const h = highlights[i];
+    lines.push(`${emojis[i % emojis.length]} ${h.title}`);
+    if (h.oneLiner) lines.push(`   ${h.oneLiner}`);
+    lines.push("");
+  }
+  lines.push("👉 搜索「SkillNav」获取更多 AI 工具资讯");
+  lines.push("");
+  lines.push(HASHTAGS.join(" "));
+  let caption = lines.join("\n");
   if (caption.length > MAX_CAPTION_LENGTH) {
-    // Rebuild with fewer highlights
     for (let count = highlights.length - 1; count >= 3; count--) {
-      caption = formatXhsCaption(highlights.slice(0, count), meta);
+      caption = formatXhsCaptionFlat(highlights.slice(0, count), meta);
       if (caption.length <= MAX_CAPTION_LENGTH) break;
     }
   }
-
   return caption;
 }
