@@ -170,6 +170,41 @@ export function BriefDetail({
         </TabsContent>
 
         <TabsContent value="wechat">
+          {/* WeChat header card */}
+          {(() => {
+            const cardUrl = `/daily-cards/${brief.brief_date}/wechat-header-card.png`;
+            return (
+              <Card className="mb-4">
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <span className="text-sm font-medium">头图配图</span>
+                  <a
+                    href={cardUrl}
+                    download
+                    className="text-xs text-primary hover:underline"
+                  >
+                    下载头图
+                  </a>
+                </CardHeader>
+                <CardContent>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={cardUrl}
+                    alt="微信头图"
+                    className="w-full rounded-lg border"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = "none";
+                      (
+                        e.target as HTMLImageElement
+                      ).nextElementSibling?.classList.remove("hidden");
+                    }}
+                  />
+                  <p className="hidden py-4 text-center text-sm text-muted-foreground">
+                    头图未生成。运行卡片生成脚本后刷新。
+                  </p>
+                </CardContent>
+              </Card>
+            );
+          })()}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <span className="text-sm font-medium">公众号 HTML 预览</span>
@@ -280,6 +315,41 @@ export function BriefDetail({
         </TabsContent>
 
         <TabsContent value="xhs">
+          {/* XHS cover card */}
+          {(() => {
+            const cardUrl = `/daily-cards/${brief.brief_date}/xhs-cover-card.png`;
+            return (
+              <Card className="mb-4">
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <span className="text-sm font-medium">封面配图（4:5）</span>
+                  <a
+                    href={cardUrl}
+                    download
+                    className="text-xs text-primary hover:underline"
+                  >
+                    下载封面
+                  </a>
+                </CardHeader>
+                <CardContent>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={cardUrl}
+                    alt="小红书封面"
+                    className="mx-auto max-h-[500px] rounded-lg border"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = "none";
+                      (
+                        e.target as HTMLImageElement
+                      ).nextElementSibling?.classList.remove("hidden");
+                    }}
+                  />
+                  <p className="hidden py-4 text-center text-sm text-muted-foreground">
+                    封面未生成。运行卡片生成脚本后刷新。
+                  </p>
+                </CardContent>
+              </Card>
+            );
+          })()}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <span className="text-sm font-medium">小红书文案预览</span>
