@@ -411,8 +411,13 @@ async function main() {
   const hoursIdx = args.indexOf("--hours");
   const lookbackHours = hoursIdx !== -1 ? Number(args[hoursIdx + 1]) : 24;
 
-  // Determine date range
-  const briefDate = dateStr ? new Date(dateStr) : new Date();
+  // Determine date range (use CST = UTC+8, so CI running at UTC 22:30 gets next CST day)
+  function todayCST() {
+    const now = new Date();
+    const cst = new Date(now.getTime() + 8 * 3600 * 1000);
+    return new Date(cst.toISOString().slice(0, 10));
+  }
+  const briefDate = dateStr ? new Date(dateStr) : todayCST();
   const until = new Date(briefDate);
   until.setHours(23, 59, 59, 999);
   const since = new Date(until);

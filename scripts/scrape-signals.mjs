@@ -23,6 +23,16 @@ const log = createLogger("signals");
 
 const BROWSER_UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
+const BROWSER_HEADERS = {
+  "User-Agent": BROWSER_UA,
+  "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+  "Accept-Language": "en-US,en;q=0.9",
+  "Sec-Fetch-Dest": "document",
+  "Sec-Fetch-Mode": "navigate",
+  "Sec-Fetch-Site": "none",
+  "Sec-Fetch-User": "?1",
+  "Upgrade-Insecure-Requests": "1",
+};
 const FETCH_TIMEOUT = 30_000;
 
 // ── Helpers ────────────────────────────────────────────────────────
@@ -142,7 +152,7 @@ async function scrapeBensBites() {
 
   const postUrl = linkMatch[1];
   const html = await fetchWithTimeout(postUrl, {
-    headers: { "User-Agent": BROWSER_UA },
+    headers: BROWSER_HEADERS,
   });
 
   const items = [];
@@ -187,7 +197,7 @@ async function scrapeBensBites() {
  */
 async function scrapeRundown() {
   const archiveHtml = await fetchWithTimeout("https://www.therundown.ai/archive", {
-    headers: { "User-Agent": BROWSER_UA },
+    headers: BROWSER_HEADERS,
   });
 
   // Get latest post slug
@@ -199,7 +209,7 @@ async function scrapeRundown() {
 
   const postUrl = `https://www.therundown.ai/p/${slugMatch[1]}`;
   const html = await fetchWithTimeout(postUrl, {
-    headers: { "User-Agent": BROWSER_UA },
+    headers: BROWSER_HEADERS,
   });
 
   const items = [];
@@ -246,124 +256,73 @@ async function scrapeRundown() {
  * Superhuman AI — Beehiiv, homepage → latest /p/ slug → extract headings.
  */
 async function scrapeSuperhuman() {
-  const homeHtml = await fetchWithTimeout("https://www.superhuman.ai/", {
-    headers: { "User-Agent": BROWSER_UA },
-  });
+  return scrapeBeehiivHomepage("https://www.superhuman.ai/", "superhuman");
+}
 
-  // Get latest post slug
-  const slugMatch = homeHtml.match(/href="\/p\/([^"]+)"/);
-  if (!slugMatch) {
-    log.warn("[superhuman] No post slug found");
-    return [];
-  }
-
-  const postUrl = `https://www.superhuman.ai/p/${slugMatch[1]}`;
-  const html = await fetchWithTimeout(postUrl, {
-    headers: { "User-Agent": BROWSER_UA },
-  });
+/**
+ * Generic beehiiv homepage scraper — extracts posts from embedded JSON.
+ * Only fetches homepage (no post detail pages), reducing Cloudflare block risk.
+ */
+async function scrapeBeehiivHomepage(baseUrl, source) {
+  const homeHtml = await fetchWithTimeout(baseUrl, { headers: BROWSER_HEADERS });
 
   const items = [];
 
-  // Extract h1 (main topic) and h2 subtopics
-  const h1Match = html.match(/<h1[^>]*>([^<]+)</);
-  if (h1Match) {
-    const title = htmlDecode(h1Match[1]);
-    items.push({ title, url: postUrl, source: "superhuman", summary: "" });
+  // Strategy 1: Parse embedded JSON posts data (beehiiv SSR)
+  // Use bracket-matching instead of regex to handle nested arrays
+  const postsIdx = homeHtml.indexOf('"posts":');
+  const bracketStart = postsIdx !== -1 ? homeHtml.indexOf("[", postsIdx) : -1;
+  let postsJson = null;
+  if (bracketStart !== -1) {
+    let depth = 0;
+    for (let i = bracketStart; i < homeHtml.length; i++) {
+      if (homeHtml[i] === "[") depth++;
+      if (homeHtml[i] === "]") { depth--; if (depth === 0) { postsJson = homeHtml.slice(bracketStart, i + 1); break; } }
+    }
   }
+  if (postsJson) {
+    try {
+      const posts = JSON.parse(postsJson);
+      // Take latest 3 posts (they're already sorted by date)
+      for (const post of posts.slice(0, 3)) {
+        const title = htmlDecode(post.web_title || post.meta_default_title || "");
+        const postUrl = `${baseUrl}/p/${post.slug || post.parameterized_web_title}`;
+        if (title) items.push({ title, url: postUrl, source, summary: "" });
 
-  // h2 subtopics from the ALSO line
-  const alsoMatch = html.match(/ALSO:\s*([^<]+)</i);
-  if (alsoMatch) {
-    const topics = alsoMatch[1].split(/[,;]/).map((t) => t.trim()).filter((t) => t.length > 5);
-    for (const topic of topics) {
-      items.push({ title: htmlDecode(topic), url: null, source: "superhuman", summary: "" });
+        // Extract subtopics from web_subtitle ("ALSO: topic1, topic2")
+        const subtitle = post.web_subtitle || post.meta_default_description || "";
+        const alsoMatch = subtitle.match(/ALSO:\s*(.+)/i);
+        if (alsoMatch) {
+          const topics = alsoMatch[1].split(/[,;]/).map((t) => t.trim()).filter((t) => t.length > 5);
+          for (const topic of topics) {
+            items.push({ title: htmlDecode(topic), url: null, source, summary: "" });
+          }
+        }
+      }
+    } catch {
+      log.warn(`[${source}] Failed to parse embedded JSON, falling back to HTML`);
     }
   }
 
-  // Extract external links from content
-  const linkRe = /<a[^>]+href="(https?:\/\/[^"]+)"[^>]*>([^<]{10,})<\/a>/g;
-  const seenUrls = new Set([postUrl]);
-  let m;
-  while ((m = linkRe.exec(html)) !== null) {
-    const rawUrl = m[1];
-    const text = htmlDecode(m[2]);
-    if (
-      rawUrl.includes("superhuman.ai") ||
-      rawUrl.includes("beehiiv.com") ||
-      rawUrl.includes("twitter.com") ||
-      rawUrl.includes("linkedin.com") ||
-      rawUrl.includes("youtube.com") ||
-      rawUrl.includes("instagram.com") ||
-      rawUrl.includes("mailto:")
-    ) continue;
-    const url = normalizeUrl(rawUrl);
-    if (!url || seenUrls.has(url)) continue;
-    seenUrls.add(url);
-    items.push({ title: text, url, source: "superhuman", summary: "" });
+  // Strategy 2: Fallback to HTML parsing if JSON extraction failed
+  if (items.length === 0) {
+    const slugs = [...new Set([...homeHtml.matchAll(/href="\/p\/([^"]+)"/g)].map((m) => m[1]))];
+    for (const slug of slugs.slice(0, 3)) {
+      items.push({ title: slug.replace(/-/g, " "), url: `${baseUrl}/p/${slug}`, source, summary: "" });
+    }
   }
 
-  log.info(`[superhuman] ${items.length} items from ${postUrl}`);
+  log.info(`[${source}] ${items.length} items from homepage`);
   return items;
 }
 
 /**
- * The Neuron — Beehiiv, homepage → latest /p/ slug → extract headings + links.
+ * The Neuron — Beehiiv, reuses generic homepage scraper.
  */
 async function scrapeNeuron() {
-  const homeHtml = await fetchWithTimeout("https://www.theneurondaily.com/", {
-    headers: { "User-Agent": BROWSER_UA },
-  });
-
-  const slugMatch = homeHtml.match(/href="\/p\/([^"]+)"/);
-  if (!slugMatch) {
-    log.warn("[neuron] No post slug found");
-    return [];
-  }
-
-  const postUrl = `https://www.theneurondaily.com/p/${slugMatch[1]}`;
-  const html = await fetchWithTimeout(postUrl, {
-    headers: { "User-Agent": BROWSER_UA },
-  });
-
-  const items = [];
-
-  // h1 main topic
-  const h1Match = html.match(/<h1[^>]*>([^<]+)</);
-  if (h1Match) {
-    items.push({
-      title: htmlDecode(h1Match[1]),
-      url: postUrl,
-      source: "neuron",
-      summary: "",
-    });
-  }
-
-  // External links in content
-  const linkRe = /<a[^>]+href="(https?:\/\/[^"]+)"[^>]*>([^<]{10,})<\/a>/g;
-  const seenUrls = new Set([postUrl]);
-  let m;
-  while ((m = linkRe.exec(html)) !== null) {
-    const rawUrl = m[1];
-    const text = htmlDecode(m[2]);
-    if (
-      rawUrl.includes("theneurondaily.com") ||
-      rawUrl.includes("beehiiv.com") ||
-      rawUrl.includes("twitter.com") ||
-      rawUrl.includes("linkedin.com") ||
-      rawUrl.includes("youtube.com") ||
-      rawUrl.includes("instagram.com") ||
-      rawUrl.includes("mailto:") ||
-      rawUrl.includes("google.com")
-    ) continue;
-    const url = normalizeUrl(rawUrl);
-    if (!url || seenUrls.has(url)) continue;
-    seenUrls.add(url);
-    items.push({ title: text, url, source: "neuron", summary: "" });
-  }
-
-  log.info(`[neuron] ${items.length} items from ${postUrl}`);
-  return items;
+  return scrapeBeehiivHomepage("https://www.theneurondaily.com/", "neuron");
 }
+
 
 // ── Aggregation ────────────────────────────────────────────────────
 
@@ -513,7 +472,13 @@ async function main() {
   const dateIdx = args.indexOf("--date");
   const dateStr = dateIdx !== -1 ? args[dateIdx + 1] : null;
 
-  const targetDate = dateStr ? new Date(dateStr) : new Date();
+  // Use CST (UTC+8) so CI running at UTC 22:xx resolves to next CST day
+  function todayCST() {
+    const now = new Date();
+    const cst = new Date(now.getTime() + 8 * 3600 * 1000);
+    return new Date(cst.toISOString().slice(0, 10));
+  }
+  const targetDate = dateStr ? new Date(dateStr) : todayCST();
   const dateLabel = formatDate(targetDate);
 
   log.info(`Scraping signals for: ${dateLabel}`);
