@@ -1,25 +1,33 @@
 # HANDOFF
-<!-- /checkpoint at 2026-03-20 -->
+<!-- /checkpoint at 2026-03-21 -->
 
 ## Active Plan
-30-Day Growth Sprint — Week 1（APPROVED）
+30-Day Growth Sprint — Week 1（战略方向调整中，见 `docs/research/2026-03-21-skill-distribution-strategy.md`）
 
 ## Session Tasks
-- [x] CI 修复：sync-clawhub 假阳性、github rate limit 死等、weekly cron 时间
-- [x] CI 新增：generate-daily.yml（UTC 22:30 自动生成 Daily Brief）
-- [x] SOP 时间线优化：双窗口→单窗口 07:30-09:00，按平台高峰排发布
-- [x] 信号层实现：scrape-signals.mjs（5 源抓取 + URL 归一化 + heat 聚合）
-- [x] 信号层集成：generate-daily 自动读取信号 JSON 注入 LLM prompt
-- [x] CI：scrape-signals.yml + generate-daily 先抓信号再生成
-- [ ] 重翻译 239 篇存量文章（DeepSeek，后台跑中）
-- [ ] X 首发帖 — 格式和配图都已准备好，复制发到 @skillnav_dev
-- [ ] 掘金介绍帖 — Sprint 计划 Week 1 关键任务
-- [ ] V2EX 介绍帖
-- [ ] 每天发 Daily Brief 到各平台（形成节奏）
+- [x] CI 诊断：Daily Brief 时区 bug 定位 + 修复（UTC → CST）
+- [x] CI 诊断：Superhuman/Neuron beehiiv 403 → 首页 JSON 解析 fallback
+- [x] 手动跑 3/21 信号抓取 + Daily Brief 生成（draft 入库）
+- [x] README.md 重写（项目介绍 + 技术栈 + 收录内容）
+- [x] VaultX 原创文章撰写 + 入库（editorial，已 published 待预览）
+- [x] Follow Builders 项目分析 + 视频转录（Whisper）
+- [x] 战略反思：Skill 分发 + 编辑品牌定位
+- [ ] VaultX 文章最终审核 + 调整
+- [ ] SkillNav Skill MVP 规划 + 实现
+- [ ] 内容质量自动化脚本（`scripts/audit-quality.mjs`）
+- [ ] 感知源扩展：Follow Builders 的 builder list + 播客纳入信号层
+- [ ] 社交媒体首发（X @skillnav_dev、掘金、V2EX）
+- [ ] 3/20 Daily Brief publish + 3/21 brief approve
 
 ## Key Files
-- `scripts/scrape-signals.mjs` — 信号层抓取脚本（5 源并行 + heat 聚合）
-- `scripts/generate-daily.mjs` — Daily Brief 生成（已集成信号层）
-- `docs/specs/content-operations-spec.md` — SOP 时间线（已更新）
-- `docs/specs/content-signals-spec.md` — 信号层规范（Status: active）
-- `.github/workflows/generate-daily.yml` — 每天 CST 06:30 自动跑
+- `scripts/scrape-signals.mjs` — 修复：CST 时区 + beehiiv 通用首页抓取
+- `scripts/generate-daily.mjs` — 修复：CST 时区
+- `scripts/insert-vaultx-article.mjs` — VaultX 原创文章入库脚本（一次性）
+- `docs/research/2026-03-21-follow-builders-analysis.md` — Follow Builders 分析
+- `docs/research/2026-03-21-skill-distribution-strategy.md` — Skill 分发策略
+- `docs/troubleshooting/2026-03-21-daily-brief-timezone-and-beehiiv.md` — 时区 + 403 修复
+
+## Decisions Needed
+- SkillNav Skill MVP 的功能范围和优先级
+- 原创内容节奏：每周几篇、什么角度
+- 社交媒体人格定位：技术向 vs 产品向 vs 混合
