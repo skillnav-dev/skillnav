@@ -43,6 +43,8 @@ const RELEVANCE_KEYWORDS = [
   "claude-code", "ai-coding", "ai-programming", "vibe-coding",
   "agentic-engineering", "model-context-protocol", "code-execution",
   "smolagents", "openai-agents-sdk", "claude-md", "context-engineering",
+  "gen ai", "generative ai", "llm", "large language model", "foundation model",
+  "chatgpt", "deepseek", "perplexity", "midjourney", "sora",
 ];
 
 const SOURCES = [
@@ -144,6 +146,13 @@ const SOURCES = [
     name: "cloudflare",
     label: "Cloudflare Blog",
     feedUrl: "https://blog.cloudflare.com/rss/",
+    defaultType: "analysis",
+    relevanceFilter: RELEVANCE_KEYWORDS,
+  },
+  {
+    name: "a16z",
+    label: "a16z News",
+    feedUrl: "https://www.a16z.news/feed",
     defaultType: "analysis",
     relevanceFilter: RELEVANCE_KEYWORDS,
   },
