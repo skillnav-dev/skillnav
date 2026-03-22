@@ -32,7 +32,7 @@ import { validateEnv } from "./lib/validate-env.mjs";
 const log = createLogger("articles");
 
 // ── RSS Sources ──────────────────────────────────────────────────────
-// Relevance keywords for filtering non-Anthropic sources
+// Relevance keywords for general sources
 const RELEVANCE_KEYWORDS = [
   "claude", "anthropic", "mcp", "skill", "agent", "agentic",
   "tool-use", "function-calling",
@@ -55,7 +55,18 @@ const SOURCES = [
     sanityProjectId: "4zrzovbb",
     sanityDataset: "website",
     defaultType: "analysis",
-    relevanceFilter: null, // Accept all Anthropic articles
+    relevanceFilter: [
+      // Product & technical (core)
+      "claude", "sonnet", "opus", "haiku", "agent", "mcp", "skill",
+      "code", "sdk", "api", "model", "tool", "computer-use", "prompt",
+      // Research & safety
+      "safety", "alignment", "research", "benchmark", "eval",
+      "vulnerability", "jailbreak", "red-team", "scaling",
+      "distill", "蒸馏", "autonomy", "自主性",
+      "science", "科学", "研究所",
+      // Developer ecosystem
+      "developer", "partner", "integration",
+    ],
   },
   {
     name: "openai",
@@ -816,7 +827,17 @@ async function main() {
             : new Date().toISOString(),
         };
 
-        // 3d: Insert or dry-run log
+        // 3d: Quality gate — rule-based checks before insert
+        if (record.status !== "hidden") {
+          const contentLen = (record.content_zh || "").length;
+
+          if (contentLen < 200) {
+            record.status = "draft"; // translation too short or failed
+            log.warn(`Quality gate: content_zh < 200 chars → draft: ${record.title_zh || record.title}`);
+          }
+        }
+
+        // 3e: Insert or dry-run log
         if (dryRun) {
           log.info(`[DRY RUN] Would insert: ${record.title_zh || record.title}`);
           totalInserted++;
