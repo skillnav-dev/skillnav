@@ -26,6 +26,7 @@ import TurndownService from "turndown";
 import { createAdminClient } from "./lib/supabase-admin.mjs";
 import { createLogger } from "./lib/logger.mjs";
 import { translateArticle, getProviderInfo } from "./lib/llm.mjs";
+import { scoreArticle } from "./lib/quality.mjs";
 import { withRetry } from "./lib/retry.mjs";
 import { validateEnv } from "./lib/validate-env.mjs";
 
@@ -837,7 +838,27 @@ async function main() {
           }
         }
 
-        // 3e: Insert or dry-run log
+        // 3e: Quality gate Layer 2 — LLM scoring for articles still in "draft"
+        if (record.status === "draft" && record.content_zh && !dryRun) {
+          try {
+            const score = await scoreArticle({
+              title_zh: record.title_zh,
+              content_zh: record.content_zh,
+              source: record.source,
+            });
+            log.info(`Quality L2: af:${score.audience_fit} cr:${score.credibility} → ${score.action} | ${score.reason}`);
+            if (score.action === "publish") {
+              record.status = "published";
+            } else if (score.action === "hidden") {
+              record.status = "hidden";
+            }
+            // "draft" stays as draft — human review queue
+          } catch (e) {
+            log.warn(`Quality L2 failed, keeping draft: ${e.message}`);
+          }
+        }
+
+        // 3f: Insert or dry-run log
         if (dryRun) {
           log.info(`[DRY RUN] Would insert: ${record.title_zh || record.title}`);
           totalInserted++;
