@@ -1,5 +1,5 @@
 # SkillNav Skill MVP
-Status: draft
+Status: approved
 Progress: 0/2
 Date: 2026-03-23
 
