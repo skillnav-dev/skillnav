@@ -1,33 +1,29 @@
 # HANDOFF
-<!-- /checkpoint at 2026-03-21 -->
-
-## Active Plan
-30-Day Growth Sprint — Week 1（战略方向调整中，见 `docs/research/2026-03-21-skill-distribution-strategy.md`）
+<!-- /checkpoint at 2026-03-23 -->
 
 ## Session Tasks
-- [x] CI 诊断：Daily Brief 时区 bug 定位 + 修复（UTC → CST）
-- [x] CI 诊断：Superhuman/Neuron beehiiv 403 → 首页 JSON 解析 fallback
-- [x] 手动跑 3/21 信号抓取 + Daily Brief 生成（draft 入库）
-- [x] README.md 重写（项目介绍 + 技术栈 + 收录内容）
-- [x] VaultX 原创文章撰写 + 入库（editorial，已 published 待预览）
-- [x] Follow Builders 项目分析 + 视频转录（Whisper）
-- [x] 战略反思：Skill 分发 + 编辑品牌定位
-- [ ] VaultX 文章最终审核 + 调整
+- [x] CI 诊断：Daily Brief 时区 bug（UTC→CST）+ beehiiv 403 → 首页 JSON 解析
+- [x] README.md 重写 + VaultX 原创文章撰写入库（editorial, published）
+- [x] a16z 文章翻译入库（editorial）+ a16z RSS 源加入采集管线（第 15 源）
+- [x] Follow Builders 项目分析 + 小红书视频 Whisper 转录
+- [x] 战略反思：编辑品牌 + Skill 分发 + 渐进披露
+- [x] Content Strategy V3 spec 完成（`docs/specs/content-strategy-v3.md`）
+- [x] Daily Brief 积压处理：3/19 hidden, 3/20+3/21 published, 3/23 生成+published
+- [x] 三层内容质量体系设计 + 实现 + 验证（L0 源配置 + L1 规则 + L2 LLM 评分）
+- [x] Lobsters gonzo 文章 hidden，记录质量自动化需求
 - [ ] SkillNav Skill MVP 规划 + 实现
-- [ ] 内容质量自动化脚本（`scripts/audit-quality.mjs`）
-- [ ] 感知源扩展：Follow Builders 的 builder list + 播客纳入信号层
-- [ ] 社交媒体首发（X @skillnav_dev、掘金、V2EX）
-- [ ] 3/20 Daily Brief publish + 3/21 brief approve
+- [ ] 感知源扩展：Follow Builders 的 builder X list + 播客纳入信号层
+- [ ] 社交媒体首发（X @skillnav_dev、掘金、V2EX）— Sprint 任务一直未做
+- [ ] 工具存活检查脚本（Skills/MCP GitHub 状态、stars 趋势、过期标记）
+- [ ] 质量体系观察一周后校准 prompt（对比 LLM 建议与人工修正率）
 
 ## Key Files
-- `scripts/scrape-signals.mjs` — 修复：CST 时区 + beehiiv 通用首页抓取
-- `scripts/generate-daily.mjs` — 修复：CST 时区
-- `scripts/insert-vaultx-article.mjs` — VaultX 原创文章入库脚本（一次性）
-- `docs/research/2026-03-21-follow-builders-analysis.md` — Follow Builders 分析
-- `docs/research/2026-03-21-skill-distribution-strategy.md` — Skill 分发策略
-- `docs/troubleshooting/2026-03-21-daily-brief-timezone-and-beehiiv.md` — 时区 + 403 修复
+- `scripts/lib/quality.mjs` — L2 LLM 评分模块（audience_fit + credibility）
+- `scripts/sync-articles.mjs` — 集成三层质量门控 + a16z 源 + Anthropic 白名单
+- `docs/specs/content-strategy-v3.md` — 编辑漏斗 + 渐进披露 + Skill 分发（draft）
+- `docs/adr/004-content-quality-system.md` — 三层质量体系决策记录
 
 ## Decisions Needed
-- SkillNav Skill MVP 的功能范围和优先级
-- 原创内容节奏：每周几篇、什么角度
-- 社交媒体人格定位：技术向 vs 产品向 vs 混合
+- Content Strategy V3 是否 approve（当前 draft）
+- SkillNav Skill MVP 功能范围
+- 社交媒体人格定位
