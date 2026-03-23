@@ -1,6 +1,6 @@
 # SkillNav 内容操作系统方案 v2
-Status: draft
-Progress: N/A
+Status: active
+Progress: M1-M3 done, M4 pending
 Date: 2026-03-11
 
 > Author: Claude (战略合伙人)
