@@ -117,12 +117,12 @@ async function main() {
   const skills = await fetchAllRows(
     supabase,
     "skills",
-    "slug, github_url, stars, freshness, is_hidden"
+    "slug, github_url, stars, freshness, status"
   );
 
-  // Filter to visible skills with github_url
+  // Filter to non-hidden skills with github_url
   const activeSkills = skills.filter(
-    (s) => s.github_url && !s.is_hidden
+    (s) => s.github_url && s.status !== "hidden"
   );
   log.info(`Found ${activeSkills.length} skills with GitHub URLs (of ${skills.length} total)`);
 
@@ -356,11 +356,18 @@ async function main() {
     lastWeek.setDate(lastWeek.getDate() - 7);
     const lastWeekStr = lastWeek.toISOString().slice(0, 10);
 
-    const { data: prevSnapshots, error: snapErr } = await supabase
-      .from("stars_snapshots")
-      .select("tool_type, tool_slug, stars_count")
-      .lte("snapshot_date", lastWeekStr)
-      .order("snapshot_date", { ascending: false });
+    const prevSnapshots = await fetchAllRows(
+      supabase,
+      "stars_snapshots",
+      "tool_type, tool_slug, stars_count, snapshot_date"
+    );
+    // Filter to snapshots on or before last week (fetchAllRows handles pagination)
+    const filteredSnapshots = prevSnapshots.filter(
+      (s) => s.snapshot_date <= lastWeekStr
+    );
+    // Sort descending so the first occurrence per tool is the most recent
+    filteredSnapshots.sort((a, b) => b.snapshot_date.localeCompare(a.snapshot_date));
+    const snapErr = null;
 
     if (snapErr) {
       log.error(`Failed to fetch previous snapshots: ${snapErr.message}`);
@@ -368,7 +375,7 @@ async function main() {
       // Build a map of previous stars (most recent snapshot per tool)
       /** @type {Map<string, number>} */
       const prevStarsMap = new Map();
-      for (const snap of prevSnapshots ?? []) {
+      for (const snap of filteredSnapshots) {
         const key = `${snap.tool_type}:${snap.tool_slug}`;
         if (!prevStarsMap.has(key)) {
           prevStarsMap.set(key, snap.stars_count);

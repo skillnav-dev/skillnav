@@ -304,16 +304,24 @@ async function main() {
   }
 
   // ── Batch upsert ──────────────────────────────────────────────────
+  // Strip editorial fields so upsert won't overwrite human edits.
+  // These fields are only set on initial insert (via DB defaults or first sync).
+  const EDITORIAL_FIELDS = ["status", "quality_score", "quality_tier", "quality_reason",
+    "editor_comment_zh", "editor_rating", "is_featured", "intro_zh", "name_zh", "description_zh"];
 
   const BATCH_SIZE = 100;
   let upserted = 0;
   let errors = 0;
 
   for (let i = 0; i < dedupedRows.length; i += BATCH_SIZE) {
-    const batch = dedupedRows.slice(i, i + BATCH_SIZE);
+    const batch = dedupedRows.slice(i, i + BATCH_SIZE).map((row) => {
+      const clean = { ...row };
+      for (const f of EDITORIAL_FIELDS) delete clean[f];
+      return clean;
+    });
     const { error } = await supabase
       .from("mcp_servers")
-      .upsert(batch, { onConflict: "slug", ignoreDuplicates: true });
+      .upsert(batch, { onConflict: "slug", ignoreDuplicates: false });
 
     if (error) {
       log.error(`Batch ${Math.floor(i / BATCH_SIZE) + 1} error: ${error.message}`);
