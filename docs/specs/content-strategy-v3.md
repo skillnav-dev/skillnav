@@ -1,5 +1,5 @@
 # SkillNav 内容战略 3.0 — 编辑品牌 + 渐进披露
-Status: draft
+Status: active
 Date: 2026-03-21
 Supersedes: content-strategy-v2.md (保留，V3 是其演进)
 
@@ -102,19 +102,18 @@ Supersedes: content-strategy-v2.md (保留，V3 是其演进)
 └───────────┴──────────────┴──────────────┘
 ```
 
-### 4.2 自动评分维度
+### 4.2 自动评分（MVP：简单规则）
 
-| 维度 | 权重 | 数据源 | 自动化程度 |
-|------|------|--------|-----------|
-| 热度 (heat) | 30% | 信号层交叉验证（源数量） | 全自动 |
-| 相关度 (relevance) | 30% | 与 Skills/MCP/Agent 主题的语义匹配 | LLM 自动 |
-| 新鲜度 (novelty) | 20% | 是否与过去 7 天内容重复 | 全自动 |
-| 影响力 (impact) | 20% | 来源权威性 + 话题范围 | 半自动（规则+LLM） |
+当前信号量 50-100 条/天，人工 5 分钟可分完，不需要复杂加权模型。
 
-综合分 0-10：
-- **8-10 → 头条候选**（人工确认后推送）
-- **5-7 → 值得关注**（自动生成摘要，人工加点评）
-- **0-4 → 存档**（不推送）
+**MVP 规则**：
+- **3+ 源提及** → 头条候选（人工确认）
+- **2 源提及 OR 直接关联 Skills/MCP** → 值得关注（LLM 摘要 + 人工点评）
+- **1 源提及** → 存档（不推送）
+
+**人工 tag**：编辑可手动升降级任何条目（覆盖规则判断）。
+
+> 未来信号量超过 200 条/天时，再引入多维加权评分（热度/相关度/新鲜度/影响力）。
 
 ### 4.3 编辑点评模板
 
@@ -143,17 +142,14 @@ Supersedes: content-strategy-v2.md (保留，V3 是其演进)
 | 过期标记 | 每周 | 6 个月无更新 → stale |
 | 质量评分刷新 | 每月 | 基于 stars/forks/issues 重算 |
 
-#### 文章层（翻译质量）
+#### 文章层（三层质量体系）
 
-| 检查项 | 频率 | 自动化方式 |
-|--------|------|-----------|
-| 翻译流畅度 | 入库时 | LLM 评分 0-5 |
-| 术语一致性 | 入库时 | 对照 glossary.json |
-| 匹配度 | 入库时 | 与 SkillNav 定位的相关度 |
-| 重复检测 | 入库时 | 标题/内容相似度 > 80% 告警 |
-| 低分自动处理 | 入库时 | 翻译分 < 3 → hidden；相关度 < 3 → hidden |
+已实现，详见 `docs/adr/004-content-quality-system.md`：
+- **L0**：源配置关键词白名单（拦截 74% 低质量文章）
+- **L1**：content_zh < 200 字 → draft（捕获翻译失败）
+- **L2**：LLM 双维度评分 audience_fit + credibility（≥7 publish，<4 hidden，其余 draft 人工审）
 
-实现：`scripts/audit-quality.mjs`，CI 每周跑一次全量审计，入库时实时打分。
+实现：`scripts/lib/quality.mjs`，在 `sync-articles.mjs` 入库时实时评分。
 
 ---
 
@@ -272,8 +268,9 @@ Next.js 16.2 宣布定位 agent-native framework，内置 AGENTS.md 规范和工
 |------|------|------|
 | 信号评分逻辑 | `scripts/generate-daily.mjs` | 新增三级分类（头条/关注/存档） |
 | Brief 格式重设计 | `scripts/generate-daily.mjs` | 从平铺列表 → 头条+精选格式 |
-| 质量审计脚本 | `scripts/audit-quality.mjs` | 工具存活检查 + 翻译质量打分 |
-| 信号源扩展 | `scripts/scrape-signals.mjs` | 新增 builder X + 播客源 |
+| 工具存活检查 | `scripts/audit-quality.mjs` | GitHub 状态、stars 趋势、过期标记 |
+
+> 信号源扩展（Builder X + 播客）单独排期，见独立任务。技术方案：TwitterAPI.io（$3/月）+ YouTube transcript。
 
 ### Phase 2: Skill 分发（1-2 周）
 
@@ -298,7 +295,7 @@ Next.js 16.2 宣布定位 agent-native framework，内置 AGENTS.md 规范和工
 | 指标 | 当前 | 1 个月 | 3 个月 |
 |------|------|--------|--------|
 | Daily Brief 推送渠道 | 1（网站） | 4+（Skill, 微信, X, 小红书） |  |
-| Skill 安装量 | 0 | 50+ | 500+ |
+| Skill 安装量 | 0 | 依赖 Skill MVP 上线 | 500+ |
 | Daily Brief 打开率 | N/A | > 40% | > 30%（衰减可控） |
 | 原创文章 | 1 | 6+ | 20+ |
 | 信号通过率 | 100%（全推） | < 15% | < 10% |
