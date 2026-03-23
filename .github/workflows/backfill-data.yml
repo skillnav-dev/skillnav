@@ -3,7 +3,7 @@ name: Backfill Data Quality
 on:
   schedule:
     # Run daily at 05:00 UTC (after other sync jobs finish)
-    - cron: "0 5 * * *"
+    - cron: "30 5 * * *" # UTC 05:30 = CST 13:30, after sync-mcp-servers finishes
   workflow_dispatch:
     inputs:
       tasks:

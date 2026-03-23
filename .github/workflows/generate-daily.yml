@@ -1,8 +1,9 @@
 name: Generate Daily Brief
 
 on:
-  schedule:
-    - cron: "30 22 * * *" # UTC 22:30 = CST 06:30, after morning article sync
+  workflow_run:
+    workflows: ["Sync Articles"]
+    types: [completed]
   workflow_dispatch:
     inputs:
       hours:
@@ -23,6 +24,7 @@ concurrency:
 
 jobs:
   generate:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:

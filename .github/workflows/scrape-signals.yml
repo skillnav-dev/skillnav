@@ -1,8 +1,6 @@
 name: Scrape Daily Signals
 
 on:
-  schedule:
-    - cron: "30 13 * * *" # UTC 13:30 = CST 21:30, after all newsletters published
   workflow_dispatch:
     inputs:
       date:
@@ -46,7 +44,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: daily-signals
-          path: data/daily-signals/
+          path: data/daily-newsletters/
           retention-days: 30
 
       - name: Notify Slack on failure
