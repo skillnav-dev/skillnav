@@ -144,23 +144,31 @@ Returns trending tools by stars delta.
 }
 ```
 
-Query: DB VIEW `trending_tools` that UNIONs skills + mcp_servers (avoids two round-trips).
+Query: Two parallel queries (skills + mcp_servers) merged in app layer via `getTrendingTools()`.
+No DB VIEW — keeps logic in code for easier debugging and schema iteration.
 Filter: `weekly_stars_delta >= 5` (not > 0, avoids returning near-zero noise).
+Sort: app-layer merge + sort by weekly_stars_delta DESC.
 Default: both types, limit 10.
 
 ### DB Changes
 
-```sql
--- View for trending (avoids cross-table app-layer merge)
-CREATE OR REPLACE VIEW trending_tools AS
-  SELECT 'skill' AS tool_type, slug, name, name_zh, editor_comment_zh,
-         stars, weekly_stars_delta, freshness
-  FROM skills WHERE weekly_stars_delta >= 5 AND status = 'published'
-UNION ALL
-  SELECT 'mcp' AS tool_type, slug, name, name_zh, editor_comment_zh,
-         stars, weekly_stars_delta, freshness
-  FROM mcp_servers WHERE weekly_stars_delta >= 5 AND status = 'published'
-ORDER BY weekly_stars_delta DESC;
+None. Trending uses existing tables with app-layer merge:
+
+```ts
+// src/lib/get-trending-tools.ts
+async function getTrendingTools(supabase, limit = 10) {
+  const [{ data: skills }, { data: mcps }] = await Promise.all([
+    supabase.from('skills').select('slug, name, name_zh, editor_comment_zh, stars, weekly_stars_delta, freshness')
+      .gte('weekly_stars_delta', 5).eq('status', 'published'),
+    supabase.from('mcp_servers').select('slug, name, name_zh, editor_comment_zh, stars, weekly_stars_delta, freshness')
+      .gte('weekly_stars_delta', 5).eq('status', 'published'),
+  ]);
+  const merged = [
+    ...(skills ?? []).map(s => ({ ...s, tool_type: 'skill' })),
+    ...(mcps ?? []).map(m => ({ ...m, tool_type: 'mcp' })),
+  ].sort((a, b) => b.weekly_stars_delta - a.weekly_stars_delta);
+  return merged.slice(0, limit);
+}
 ```
 
 ### SKILL.md
@@ -169,20 +177,25 @@ ORDER BY weekly_stars_delta DESC;
 ---
 name: skillnav
 description: "Search 3,900+ MCP servers with install commands, get daily AI brief, and discover trending tools — in Chinese. Data from skillnav.dev editorial team."
+argument-hint: "brief | mcp <keyword> | trending"
 allowed-tools: WebFetch
 ---
 ```
 
-**Sub-command routing** (deterministic, not intent-based):
+**Sub-command routing** (table format for higher Claude compliance):
 
 ```
-/skillnav brief              -> fetch type=brief
-/skillnav mcp <keyword>      -> fetch type=mcp&q=<keyword>
-/skillnav trending           -> fetch type=trending
-/skillnav (anything else)    -> default to brief
+Route based on $ARGUMENTS[0]:
+
+| Command   | Action                                                       |
+|-----------|--------------------------------------------------------------|
+| brief     | WebFetch https://skillnav.dev/api/skill/query?type=brief     |
+| mcp       | WebFetch https://skillnav.dev/api/skill/query?type=mcp&q=$ARGUMENTS[1] |
+| trending  | WebFetch https://skillnav.dev/api/skill/query?type=trending  |
+| (other)   | Show usage message — do NOT fetch any URL                    |
 ```
 
-The first token after `/skillnav` determines the route. This is explicit and reliable — no ambiguous intent matching.
+Unknown input returns usage help instead of silently falling back to brief — prevents silent misroutes and keeps usage metrics clean.
 
 **Format rules**:
 
@@ -206,7 +219,7 @@ Trending:
 
 **Error handling**:
 - If WebFetch fails: "SkillNav API is temporarily unavailable. Visit skillnav.dev directly."
-- If results empty: suggest related keywords or broader category
+- If results empty: "No matches found. Try a broader keyword." (no fake keyword suggestions)
 - If brief is fallback: note the date explicitly
 
 ### Distribution
@@ -217,7 +230,6 @@ Trending:
 | Personal install | `~/.claude/skills/skillnav/SKILL.md` | P0 (M1) |
 | Website install section | /about page or banner | P0 (M1) |
 | Daily Brief CTA | Each brief ends with Skill install link | P0 (M1) |
-| One-line install script | `curl -fsSL skillnav.dev/install.sh \| bash` | P1 (M2) |
 | ClawHub | Submit after validation | P1 (M2) |
 | Community posts | Juejin, V2EX, HelloGitHub | P1 (M2) |
 
@@ -237,7 +249,7 @@ Trending:
 | Public Supabase client | `src/lib/supabase-public.ts` | Anon key, no cookies |
 | Unified query endpoint | `src/app/api/skill/query/route.ts` | type param routing, input validation, error schema |
 | Brief parser | `src/lib/parse-brief.ts` | content_md -> headline + highlights JSON |
-| trending_tools VIEW | SQL migration | UNION skills + mcp_servers |
+| getTrendingTools | `src/lib/get-trending-tools.ts` | Two queries + app-layer merge, no DB VIEW |
 | PGroonga + ILIKE fallback | query route | search_method in response |
 | SKILL.md | `skills/skillnav/SKILL.md` | Sub-command routing + format rules |
 | Website install CTA | `/about` or homepage | Copy-paste install command |
@@ -248,7 +260,6 @@ Trending:
 | Task | Files | Notes |
 |------|-------|-------|
 | GitHub repo | `skillnav-dev/skillnav-skill` | README with examples + install |
-| Install script | `public/install.sh` | curl one-liner, validates after clone |
 | Rate limit | Cloudflare Rules (free tier) | 60 req/min, not middleware.ts |
 | Brief CTA integration | `scripts/lib/publishers/` | Append Skill install link to all channels |
 | Community launch | - | Juejin + X + ClawHub submission |
