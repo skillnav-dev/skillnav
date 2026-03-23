@@ -14,6 +14,7 @@ import {
   FileSearch,
   ArrowRight,
   RefreshCw,
+  Terminal,
 } from "lucide-react";
 
 export const metadata: Metadata = {
@@ -101,14 +102,19 @@ export default function AboutPage() {
 
       {/* Pain points */}
       <section className="mt-12 rounded-xl bg-muted/30 px-4 py-8 sm:px-6">
-        <h2 className="text-xl font-semibold tracking-tight">开发者面临的问题</h2>
+        <h2 className="text-xl font-semibold tracking-tight">
+          开发者面临的问题
+        </h2>
         <p className="mt-2 text-muted-foreground">
           AI Agent
           工具生态正在爆发式增长，但中文开发者获取信息的体验并没有跟上。
         </p>
         <div className="mt-6 grid gap-4 sm:grid-cols-3">
           {painPoints.map(({ icon: Icon, title, description }) => (
-            <div key={title} className="rounded-lg ring-1 ring-gray-950/10 dark:ring-gray-50/10 bg-card p-5">
+            <div
+              key={title}
+              className="rounded-lg ring-1 ring-gray-950/10 dark:ring-gray-50/10 bg-card p-5"
+            >
               <div className="inline-flex rounded-lg bg-destructive/10 p-2">
                 <Icon className="size-5 text-destructive" />
               </div>
@@ -129,7 +135,10 @@ export default function AboutPage() {
         </p>
         <div className="mt-6 grid gap-4 sm:grid-cols-3">
           {solutions.map(({ icon: Icon, title, description }) => (
-            <div key={title} className="rounded-lg ring-1 ring-gray-950/10 dark:ring-gray-50/10 bg-card p-5">
+            <div
+              key={title}
+              className="rounded-lg ring-1 ring-gray-950/10 dark:ring-gray-50/10 bg-card p-5"
+            >
               <div className="inline-flex rounded-lg bg-primary/10 p-2">
                 <Icon className="size-5 text-primary" />
               </div>
@@ -190,6 +199,44 @@ export default function AboutPage() {
               <p className="text-sm text-muted-foreground">{label}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* Claude Code Skill */}
+      <section className="mt-10">
+        <h2 className="text-xl font-semibold tracking-tight">
+          在 Claude Code 中使用
+        </h2>
+        <p className="mt-2 text-muted-foreground">
+          一行命令安装 SkillNav Skill，在编辑器中直接搜索
+          MCP、阅读日报、发现热门工具。
+        </p>
+        <div className="mt-4 rounded-lg ring-1 ring-gray-950/10 dark:ring-gray-50/10 bg-card p-5">
+          <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+            <Terminal className="size-4" />
+            安装命令
+          </div>
+          <pre className="mt-3 overflow-x-auto rounded-md bg-gray-950 p-4 text-sm text-gray-100">
+            <code>
+              mkdir -p ~/.claude/skills/skillnav &amp;&amp; curl -sL
+              https://raw.githubusercontent.com/skillnav-dev/skillnav-skill/main/SKILL.md
+              -o ~/.claude/skills/skillnav/SKILL.md
+            </code>
+          </pre>
+          <div className="mt-4 grid gap-2 text-sm sm:grid-cols-3">
+            <div className="rounded-md bg-muted/50 px-3 py-2">
+              <code className="text-primary">/skillnav brief</code>
+              <span className="ml-2 text-muted-foreground">— 今日 AI 日报</span>
+            </div>
+            <div className="rounded-md bg-muted/50 px-3 py-2">
+              <code className="text-primary">/skillnav mcp database</code>
+              <span className="ml-2 text-muted-foreground">— 搜索 MCP</span>
+            </div>
+            <div className="rounded-md bg-muted/50 px-3 py-2">
+              <code className="text-primary">/skillnav trending</code>
+              <span className="ml-2 text-muted-foreground">— 热门工具</span>
+            </div>
+          </div>
         </div>
       </section>
 
