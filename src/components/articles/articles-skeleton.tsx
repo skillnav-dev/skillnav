@@ -1,6 +1,6 @@
 function CardSkeleton() {
   return (
-    <div className="overflow-hidden rounded-xl border bg-card">
+    <div className="overflow-hidden rounded-xl ring-1 ring-border bg-card">
       <div className="p-4">
         {/* Category badge + source + date */}
         <div className="flex items-center gap-2">

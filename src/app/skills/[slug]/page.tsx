@@ -193,7 +193,7 @@ export default async function SkillDetailPage({ params }: PageProps) {
 
             {/* Editorial review (only shown when data exists) */}
             {skill.editorReviewZh && (
-              <div className="rounded-xl border border-border/40 bg-card p-6">
+              <div className="rounded-xl ring-1 ring-gray-950/10 bg-card p-6 dark:ring-gray-50/10">
                 <div className="mb-3 flex items-center gap-2">
                   <h2 className="text-lg font-semibold">编辑评测</h2>
                   {skill.editorRating && (
@@ -218,7 +218,7 @@ export default async function SkillDetailPage({ params }: PageProps) {
       {related.length > 0 && (
         <section className="border-t border-border/40">
           <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-            <h2 className="mb-6 text-xl font-bold">相关 Skills</h2>
+            <h2 className="mb-6 text-xl font-bold tracking-tight">相关 Skills</h2>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {related.map((s) => (
                 <SkillCard key={s.id} skill={s} />
@@ -231,7 +231,7 @@ export default async function SkillDetailPage({ params }: PageProps) {
       {relatedMcp.length > 0 && (
         <section className="border-t border-border/40">
           <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-            <h2 className="mb-6 text-xl font-bold">相关 MCP 服务</h2>
+            <h2 className="mb-6 text-xl font-bold tracking-tight">相关 MCP 服务</h2>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {relatedMcp.map((s) => (
                 <MCPCard key={s.id} server={s} />
@@ -244,7 +244,7 @@ export default async function SkillDetailPage({ params }: PageProps) {
       {relatedArticles.length > 0 && (
         <section className="border-t border-border/40">
           <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-            <h2 className="mb-6 text-xl font-bold">相关资讯</h2>
+            <h2 className="mb-6 text-xl font-bold tracking-tight">相关资讯</h2>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {relatedArticles.map((a) => (
                 <ArticleCard key={a.id} article={a} />

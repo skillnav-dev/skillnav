@@ -71,7 +71,7 @@ export default async function AdminArticlesPage({ searchParams }: PageProps) {
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold">文章管理</h1>
+      <h1 className="mb-6 text-2xl font-bold tracking-tight">文章管理</h1>
 
       {/* Status tabs */}
       <Tabs value={status} className="mb-4">

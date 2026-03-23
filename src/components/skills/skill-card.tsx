@@ -57,7 +57,7 @@ export function SkillCard({ skill }: SkillCardProps) {
             {skill.qualityTier === "S" && (
               <Badge
                 variant="secondary"
-                className="border-amber-200 bg-amber-100 text-amber-800 text-xs dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-400"
+                className="border-amber-200 bg-amber-100 text-amber-900 text-xs dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-400"
               >
                 <Award className="mr-0.5 size-3" />
                 编辑精选
@@ -66,7 +66,7 @@ export function SkillCard({ skill }: SkillCardProps) {
             {skill.qualityTier === "A" && (
               <Badge
                 variant="secondary"
-                className="border-amber-200 bg-amber-50 text-amber-700 text-xs dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300"
+                className="border-amber-200 bg-amber-50 text-amber-600 text-xs dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300"
               >
                 精选
               </Badge>

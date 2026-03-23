@@ -39,7 +39,7 @@ export async function EditorialHighlights() {
           {latestWeekly && (
             <Link
               href={`/weekly/${latestWeekly.slug}`}
-              className="group relative flex flex-col justify-end overflow-hidden rounded-xl border bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 transition-shadow hover:shadow-md lg:col-span-2"
+              className="group relative flex flex-col justify-end overflow-hidden rounded-xl ring-1 ring-border bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 transition-shadow hover:shadow-md lg:col-span-2"
             >
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <Calendar className="size-3.5" />

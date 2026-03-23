@@ -148,7 +148,7 @@ export default async function LearnConceptPage({ params }: PageProps) {
         </h1>
 
         {/* One-liner definition card */}
-        <div className="mt-6 rounded-lg border border-primary/20 bg-primary/5 px-5 py-4">
+        <div className="mt-6 rounded-lg ring-1 ring-primary/20 bg-primary/5 px-5 py-4">
           <p className="text-base leading-relaxed">{concept.oneLiner}</p>
         </div>
 
@@ -162,7 +162,7 @@ export default async function LearnConceptPage({ params }: PageProps) {
 
         {/* Further reading */}
         {furtherReading[conceptSlug] && (
-          <div className="mt-10 rounded-lg border border-border/40 bg-muted/20 p-5">
+          <div className="mt-10 rounded-lg bg-gray-950/[0.025] dark:bg-gray-50/[0.025] p-5">
             <h2 className="text-lg font-semibold">延伸阅读</h2>
             <ul className="mt-3 space-y-2">
               {furtherReading[conceptSlug].map((link) => (

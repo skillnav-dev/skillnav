@@ -4,7 +4,7 @@ import { siteConfig } from "@/lib/constants";
 
 export function InlineNewsletterCta() {
   return (
-    <div className="rounded-lg border border-border/40 bg-primary/5 px-6 py-6">
+    <div className="rounded-lg ring-1 ring-gray-950/10 bg-primary/5 px-6 py-6 dark:ring-gray-50/10">
       <div className="flex items-start gap-3">
         <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
           <Rss className="size-4 text-primary" />

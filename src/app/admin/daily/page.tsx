@@ -53,7 +53,7 @@ export default async function DailyBriefsPage() {
     <div className="mx-auto max-w-4xl px-4 py-8">
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Daily Briefs</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Daily Briefs</h1>
           <p className="text-sm text-muted-foreground">AI 每日简报管理</p>
         </div>
       </div>

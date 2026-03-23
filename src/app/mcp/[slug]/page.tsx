@@ -254,7 +254,7 @@ export default async function McpDetailPage({ params }: PageProps) {
       {relatedSkills.length > 0 && (
         <section className="border-t border-border/40">
           <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-            <h2 className="mb-6 text-xl font-bold">相关 Skills</h2>
+            <h2 className="mb-6 text-xl font-bold tracking-tight">相关 Skills</h2>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {relatedSkills.map((s) => (
                 <SkillCard key={s.id} skill={s} />
@@ -267,7 +267,7 @@ export default async function McpDetailPage({ params }: PageProps) {
       {related.length > 0 && (
         <section className="border-t border-border/40">
           <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-            <h2 className="mb-6 text-xl font-bold">相关 MCP Server</h2>
+            <h2 className="mb-6 text-xl font-bold tracking-tight">相关 MCP Server</h2>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {related.map((s) => (
                 <MCPCard key={s.id} server={s} />

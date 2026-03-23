@@ -79,7 +79,7 @@ export default function LearnPage() {
           </h2>
           <Link
             href="/guides/ai-guide.html"
-            className="group block rounded-xl border border-border bg-card p-5 transition-colors hover:border-primary/40"
+            className="group block rounded-xl ring-1 ring-gray-950/10 dark:ring-gray-50/10 bg-card p-5 transition-colors hover:ring-primary/40"
           >
             <div className="text-xs font-medium text-primary/70">
               10 章完整体系

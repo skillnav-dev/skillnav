@@ -15,7 +15,7 @@ interface SkillMobileMetaProps {
  */
 export function SkillMobileMetaBar({ skill }: SkillMobileMetaProps) {
   return (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-border/40 bg-card px-4 py-3 text-xs lg:hidden">
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg ring-1 ring-gray-950/10 bg-card px-4 py-3 text-xs lg:hidden dark:ring-gray-50/10">
       {/* Stars */}
       {skill.stars > 0 && (
         <span className="flex items-center gap-1 text-muted-foreground">

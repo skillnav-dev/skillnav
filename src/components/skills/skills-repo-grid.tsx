@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Github, Star, ChevronRight, Package, ArrowLeft } from "lucide-react";
+import { Github, Star, ChevronRight, Package, ArrowLeft, FolderSearch } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -110,7 +110,7 @@ export async function SkillsRepoIndex() {
             key={repo.repo}
             href={`/skills?repo=${encodeURIComponent(repo.repo)}`}
           >
-            <Card className="group h-full transition-all hover:border-primary/40 hover:shadow-md">
+            <Card className="group h-full transition-all hover:ring-primary/40 hover:shadow-md">
               <CardContent className="pt-6">
                 <div className="flex items-start justify-between">
                   <div className="min-w-0 flex-1">
@@ -124,7 +124,7 @@ export async function SkillsRepoIndex() {
                       {repo.isOfficial && (
                         <Badge
                           variant="secondary"
-                          className="border-blue-200 bg-blue-50 text-blue-700 text-xs dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300"
+                          className="border-blue-200 bg-blue-50 text-blue-600 text-xs dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300"
                         >
                           官方
                         </Badge>
@@ -198,8 +198,10 @@ export async function SkillsRepoDetail({
 
   if (!current) {
     return (
-      <div className="mt-8 text-center">
-        <p className="text-muted-foreground">未找到该仓库</p>
+      <div className="flex flex-col items-center py-12 text-center">
+        <FolderSearch className="mb-4 size-12 text-gray-300 dark:text-gray-600" />
+        <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">未找到该仓库</h3>
+        <p className="mt-1 max-w-[40ch] text-sm text-gray-600 dark:text-gray-400">该仓库可能已被移除或地址有误，请返回仓库列表重新浏览。</p>
         <Button variant="outline" className="mt-4" asChild>
           <Link href="/skills">返回仓库列表</Link>
         </Button>
@@ -210,7 +212,7 @@ export async function SkillsRepoDetail({
   return (
     <div className="mt-6">
       {/* Repo header */}
-      <div className="mb-6 rounded-lg border border-border/40 bg-muted/30 p-4">
+      <div className="mb-6 rounded-lg bg-gray-950/[0.025] p-4 dark:bg-gray-50/[0.025]">
         <div className="flex items-start justify-between">
           <div>
             <div className="flex items-center gap-2">
@@ -231,7 +233,7 @@ export async function SkillsRepoDetail({
               {current.isOfficial && (
                 <Badge
                   variant="secondary"
-                  className="border-blue-200 bg-blue-50 text-blue-700 text-xs dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300"
+                  className="border-blue-200 bg-blue-50 text-blue-600 text-xs dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300"
                 >
                   官方
                 </Badge>

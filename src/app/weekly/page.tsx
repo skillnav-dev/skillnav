@@ -44,7 +44,7 @@ export default async function WeeklyPage() {
             <div className="flex size-16 items-center justify-center rounded-2xl bg-primary/10">
               <Newspaper className="size-8 text-primary" />
             </div>
-            <h2 className="mt-6 text-xl font-semibold">首期周刊即将发布</h2>
+            <h2 className="mt-6 text-xl font-semibold tracking-tight">首期周刊即将发布</h2>
             <p className="mt-2 max-w-md text-sm text-muted-foreground">
               我们正在筹备第一期 SkillNav
               周刊，精选本周最值得关注的工具、教程和行业动态。
@@ -59,7 +59,7 @@ export default async function WeeklyPage() {
               <Link
                 key={issue.id}
                 href={`/weekly/${issue.slug}`}
-                className="group rounded-xl border border-border/40 p-6 transition-all hover:border-primary/40 hover:bg-muted/30 hover:shadow-md"
+                className="group rounded-xl ring-1 ring-gray-950/10 dark:ring-gray-50/10 p-6 transition-all hover:ring-primary/40 hover:bg-muted/30 hover:shadow-md"
               >
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <Calendar className="size-3.5" />

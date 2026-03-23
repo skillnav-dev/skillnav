@@ -14,14 +14,14 @@ export function RelatedConcepts({ slugs }: RelatedConceptsProps) {
   if (related.length === 0) return null;
 
   return (
-    <section className="mt-12 rounded-lg border border-border/40 bg-muted/30 p-6">
+    <section className="mt-12 rounded-lg bg-gray-950/[0.025] dark:bg-gray-50/[0.025] p-6">
       <h2 className="mb-4 text-lg font-semibold">相关概念</h2>
       <div className="grid gap-3 sm:grid-cols-2">
         {related.map((c) => (
           <Link
             key={c.slug}
             href={`/learn/what-is-${c.slug}`}
-            className="group rounded-md border border-border/40 bg-card p-4 transition-colors hover:border-primary/40"
+            className="group rounded-md ring-1 ring-gray-950/10 dark:ring-gray-50/10 bg-card p-4 transition-colors hover:ring-primary/40"
           >
             <div className="font-medium group-hover:text-primary">{c.zh}</div>
             <p className="mt-1 text-sm text-muted-foreground">{c.oneLiner}</p>

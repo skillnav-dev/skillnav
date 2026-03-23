@@ -104,7 +104,7 @@ export function SkillInstallTabs({
   const activeCommand = tabs.find((t) => t.id === activeTab)?.command ?? "";
 
   return (
-    <div className="rounded-xl border border-border/40 bg-card p-6">
+    <div className="rounded-xl ring-1 ring-gray-950/10 bg-card p-6 dark:ring-gray-50/10">
       <div className="mb-4 flex items-center gap-2">
         <Terminal className="size-4 text-muted-foreground" />
         <h2 className="text-lg font-semibold">安装</h2>

@@ -34,7 +34,7 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-2xl font-bold">Dashboard</h1>
+      <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
 
       {/* Articles section */}
       <div>
@@ -56,7 +56,7 @@ export default async function AdminDashboardPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-3xl font-bold">{card.value}</p>
+                <p className="text-3xl font-bold tracking-tight">{card.value}</p>
               </CardContent>
             </Card>
           ))}
@@ -83,7 +83,7 @@ export default async function AdminDashboardPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-3xl font-bold">{card.value}</p>
+                <p className="text-3xl font-bold tracking-tight">{card.value}</p>
               </CardContent>
             </Card>
           ))}
@@ -110,7 +110,7 @@ export default async function AdminDashboardPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-3xl font-bold">{card.value}</p>
+                <p className="text-3xl font-bold tracking-tight">{card.value}</p>
               </CardContent>
             </Card>
           ))}

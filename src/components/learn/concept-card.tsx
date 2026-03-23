@@ -16,7 +16,7 @@ export function ConceptCard({ concept, featured }: ConceptCardProps) {
   return (
     <Link
       href={`/learn/what-is-${concept.slug}`}
-      className={`group block rounded-xl border border-border/40 bg-card p-6 transition-all hover:border-primary/40 hover:bg-accent/30 hover:shadow-md ${
+      className={`group block rounded-xl ring-1 ring-gray-950/10 dark:ring-gray-50/10 bg-card p-6 transition-all hover:ring-primary/40 hover:bg-accent/30 hover:shadow-md ${
         featured ? "sm:col-span-2 lg:col-span-1" : ""
       }`}
     >

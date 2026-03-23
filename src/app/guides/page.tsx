@@ -110,7 +110,7 @@ export default function GuidesPage() {
             <Link
               key={s.slug}
               href={`/guides/${s.slug}`}
-              className="group rounded-xl border bg-card p-6 transition-colors hover:border-primary/50 hover:bg-accent/50"
+              className="group rounded-xl ring-1 ring-gray-950/10 dark:ring-gray-50/10 bg-card p-6 transition-colors hover:ring-primary/50 hover:bg-accent/50"
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0 flex-1 space-y-2">
@@ -152,8 +152,10 @@ export default function GuidesPage() {
         </div>
 
         {series.length === 0 && (
-          <div className="mt-12 text-center text-muted-foreground">
-            <p>专栏内容筹备中，敬请期待。</p>
+          <div className="mt-16 flex flex-col items-center py-12 text-center">
+            <BookOpen className="h-12 w-12 text-gray-300 dark:text-gray-600 mb-4" />
+            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1">专栏内容筹备中</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 max-w-[40ch]">我们正在精心准备深度技术专栏，敬请期待。</p>
           </div>
         )}
 
@@ -167,7 +169,7 @@ export default function GuidesPage() {
               <Link
                 key={g.href}
                 href={g.href}
-                className="group block rounded-lg border bg-card p-6 transition-colors hover:border-primary/50 hover:bg-accent/50"
+                className="group block rounded-lg ring-1 ring-gray-950/10 dark:ring-gray-50/10 bg-card p-6 transition-colors hover:ring-primary/50 hover:bg-accent/50"
               >
                 <div className="text-xs font-medium text-primary/70">
                   {g.tag}

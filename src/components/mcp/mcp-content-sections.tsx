@@ -10,7 +10,7 @@ export function McpWhatIs({ server }: McpContentProps) {
   if (!content) return null;
 
   return (
-    <section className="rounded-xl border border-border/40 bg-card p-6">
+    <section className="rounded-xl ring-1 ring-border/40 bg-card p-6 shadow-sm">
       <h2 className="mb-3 text-lg font-semibold">
         什么是 {server.nameZh ?? server.name}？
       </h2>
@@ -27,7 +27,7 @@ export function McpHowToUse({ server }: McpContentProps) {
   if (!server.installCommand && !server.installConfig) return null;
 
   return (
-    <section className="rounded-xl border border-border/40 bg-card p-6">
+    <section className="rounded-xl ring-1 ring-border/40 bg-card p-6 shadow-sm">
       <h2 className="mb-3 text-lg font-semibold">
         如何使用 {server.nameZh ?? server.name}
       </h2>
@@ -36,7 +36,7 @@ export function McpHowToUse({ server }: McpContentProps) {
           <h3 className="text-sm font-medium text-muted-foreground">
             安装命令
           </h3>
-          <div className="flex items-center gap-2 rounded-md border bg-muted/50 px-3 py-2.5 font-mono text-sm">
+          <div className="flex items-center gap-2 rounded-md ring-1 ring-border bg-muted/50 px-3 py-2.5 font-mono text-sm">
             <code className="min-w-0 flex-1 truncate text-muted-foreground">
               {server.installCommand}
             </code>
@@ -49,7 +49,7 @@ export function McpHowToUse({ server }: McpContentProps) {
           <h3 className="text-sm font-medium text-muted-foreground">
             配置示例
           </h3>
-          <pre className="overflow-x-auto rounded-md border bg-muted/50 p-3 text-xs">
+          <pre className="overflow-x-auto rounded-md ring-1 ring-border bg-muted/50 p-3 text-xs">
             <code>{JSON.stringify(server.installConfig, null, 2)}</code>
           </pre>
         </div>
@@ -61,7 +61,7 @@ export function McpHowToUse({ server }: McpContentProps) {
 export function McpToolsList({ server }: McpContentProps) {
   if (server.tools && server.tools.length > 0) {
     return (
-      <section className="rounded-xl border border-border/40 bg-card p-6">
+      <section className="rounded-xl ring-1 ring-border/40 bg-card p-6 shadow-sm">
         <h2 className="mb-3 text-lg font-semibold">
           核心功能 ({server.tools.length} 个工具)
         </h2>
@@ -69,7 +69,7 @@ export function McpToolsList({ server }: McpContentProps) {
           {server.tools.map((tool) => (
             <div
               key={tool.name}
-              className="rounded-md border border-border/40 bg-muted/30 px-4 py-3"
+              className="rounded-md bg-muted/30 ring-1 ring-inset ring-border/40 px-4 py-3"
             >
               <code className="text-sm font-semibold text-primary">
                 {tool.name}
@@ -88,7 +88,7 @@ export function McpToolsList({ server }: McpContentProps) {
 
   if (server.toolsCount > 0) {
     return (
-      <section className="rounded-xl border border-border/40 bg-card p-6">
+      <section className="rounded-xl ring-1 ring-border/40 bg-card p-6 shadow-sm">
         <h2 className="mb-3 text-lg font-semibold">核心功能</h2>
         <p className="text-sm text-foreground/85">
           该 MCP Server 提供{" "}

@@ -33,7 +33,7 @@ export function SectionHeader({
           </Link>
         )}
       </div>
-      {description && <p className="text-muted-foreground">{description}</p>}
+      {description && <p className="max-w-[50ch] text-muted-foreground">{description}</p>}
     </div>
   );
 }

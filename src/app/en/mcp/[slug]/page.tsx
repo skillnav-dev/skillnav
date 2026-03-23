@@ -339,7 +339,7 @@ export default async function EnMcpDetailPage({ params }: PageProps) {
       {related.length > 0 && (
         <section className="border-t border-border/40">
           <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-            <h2 className="mb-6 text-xl font-bold">Related MCP Servers</h2>
+            <h2 className="mb-6 text-xl font-bold tracking-tight">Related MCP Servers</h2>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {related.map((s) => (
                 <div

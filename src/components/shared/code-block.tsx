@@ -36,7 +36,7 @@ export function CodeBlock({ children, ...props }: React.ComponentProps<"pre">) {
   const rawText = extractText(children).replace(/\n$/, "");
 
   return (
-    <div className="not-prose group relative my-4 rounded-lg border border-border/40 bg-muted/50 dark:bg-muted/30">
+    <div className="not-prose group relative my-4 rounded-lg ring-1 ring-gray-950/10 bg-muted/50 dark:ring-gray-50/10 dark:bg-muted/30">
       {/* Toolbar */}
       <div className="flex items-center justify-between border-b border-border/40 px-4 py-1.5">
         <span className="font-mono text-xs text-muted-foreground">

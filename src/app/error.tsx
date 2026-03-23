@@ -19,7 +19,7 @@ export default function Error({
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center px-4 text-center">
       <h1 className="text-7xl font-bold text-primary/20">500</h1>
-      <h2 className="mt-4 text-2xl font-bold">出了点问题</h2>
+      <h2 className="mt-4 text-2xl font-bold tracking-tight">出了点问题</h2>
       <p className="mt-2 text-muted-foreground">
         页面加载时遇到错误，请稍后重试。
       </p>

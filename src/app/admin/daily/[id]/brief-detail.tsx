@@ -148,7 +148,7 @@ export function BriefDetail({
         </div>
       </div>
 
-      <h1 className="mb-6 text-xl font-bold">{brief.title}</h1>
+      <h1 className="mb-6 text-xl font-bold tracking-tight">{brief.title}</h1>
 
       {/* Tabs */}
       <Tabs defaultValue="preview">

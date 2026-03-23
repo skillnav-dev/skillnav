@@ -28,7 +28,7 @@ export function FreshnessBadge({
       <Badge
         variant="outline"
         className={cn(
-          "gap-1 border border-amber-300 bg-amber-50 font-medium text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300",
+          "gap-1 border border-amber-300 bg-amber-50 font-medium text-amber-600 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300",
           className,
         )}
       >
@@ -48,7 +48,7 @@ export function FreshnessBadge({
         <Badge
           variant="outline"
           className={cn(
-            "gap-1 border border-blue-300 bg-blue-50 font-medium text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300",
+            "gap-1 border border-blue-300 bg-blue-50 font-medium text-blue-600 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300",
             className,
           )}
         >
@@ -64,7 +64,7 @@ export function FreshnessBadge({
       <Badge
         variant="outline"
         className={cn(
-          "gap-1 border border-yellow-300 bg-yellow-50 font-medium text-yellow-700 dark:border-yellow-800 dark:bg-yellow-950 dark:text-yellow-300",
+          "gap-1 border border-yellow-300 bg-yellow-50 font-medium text-yellow-600 dark:border-yellow-800 dark:bg-yellow-950 dark:text-yellow-300",
           className,
         )}
       >
@@ -80,7 +80,7 @@ export function FreshnessBadge({
       <Badge
         variant="outline"
         className={cn(
-          "gap-1 border border-gray-300 bg-gray-50 font-medium text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400",
+          "gap-1 border border-gray-300 bg-gray-50 font-medium text-gray-400 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400",
           className,
         )}
       >

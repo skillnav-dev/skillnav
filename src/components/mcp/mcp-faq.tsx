@@ -8,7 +8,7 @@ export function McpFaq({ server }: McpFaqProps) {
   const displayName = server.nameZh ?? server.name;
 
   return (
-    <section className="rounded-xl border border-border/40 bg-card p-6">
+    <section className="rounded-xl ring-1 ring-border/40 bg-card p-6 shadow-sm">
       <h2 className="mb-4 text-lg font-semibold">常见问题</h2>
       <div className="space-y-4">
         <div>

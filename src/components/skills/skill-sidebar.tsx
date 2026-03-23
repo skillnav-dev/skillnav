@@ -54,7 +54,7 @@ export function SkillSidebar({ skill }: SkillSidebarProps) {
   return (
     <aside className="space-y-4 lg:sticky lg:top-24">
       {/* Metadata card */}
-      <div className="rounded-xl border border-border/40 bg-card p-6">
+      <div className="rounded-xl ring-1 ring-gray-950/10 bg-card p-6 dark:ring-gray-50/10">
         <h3 className="mb-3 text-sm font-semibold">详情</h3>
         <div className="divide-y divide-border/40">
           {/* Platform */}
@@ -156,7 +156,7 @@ export function SkillSidebar({ skill }: SkillSidebarProps) {
 
       {/* Tags card (conditional) */}
       {skill.tags.length > 0 && (
-        <div className="rounded-xl border border-border/40 bg-card p-6">
+        <div className="rounded-xl ring-1 ring-gray-950/10 bg-card p-6 dark:ring-gray-50/10">
           <div className="mb-3 flex items-center gap-1.5">
             <Tag className="size-3.5 text-muted-foreground" />
             <h3 className="text-sm font-semibold">标签</h3>
@@ -178,7 +178,7 @@ export function SkillSidebar({ skill }: SkillSidebarProps) {
 
       {/* External links card (conditional) */}
       {(skill.sourceUrl || skill.githubUrl) && (
-        <div className="rounded-xl border border-border/40 bg-card p-6">
+        <div className="rounded-xl ring-1 ring-gray-950/10 bg-card p-6 dark:ring-gray-50/10">
           <h3 className="mb-3 text-sm font-semibold">链接</h3>
           <div className="space-y-2">
             {skill.sourceUrl && (

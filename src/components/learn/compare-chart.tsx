@@ -14,7 +14,7 @@ export function CompareChart({ items }: CompareChartProps) {
       {items.map((item) => (
         <div
           key={item.title}
-          className="rounded-xl border border-border bg-card p-5"
+          className="rounded-xl ring-1 ring-gray-950/10 dark:ring-gray-50/10 bg-card p-5"
         >
           <h4 className="mb-2 text-base font-bold">{item.title}</h4>
           <p className="text-sm leading-relaxed text-muted-foreground">

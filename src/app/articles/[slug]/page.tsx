@@ -182,7 +182,7 @@ export default async function ArticlePage({ params }: PageProps) {
         </div>
         {/* Copyright attribution for translated articles */}
         {article.sourceUrl && (
-          <div className="mt-10 rounded-md border border-border/40 bg-muted/30 px-4 py-3 text-xs text-muted-foreground">
+          <div className="mt-10 rounded-md ring-1 ring-border/40 bg-muted/30 px-4 py-3 text-xs text-muted-foreground">
             本文编译自{" "}
             <a
               href={article.sourceUrl}
@@ -248,13 +248,13 @@ export default async function ArticlePage({ params }: PageProps) {
         return (
           <section className="border-t border-border/40">
             <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
-              <h2 className="mb-6 text-xl font-bold">概念速查</h2>
+              <h2 className="mb-6 text-xl font-bold tracking-tight">概念速查</h2>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {matched.map((c) => (
                   <Link
                     key={c.slug}
                     href={`/learn/what-is-${c.slug}`}
-                    className="rounded-lg border border-border/40 p-4 transition-colors hover:border-primary/40 hover:bg-muted/30"
+                    className="rounded-lg ring-1 ring-border/40 p-4 transition-colors hover:ring-primary/40 hover:bg-muted/30"
                   >
                     <p className="font-medium">{c.zh}</p>
                     <p className="mt-1 text-sm text-muted-foreground line-clamp-2">
@@ -271,7 +271,7 @@ export default async function ArticlePage({ params }: PageProps) {
       {relatedSkills.length > 0 && (
         <section className="border-t border-border/40">
           <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
-            <h2 className="mb-6 text-xl font-bold">相关工具</h2>
+            <h2 className="mb-6 text-xl font-bold tracking-tight">相关工具</h2>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {relatedSkills.map((s) => (
                 <SkillCard key={s.id} skill={s} />
@@ -283,7 +283,7 @@ export default async function ArticlePage({ params }: PageProps) {
       {related.length > 0 && (
         <section className="border-t border-border/40">
           <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
-            <h2 className="mb-6 text-xl font-bold">相关文章</h2>
+            <h2 className="mb-6 text-xl font-bold tracking-tight">相关文章</h2>
             <div className="grid gap-4 sm:grid-cols-2">
               {related.map((a) => (
                 <ArticleCard key={a.id} article={a} />

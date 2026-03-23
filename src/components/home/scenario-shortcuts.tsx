@@ -72,7 +72,7 @@ export function ScenarioShortcuts() {
           <Link
             key={label}
             href={href}
-            className="group flex items-start gap-3 rounded-xl border border-border/40 p-3 transition-all hover:border-primary/40 hover:bg-muted/30 hover:shadow-sm"
+            className="group flex items-start gap-3 rounded-xl ring-1 ring-border/40 p-3 transition-all hover:ring-primary/40 hover:bg-muted/30 hover:shadow-sm"
           >
             <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 transition-colors group-hover:bg-primary/20">
               <Icon className="size-4.5 text-primary" />

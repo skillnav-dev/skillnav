@@ -101,14 +101,14 @@ export default function AboutPage() {
 
       {/* Pain points */}
       <section className="mt-12 rounded-xl bg-muted/30 px-4 py-8 sm:px-6">
-        <h2 className="text-xl font-semibold">开发者面临的问题</h2>
+        <h2 className="text-xl font-semibold tracking-tight">开发者面临的问题</h2>
         <p className="mt-2 text-muted-foreground">
           AI Agent
           工具生态正在爆发式增长，但中文开发者获取信息的体验并没有跟上。
         </p>
         <div className="mt-6 grid gap-4 sm:grid-cols-3">
           {painPoints.map(({ icon: Icon, title, description }) => (
-            <div key={title} className="rounded-lg border bg-card p-5">
+            <div key={title} className="rounded-lg ring-1 ring-gray-950/10 dark:ring-gray-50/10 bg-card p-5">
               <div className="inline-flex rounded-lg bg-destructive/10 p-2">
                 <Icon className="size-5 text-destructive" />
               </div>
@@ -123,13 +123,13 @@ export default function AboutPage() {
 
       {/* Our approach */}
       <section className="mt-10">
-        <h2 className="text-xl font-semibold">我们怎么做</h2>
+        <h2 className="text-xl font-semibold tracking-tight">我们怎么做</h2>
         <p className="mt-2 text-muted-foreground">
           不做大而全的聚合站，做有编辑判断力的工具指南。
         </p>
         <div className="mt-6 grid gap-4 sm:grid-cols-3">
           {solutions.map(({ icon: Icon, title, description }) => (
-            <div key={title} className="rounded-lg border bg-card p-5">
+            <div key={title} className="rounded-lg ring-1 ring-gray-950/10 dark:ring-gray-50/10 bg-card p-5">
               <div className="inline-flex rounded-lg bg-primary/10 p-2">
                 <Icon className="size-5 text-primary" />
               </div>
@@ -144,8 +144,8 @@ export default function AboutPage() {
 
       {/* Content pipeline */}
       <section className="mt-12 space-y-4">
-        <h2 className="text-xl font-semibold">内容管线</h2>
-        <div className="rounded-lg border bg-muted/30 p-6">
+        <h2 className="text-xl font-semibold tracking-tight">内容管线</h2>
+        <div className="rounded-lg bg-gray-950/[0.025] dark:bg-gray-50/[0.025] p-6">
           <div className="flex flex-col gap-3 text-sm text-muted-foreground sm:flex-row sm:items-center sm:gap-2">
             <span className="inline-flex items-center gap-1.5 rounded-md bg-primary/10 px-2.5 py-1 font-medium text-primary">
               <Rss className="size-3.5" />
@@ -178,15 +178,15 @@ export default function AboutPage() {
 
       {/* Data overview */}
       <section className="mt-10">
-        <h2 className="text-xl font-semibold">数据概览</h2>
+        <h2 className="text-xl font-semibold tracking-tight">数据概览</h2>
         <div className="mt-4 grid gap-4 grid-cols-2 sm:grid-cols-4">
           {stats.map(({ icon: Icon, label, value }) => (
             <div
               key={label}
-              className="rounded-lg border bg-card p-4 text-center"
+              className="rounded-lg ring-1 ring-gray-950/10 dark:ring-gray-50/10 bg-card p-4 text-center"
             >
               <Icon className="mx-auto size-5 text-primary" />
-              <p className="mt-2 text-2xl font-bold">{value}</p>
+              <p className="mt-2 text-2xl font-bold tracking-tight">{value}</p>
               <p className="text-sm text-muted-foreground">{label}</p>
             </div>
           ))}

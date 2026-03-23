@@ -114,7 +114,7 @@ export default async function WeeklyDetailPage({ params }: PageProps) {
           {olderIssue ? (
             <Link
               href={`/weekly/${olderIssue.slug}`}
-              className="group flex items-start gap-2 rounded-lg border border-border/40 p-4 transition-colors hover:border-primary/40"
+              className="group flex items-start gap-2 rounded-lg ring-1 ring-gray-950/10 dark:ring-gray-50/10 p-4 transition-colors hover:ring-primary/40"
             >
               <ChevronLeft className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
               <div>
@@ -130,7 +130,7 @@ export default async function WeeklyDetailPage({ params }: PageProps) {
           {newerIssue ? (
             <Link
               href={`/weekly/${newerIssue.slug}`}
-              className="group flex items-end gap-2 rounded-lg border border-border/40 p-4 text-right transition-colors hover:border-primary/40"
+              className="group flex items-end gap-2 rounded-lg ring-1 ring-gray-950/10 dark:ring-gray-50/10 p-4 text-right transition-colors hover:ring-primary/40"
             >
               <div>
                 <p className="text-xs text-muted-foreground">下一期</p>

@@ -24,7 +24,7 @@ export function SeriesNav({ current, siblings, meta }: SeriesNavProps) {
     currentIdx < numbered.length - 1 ? numbered[currentIdx + 1] : null;
 
   return (
-    <nav className="rounded-lg border border-border/40 bg-muted/30 px-4 py-3">
+    <nav className="rounded-lg ring-1 ring-border/40 bg-muted/30 px-4 py-3">
       <div className="flex items-center gap-2 text-sm font-medium">
         <BookOpen className="size-4 text-primary" />
         <span>
