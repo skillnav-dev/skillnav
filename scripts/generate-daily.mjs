@@ -102,66 +102,37 @@ async function queryRecentArticles(supabase, since, until, limit = 20) {
   return filtered;
 }
 
-// ── Signal Layer ───────────────────────────────────────────────────
+// ── Newsletter Layer ──────────────────────────────────────────────
 
-function loadSignals(dateLabel) {
-  const filePath = pathMod.join(process.cwd(), "data", "daily-signals", `${dateLabel}.json`);
-  if (!fs.existsSync(filePath)) {
-    // Try previous day (signals scraped the evening before)
-    const prev = new Date(dateLabel);
-    prev.setDate(prev.getDate() - 1);
-    const prevLabel = formatDate(prev);
-    const prevPath = pathMod.join(process.cwd(), "data", "daily-signals", `${prevLabel}.json`);
-    if (!fs.existsSync(prevPath)) return null;
+function loadNewsletters(dateLabel) {
+  const dir = pathMod.join(process.cwd(), "data", "daily-newsletters");
+  const filePath = pathMod.join(dir, `${dateLabel}.json`);
+  if (fs.existsSync(filePath)) {
+    return JSON.parse(fs.readFileSync(filePath, "utf8"));
+  }
+  // Try previous day (newsletters scraped the evening before)
+  const prev = new Date(dateLabel);
+  prev.setDate(prev.getDate() - 1);
+  const prevPath = pathMod.join(dir, `${formatDate(prev)}.json`);
+  if (fs.existsSync(prevPath)) {
     return JSON.parse(fs.readFileSync(prevPath, "utf8"));
   }
-  return JSON.parse(fs.readFileSync(filePath, "utf8"));
+  return null;
 }
 
-function formatSignalContext(signals) {
-  if (!signals?.signals?.length) return "";
-
-  const hot = signals.signals.filter((s) => s.heat >= 3);
-  const warm = signals.signals.filter((s) => s.heat === 2);
-
-  if (!hot.length && !warm.length) return "";
-
-  const lines = [
-    "\n## 今日外部热度信号（来自 5 个头部 AI 日报的交叉分析）\n",
-  ];
-
-  if (hot.length) {
-    lines.push("🔥 高热度（3+ 个日报同时报道）:");
-    for (const s of hot) {
-      const covered = s.in_our_pipeline ? "✅ 我们已覆盖" : "❌ 我们未覆盖";
-      const summary = Object.values(s.summaries)[0]?.slice(0, 100) || "";
-      lines.push(`- ${s.title} (heat: ${s.heat}, ${covered}) — ${summary}`);
-    }
-    lines.push("");
+function formatNewsletterContext(newsletters) {
+  if (!newsletters?.sources?.length) return "";
+  const lines = [];
+  for (const src of newsletters.sources) {
+    lines.push(`\n### ${src.label} (${src.name})\n`);
+    lines.push(src.text);
   }
-
-  if (warm.length) {
-    lines.push("⭐ 关注度较高（2 个日报报道）:");
-    for (const s of warm.slice(0, 8)) {
-      const covered = s.in_our_pipeline ? "✅" : "❌";
-      lines.push(`- ${s.title} (${covered})`);
-    }
-    lines.push("");
-  }
-
-  lines.push(
-    "选题指引：",
-    "- 对于我们已有文章的高热度话题，优先选入 Daily Brief",
-    "- 对于我们未覆盖的高热度话题，在 headlines 或 quickLinks 中用简讯形式报道（使用 slug 'signal-N'）",
-    ""
-  );
-
   return lines.join("\n");
 }
 
 // ── LLM Curation ───────────────────────────────────────────────────
 
-async function generateEditorialBrief(articles, signalContext = "") {
+async function generateEditorialBrief(articles, newsletterContext = "") {
   const { callLLM } = await import("./lib/llm.mjs");
 
   const articleList = articles
@@ -169,161 +140,171 @@ async function generateEditorialBrief(articles, signalContext = "") {
       const title = a.title_zh || a.title;
       const source = SOURCE_LABELS[a.source] || a.source;
       const summary = a.summary_zh || a.summary || "";
-      // Give LLM enough context to make editorial judgment
       const summaryLine = summary ? `\n   摘要: ${summary.slice(0, 150)}` : "";
       return `${i + 1}. [${a.slug}] ${title} (来源: ${source})${summaryLine}`;
     })
     .join("\n");
 
-  const systemPrompt = `You are the editor of SkillNav Daily Brief, a Chinese-language daily digest of AI agent tools and developer ecosystem news.
-Your style: concise, opinionated, no fluff. Like a sharp tech lead briefing the team — every sentence earns its place.
-Key principle: don't just report WHAT happened, explain WHY IT MATTERS to developers.
+  const hasNewsletters = newsletterContext.length > 100;
 
-## Anti-patterns (DO NOT write like this)
-- hook: "AI智能体不再只是写代码，而是成为可部署、可协作的工程系统" ← 太泛，谁都能说
-- whyItMatters: "这是关键一步" / "不可替代" / "值得关注" ← 万能套话，没有信息量
-- quickLinks: 复读标题 ← 必须补一个标题里没有的新信息点
+  const systemPrompt = `You are the chief editor of SkillNav Daily Brief, a Chinese-language daily digest for AI developers.
 
-## Good examples
-- hook: "当教授开始把推导交给 Agent，你的工作流还停留在手写 CRUD？"
-- whyItMatters: "推理成本降至 GPT-4 的 1/50，Agent 批量调用从烧钱变成零钱"
-- quickLinks: "10 倍效率但 AI 会伪造图表" (not just "哈佛教授用 Claude Code 做物理")`;
+## Your role
+You have two inputs: (1) raw text from today's top AI newsletters, and (2) our article pool.
+Your job: cross-reference the newsletters, identify the most important stories, and produce a brief with clear editorial hierarchy.
 
-  const maxArticles = Math.min(articles.length, 10);
+## Editorial funnel (strict rules)
+- HEADLINE (0 or 1): A topic mentioned by 2+ newsletters, OR a genuine industry inflection point. Write "why it matters" with a specific impact statement. If nothing qualifies, set headline to null — do NOT force a headline.
+- NOTEWORTHY (3-5): Topics worth a developer's attention. Each gets a one-line editorial comment that adds insight beyond the title.
+- SKIP everything else. Most newsletter items are noise. Pushing less = brand trust.
 
-  // Adaptive section sizing
-  let headlineCount, toolCount, quickLinkCount;
-  if (maxArticles <= 3) {
-    headlineCount = maxArticles;
-    toolCount = 0;
-    quickLinkCount = 0;
-  } else if (maxArticles <= 6) {
-    headlineCount = 1;
-    toolCount = Math.min(maxArticles - 1, 3);
-    quickLinkCount = maxArticles - 1 - toolCount;
-  } else {
-    headlineCount = 2;
-    toolCount = Math.min(4, Math.ceil((maxArticles - 2) / 2));
-    quickLinkCount = maxArticles - 2 - toolCount;
-  }
+## Cross-referencing
+Read ALL newsletter texts carefully. When multiple newsletters cover the same topic (even with different wording), that's a strong signal. Prefer topics validated by 2+ sources.
 
-  const userPrompt = `Generate a structured daily brief from these ${articles.length} articles:
+## Linking to our articles
+For each item, check if our article pool covers the topic. If yes, use the article's slug. If not, use slug "signal-{N}" (e.g., "signal-1") — we'll display these as text-only items.
+
+## Writing rules
+- All output in Chinese
+- Hook: must contain a specific fact, number, or contrast — no vague statements
+- whyItMatters: must name WHO benefits and HOW — no "this is important" filler
+- comment: must add information not in the title — no title parroting
+- Style: sharp tech lead briefing the team. Every word earns its place.
+
+## Anti-patterns (NEVER write like this)
+- "这标志着AI发展的重要里程碑" ← empty
+- "值得关注" / "不可忽视" / "意义重大" ← filler
+- comment that restates the title ← useless`;
+
+  const userPrompt = `${hasNewsletters ? `## Today's AI newsletters (raw text from ${articles.length > 0 ? "multiple" : "5"} sources)\n${newsletterContext}\n` : ""}
+## Our article pool (${articles.length} articles)
 
 ${articleList}
-${signalContext}
 
-Return a JSON object with THREE sections:
+## Output format
+
+Return a JSON object:
 {
-  "title": "今日标题（中文，10-20字，概括今天最重要的主题）",
-  "hook": "一句金句引题（中文，15-30字）— 必须包含一个具体事实、数字或对比，不要写正确但空洞的概括",
-  "headlines": [
+  "title": "10-20 chars, today's theme",
+  "hook": "15-30 chars, specific fact/number/contrast",
+  "headline": ${hasNewsletters ? `{
+    "slug": "article-slug or signal-1",
+    "title": "topic title in Chinese",
+    "summary": "2-3 sentences, 60-100 chars, with specific details",
+    "whyItMatters": "20-40 chars, specific impact: who benefits, what changes",
+    "sources": ["newsletter names that covered this"]
+  } OR null if nothing qualifies` : `{
+    "slug": "article-slug",
+    "title": "topic title in Chinese",
+    "summary": "2-3 sentences with specific details",
+    "whyItMatters": "specific impact statement"
+  }`},
+  "noteworthy": [
     {
-      "slug": "article-slug",
-      "summary": "2-3句事实摘要（中文，60-100字）— 包含关键数字和具体细节，不要泛泛而谈",
-      "whyItMatters": "一句话点评（中文，20-40字）— 必须说出具体影响：谁受益、省多少、改变什么流程"
+      "slug": "article-slug or signal-N",
+      "title": "topic title in Chinese",
+      "comment": "editorial insight not in the title, 15-30 chars"
     }
-  ],
-  "tools": [
-    { "slug": "article-slug", "oneLiner": "一句话概括（中文，20-40字）— 说清楚这个工具解决什么痛点" }
-  ],
-  "quickLinks": [
-    { "slug": "article-slug", "oneLiner": "补充信息点（中文，10-25字）— 必须包含标题里没有的新信息，不要复读标题" }
   ]
 }
 
 Rules:
-- Pick top ${maxArticles} articles, distribute: headlines ${headlineCount}, tools ~${toolCount}, quickLinks ~${quickLinkCount}
-- Each article only appears in ONE section, no duplicates
-- Use article slugs from the list above
-- Read the 摘要 carefully — your editorial judgment depends on understanding the actual content
+- noteworthy: 3-5 items max
+- Each slug appears only once
+- For our articles, use the exact slug from the list above
+- For topics not in our pool, use "signal-1", "signal-2", etc. and provide the title
 - Return ONLY valid JSON, no markdown fences`;
 
   const raw = await callLLM(systemPrompt, userPrompt, 2048);
   const jsonStr = raw.replace(/^```(?:json)?\s*/m, "").replace(/```\s*$/m, "").trim();
   const plan = JSON.parse(jsonStr);
 
-  if (!plan.title || !plan.hook || !Array.isArray(plan.headlines)) {
+  if (!plan.title || !plan.hook) {
     throw new Error("LLM returned invalid brief structure");
   }
 
-  // Ensure arrays exist
-  plan.tools = plan.tools || [];
-  plan.quickLinks = plan.quickLinks || [];
-
-  // Enforce length limits on LLM output
+  // Normalize
   plan.title = String(plan.title).slice(0, 100);
   plan.hook = String(plan.hook).slice(0, 200);
-  for (const h of plan.headlines) {
-    if (h.summary) h.summary = String(h.summary).slice(0, 500);
-    if (h.whyItMatters) h.whyItMatters = String(h.whyItMatters).slice(0, 200);
+  plan.noteworthy = Array.isArray(plan.noteworthy) ? plan.noteworthy : [];
+
+  // Enforce length limits
+  if (plan.headline) {
+    plan.headline.summary = String(plan.headline.summary || "").slice(0, 500);
+    plan.headline.whyItMatters = String(plan.headline.whyItMatters || "").slice(0, 200);
+    plan.headline.title = String(plan.headline.title || "").slice(0, 100);
   }
-  for (const t of plan.tools) {
-    if (t.oneLiner) t.oneLiner = String(t.oneLiner).slice(0, 200);
-  }
-  for (const q of plan.quickLinks) {
-    if (q.oneLiner) q.oneLiner = String(q.oneLiner).slice(0, 200);
+  for (const n of plan.noteworthy) {
+    n.comment = String(n.comment || "").slice(0, 200);
+    n.title = String(n.title || "").slice(0, 100);
   }
 
-  // Validate slugs exist and deduplicate across sections
+  // Validate slugs: article slugs must exist, signal-N slugs are allowed
   const validSlugs = new Set(articles.map((a) => a.slug));
   const usedSlugs = new Set();
 
-  plan.headlines = plan.headlines.filter((h) => {
-    if (!validSlugs.has(h.slug) || usedSlugs.has(h.slug)) return false;
-    usedSlugs.add(h.slug);
-    return true;
-  });
-  plan.tools = plan.tools.filter((t) => {
-    if (!validSlugs.has(t.slug) || usedSlugs.has(t.slug)) return false;
-    usedSlugs.add(t.slug);
-    return true;
-  });
-  plan.quickLinks = plan.quickLinks.filter((q) => {
-    if (!validSlugs.has(q.slug) || usedSlugs.has(q.slug)) return false;
-    usedSlugs.add(q.slug);
+  if (plan.headline) {
+    const slug = plan.headline.slug;
+    if (slug && !slug.startsWith("signal-") && !validSlugs.has(slug)) {
+      plan.headline = null; // invalid slug, drop headline
+    } else if (slug) {
+      usedSlugs.add(slug);
+    }
+  }
+
+  plan.noteworthy = plan.noteworthy.filter((n) => {
+    const slug = n.slug;
+    if (!slug || usedSlugs.has(slug)) return false;
+    if (!slug.startsWith("signal-") && !validSlugs.has(slug)) return false;
+    usedSlugs.add(slug);
     return true;
   });
 
-  // Backward compat: assemble highlights for downstream consumers (X thread, XHS, etc.)
+  // Build backward-compat structures for downstream consumers
+  plan.headlines = plan.headline ? [plan.headline] : [];
+  plan.tools = [];
+  plan.quickLinks = plan.noteworthy.map((n) => ({
+    slug: n.slug,
+    oneLiner: n.comment,
+  }));
   plan.highlights = [
-    ...plan.headlines.map((h) => ({ slug: h.slug, oneLiner: h.whyItMatters || h.summary })),
-    ...plan.tools.map((t) => ({ slug: t.slug, oneLiner: t.oneLiner })),
-    ...plan.quickLinks.map((q) => ({ slug: q.slug, oneLiner: q.oneLiner })),
+    ...(plan.headline ? [{ slug: plan.headline.slug, oneLiner: plan.headline.whyItMatters || plan.headline.summary }] : []),
+    ...plan.noteworthy.map((n) => ({ slug: n.slug, oneLiner: n.comment })),
   ];
 
   return plan;
 }
 
 function fallbackBrief(articles) {
-  const total = Math.min(articles.length, 10);
-  const items = articles.slice(0, total);
-  const headlines = items.slice(0, 2);
-  const tools = items.slice(2, 6);
-  const quickLinks = items.slice(6);
+  const items = articles.slice(0, 6);
+  const headline = items[0];
+  const rest = items.slice(1);
 
   const brief = {
-    title: `AI 日报：${total} 条值得关注的动态`,
-    hook: `今日 ${total} 条 AI 动态速览。`,
-    headlines: headlines.map((a) => ({
+    title: `AI 日报：${items.length} 条值得关注的动态`,
+    hook: `今日 ${items.length} 条 AI 动态速览。`,
+    headline: headline
+      ? {
+          slug: headline.slug,
+          title: headline.title_zh || headline.title,
+          summary: headline.summary_zh?.slice(0, 100) || headline.title_zh || headline.title,
+          whyItMatters: "",
+        }
+      : null,
+    noteworthy: rest.map((a) => ({
       slug: a.slug,
-      summary: a.summary_zh?.slice(0, 100) || a.title_zh || a.title,
-      whyItMatters: "",
-    })),
-    tools: tools.map((a) => ({
-      slug: a.slug,
-      oneLiner: a.summary_zh?.slice(0, 40) || a.title_zh || a.title,
-    })),
-    quickLinks: quickLinks.map((a) => ({
-      slug: a.slug,
-      oneLiner: a.summary_zh?.slice(0, 20) || a.title_zh || a.title,
+      title: a.title_zh || a.title,
+      comment: a.summary_zh?.slice(0, 40) || a.title_zh || a.title,
     })),
   };
 
   // Backward compat
+  brief.headlines = brief.headline ? [brief.headline] : [];
+  brief.tools = [];
+  brief.quickLinks = brief.noteworthy.map((n) => ({ slug: n.slug, oneLiner: n.comment }));
   brief.highlights = [
-    ...brief.headlines.map((h) => ({ slug: h.slug, oneLiner: h.summary })),
-    ...brief.tools.map((t) => ({ slug: t.slug, oneLiner: t.oneLiner })),
-    ...brief.quickLinks.map((q) => ({ slug: q.slug, oneLiner: q.oneLiner })),
+    ...(brief.headline ? [{ slug: brief.headline.slug, oneLiner: brief.headline.summary }] : []),
+    ...brief.noteworthy.map((n) => ({ slug: n.slug, oneLiner: n.comment })),
   ];
 
   return brief;
@@ -339,56 +320,43 @@ function assembleMarkdown(editorialBrief, articles, briefDate) {
   lines.push(`> ${editorialBrief.hook}`);
   lines.push("");
 
-  // Headlines
-  if (editorialBrief.headlines?.length) {
-    lines.push("## 🚀 头条");
+  // Headline (0 or 1)
+  const hl = editorialBrief.headline;
+  if (hl) {
+    const article = articleMap.get(hl.slug);
+    const title = article ? (article.title_zh || article.title) : hl.title;
+    const source = article ? (SOURCE_LABELS[article.source] || article.source) : (hl.sources?.join(", ") || "");
+
+    lines.push("## 📌 今日头条");
     lines.push("");
-
-    for (const headline of editorialBrief.headlines) {
-      const article = articleMap.get(headline.slug);
-      if (!article) continue;
-
-      const title = article.title_zh || article.title;
-      const source = SOURCE_LABELS[article.source] || article.source;
-
+    if (article) {
       lines.push(`### [${title}](/articles/${article.slug})`);
-      lines.push(`*${source}*`);
+    } else {
+      lines.push(`### ${title}`);
+    }
+    if (source) lines.push(`*${source}*`);
+    lines.push("");
+    lines.push(hl.summary);
+    if (hl.whyItMatters) {
       lines.push("");
-      lines.push(headline.summary);
-      if (headline.whyItMatters) {
-        lines.push("");
-        lines.push(`**为什么重要：** ${headline.whyItMatters}`);
+      lines.push(`**为什么重要：** ${hl.whyItMatters}`);
+    }
+    lines.push("");
+  }
+
+  // Noteworthy (3-5)
+  if (editorialBrief.noteworthy?.length) {
+    lines.push("## 📋 值得关注");
+    lines.push("");
+
+    for (const item of editorialBrief.noteworthy) {
+      const article = articleMap.get(item.slug);
+      const title = article ? (article.title_zh || article.title) : item.title;
+      if (article) {
+        lines.push(`- [${title}](/articles/${article.slug}) — ${item.comment}`);
+      } else {
+        lines.push(`- ${title} — ${item.comment}`);
       }
-      lines.push("");
-    }
-  }
-
-  // Tools & Releases
-  if (editorialBrief.tools?.length) {
-    lines.push("## 🛠️ 工具与发布");
-    lines.push("");
-
-    for (const tool of editorialBrief.tools) {
-      const article = articleMap.get(tool.slug);
-      if (!article) continue;
-
-      const title = article.title_zh || article.title;
-      lines.push(`- [${title}](/articles/${article.slug}) — ${tool.oneLiner}`);
-    }
-    lines.push("");
-  }
-
-  // Quick Links
-  if (editorialBrief.quickLinks?.length) {
-    lines.push("## ⚡ 快讯");
-    lines.push("");
-
-    for (const link of editorialBrief.quickLinks) {
-      const article = articleMap.get(link.slug);
-      if (!article) continue;
-
-      const title = article.title_zh || article.title;
-      lines.push(`- [${title}](/articles/${article.slug}) — ${link.oneLiner}`);
     }
     lines.push("");
   }
@@ -473,15 +441,13 @@ async function main() {
 
   log.info(`Found ${articles.length} articles`);
 
-  // Load signal layer data
-  const signals = loadSignals(dateLabel);
-  const signalContext = formatSignalContext(signals);
-  if (signals) {
-    const hot = signals.signals.filter((s) => s.heat >= 3).length;
-    const warm = signals.signals.filter((s) => s.heat === 2).length;
-    log.info(`Signal layer: ${hot} hot + ${warm} warm topics from ${signals.sources_scraped.length} sources`);
+  // Load newsletter data
+  const newsletters = loadNewsletters(dateLabel);
+  const newsletterContext = formatNewsletterContext(newsletters);
+  if (newsletters) {
+    log.info(`Newsletters: ${newsletters.sources.length} sources loaded (${newsletterContext.length} chars)`);
   } else {
-    log.info("Signal layer: no data available, using articles only");
+    log.info("Newsletters: no data available, using articles only");
   }
 
   // Generate editorial brief
@@ -492,7 +458,7 @@ async function main() {
   } else {
     log.info("Generating editorial brief via LLM...");
     try {
-      editorialBrief = await generateEditorialBrief(articles, signalContext);
+      editorialBrief = await generateEditorialBrief(articles, newsletterContext);
       log.success(`Brief: "${editorialBrief.title}" with ${editorialBrief.highlights.length} highlights`);
     } catch (e) {
       log.warn(`LLM failed: ${e.message}. Using fallback.`);
@@ -530,31 +496,27 @@ async function main() {
   });
 
   // Generate Xiaohongshu caption (pass structured sections)
+  const hl = editorialBrief.headline;
   const xhsSections = {
-    headlines: (editorialBrief.headlines || []).map((h) => {
-      const article = articles.find((a) => a.slug === h.slug);
+    headlines: hl
+      ? [
+          {
+            title: articles.find((a) => a.slug === hl.slug)?.title_zh || hl.title || hl.slug,
+            summary: hl.summary || "",
+            whyItMatters: hl.whyItMatters || "",
+          },
+        ]
+      : [],
+    tools: [],
+    quickLinks: (editorialBrief.noteworthy || []).map((n) => {
+      const article = articles.find((a) => a.slug === n.slug);
       return {
-        title: article?.title_zh || article?.title || h.slug,
-        summary: h.summary || "",
-        whyItMatters: h.whyItMatters || "",
-      };
-    }),
-    tools: (editorialBrief.tools || []).map((t) => {
-      const article = articles.find((a) => a.slug === t.slug);
-      return {
-        title: article?.title_zh || article?.title || t.slug,
-        oneLiner: t.oneLiner,
-      };
-    }),
-    quickLinks: (editorialBrief.quickLinks || []).map((q) => {
-      const article = articles.find((a) => a.slug === q.slug);
-      return {
-        title: article?.title_zh || article?.title || q.slug,
-        oneLiner: q.oneLiner,
+        title: article?.title_zh || article?.title || n.title || n.slug,
+        oneLiner: n.comment,
       };
     }),
   };
-  const totalCount = xhsSections.headlines.length + xhsSections.tools.length + xhsSections.quickLinks.length;
+  const totalCount = xhsSections.headlines.length + xhsSections.quickLinks.length;
   const contentXhs = formatXhsCaption(xhsSections, {
     title: editorialBrief.title,
     date: formatDateChinese(briefDate),

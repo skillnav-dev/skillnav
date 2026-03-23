@@ -40,7 +40,7 @@ sync-articles (daily cron)  ──→  articles (translated)
 - [x] Admin Dashboard: Zhihu/XHS tab + publication status tracking
 - [x] Codex review 修复: channel name mismatch + false published + API allowlist
 - [ ] 邮件 Newsletter（Resend 集成 + 订阅管理）
-- [ ] OpenClaw Skill（IM 渠道分发）
+- [x] OpenClaw Skill（IM 渠道分发）— skillnav-daily skill, deployed to server, GitHub: skillnav-dev/skillnav-daily-skill
 - [ ] 用户账号体系 + 个性化推荐
 - [ ] X API 自动发布（$200/月 Basic tier）
 - [ ] 公众号 API 自动发布（需已认证服务号）
