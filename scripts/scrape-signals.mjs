@@ -12,6 +12,7 @@
  */
 
 import { createLogger } from "./lib/logger.mjs";
+import { runPipeline } from "./lib/run-pipeline.mjs";
 import fs from "fs";
 import path from "path";
 
@@ -200,7 +201,12 @@ async function main() {
 
   if (sources.length < 2) {
     log.error(`Only ${sources.length} sources succeeded. Need >= 2. Aborting.`);
-    process.exit(1);
+    return {
+      status: "failure",
+      summary: { sources_ok: sources.length, sources_failed: sourcesFailed.length },
+      errorMsg: `Only ${sources.length}/5 sources succeeded`,
+      exitCode: 1,
+    };
   }
 
   const output = {
@@ -240,10 +246,20 @@ async function main() {
     }
   }
 
-  log.done();
+  const totalChars = sources.reduce((s, x) => s + x.text.length, 0);
+  return {
+    status: sourcesFailed.length > 0 ? "partial" : "success",
+    summary: {
+      sources_ok: sources.length,
+      sources_failed: sourcesFailed.length,
+      total_chars: totalChars,
+    },
+    errorMsg:
+      sourcesFailed.length > 0
+        ? `Failed: ${sourcesFailed.join(", ")}`
+        : null,
+    exitCode: 0,
+  };
 }
 
-main().catch((e) => {
-  log.error(e.message);
-  process.exit(1);
-});
+runPipeline(main, { logger: log, defaultPipeline: "scrape-signals" });

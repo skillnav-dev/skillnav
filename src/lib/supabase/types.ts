@@ -231,6 +231,29 @@ export interface Database {
           Database["public"]["Tables"]["brief_publications"]["Insert"]
         >;
       };
+      pipeline_runs: {
+        Row: {
+          id: number;
+          pipeline: string;
+          status: "success" | "partial" | "failure" | "skipped";
+          started_at: string;
+          duration_s: number | null;
+          summary: Record<string, unknown>;
+          error_msg: string | null;
+          created_at: string;
+        };
+        Insert: {
+          pipeline: string;
+          status?: "success" | "partial" | "failure" | "skipped";
+          started_at?: string;
+          duration_s?: number | null;
+          summary?: Record<string, unknown>;
+          error_msg?: string | null;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["pipeline_runs"]["Insert"]
+        >;
+      };
       submissions: {
         Row: {
           id: string;
@@ -263,3 +286,5 @@ export type SubmissionRow = Database["public"]["Tables"]["submissions"]["Row"];
 export type DailyBriefRow = Database["public"]["Tables"]["daily_briefs"]["Row"];
 export type BriefPublicationRow =
   Database["public"]["Tables"]["brief_publications"]["Row"];
+export type PipelineRunRow =
+  Database["public"]["Tables"]["pipeline_runs"]["Row"];

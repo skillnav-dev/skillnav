@@ -25,6 +25,7 @@ import { JSDOM } from "jsdom";
 import TurndownService from "turndown";
 import { createAdminClient } from "./lib/supabase-admin.mjs";
 import { createLogger } from "./lib/logger.mjs";
+import { runPipeline } from "./lib/run-pipeline.mjs";
 import { translateArticle, getProviderInfo } from "./lib/llm.mjs";
 import { scoreArticle } from "./lib/quality.mjs";
 import { withRetry } from "./lib/retry.mjs";
@@ -348,7 +349,7 @@ async function main() {
 
   if (sources.length === 0) {
     log.error(`Unknown source: "${sourceFilter}". Available: ${SOURCES.map((s) => s.name).join(", ")}`);
-    process.exit(1);
+    return { status: "failure", summary: {}, errorMsg: `Unknown source: "${sourceFilter}"`, exitCode: 1 };
   }
 
   // ── Retranslate truncated articles mode ───────────────────────────
@@ -367,7 +368,7 @@ async function main() {
 
     if (queryErr) {
       log.error(`Query failed: ${queryErr.message}`);
-      process.exit(1);
+      return { pipeline: "sync-articles:retranslate", status: "failure", summary: { mode: "retranslate-truncated" }, errorMsg: queryErr.message, exitCode: 1 };
     }
 
     // Filter to articles that actually have English content to retranslate
@@ -436,9 +437,13 @@ async function main() {
     log.success(`\n=== Retranslation Summary ===`);
     log.success(`Total: ${candidates.length} | Retranslated: ${retranslated} | Failed: ${failed}`);
     if (dryRun) log.info("[DRY RUN] No records were updated.");
-    log.done();
-    if (failed > 0) process.exit(1);
-    return;
+    return {
+      pipeline: "sync-articles:retranslate",
+      status: failed > 0 ? "partial" : "success",
+      summary: { mode: "retranslate-truncated", total: candidates.length, retranslated, failed },
+      errorMsg: failed > 0 ? `${failed} retranslations failed` : null,
+      exitCode: failed > 0 ? 1 : 0,
+    };
   }
 
   // ── Re-compile all draft articles with upgraded prompt ─────────────
@@ -465,7 +470,7 @@ async function main() {
 
     if (queryErr) {
       log.error(`Query failed: ${queryErr.message}`);
-      process.exit(1);
+      return { pipeline: "sync-articles:retranslate", status: "failure", summary: { mode: "retranslate-drafts" }, errorMsg: queryErr.message, exitCode: 1 };
     }
 
     const candidates = (drafts || []).filter((a) => a.content && a.content.length > 100);
@@ -534,9 +539,13 @@ async function main() {
     log.success(`\n=== Re-compilation Summary ===`);
     log.success(`Total: ${batch.length} | Re-compiled: ${recompiled} | Failed: ${failed}`);
     if (dryRun) log.info("[DRY RUN] No records were updated.");
-    log.done();
-    if (failed > 0) process.exit(1);
-    return;
+    return {
+      pipeline: "sync-articles:retranslate",
+      status: failed > 0 ? "partial" : "success",
+      summary: { mode: "retranslate-drafts", total: batch.length, recompiled, failed },
+      errorMsg: failed > 0 ? `${failed} re-compilations failed` : null,
+      exitCode: failed > 0 ? 1 : 0,
+    };
   }
 
   // ── Re-compile published articles with upgraded prompt ──────────────
@@ -561,7 +570,7 @@ async function main() {
 
     if (queryErr) {
       log.error(`Query failed: ${queryErr.message}`);
-      process.exit(1);
+      return { pipeline: "sync-articles:retranslate", status: "failure", summary: { mode: "retranslate-published" }, errorMsg: queryErr.message, exitCode: 1 };
     }
 
     const candidates = (articles || []).filter((a) => a.content && a.content.length > 100);
@@ -630,14 +639,19 @@ async function main() {
     log.success(`\n=== Re-compilation (Published) Summary ===`);
     log.success(`Total: ${batch.length} | Re-compiled: ${recompiled} | Failed: ${failed}`);
     if (dryRun) log.info("[DRY RUN] No records were updated.");
-    log.done();
-    if (failed > 0) process.exit(1);
-    return;
+    return {
+      pipeline: "sync-articles:retranslate",
+      status: failed > 0 ? "partial" : "success",
+      summary: { mode: "retranslate-published", total: batch.length, recompiled, failed },
+      errorMsg: failed > 0 ? `${failed} re-compilations failed` : null,
+      exitCode: failed > 0 ? 1 : 0,
+    };
   }
 
   // Summary counters
   let totalFetched = 0;
   let totalSkipped = 0;
+  let totalFiltered = 0;
   let totalInserted = 0;
   let totalFailed = 0;
 
@@ -713,6 +727,7 @@ async function main() {
     newItems = newItems.filter((item) => isRelevant(item, source));
     const filtered = beforeFilter - newItems.length;
     if (filtered > 0) {
+      totalFiltered += filtered;
       log.info(`Filtered ${filtered} irrelevant articles`);
     }
 
@@ -890,7 +905,7 @@ async function main() {
   // Summary report
   log.success("\n=== Sync Summary ===");
   log.success(`Sources: ${sources.map((s) => s.name).join(", ")}`);
-  log.success(`Fetched: ${totalFetched} | Skipped (dedup): ${totalSkipped} | Inserted: ${totalInserted} | Failed: ${totalFailed}`);
+  log.success(`Fetched: ${totalFetched} | Dedup: ${totalSkipped} | Filtered: ${totalFiltered} | Inserted: ${totalInserted} | Failed: ${totalFailed}`);
   if (dryRun) {
     log.info("[DRY RUN] No records were written to the database.");
   }
@@ -904,6 +919,7 @@ async function main() {
     `| Sources | ${sources.map((s) => s.name).join(", ")} |`,
     `| Fetched | ${totalFetched} |`,
     `| Skipped (dedup) | ${totalSkipped} |`,
+    `| Filtered (irrelevant) | ${totalFiltered} |`,
     `| Inserted | ${totalInserted} |`,
     `| Failed | ${totalFailed} |`,
     dryRun ? "\n> **DRY RUN** — no records written" : "",
@@ -916,12 +932,18 @@ async function main() {
   log.setOutput("failed", totalFailed);
   log.setOutput("fetched", totalFetched);
 
-  log.done();
-
-  if (totalFailed > 0) process.exit(1);
+  return {
+    status: totalFailed > 0 ? "partial" : "success",
+    summary: {
+      fetched: totalFetched,
+      deduped: totalSkipped,
+      filtered: totalFiltered,
+      inserted: totalInserted,
+      failed: totalFailed,
+    },
+    errorMsg: totalFailed > 0 ? `${totalFailed} articles failed` : null,
+    exitCode: totalFailed > 0 ? 1 : 0,
+  };
 }
 
-main().catch((e) => {
-  log.error(e.message);
-  process.exit(1);
-});
+runPipeline(main, { logger: log, defaultPipeline: "sync-articles" });

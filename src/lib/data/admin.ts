@@ -772,3 +772,96 @@ export async function deleteMcpServer(id: string): Promise<void> {
 
   if (error) throw error;
 }
+
+// ── Pipeline Observability ────────────────────────────────────────
+
+export const CORE_PIPELINES = [
+  { key: "sync-articles", label: "文章采集" },
+  { key: "scrape-signals", label: "信号采集" },
+  { key: "generate-daily", label: "日报生成" },
+  { key: "publish-daily", label: "日报发布" },
+] as const;
+
+export interface PipelineStatus {
+  pipeline: string;
+  label: string;
+  status: "success" | "partial" | "failure" | "skipped" | null;
+  started_at: string | null;
+  duration_s: number | null;
+  error_msg: string | null;
+}
+
+/**
+ * Get the latest run for each core pipeline.
+ * Returns null status when no runs exist (empty table / first load).
+ */
+export async function getPipelineStatus(): Promise<PipelineStatus[]> {
+  const supabase = createAdminClient();
+
+  const results = await Promise.all(
+    CORE_PIPELINES.map(async (p) => {
+      const { data } = await supabase
+        .from("pipeline_runs")
+        .select("*")
+        .eq("pipeline", p.key)
+        .order("started_at", { ascending: false })
+        .limit(1);
+
+      const run = data?.[0] as
+        | Database["public"]["Tables"]["pipeline_runs"]["Row"]
+        | undefined;
+      return {
+        pipeline: p.key,
+        label: p.label,
+        status: (run?.status as PipelineStatus["status"]) ?? null,
+        started_at: run?.started_at ?? null,
+        duration_s: run?.duration_s ?? null,
+        error_msg: run?.error_msg ?? null,
+      };
+    }),
+  );
+
+  return results;
+}
+
+export interface TodoSummary {
+  pendingBriefs: number;
+  recentDraftArticles: number;
+}
+
+function getTodayCST(): string {
+  const now = new Date();
+  const cst = new Date(now.getTime() + 8 * 60 * 60 * 1000);
+  return cst.toISOString().slice(0, 10);
+}
+
+/**
+ * Get today's actionable items for the editor.
+ * - pendingBriefs: daily_briefs not yet published for today (CST)
+ * - recentDraftArticles: draft articles from the last 7 days
+ */
+export async function getTodayTodos(): Promise<TodoSummary> {
+  const supabase = createAdminClient();
+  const today = getTodayCST();
+  const sevenDaysAgo = new Date(
+    new Date(today).getTime() - 7 * 24 * 60 * 60 * 1000,
+  ).toISOString();
+
+  const [briefsRes, draftsRes] = await Promise.all([
+    supabase
+      .from("daily_briefs")
+      .select("*", { count: "exact", head: true })
+      .eq("brief_date", today)
+      .in("status", ["draft", "approved"]),
+    supabase
+      .from("articles")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "draft")
+      .gte("created_at", sevenDaysAgo),
+  ]);
+
+  return {
+    pendingBriefs: briefsRes.count ?? 0,
+    recentDraftArticles: draftsRes.count ?? 0,
+  };
+}

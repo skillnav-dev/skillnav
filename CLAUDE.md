@@ -138,7 +138,9 @@ scripts/
 ├── lib/publishers/             # Platform format adapters (wechat.mjs, twitter.mjs, rss.mjs)
 scripts/lib/
 ├── llm.mjs                     # LLM providers + compile prompt (imports glossary)
-└── glossary.json               # Centralized terminology (keep/translate/bracket policies)
+├── glossary.json               # Centralized terminology (keep/translate/bracket policies)
+├── report-run.mjs              # Pipeline run reporting (markStart + reportRun with 5s timeout)
+└── run-pipeline.mjs            # Universal pipeline wrapper (main→return→reportRun→exit)
 
 skills/
 └── skillnav/SKILL.md           # SkillNav Skill definition (sub-command routing + format rules)

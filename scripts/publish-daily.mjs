@@ -16,6 +16,7 @@ dotenv.config({ path: ".env.local" });
 dotenv.config();
 import { createAdminClient } from "./lib/supabase-admin.mjs";
 import { createLogger } from "./lib/logger.mjs";
+import { runPipeline } from "./lib/run-pipeline.mjs";
 import { validateEnv } from "./lib/validate-env.mjs";
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -40,7 +41,7 @@ async function main() {
   const validChannels = ["rss", "wechat", "x", "zhihu", "xhs"];
   if (channelFilter && !validChannels.includes(channelFilter)) {
     log.error(`Invalid channel: ${channelFilter}. Valid: ${validChannels.join(", ")}`);
-    process.exit(1);
+    return { status: "failure", summary: {}, errorMsg: `Invalid channel: ${channelFilter}`, exitCode: 1 };
   }
 
   const dateLabel = dateStr || formatDate(new Date());
@@ -59,19 +60,19 @@ async function main() {
 
   if (error) {
     log.error(`Query failed: ${error.message}`);
-    process.exit(1);
+    return { status: "failure", summary: { date: dateLabel }, errorMsg: error.message, exitCode: 1 };
   }
 
   if (!briefs?.length) {
     log.warn(`No brief found for ${dateLabel}. Run generate-daily.mjs first.`);
-    process.exit(1);
+    return { status: "failure", summary: { date: dateLabel }, errorMsg: "No brief found", exitCode: 1 };
   }
 
   const brief = briefs[0];
 
   if (brief.status === "draft") {
     log.warn(`Brief for ${dateLabel} is still a draft. Approve it first via Admin Dashboard.`);
-    process.exit(1);
+    return { status: "failure", summary: { date: dateLabel }, errorMsg: "Brief is draft", exitCode: 1 };
   }
 
   log.info(`Brief: "${brief.title}" (status: ${brief.status})`);
@@ -185,10 +186,12 @@ async function main() {
     }
   }
 
-  log.done();
+  const channelsPrepared = channels.filter((ch) => ch !== "unknown");
+  return {
+    status: "success",
+    summary: { date: dateLabel, channels_prepared: channelsPrepared },
+    exitCode: 0,
+  };
 }
 
-main().catch((e) => {
-  log.error(e.message);
-  process.exit(1);
-});
+runPipeline(main, { logger: log, defaultPipeline: "publish-daily" });

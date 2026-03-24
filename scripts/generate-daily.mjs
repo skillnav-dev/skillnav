@@ -18,6 +18,7 @@ dotenv.config({ path: ".env.local" });
 dotenv.config();
 import { createAdminClient } from "./lib/supabase-admin.mjs";
 import { createLogger } from "./lib/logger.mjs";
+import { runPipeline } from "./lib/run-pipeline.mjs";
 import { validateEnv } from "./lib/validate-env.mjs";
 import { getProviderInfo } from "./lib/llm.mjs";
 import { markdownToWechatHtml } from "./lib/publishers/wechat.mjs";
@@ -421,7 +422,11 @@ async function main() {
     if (existing[0].status !== "draft") {
       log.warn(`Brief for ${dateLabel} is already ${existing[0].status}. Use --force to overwrite.`);
       if (!args.includes("--force")) {
-        process.exit(0);
+        return {
+          status: "skipped",
+          summary: { date: dateLabel, reason: "already_exists" },
+          exitCode: 0,
+        };
       }
     } else {
       log.warn(`Brief for ${dateLabel} already exists as draft. Updating.`);
@@ -436,7 +441,11 @@ async function main() {
     if (!dryRun) {
       log.info("Skipping brief generation. Run with --hours 48 to extend lookback.");
     }
-    process.exit(0);
+    return {
+      status: "skipped",
+      summary: { date: dateLabel, articles: 0, reason: "no_articles" },
+      exitCode: 0,
+    };
   }
 
   log.info(`Found ${articles.length} articles`);
@@ -565,16 +574,26 @@ async function main() {
 
     if (upsertErr) {
       log.error(`Upsert failed: ${upsertErr.message}`);
-      process.exit(1);
+      return {
+        status: "failure",
+        summary: { date: dateLabel },
+        errorMsg: upsertErr.message,
+        exitCode: 1,
+      };
     }
 
     log.success(`Upserted daily brief for ${dateLabel} as draft`);
   }
 
-  log.done();
+  return {
+    status: "success",
+    summary: {
+      date: dateLabel,
+      articles: articles.length,
+      highlights: editorialBrief.highlights.length,
+    },
+    exitCode: 0,
+  };
 }
 
-main().catch((e) => {
-  log.error(e.message);
-  process.exit(1);
-});
+runPipeline(main, { logger: log, defaultPipeline: "generate-daily" });

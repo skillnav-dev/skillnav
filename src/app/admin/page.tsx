@@ -1,15 +1,26 @@
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getArticleStats, getSkillStats, getMcpStats } from "@/lib/data/admin";
+import {
+  getArticleStats,
+  getSkillStats,
+  getMcpStats,
+  getPipelineStatus,
+  getTodayTodos,
+} from "@/lib/data/admin";
 import { requireAdmin } from "@/lib/admin-auth";
+import { PipelineStatusBar } from "@/components/admin/pipeline-status-bar";
+import { TodoList } from "@/components/admin/todo-list";
 
 export default async function AdminDashboardPage() {
   await requireAdmin();
-  const [articleStats, skillStats, mcpStats] = await Promise.all([
-    getArticleStats(),
-    getSkillStats(),
-    getMcpStats(),
-  ]);
+  const [articleStats, skillStats, mcpStats, pipelineStatus, todos] =
+    await Promise.all([
+      getArticleStats(),
+      getSkillStats(),
+      getMcpStats(),
+      getPipelineStatus(),
+      getTodayTodos(),
+    ]);
 
   const articleCards = [
     { title: "总文章数", value: articleStats.total },
@@ -36,6 +47,12 @@ export default async function AdminDashboardPage() {
     <div className="space-y-8">
       <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
 
+      {/* Pipeline status */}
+      <PipelineStatusBar pipelines={pipelineStatus} />
+
+      {/* Today's todos */}
+      <TodoList todos={todos} />
+
       {/* Articles section */}
       <div>
         <div className="mb-3 flex items-center justify-between">
@@ -56,7 +73,9 @@ export default async function AdminDashboardPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-3xl font-bold tracking-tight">{card.value}</p>
+                <p className="text-3xl font-bold tracking-tight">
+                  {card.value}
+                </p>
               </CardContent>
             </Card>
           ))}
@@ -83,7 +102,9 @@ export default async function AdminDashboardPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-3xl font-bold tracking-tight">{card.value}</p>
+                <p className="text-3xl font-bold tracking-tight">
+                  {card.value}
+                </p>
               </CardContent>
             </Card>
           ))}
@@ -110,7 +131,9 @@ export default async function AdminDashboardPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-3xl font-bold tracking-tight">{card.value}</p>
+                <p className="text-3xl font-bold tracking-tight">
+                  {card.value}
+                </p>
               </CardContent>
             </Card>
           ))}
