@@ -2,7 +2,7 @@ name: Govern MCP Servers
 
 on:
   schedule:
-    - cron: "30 3 * * 1"
+    - cron: "30 5 * * 5" # UTC 05:30 Friday = CST 13:30, governance after MCP sync
   workflow_dispatch:
     inputs:
       mode:

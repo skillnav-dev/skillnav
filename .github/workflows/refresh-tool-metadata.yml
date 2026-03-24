@@ -2,8 +2,9 @@ name: Refresh Tool Metadata
 
 on:
   schedule:
-    - cron: "0 2 * * *" # UTC 02:00 daily = Beijing 10:00, daily freshness
-    - cron: "0 3 * * 1" # UTC 03:00 Monday = Beijing 11:00, weekly snapshot
+    - cron: "0 2 * * 2" # UTC 02:00 Tuesday = CST 10:00, mid-week refresh
+    - cron: "0 2 * * 5" # UTC 02:00 Friday = CST 10:00, end-week refresh
+    - cron: "0 3 * * 1" # UTC 03:00 Monday = CST 11:00, weekly snapshot
   workflow_dispatch:
     inputs:
       snapshot:
