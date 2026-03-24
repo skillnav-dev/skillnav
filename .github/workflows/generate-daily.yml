@@ -24,7 +24,8 @@ concurrency:
 
 jobs:
   generate:
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    # Run after any sync completion (partial failures still insert usable articles)
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion != 'cancelled'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:

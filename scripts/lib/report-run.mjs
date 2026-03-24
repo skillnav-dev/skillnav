@@ -34,7 +34,7 @@ export async function reportRun(
   try {
     const supabase = createAdminClient();
     let timer;
-    await Promise.race([
+    const result = await Promise.race([
       supabase.from("pipeline_runs").insert({
         pipeline,
         status,
@@ -48,6 +48,9 @@ export async function reportRun(
       }),
     ]);
     clearTimeout(timer);
+    if (result?.error) {
+      console.warn(`[report] DB insert failed: ${result.error.message}`);
+    }
   } catch (e) {
     console.warn(`[report] Pipeline run report skipped: ${e.message}`);
   }

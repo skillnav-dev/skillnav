@@ -71,11 +71,48 @@ function parseEntry(block: string): BriefHighlight | null {
   return { title, summary: summaryLines.join(" "), comment };
 }
 
+/**
+ * Parse bullet-list highlights from the "## 📋 值得关注" section.
+ * Format: `- [Title](/articles/slug) — comment` or `- Title — comment`
+ */
+function parseBulletHighlights(contentMd: string): BriefHighlight[] {
+  const sectionMatch = contentMd.match(
+    /## 📋 值得关注\s*\n([\s\S]*?)(?=\n---|\n## |$)/,
+  );
+  if (!sectionMatch) return [];
+
+  const highlights: BriefHighlight[] = [];
+  const lines = sectionMatch[1].split("\n");
+
+  for (const line of lines) {
+    // Linked: - [Title](/url) — comment
+    const linked = line.match(/^-\s+\[([^\]]+)\]\([^)]+\)\s*[—–-]\s*(.*)/);
+    if (linked) {
+      highlights.push({
+        title: linked[1],
+        summary: "",
+        comment: linked[2].trim(),
+      });
+      continue;
+    }
+    // Plain: - Title — comment
+    const plain = line.match(/^-\s+(.+?)\s*[—–-]\s+(.*)/);
+    if (plain) {
+      highlights.push({
+        title: plain[1],
+        summary: "",
+        comment: plain[2].trim(),
+      });
+    }
+  }
+  return highlights;
+}
+
 function parseContentMd(contentMd: string): {
   headline: BriefHeadline;
   highlights: BriefHighlight[];
 } {
-  // Split into ### blocks (entries)
+  // Split into ### blocks (entries) for headline + legacy format
   const entries = contentMd
     .split(/^(?=### )/m)
     .filter((b) => b.includes("###"));
@@ -97,6 +134,10 @@ function parseContentMd(contentMd: string): {
       highlights.push(entry);
     }
   }
+
+  // Also parse bullet-list highlights from ## 📋 值得关注
+  const bulletHighlights = parseBulletHighlights(contentMd);
+  highlights.push(...bulletHighlights);
 
   return { headline, highlights };
 }

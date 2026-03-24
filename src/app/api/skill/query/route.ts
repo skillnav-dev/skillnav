@@ -91,11 +91,14 @@ async function handleMcp(
     searchMethod = "ilike";
   }
 
+  // If we hit the limit, there may be more matches
+  const hasMore = results.length >= limit;
+
   return NextResponse.json({
     type: "mcp",
     query: q,
-    total_matches: results.length,
     returned: results.length,
+    has_more: hasMore,
     search_method: searchMethod,
     results: results.map((r) => ({
       name: r.name,

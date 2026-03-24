@@ -55,7 +55,7 @@ Format each result as a numbered list with one blank line between items:
 
 If `editor_comment_zh` is null, skip the blockquote line.
 If results are empty: "未找到匹配的 MCP Server，试试更宽泛的关键词。"
-Footer: "共 {total_matches} 个结果 · 搜索方式: {search_method}"
+Footer: "共 {returned} 个结果{has_more ? '（更多结果请访问 skillnav.dev）' : ''}"
 
 ### trending
 
