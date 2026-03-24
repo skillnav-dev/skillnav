@@ -267,45 +267,79 @@ node scripts/govern-articles.mjs --apply           # 按评分调整状态
 
 ## 4. CI/CD 调度表
 
-### 4.1 每日调度（CST）
+### 4.1 设计原则
 
-| 时间 | 工作流 | 触发方式 | 时长 | LLM |
-|------|--------|---------|------|-----|
+- **每天只有心跳**（采集 + 健康检查 + 日报），零人工
+- **周任务按品类分天**，互不干扰，故障隔离
+- **降频即降本** — backfill 每周一次，元数据刷新每周两次（月省 ~1900min CI）
+- **周末自治** — 采集和日报照跑，CEO 零投入，周一补审
+
+### 4.2 每日心跳（每天自动运行）
+
+| 时间 CST | 工作流 | 触发方式 | 时长 | LLM |
+|---------|--------|---------|------|-----|
 | 06:15 | sync-articles（晨间） | cron | 30-60min | DeepSeek |
+| 采集后 | generate-daily | workflow_run | 10-15min | DeepSeek |
 | 07:45 | health-check | cron | 5min | — |
-| 10:00 | refresh-tool-metadata | cron | 10-15min | — |
-| 13:30 | backfill-data | cron | 20-40min | GPT |
 | 18:15 | sync-articles（午后） | cron | 30-60min | DeepSeek |
 | 采集后 | generate-daily | workflow_run | 10-15min | DeepSeek |
 
-### 4.2 周一调度（CST，叠加每日调度）
+### 4.3 周任务分布
 
-| 时间 | 工作流 | 时长 | LLM |
-|------|--------|------|-----|
-| 08:00 | generate-weekly | 15min | DeepSeek |
-| 09:00 | sync-curated-skills | 10-20min | GPT（--evaluate 时） |
-| 10:00 | sync-skills（ClawHub + Anthropic） | 30-60min | — |
-| 11:00 | refresh-tool-metadata --snapshot | 10-15min | — |
-| 11:30 | govern-mcp-servers | 5-10min | — |
-| 13:00 | sync-mcp-servers | 15-30min | — |
+| 时间 CST | 周一 | 周二 | 周三 | 周四 | 周五 |
+|---------|------|------|------|------|------|
+| 08:00 | 周刊生成 | | | | |
+| 09:00 | 精选 Skills 同步 | | | | |
+| 10:00 | Skills 全量同步 | 元数据刷新 | | | 元数据刷新 |
+| 11:00 | 元数据快照(trending) | | | | |
+| 13:00 | | | 数据回填 | MCP 同步 | |
+| 13:30 | | | | | MCP 治理 |
 
-### 4.3 依赖关系图
+**周末**：仅每日心跳（采集 + 日报 + 健康检查），无周任务。
+
+### 4.4 CEO 周节奏
+
+| 日 | 投入 | 事项 |
+|----|------|------|
+| 周一 | ~40min | 日报审批 + 周刊审批 + 清理周末 draft |
+| 周二-四 | 各 ~10min | 日报审批 |
+| 周五 | ~25min | 日报审批 + 可选周回顾 |
+| 周末 | 0 | 采集和日报自动跑，draft 攒着周一处理 |
+
+**总计 ~1.5h/周**。
+
+### 4.5 依赖关系图
 
 ```
-sync-articles (06:15 + 18:15)
-  └──[workflow_run]──→ generate-daily（自动触发）
-                         ├── scrape-signals（内置步骤）
-                         ├── LLM 编辑漏斗
-                         └── 写入 daily_briefs（draft）
+每日心跳：
+  sync-articles (06:15 + 18:15)
+    └──[workflow_run]──→ generate-daily（自动触发，含 scrape-signals）
+                           └── 写入 daily_briefs（draft）
+  publish-daily ← 人工审批 via /admin/daily
 
-publish-daily ← 人工审批 via /admin/daily
-
-周一任务（并行，无数据冲突 — 写入字段不重叠）：
-  sync-curated (09:00) | sync-skills (10:00) | refresh-metadata (10:00/11:00)
-  govern-mcp (11:30) | sync-mcp (13:00) | backfill (13:30)
+周任务（按品类分天，互不干扰）：
+  周一: Skills 日   → sync-curated → sync-skills → metadata snapshot
+  周二: 元数据刷新  → refresh-tool-metadata
+  周三: 数据质量日  → backfill-data（回填周一新增数据）
+  周四: MCP 日      → sync-mcp-servers
+  周五: 治理日      → govern-mcp-servers + 元数据刷新
 ```
 
-### 4.4 部署
+### 4.6 CI 预算
+
+| 项目 | 优化前 (月) | 优化后 (月) |
+|------|-----------|-----------|
+| 文章采集 + 日报 | ~900min | ~900min |
+| 健康检查 | ~60min | ~60min |
+| 元数据刷新 | ~450min | ~120min |
+| 数据回填 | ~1800min | ~240min |
+| Skills/MCP/治理 | ~360min | ~360min |
+| 部署 + 其他 | ~120min | ~120min |
+| **合计** | **~3,700min** | **~1,800min** |
+
+GitHub Actions 免费额度 2,000min/月，优化后回到安全范围。
+
+### 4.7 部署
 
 - **触发**: 推送到 main 分支（自动）或 workflow_dispatch
 - **步骤**: lint → 类型检查 → OpenNext 构建 + 部署到 Cloudflare Workers
