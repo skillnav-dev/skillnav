@@ -1,6 +1,6 @@
 # SkillNav Skill MVP
-Status: approved
-Progress: 0/2
+Status: active
+Progress: 1/2
 Date: 2026-03-23
 
 > Upstream: content-strategy-v3.md SS6, tool-intelligence-pipeline.md

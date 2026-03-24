@@ -85,6 +85,7 @@ src/
 │   ├── mcp/                    # MCP Server 精选导航 (static curated data)
 │   ├── learn/                  # Learning Center: /learn index + /learn/what-is-[slug] detail
 │   ├── admin/daily/            # Daily Brief admin: list + [id] detail (preview/edit/approve/publish)
+│   ├── api/skill/query/         # Skill API: GET ?type=brief|mcp|trending (public, anon key)
 │   ├── api/admin/daily/        # Admin API: PATCH update, POST approve, POST publish
 │   ├── api/rss/daily/          # RSS feed for daily briefs
 │   ├── layout.tsx              # Root layout (zh lang, fonts, Header/Footer)
@@ -109,7 +110,9 @@ src/
 │   └── mock-articles.ts        # 7 mock articles with full Chinese content
 └── lib/                        # Utilities
     ├── constants.ts            # Site-wide constants (name, URL, description)
-    └── fonts.ts                # Font configuration
+    ├── fonts.ts                # Font configuration
+    ├── parse-brief.ts          # Daily brief content_md → structured JSON
+    └── get-trending-tools.ts   # Skills + MCP trending merge
 
 public/
 ├── daily-cards/                # Generated card images for social distribution
@@ -136,6 +139,9 @@ scripts/
 scripts/lib/
 ├── llm.mjs                     # LLM providers + compile prompt (imports glossary)
 └── glossary.json               # Centralized terminology (keep/translate/bracket policies)
+
+skills/
+└── skillnav/SKILL.md           # SkillNav Skill definition (sub-command routing + format rules)
 ```
 
 Call direction: `page.tsx` → `components/` → `data/` → `lib/`
