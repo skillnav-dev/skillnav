@@ -2,23 +2,21 @@
 <!-- /checkpoint at 2026-03-26 -->
 
 ## Active Plan
-Paper Channel v2 — `docs/plans/paper-channel-proposal-v2.md`（待拍板）
+Paper Channel v2 — `docs/plans/paper-channel-proposal-v2.md`（Phase 1 已上线，4 周观察期）
 
 ## Session Tasks
-- [x] 阅读外部论文采集方案书，分析与 SkillNav 融合可行性
-- [x] 6 agent 并行调研（竞品/战略/编辑/分发/Skill/受众）
-- [x] 综合调研输出 v1 完整方案 `paper-channel-proposal.md`
-- [x] 4 agent 独立评审（CEO/主编/魔鬼代言人/用户研究）
-- [x] 纳入评审批评，输出 v2 精简方案 `paper-channel-proposal-v2.md`
-- [x] 3 agent 专项调研持续优化闭环
-- [x] 重写闭环章节（三层节奏 + 四个通道 + 渐进自动化）
-- [ ] 用户拍板后执行 Phase 1（改 generate-daily + parse-brief，半天）
+- [x] Paper Channel Phase 1 实施：HF API + LLM 选稿 + markdown 渲染 + parse-brief 解析
+- [x] Umami 点击追踪：`/go/paper/[id]` 302 重定向 + server-side tracking
+- [x] Push to remote（`49885e7` + `540ae5d`）
 
 ## Key Files
-- `docs/plans/paper-channel-proposal-v2.md` — 论文频道 v2 方案（待拍板）
-- `docs/plans/paper-channel-proposal.md` — v1 方案（保留调研资产）
+- `scripts/generate-daily.mjs` — 新增 fetchHFDailyPapers + 论文 prompt + tracked URL
+- `src/lib/parse-brief.ts` — 新增 BriefPaper + parsePaperSection
+- `src/app/go/paper/[id]/route.ts` — 论文点击追踪重定向路由
+- `docs/plans/paper-channel-proposal-v2.md` — 方案书（已拍板）
 
-## Decisions Needed
-- 拍板 v2 方案后执行 Phase 1
+## What's Next
+- 4 周观察期（~2026-04-23）：每天审日报论文板块，记 corrections.jsonl
+- 观察期结束后：Umami `/go/paper/` 数据 → Go/Hold/Kill 决策
 - Skill MVP M2 何时启动
 - 社交媒体人格定位

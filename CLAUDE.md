@@ -93,6 +93,7 @@ src/
 │   ├── api/skill/query/         # Skill API: GET ?type=brief|mcp|trending (public, anon key)
 │   ├── api/admin/daily/        # Admin API: PATCH update, POST approve, POST publish
 │   ├── api/rss/daily/          # RSS feed for daily briefs
+│   ├── go/paper/[id]/          # Paper click tracking: 302 redirect to arXiv + Umami server-side event
 │   ├── layout.tsx              # Root layout (zh lang, fonts, Header/Footer)
 │   ├── globals.css             # Brand color variables (deep indigo theme)
 │   ├── robots.ts / sitemap.ts  # SEO
