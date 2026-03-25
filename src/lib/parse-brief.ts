@@ -13,11 +13,19 @@ export interface BriefHighlight {
   comment: string;
 }
 
+export interface BriefPaper {
+  summary: string;
+  org: string;
+  hook: string;
+  url: string;
+}
+
 export interface ParsedBrief {
   type: "brief";
   date: string;
   headline: BriefHeadline;
   highlights: BriefHighlight[];
+  papers: BriefPaper[];
   url: string;
   is_fallback: boolean;
 }
@@ -108,9 +116,55 @@ function parseBulletHighlights(contentMd: string): BriefHighlight[] {
   return highlights;
 }
 
+/**
+ * Parse paper picks from the "## 📄 论文速递" section.
+ * Format:
+ *   - **summary** (org)
+ *     hook → [arXiv](url)
+ */
+function parsePaperSection(contentMd: string): BriefPaper[] {
+  const sectionMatch = contentMd.match(
+    /## 📄 论文速递\s*\n([\s\S]*?)(?=\n---|\n## |$)/,
+  );
+  if (!sectionMatch) return [];
+
+  const papers: BriefPaper[] = [];
+  const lines = sectionMatch[1].split("\n");
+
+  for (let i = 0; i < lines.length; i++) {
+    // Title line: - **summary** (org)
+    const titleMatch = lines[i].match(
+      /^-\s+\*\*([^*]+)\*\*(?:\s*\(([^)]*)\))?/,
+    );
+    if (!titleMatch) continue;
+
+    const summary = titleMatch[1].trim();
+    const org = titleMatch[2]?.trim() || "";
+
+    // Next line: hook → [arXiv](url)
+    let hook = "";
+    let url = "";
+    if (i + 1 < lines.length) {
+      const hookMatch = lines[i + 1].match(
+        /^\s+(.+?)\s*→\s*\[arXiv\]\(([^)]+)\)/,
+      );
+      if (hookMatch) {
+        hook = hookMatch[1].trim();
+        url = hookMatch[2].trim();
+        i++; // skip the hook line
+      }
+    }
+
+    papers.push({ summary, org, hook, url });
+  }
+
+  return papers;
+}
+
 function parseContentMd(contentMd: string): {
   headline: BriefHeadline;
   highlights: BriefHighlight[];
+  papers: BriefPaper[];
 } {
   // Split into ### blocks (entries) for headline + legacy format
   const entries = contentMd
@@ -139,7 +193,10 @@ function parseContentMd(contentMd: string): {
   const bulletHighlights = parseBulletHighlights(contentMd);
   highlights.push(...bulletHighlights);
 
-  return { headline, highlights };
+  // Parse paper picks from ## 📄 论文速递
+  const papers = parsePaperSection(contentMd);
+
+  return { headline, highlights, papers };
 }
 
 export async function getLatestBrief(
@@ -175,13 +232,14 @@ export async function getLatestBrief(
     isFallback = true;
   }
 
-  const { headline, highlights } = parseContentMd(brief.content_md);
+  const { headline, highlights, papers } = parseContentMd(brief.content_md);
 
   return {
     type: "brief",
     date: brief.brief_date,
     headline,
     highlights,
+    papers,
     url: `https://skillnav.dev/daily/${brief.brief_date}`,
     is_fallback: isFallback,
   };

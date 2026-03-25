@@ -131,9 +131,43 @@ function formatNewsletterContext(newsletters) {
   return lines.join("\n");
 }
 
+// ── HF Daily Papers ─────────────────────────────────────────────────
+
+async function fetchHFDailyPapers(limit = 10) {
+  try {
+    const res = await fetch("https://huggingface.co/api/daily_papers");
+    if (!res.ok) {
+      log.warn(`HF Daily Papers API returned ${res.status}`);
+      return [];
+    }
+    const data = await res.json();
+    // Sort by upvotes descending, take top N
+    return data
+      .sort((a, b) => (b.paper?.upvotes || 0) - (a.paper?.upvotes || 0))
+      .slice(0, limit)
+      .map((item) => ({
+        id: item.paper?.id,
+        title: item.paper?.title,
+        upvotes: item.paper?.upvotes || 0,
+        org: item.paper?.organization?.fullname || "",
+        url: `https://arxiv.org/abs/${item.paper?.id}`,
+      }));
+  } catch (e) {
+    log.warn(`HF Daily Papers fetch failed: ${e.message}`);
+    return [];
+  }
+}
+
+function formatPapersContext(papers) {
+  if (!papers.length) return "";
+  return papers
+    .map((p, i) => `${i + 1}. [${p.id}] ${p.title} (${p.org || "unknown org"}, ${p.upvotes} upvotes) ${p.url}`)
+    .join("\n");
+}
+
 // ── LLM Curation ───────────────────────────────────────────────────
 
-async function generateEditorialBrief(articles, newsletterContext = "") {
+async function generateEditorialBrief(articles, newsletterContext = "", papersContext = "") {
   const { callLLM } = await import("./lib/llm.mjs");
 
   const articleList = articles
@@ -172,16 +206,25 @@ For each item, check if our article pool covers the topic. If yes, use the artic
 - comment: must add information not in the title — no title parroting
 - Style: sharp tech lead briefing the team. Every word earns its place.
 
+## Paper picks (0-3 from HuggingFace Daily Papers)
+- Pick 0-3 papers most relevant to AI developer tools/practices from the provided HF papers list.
+- Each paper gets: a Chinese one-line summary (20-30 chars), org tag, and an editorial hook explaining WHY a developer should care.
+- Hook must be specific (name a tool/framework/use case). Axe test: if swapping the paper title still makes the hook valid, it's filler — rewrite it.
+- If no paper is worth recommending today, return an empty papers array. That IS editorial judgment.
+- NEVER fabricate paper IDs or URLs — only use papers from the provided list.
+
 ## Anti-patterns (NEVER write like this)
 - "这标志着AI发展的重要里程碑" ← empty
 - "值得关注" / "不可忽视" / "意义重大" ← filler
 - comment that restates the title ← useless`;
 
+  const hasPapers = papersContext.length > 0;
+
   const userPrompt = `${hasNewsletters ? `## Today's AI newsletters (raw text from ${articles.length > 0 ? "multiple" : "5"} sources)\n${newsletterContext}\n` : ""}
 ## Our article pool (${articles.length} articles)
 
 ${articleList}
-
+${hasPapers ? `\n## HuggingFace Daily Papers (Top 10 by upvotes)\n\n${papersContext}\n` : ""}
 ## Output format
 
 Return a JSON object:
@@ -206,11 +249,21 @@ Return a JSON object:
       "title": "topic title in Chinese",
       "comment": "editorial insight not in the title, 15-30 chars"
     }
+  ],
+  "papers": [
+    {
+      "id": "arXiv paper ID from the HF list",
+      "summary": "Chinese one-line summary, 20-30 chars",
+      "org": "institution tag",
+      "hook": "Chinese editorial hook: why a developer should care, 15-30 chars",
+      "url": "arXiv URL from the HF list"
+    }
   ]
 }
 
 Rules:
 - noteworthy: 3-5 items max
+- papers: 0-3 items max. Only include if HF papers were provided and worth recommending. Use EXACT id and url from the HF list.
 - Each slug appears only once
 - For our articles, use the exact slug from the list above
 - For topics not in our pool, use "signal-1", "signal-2", etc. and provide the title
@@ -228,6 +281,16 @@ Rules:
   plan.title = String(plan.title).slice(0, 100);
   plan.hook = String(plan.hook).slice(0, 200);
   plan.noteworthy = Array.isArray(plan.noteworthy) ? plan.noteworthy : [];
+
+  // Normalize papers
+  plan.papers = Array.isArray(plan.papers) ? plan.papers.slice(0, 3) : [];
+  for (const p of plan.papers) {
+    p.summary = String(p.summary || "").slice(0, 100);
+    p.hook = String(p.hook || "").slice(0, 100);
+    p.org = String(p.org || "");
+  }
+  // Drop papers with missing id or url
+  plan.papers = plan.papers.filter((p) => p.id && p.url);
 
   // Enforce length limits
   if (plan.headline) {
@@ -302,6 +365,7 @@ function fallbackBrief(articles) {
   // Backward compat
   brief.headlines = brief.headline ? [brief.headline] : [];
   brief.tools = [];
+  brief.papers = [];
   brief.quickLinks = brief.noteworthy.map((n) => ({ slug: n.slug, oneLiner: n.comment }));
   brief.highlights = [
     ...(brief.headline ? [{ slug: brief.headline.slug, oneLiner: brief.headline.summary }] : []),
@@ -360,6 +424,19 @@ function assembleMarkdown(editorialBrief, articles, briefDate) {
       }
     }
     lines.push("");
+  }
+
+  // Paper picks (0-3)
+  if (editorialBrief.papers?.length) {
+    lines.push("## 📄 论文速递");
+    lines.push("");
+
+    for (const paper of editorialBrief.papers) {
+      const orgTag = paper.org ? ` (${paper.org})` : "";
+      lines.push(`- **${paper.summary}**${orgTag}`);
+      lines.push(`  ${paper.hook} → [arXiv](${paper.url})`);
+      lines.push("");
+    }
   }
 
   // Footer
@@ -459,6 +536,15 @@ async function main() {
     log.info("Newsletters: no data available, using articles only");
   }
 
+  // Fetch HF Daily Papers
+  const hfPapers = await fetchHFDailyPapers(10);
+  const papersContext = formatPapersContext(hfPapers);
+  if (hfPapers.length) {
+    log.info(`HF Papers: ${hfPapers.length} papers fetched (top upvotes: ${hfPapers[0]?.upvotes})`);
+  } else {
+    log.info("HF Papers: no data available");
+  }
+
   // Generate editorial brief
   let editorialBrief;
   if (noLlm) {
@@ -467,8 +553,9 @@ async function main() {
   } else {
     log.info("Generating editorial brief via LLM...");
     try {
-      editorialBrief = await generateEditorialBrief(articles, newsletterContext);
-      log.success(`Brief: "${editorialBrief.title}" with ${editorialBrief.highlights.length} highlights`);
+      editorialBrief = await generateEditorialBrief(articles, newsletterContext, papersContext);
+      const paperCount = editorialBrief.papers?.length || 0;
+      log.success(`Brief: "${editorialBrief.title}" with ${editorialBrief.highlights.length} highlights, ${paperCount} papers`);
     } catch (e) {
       log.warn(`LLM failed: ${e.message}. Using fallback.`);
       editorialBrief = fallbackBrief(articles);
