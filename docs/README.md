@@ -39,6 +39,8 @@
 | [plans/github-nav-design.md](plans/github-nav-design.md) | draft | GitHub 开源导航页 |
 | [plans/guides-series.md](plans/guides-series.md) | approved | 专栏（Guides）一级内容产品 |
 | [plans/glossary-learning-center.md](plans/glossary-learning-center.md) | pending | 学习中心：AI Agent 工程概念教学 |
+| [plans/paper-channel-proposal.md](plans/paper-channel-proposal.md) | superseded | 论文频道 v1：6 agent 调研 + 完整方案 |
+| [plans/paper-channel-proposal-v2.md](plans/paper-channel-proposal-v2.md) | pending | 论文频道 v2：4 agent 评审修订 + 最小验证方案 |
 
 ### ADR（架构决策记录）
 
