@@ -433,8 +433,9 @@ function assembleMarkdown(editorialBrief, articles, briefDate) {
 
     for (const paper of editorialBrief.papers) {
       const orgTag = paper.org ? ` (${paper.org})` : "";
+      const trackedUrl = `https://skillnav.dev/go/paper/${paper.id}`;
       lines.push(`- **${paper.summary}**${orgTag}`);
-      lines.push(`  ${paper.hook} → [arXiv](${paper.url})`);
+      lines.push(`  ${paper.hook} → [arXiv](${trackedUrl})`);
       lines.push("");
     }
   }
