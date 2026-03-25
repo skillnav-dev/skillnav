@@ -96,15 +96,20 @@ function buildGlossaryPrompt() {
   return lines.join("\n");
 }
 
-// ── Retry & Fallback State ──────────────────────────────────────────
+// ── Retry & Circuit Breaker ─────────────────────────────────────────
 // Retry with backoff on transient failures (502, timeout, network).
-// Only switch to fallback after FALLBACK_THRESHOLD consecutive failures.
+// Circuit breaker: 3 failures → open (use fallback) → 10min cooldown → half-open (try primary once)
 const RETRY_COUNT = 3;              // retries per call before giving up
 const RETRY_BASE_DELAY_MS = 5_000;  // 5s → 10s → 20s (~35s total)
 const RETRY_MAX_DELAY_MS = 30_000;  // cap individual delay at 30s
-const FALLBACK_THRESHOLD = 150;     // switch provider after 150 consecutive failures (practically never)
-let consecutiveFailures = 0;
-let usingFallback = false;
+
+const CIRCUIT_FAILURE_THRESHOLD = 3;       // failures before opening circuit
+const CIRCUIT_COOLDOWN_MS = 10 * 60_000;   // 10 minutes before half-open
+
+// Circuit states: "closed" (normal) → "open" (fallback) → "half-open" (probe primary)
+let circuitState = "closed";
+let circuitFailures = 0;
+let circuitOpenedAt = 0;
 
 // ── Provider Resolution ──────────────────────────────────────────────
 
@@ -126,10 +131,22 @@ function getProvider() {
   const primaryName = process.env.LLM_PROVIDER || "gpt";
   const fallbackName = process.env.LLM_FALLBACK_PROVIDER;
 
-  // If already switched to fallback, stay there
-  if (usingFallback && fallbackName) {
-    const fb = resolveProvider(fallbackName);
-    if (fb) return fb;
+  // Circuit open or half-open → use fallback if available
+  if (circuitState !== "closed" && fallbackName) {
+    // Half-open: check if cooldown elapsed, probe primary once
+    if (circuitState === "open" && Date.now() - circuitOpenedAt >= CIRCUIT_COOLDOWN_MS) {
+      circuitState = "half-open";
+      console.log(`\x1b[33m[llm] Circuit half-open — probing primary provider\x1b[0m`);
+      // Fall through to return primary
+    } else if (circuitState === "open") {
+      const fb = resolveProvider(fallbackName);
+      if (fb) return fb;
+    }
+    // half-open: return primary for the probe attempt
+    if (circuitState === "half-open") {
+      const primary = resolveProvider(primaryName);
+      if (primary) return primary;
+    }
   }
 
   const primary = resolveProvider(primaryName);
@@ -142,18 +159,32 @@ function getProvider() {
 }
 
 function onCallSuccess() {
-  consecutiveFailures = 0;
+  if (circuitState !== "closed") {
+    console.log(`\x1b[32m[llm] Circuit closed — primary provider recovered\x1b[0m`);
+  }
+  circuitState = "closed";
+  circuitFailures = 0;
 }
 
 function onCallFailure() {
-  consecutiveFailures++;
+  circuitFailures++;
   const fallbackName = process.env.LLM_FALLBACK_PROVIDER;
-  if (!usingFallback && fallbackName && consecutiveFailures >= FALLBACK_THRESHOLD) {
+
+  if (circuitState === "half-open") {
+    // Probe failed → reopen circuit, reset cooldown
+    circuitState = "open";
+    circuitOpenedAt = Date.now();
+    console.log(`\x1b[33m[llm] Half-open probe failed — circuit reopened for ${CIRCUIT_COOLDOWN_MS / 60000}min\x1b[0m`);
+    return;
+  }
+
+  if (circuitState === "closed" && fallbackName && circuitFailures >= CIRCUIT_FAILURE_THRESHOLD) {
     const fb = resolveProvider(fallbackName);
     if (fb) {
-      usingFallback = true;
+      circuitState = "open";
+      circuitOpenedAt = Date.now();
       console.log(
-        `\x1b[33m[llm] ${consecutiveFailures} consecutive failures — switching to fallback: ${fb.name} (${fallbackName})\x1b[0m`
+        `\x1b[33m[llm] ${circuitFailures} consecutive failures — circuit opened, switching to fallback: ${fb.name} (${fallbackName})\x1b[0m`
       );
     }
   }

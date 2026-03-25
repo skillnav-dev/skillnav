@@ -658,6 +658,7 @@ async function main() {
   for (const source of sources) {
     log.info(`\n── ${source.label} (${source.name}) ──`);
 
+    try {
     // Step 1: Fetch items (Sanity API or RSS feed)
     let items;
     try {
@@ -900,6 +901,11 @@ async function main() {
     }
 
     log.progressEnd();
+    } catch (e) {
+      // Source-level isolation: one source failure doesn't kill the pipeline
+      log.error(`Source "${source.name}" failed unexpectedly: ${e.message}`);
+      totalFailed++;
+    }
   }
 
   // Summary report
