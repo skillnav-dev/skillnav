@@ -1,5 +1,5 @@
 # Pipeline Reliability Redesign
-Status: approved-pending
+Status: done
 Date: 2026-03-25
 Upstream: content-strategy-v3.md, content-operations-spec.md
 
@@ -102,3 +102,4 @@ circuit breaker 30min + /api/health 15min + failover script 30min + deploy 15min
 - v2: Codex review incorporated, cut to 11 tasks — still too engineering-focused
 - v3 (this): 3 design decisions, one deployment — approved pending execution
 - Codex review: 7 critical + 11 major findings, all addressed in v3
+- **Implemented**: 2026-03-25, all 3 decisions deployed + tested + Better Stack + launchd configured

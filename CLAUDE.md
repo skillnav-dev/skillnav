@@ -56,6 +56,10 @@ node scripts/generate-daily.mjs --hours 48               # Look back 48h instead
 node scripts/publish-daily.mjs                           # Publish today's approved brief
 node scripts/publish-daily.mjs --channel rss             # Publish to specific channel only
 
+# Pipeline health & failover
+node scripts/failover-check.mjs                          # Check pipeline freshness, auto-collect if >36h stale
+curl https://skillnav.dev/api/health                     # Check pipeline health (ok/stale)
+
 # Card image generation (requires gstack browse)
 python3 -m http.server 8765 --directory scripts/templates &  # Serve card template
 $B goto http://localhost:8765/daily-card.html                 # Render in browser
@@ -85,6 +89,7 @@ src/
 │   ├── mcp/                    # MCP Server 精选导航 (static curated data)
 │   ├── learn/                  # Learning Center: /learn index + /learn/what-is-[slug] detail
 │   ├── admin/daily/            # Daily Brief admin: list + [id] detail (preview/edit/approve/publish)
+│   ├── api/health/              # Pipeline health probe: stale if >36h no runs (Better Stack monitored)
 │   ├── api/skill/query/         # Skill API: GET ?type=brief|mcp|trending (public, anon key)
 │   ├── api/admin/daily/        # Admin API: PATCH update, POST approve, POST publish
 │   ├── api/rss/daily/          # RSS feed for daily briefs
@@ -135,12 +140,14 @@ scripts/
 ├── generate-daily.mjs          # Daily brief generator (newsletters + articles → LLM editorial funnel → multi-format → upsert)
 ├── publish-daily.mjs           # Multi-channel publisher (RSS auto, WeChat/X copy-ready)
 ├── templates/daily-card.html   # Card image template (6 XHS cards + WeChat header, rendered via gstack browse)
+├── failover-check.mjs          # Local failover: check pipeline_runs >36h → auto-run sync-articles
+├── com.skillnav.failover-check.plist  # macOS launchd config (hourly failover check)
 ├── lib/publishers/             # Platform format adapters (wechat.mjs, twitter.mjs, rss.mjs)
 scripts/lib/
-├── llm.mjs                     # LLM providers + compile prompt (imports glossary)
+├── llm.mjs                     # LLM providers + compile prompt + circuit breaker (3 fail→open→10min→half-open)
 ├── glossary.json               # Centralized terminology (keep/translate/bracket policies)
-├── report-run.mjs              # Pipeline run reporting (markStart + reportRun with 5s timeout)
-└── run-pipeline.mjs            # Universal pipeline wrapper (main→return→reportRun→exit)
+├── report-run.mjs              # Pipeline run reporting (claimRun→duration_s=null lock→reportRun→update)
+└── run-pipeline.mjs            # Universal pipeline wrapper (lock check→claimRun→main→reportRun→exit)
 
 skills/
 └── skillnav/SKILL.md           # SkillNav Skill definition (sub-command routing + format rules)

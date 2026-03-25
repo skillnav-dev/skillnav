@@ -33,8 +33,13 @@
 | OPS-06 | 数据质量健康检查 | shipped | 每日 23:45，Job Summary 报告 |
 | OPS-07 | 内容治理自动化 | shipped | Skills/Articles/MCP 三路治理 + 软广自动检测（isAdvertorial） |
 | OPS-08 | GPT Proxy 超时 + 错误分类 | shipped | 60s 超时，isRetryable 分类 |
-| OPS-09 | LLM Fallback 机制 | shipped | 连续 3 次失败自动切备用 provider |
+| OPS-09 | LLM Circuit Breaker | shipped | 3 次失败→open（切 fallback）→10min cooldown→half-open 探测→close 恢复 |
 | OPS-10 | 系列内容回填脚本 | shipped | `backfill-series.mjs`，可复用 |
+| OPS-11 | 采集并发锁 | shipped | pipeline_runs 表锁（claimRun duration_s=null），30min 窗口自动跳过 |
+| OPS-12 | 源隔离 | shipped | 每个 RSS 源独立 try/catch，单源故障不影响全局 |
+| OPS-13 | URL 去重（DB 层） | shipped | source_url_normalized 生成列 + UNIQUE index，DB 层不可能重复 |
+| OPS-14 | 健康探针 /api/health | shipped | 查 pipeline_runs 新鲜度，>36h 返回 stale，Better Stack 5min 轮询 |
+| OPS-15 | 本地热备 failover | shipped | failover-check.mjs + launchd 每小时检查，>36h 自动本地采集 |
 
 ## 前端 & UX
 
