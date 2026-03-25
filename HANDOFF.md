@@ -1,30 +1,39 @@
 # HANDOFF
-<!-- /checkpoint at 2026-03-24 -->
+<!-- /checkpoint at 2026-03-25 -->
 
 ## Active Plan
 
-`docs/plans/pipeline-dashboard.md` — Status: active, Progress: 9/9 (code done)
+`docs/plans/pipeline-reliability.md` — Status: approved-pending, 0/3 decisions implemented
+
+## Completed (this session)
+
+- Pipeline Dashboard: DB migration executed + verified
+- Codex review #1: 4 findings fixed (workflow_run, parse-brief, report-run, API)
+- Deployed to Cloudflare Workers (fb19e0b)
+- Repo转 public（解决 GitHub Actions billing 限制）
+- 采集管线可靠性方案设计（6-agent 调研 + Codex 审阅 → v3）
 
 ## Session Tasks
-- [x] 调查 sync-articles 0 插入原因（19 篇被相关性过滤但未计数）
-- [x] 调查 Cloudflare/a16z RSS fetch 失败（GitHub Actions IP 被封）
-- [x] 设计 Admin Pipeline Dashboard（多 agent 调研 + 设计 + Codex 审阅）
-- [x] Pipeline Dashboard 实施（M1-M9 全部完成）
-- [x] /review 通过（1 critical auto-fixed: timer 泄漏）
-- [ ] 在 Supabase Dashboard 执行迁移 SQL `supabase/migrations/20260325_pipeline_runs.sql`
-- [ ] 手动跑 `node scripts/scrape-signals.mjs` 验证上报到 pipeline_runs
-- [ ] 部署后检查 `/admin` 页面 PipelineStatusBar + TodoList
-- [ ] Skill MVP M2：GitHub repo 发布 + 限流 + Brief CTA
-- [ ] 社交媒体首发（X @skillnav_dev、掘金、V2EX）
-- [ ] 感知源扩展：TwitterAPI.io + YouTube transcript
+- [x] Pipeline Dashboard 收尾（迁移+验证+部署+确认）
+- [x] Codex review 4 fix + commit + deploy
+- [x] 诊断文章缺失原因（GH Actions billing 停机 48h+）
+- [x] Repo 转 public
+- [x] 采集可靠性方案 v3 设计
+- [ ] 执行方案：Decision 1（数据层加固）
+- [ ] 执行方案：Decision 2（源隔离+并发锁+circuit breaker）
+- [ ] 执行方案：Decision 3（外部探针+failover）
+- [ ] 手动补采 3/24-3/25 文章
+- [ ] Better Stack 配置（手动）
+- [ ] Skill MVP M2
+- [ ] 社交媒体首发
 
 ## Key Files
-- `scripts/lib/run-pipeline.mjs` — 通用 wrapper（main→return→reportRun→exit）
-- `scripts/lib/report-run.mjs` — 上报函数（markStart + 5s 超时）
-- `supabase/migrations/20260325_pipeline_runs.sql` — 待执行的 DB 迁移
-- `src/components/admin/pipeline-status-bar.tsx` — 管线状态条组件
-- `src/components/admin/todo-list.tsx` — 今日待办组件
-- `src/lib/data/admin.ts` — 新增 getPipelineStatus + getTodayTodos
+- `docs/plans/pipeline-reliability.md` — 采集可靠性方案 v3
+- `scripts/sync-articles.mjs` — 需改：源隔离+并发锁+URL归一化
+- `scripts/lib/llm.mjs` — 需改：circuit breaker 替换 fallback 阈值
+- `scripts/lib/run-pipeline.mjs` — 需改：并发锁逻辑
+- `src/app/api/health/route.ts` — 待创建：健康端点
+- `scripts/failover-check.mjs` — 待创建：本地热备
 
 ## Decisions Needed
 - Skill MVP M2 何时启动
