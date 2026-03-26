@@ -1,8 +1,8 @@
 # SkillNav 内容体验重设计 — 从"千人一面"到"按需取餐"
 
-Status: active
+Status: done
 Date: 2026-03-27
-Progress: 7/11 (Wave 0 done, Wave 1 done, Wave 2-3 pending)
+Progress: 11/11 (Wave 0-3 all done)
 
 ---
 
