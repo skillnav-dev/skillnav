@@ -40,7 +40,8 @@
 | [plans/guides-series.md](plans/guides-series.md) | approved | 专栏（Guides）一级内容产品 |
 | [plans/glossary-learning-center.md](plans/glossary-learning-center.md) | pending | 学习中心：AI Agent 工程概念教学 |
 | [plans/paper-channel-proposal.md](plans/paper-channel-proposal.md) | superseded | 论文频道 v1：6 agent 调研 + 完整方案 |
-| [plans/paper-channel-proposal-v2.md](plans/paper-channel-proposal-v2.md) | pending | 论文频道 v2：4 agent 评审修订 + 最小验证方案 |
+| [plans/paper-channel-proposal-v2.md](plans/paper-channel-proposal-v2.md) | superseded | 论文频道 v2：4 agent 评审修订 + 最小验证方案 |
+| [plans/paper-channel-v3.md](plans/paper-channel-v3.md) | **approved** | 论文频道 v3：导读卡升级 + 一键全文翻译 |
 
 ### ADR（架构决策记录）
 

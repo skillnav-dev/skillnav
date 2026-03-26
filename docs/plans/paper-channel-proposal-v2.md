@@ -1,6 +1,6 @@
 # SkillNav 论文频道方案书 v2
 
-> 状态：Phase 1 上线（4 周观察期 ~2026-04-23）
+> 状态：superseded by v3（`paper-channel-v3.md`）
 > 日期：2026-03-26
 > 基于：v1 方案（6 agent 调研）+ 4 agent 独立评审（CEO/主编/魔鬼代言人/用户研究）
 > 前版：`paper-channel-proposal.md`（保留，v2 是其修订版）

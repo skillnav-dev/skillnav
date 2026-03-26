@@ -2,25 +2,22 @@
 <!-- /checkpoint at 2026-03-26 -->
 
 ## Active Plan
-Skill v2 — `docs/plans/skill-v2-proposal.md`（draft，用户要求先做好日报）
+Paper Channel v3 — `docs/plans/paper-channel-v3.md`（0/2, 0%）
 
 ## Session Tasks
-- [x] Skill MVP M2：GitHub repo + CTA 集成 + Rate limit + Archive 旧仓库
-- [x] Skill v2 方案：5-agent 调研 + 综合方案输出
-- [x] 日报改进：Slack 通知 + TLDR 时区修复 + 3/26 日报发布
-- [x] ClawHub 上架：`skillnav@1.0.0` 已发布（VirusTotal 扫描中）
-- [ ] 日报稳定性：确保每天自动生成 + Slack 提醒 + 人工审核发布
-- [ ] Skill v2 Wave 1：API 升级（search + version meta）+ SKILL.md 重写
-- [ ] 社区推广：awesome 列表 PR + 掘金文章 + X 公告
+- [x] 6 agent 并行调研（竞品/技术/内容/分发/商业化/架构）
+- [x] 综合调研输出 paper-channel-v3.md 方案
+- [x] 用户拍板 v3 方案
+- [ ] M1: 日报导读卡升级 → `scripts/generate-daily.mjs`（补 HF 字段 + prompt 升级 + 格式编译）
+- [ ] M2: 全文翻译脚本 → `scripts/translate-paper.mjs`（新建，ar5iv + PDF fallback + LLM 翻译）
 
 ## Key Files
-- `skills/skillnav/SKILL.md` — Skill 定义（同步到 GitHub + ClawHub）
-- `docs/plans/skill-v2-proposal.md` — Skill v2 方案（5-agent 调研结果）
-- `.github/workflows/generate-daily.yml` — 日报 CI（新增 Slack 成功通知）
-- `scripts/scrape-signals.mjs` — 信号采集（TLDR 时区 fallback 修复）
-- `scripts/lib/publishers/` — 5 个渠道 publisher（已加 Skill CTA）
+- `docs/plans/paper-channel-v3.md` — v3 方案（已拍板）
+- `scripts/generate-daily.mjs` — M1 改动目标（fetchHFDailyPapers + prompt）
+- `scripts/lib/llm.mjs` — LLM 封装（translate-paper 复用）
+- `scripts/lib/glossary.json` — 术语表（需补论文术语）
 
-## What's Next
-- 先做好日报：稳定每天发布，观察内容质量
-- Paper Channel 观察期 ~2026-04-23（Go/Hold/Kill）
-- Skill v2 在日报稳定后启动
+## Next Actions
+- [ ] 执行 M1: `scripts/generate-daily.mjs` 补全 HF API 字段 + prompt 升级为 300 字导读卡
+- [ ] 执行 M2: 新建 `scripts/translate-paper.mjs`，测试翻译今天的 2 篇论文
+- [ ] `npm run build` 验证构建通过
