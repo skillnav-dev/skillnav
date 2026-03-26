@@ -1,6 +1,6 @@
 # SkillNav 论文频道方案 v3
 
-> 状态：待拍板
+> 状态：done（M1+M2 完成，M3 持续迭代）
 > 日期：2026-03-26
 > 基于：v2 方案 + 6 agent 并行调研（竞品/技术/内容/分发/商业化/架构）
 > 前版：`paper-channel-proposal-v2.md`（Phase 1 已上线，本文为其升级方案）
@@ -316,25 +316,25 @@ Skill 套件(变现) ← 不变
 
 ### M1：日报导读升级（1 天）
 
-- [ ] `generate-daily.mjs`: fetchHFDailyPapers 补全 4 个 HF API 字段
-- [ ] `generate-daily.mjs`: prompt 从"一句话推荐"升级为"300 字导读卡 + 态度标签"
-- [ ] `generate-daily.mjs`: Markdown 编译逻辑适配新格式
-- [ ] `generate-daily.mjs`: 数量约束从"0-3"改为"3-5"
-- [ ] 测试：`node scripts/generate-daily.mjs --dry-run` 验证输出质量
-- [ ] 发布第一期含导读卡的日报
+- [x] `generate-daily.mjs`: fetchHFDailyPapers 补全 4 个 HF API 字段
+- [x] `generate-daily.mjs`: prompt 从"一句话推荐"升级为"300 字导读卡 + 态度标签"
+- [x] `generate-daily.mjs`: Markdown 编译逻辑适配新格式
+- [x] `generate-daily.mjs`: 数量约束从"0-3"改为"3-5"
+- [x] 测试：`node scripts/generate-daily.mjs --dry-run` 验证输出质量
+- [x] 发布第一期含导读卡的日报
 
 ### M2：全文翻译脚本（1 天）
 
-- [ ] `scripts/translate-paper.mjs`: 新建脚本
+- [x] `scripts/translate-paper.mjs`: 新建脚本
   - arXiv API 元数据获取
   - ar5iv HTML 提取（cheerio）
   - PDF fallback（pdf-parse）
   - 分段 LLM 翻译（复用 llm.mjs）
   - INSERT articles 表
-- [ ] `package.json`: 添加 pdf-parse 依赖
-- [ ] `scripts/lib/glossary.json`: 补充论文领域术语
-- [ ] 测试：翻译今天的 2 篇论文验证全流程
-- [ ] 更新 CLAUDE.md Commands 区域
+- [x] `package.json`: 添加 cheerio + pdf-parse 依赖
+- [x] `scripts/lib/glossary.json`: 补充论文领域术语
+- [x] 测试：翻译 2 篇论文验证全流程（SpecEyes + 工作流优化综述）
+- [x] 更新 CLAUDE.md Commands 区域
 
 ### M3：质量迭代（持续，v2 闭环机制）
 

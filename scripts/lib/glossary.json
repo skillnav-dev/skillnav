@@ -27,7 +27,23 @@
     "Kubernetes",
     "GitHub",
     "npm",
-    "Skills"
+    "Skills",
+    "Transformer",
+    "BERT",
+    "GPT",
+    "LoRA",
+    "RLHF",
+    "SFT",
+    "DPO",
+    "arXiv",
+    "ResNet",
+    "ViT",
+    "GAN",
+    "VAE",
+    "CLIP",
+    "BLEU",
+    "ROUGE",
+    "F1"
   ],
   "translate": {
     "machine learning": "机器学习",
@@ -38,7 +54,14 @@
     "middleware": "中间件",
     "fine-tuning": "微调",
     "prompt engineering": "提示工程",
-    "workflow": "工作流"
+    "workflow": "工作流",
+    "inference": "推理",
+    "pre-training": "预训练",
+    "benchmark": "基准测试",
+    "downstream task": "下游任务",
+    "zero-shot": "零样本",
+    "few-shot": "少样本",
+    "ablation study": "消融实验"
   },
   "bracket": {
     "harness": "执行框架（Harness）",
@@ -58,6 +81,16 @@
     "streaming": "流式输出（Streaming）",
     "chunking": "分块（Chunking）",
     "orchestration": "编排（Orchestration）",
-    "observability": "可观测性（Observability）"
+    "observability": "可观测性（Observability）",
+    "diffusion model": "扩散模型（Diffusion Model）",
+    "quantization": "量化（Quantization）",
+    "knowledge distillation": "知识蒸馏（Knowledge Distillation）",
+    "contrastive learning": "对比学习（Contrastive Learning）",
+    "self-supervised learning": "自监督学习（Self-supervised Learning）",
+    "multi-modal": "多模态（Multi-modal）",
+    "cross-attention": "交叉注意力（Cross-attention）",
+    "self-attention": "自注意力（Self-attention）",
+    "latent space": "潜在空间（Latent Space）",
+    "optical flow": "光流（Optical Flow）"
   }
 }

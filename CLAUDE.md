@@ -56,6 +56,10 @@ node scripts/generate-daily.mjs --hours 48               # Look back 48h instead
 node scripts/publish-daily.mjs                           # Publish today's approved brief
 node scripts/publish-daily.mjs --channel rss             # Publish to specific channel only
 
+# Paper translation
+node scripts/translate-paper.mjs 2603.23483              # Translate arXiv paper → articles table (draft)
+node scripts/translate-paper.mjs 2603.23483 --dry-run    # Preview without DB write
+
 # Pipeline health & failover
 node scripts/failover-check.mjs                          # Check pipeline freshness, auto-collect if >36h stale
 curl https://skillnav.dev/api/health                     # Check pipeline health (ok/stale)

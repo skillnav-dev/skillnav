@@ -151,6 +151,10 @@ async function fetchHFDailyPapers(limit = 10) {
         upvotes: item.paper?.upvotes || 0,
         org: item.paper?.organization?.fullname || "",
         url: `https://arxiv.org/abs/${item.paper?.id}`,
+        ai_summary: item.paper?.ai_summary || "",
+        ai_keywords: item.paper?.ai_keywords || [],
+        githubRepo: item.paper?.githubRepo || "",
+        githubStars: item.paper?.githubStars ?? null,
       }));
   } catch (e) {
     log.warn(`HF Daily Papers fetch failed: ${e.message}`);
@@ -161,8 +165,15 @@ async function fetchHFDailyPapers(limit = 10) {
 function formatPapersContext(papers) {
   if (!papers.length) return "";
   return papers
-    .map((p, i) => `${i + 1}. [${p.id}] ${p.title} (${p.org || "unknown org"}, ${p.upvotes} upvotes) ${p.url}`)
-    .join("\n");
+    .map((p, i) => {
+      const lines = [`${i + 1}. [${p.id}] ${p.title} (${p.org || "unknown org"}, ${p.upvotes} upvotes)`];
+      lines.push(`   URL: ${p.url}`);
+      if (p.ai_summary) lines.push(`   AI Summary: ${p.ai_summary}`);
+      if (p.ai_keywords?.length) lines.push(`   Keywords: ${p.ai_keywords.join(", ")}`);
+      if (p.githubRepo) lines.push(`   GitHub: ${p.githubRepo} (${p.githubStars ?? 0} stars)`);
+      return lines.join("\n");
+    })
+    .join("\n\n");
 }
 
 // ── LLM Curation ───────────────────────────────────────────────────
@@ -206,11 +217,20 @@ For each item, check if our article pool covers the topic. If yes, use the artic
 - comment: must add information not in the title — no title parroting
 - Style: sharp tech lead briefing the team. Every word earns its place.
 
-## Paper picks (0-3 from HuggingFace Daily Papers)
-- Pick 0-3 papers most relevant to AI developer tools/practices from the provided HF papers list.
-- Each paper gets: a Chinese one-line summary (20-30 chars), org tag, and an editorial hook explaining WHY a developer should care.
-- Hook must be specific (name a tool/framework/use case). Axe test: if swapping the paper title still makes the hook valid, it's filler — rewrite it.
-- If no paper is worth recommending today, return an empty papers array. That IS editorial judgment.
+## Paper reading cards (3-5 from HuggingFace Daily Papers)
+- Pick 3-5 papers most relevant to AI developer tools/practices from the provided HF papers list. Each paper has AI summary, keywords, and optionally GitHub repo — use ALL of these to write a richer reading card.
+- Each paper gets a ~250-300 char reading card with THREE sections:
+  1. **what** (做了什么): Problem, method, result in 2-3 sentences. Use specific numbers from the AI summary.
+  2. **implication** (对你意味着什么): Can a developer USE this? Name specific tools/frameworks it relates to. Axe test: if swapping the paper title still makes this valid, it's filler — rewrite it.
+  3. **trend** (趋势): One sentence placing this in a broader direction.
+- **attitude** label (态度标签, MANDATORY, pick exactly one):
+  - "可以用了" — has code + docs, ready to integrate
+  - "有代码但离生产远" — open-sourced but needs significant adaptation
+  - "纯学术" — no near-term application, but direction worth watching
+  - "思路有启发" — weak experiments but good design idea
+  Use GitHub repo presence + stars as a signal: repo with 100+ stars → likely "可以用了" or "有代码但离生产远". No repo → likely "纯学术" or "思路有启发".
+- **title_zh**: Chinese title (concise, 15-25 chars, convey the core idea)
+- If fewer than 3 papers are worth recommending, still pick 3 — the bar is "interesting to an AI developer", not "groundbreaking".
 - NEVER fabricate paper IDs or URLs — only use papers from the provided list.
 
 ## Anti-patterns (NEVER write like this)
@@ -253,9 +273,13 @@ Return a JSON object:
   "papers": [
     {
       "id": "arXiv paper ID from the HF list",
-      "summary": "Chinese one-line summary, 20-30 chars",
+      "title_zh": "Chinese title, 15-25 chars",
       "org": "institution tag",
-      "hook": "Chinese editorial hook: why a developer should care, 15-30 chars",
+      "attitude": "可以用了 | 有代码但离生产远 | 纯学术 | 思路有启发",
+      "what": "做了什么: 2-3 sentences, specific numbers",
+      "implication": "对你意味着什么: name tools/frameworks, actionable",
+      "trend": "趋势: one sentence, broader direction",
+      "github_url": "GitHub repo URL if available, or null",
       "url": "arXiv URL from the HF list"
     }
   ]
@@ -263,7 +287,7 @@ Return a JSON object:
 
 Rules:
 - noteworthy: 3-5 items max
-- papers: 0-3 items max. Only include if HF papers were provided and worth recommending. Use EXACT id and url from the HF list.
+- papers: 3-5 items. Use EXACT id and url from the HF list. Each paper MUST have attitude label.
 - Each slug appears only once
 - For our articles, use the exact slug from the list above
 - For topics not in our pool, use "signal-1", "signal-2", etc. and provide the title
@@ -283,14 +307,19 @@ Rules:
   plan.noteworthy = Array.isArray(plan.noteworthy) ? plan.noteworthy : [];
 
   // Normalize papers
-  plan.papers = Array.isArray(plan.papers) ? plan.papers.slice(0, 3) : [];
+  const VALID_ATTITUDES = ["可以用了", "有代码但离生产远", "纯学术", "思路有启发"];
+  plan.papers = Array.isArray(plan.papers) ? plan.papers.slice(0, 5) : [];
   for (const p of plan.papers) {
-    p.summary = String(p.summary || "").slice(0, 100);
-    p.hook = String(p.hook || "").slice(0, 100);
+    p.title_zh = String(p.title_zh || "").slice(0, 80);
     p.org = String(p.org || "");
+    p.what = String(p.what || "").slice(0, 300);
+    p.implication = String(p.implication || "").slice(0, 300);
+    p.trend = String(p.trend || "").slice(0, 200);
+    p.github_url = p.github_url || null;
+    if (!VALID_ATTITUDES.includes(p.attitude)) p.attitude = "纯学术";
   }
-  // Drop papers with missing id or url
-  plan.papers = plan.papers.filter((p) => p.id && p.url);
+  // Drop papers with missing id, url, or empty content
+  plan.papers = plan.papers.filter((p) => p.id && p.url && p.what);
 
   // Enforce length limits
   if (plan.headline) {
@@ -426,16 +455,27 @@ function assembleMarkdown(editorialBrief, articles, briefDate) {
     lines.push("");
   }
 
-  // Paper picks (0-3)
+  // Paper reading cards (3-5)
   if (editorialBrief.papers?.length) {
     lines.push("## 📄 论文速递");
     lines.push("");
 
     for (const paper of editorialBrief.papers) {
-      const orgTag = paper.org ? ` (${paper.org})` : "";
+      const orgTag = paper.org ? ` · ${paper.org}` : "";
       const trackedUrl = `https://skillnav.dev/go/paper/${paper.id}`;
-      lines.push(`- **${paper.summary}**${orgTag}`);
-      lines.push(`  ${paper.hook} → [arXiv](${trackedUrl})`);
+      const githubLink = paper.github_url ? ` · [GitHub](${paper.github_url})` : "";
+
+      lines.push(`### ${paper.title_zh}`);
+      lines.push(`> ${orgTag ? paper.org : ""}${orgTag ? " · " : ""}${paper.attitude}${githubLink ? " · 代码已开源" : ""}`);
+      lines.push("");
+      lines.push(`**做了什么**：${paper.what}`);
+      lines.push("");
+      lines.push(`**对你意味着什么** | ${paper.attitude}`);
+      lines.push(paper.implication);
+      lines.push("");
+      lines.push(`**趋势**：${paper.trend}`);
+      lines.push("");
+      lines.push(`→ [arXiv](${trackedUrl})${githubLink}`);
       lines.push("");
     }
   }
