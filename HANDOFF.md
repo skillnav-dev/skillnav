@@ -1,22 +1,29 @@
 # HANDOFF
-<!-- /checkpoint at 2026-03-26 -->
+<!-- /checkpoint at 2026-03-27 -->
+
+## Active Plan
+Content Experience Redesign — `docs/plans/content-experience-redesign.md`（7/11, 64%）
 
 ## Session Tasks
-- [x] M1: generate-daily.mjs 导读卡升级（HF 字段补全 + prompt 升级 + markdown 编译 + 验证）
-- [x] M1: 发布第一期含导读卡的日报（3/26, approved + published）
-- [x] M2: 新建 translate-paper.mjs（arXiv API + ar5iv HTML + PDF fallback + 分段翻译 + DB insert）
-- [x] M2: 添加 cheerio + pdf-parse 依赖，glossary.json 补充论文术语
-- [x] M2: 翻译 2 篇论文测试（SpecEyes 29K 字 + 工作流综述 52K 字）
-- [x] 3-agent review（正确性/安全/架构）→ 修复 3 个 bug（null abstract / arXiv ID 验证 / PDF 大小限制）
-- [ ] Git commit 所有改动
+- [x] 方案设计：content-experience-redesign.md（3-agent 调研 + 综合输出）
+- [x] 产品走查：API + 网站 + Admin 三线并行（发现 parse-brief 80%空、/daily 404、trending 空）
+- [x] W0.1: 修复 parse-brief.ts（highlights + papers 解析重写）
+- [x] W0.2: 新建 /daily 列表页 + /daily/[date] 详情页
+- [x] W0.3: 导航栏 + footer 添加"日报"入口
+- [x] W1.1: parse-brief.ts 支持 section 过滤（news/papers/tools）
+- [x] W1.2: API route 支持 `?section=` 参数
+- [x] W1.3: SKILL.md brief 子参数 + 格式规则
+- [x] W1.4: 构建验证 + 同步 skillnav-skill repo
 
 ## Key Files
-- `scripts/generate-daily.mjs` — M1 改动（HF 字段 + 导读卡 prompt + markdown 编译）
-- `scripts/translate-paper.mjs` — M2 新建（论文全文翻译脚本）
-- `scripts/lib/glossary.json` — 补充 ML/AI 论文术语
-- `docs/plans/paper-channel-v3.md` — M1+M2 done，M3 持续迭代
+- `src/lib/parse-brief.ts` — BriefPaper 接口扩展 + 解析重写 + section 过滤
+- `src/app/api/skill/query/route.ts` — section 参数传递
+- `src/app/daily/page.tsx` — 日报列表页（新建）
+- `src/app/daily/[date]/page.tsx` — 日报详情页（新建）
+- `skills/skillnav/SKILL.md` — brief 子参数路由 + 格式规则
 
 ## Next Actions
-- [ ] `git add` + commit 所有 Paper Channel v3 改动
-- [ ] 每日审日报时记录 corrections.jsonl（M3 质量闭环）
-- [ ] 4/23 综合评估：导读点击率 + 全文翻译使用频率
+- [ ] W2: 论文查询 API `type=paper&id=xxx` + `type=paper&q=keyword` → `src/app/api/skill/query/route.ts`
+- [ ] W2: SKILL.md 新增 paper 命令路由 → `skills/skillnav/SKILL.md`
+- [ ] W3: generate-daily.mjs 新增 tools section → `scripts/generate-daily.mjs`
+- [ ] 修复 trending 空数据（降低 weekly_stars_delta 阈值或回填）

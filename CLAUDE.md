@@ -91,10 +91,11 @@ src/
 │   ├── articles/               # Article list + [slug] detail (SSG)
 │   ├── skills/                 # Skills listing + [slug] detail
 │   ├── mcp/                    # MCP Server 精选导航 (static curated data)
+│   ├── daily/                  # Daily Brief public: /daily list (ISR 5min) + /daily/[date] detail
 │   ├── learn/                  # Learning Center: /learn index + /learn/what-is-[slug] detail
 │   ├── admin/daily/            # Daily Brief admin: list + [id] detail (preview/edit/approve/publish)
 │   ├── api/health/              # Pipeline health probe: stale if >36h no runs (Better Stack monitored)
-│   ├── api/skill/query/         # Skill API: GET ?type=brief|mcp|trending (public, anon key)
+│   ├── api/skill/query/         # Skill API: GET ?type=brief|mcp|trending&section=news|papers|tools (public, anon key)
 │   ├── api/admin/daily/        # Admin API: PATCH update, POST approve, POST publish
 │   ├── api/rss/daily/          # RSS feed for daily briefs
 │   ├── go/paper/[id]/          # Paper click tracking: 302 redirect to arXiv + Umami server-side event
