@@ -267,6 +267,40 @@ function parseContentMd(contentMd: string): {
 
 export type BriefSection = "news" | "papers" | "tools" | undefined;
 
+/**
+ * Fetch recent published briefs and extract all paper cards.
+ * Used by paper query API to search across multiple days.
+ */
+export async function parsePapersFromBriefs(
+  supabase: SupabaseClient<Database>,
+  days: number,
+): Promise<(BriefPaper & { date: string })[]> {
+  const since = new Date();
+  since.setDate(since.getDate() - days);
+  const sinceStr = since.toISOString().slice(0, 10);
+
+  type BriefRow = { brief_date: string; content_md: string };
+
+  const { data } = await supabase
+    .from("daily_briefs" as "skills")
+    .select("brief_date, content_md" as "slug")
+    .eq("status" as "slug", "published")
+    .gte("brief_date" as "slug", sinceStr)
+    .order("brief_date" as "created_at", { ascending: false });
+
+  const rows = (data as unknown as BriefRow[]) ?? [];
+  const allPapers: (BriefPaper & { date: string })[] = [];
+
+  for (const row of rows) {
+    const papers = parsePaperSection(row.content_md);
+    for (const p of papers) {
+      allPapers.push({ ...p, date: row.brief_date });
+    }
+  }
+
+  return allPapers;
+}
+
 export async function getLatestBrief(
   supabase: SupabaseClient<Database>,
   today: string,

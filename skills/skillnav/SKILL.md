@@ -1,7 +1,7 @@
 ---
 name: skillnav
-description: "Search 3,900+ MCP servers with install commands, get daily AI brief, and discover trending tools — in Chinese. Data from skillnav.dev editorial team."
-argument-hint: "brief | mcp <keyword> | trending"
+description: "Search 3,900+ MCP servers with install commands, get daily AI brief, query papers, and discover trending tools — in Chinese. Data from skillnav.dev editorial team."
+argument-hint: "brief | mcp <keyword> | paper <id|keyword> | trending"
 allowed-tools: WebFetch
 ---
 
@@ -11,6 +11,7 @@ Route based on $ARGUMENTS[0]:
 |-----------|--------------------------------------------------------------|
 | brief     | If $ARGUMENTS[1] is "papers", "news", or "tools": WebFetch https://skillnav.dev/api/skill/query?type=brief&section=$ARGUMENTS[1]. Otherwise: WebFetch https://skillnav.dev/api/skill/query?type=brief |
 | mcp       | WebFetch https://skillnav.dev/api/skill/query?type=mcp&q=$ARGUMENTS[1] |
+| paper     | If $ARGUMENTS[1] matches arXiv ID pattern (YYMM.NNNNN): WebFetch https://skillnav.dev/api/skill/query?type=paper&id=$ARGUMENTS[1]. Otherwise: WebFetch https://skillnav.dev/api/skill/query?type=paper&q=$ARGUMENTS[1] |
 | trending  | WebFetch https://skillnav.dev/api/skill/query?type=trending  |
 | (other)   | Show usage message — do NOT fetch any URL                    |
 
@@ -24,6 +25,8 @@ Usage:
   /skillnav brief papers       只看论文导读
   /skillnav brief news         只看行业动态
   /skillnav mcp <keyword>      搜索 MCP Server（如 database, github, slack）
+  /skillnav paper <arxiv-id>   查看论文详情（如 2603.23483）
+  /skillnav paper <keyword>    搜索最近论文（如 agent, reasoning）
   /skillnav trending           本周热门工具
 
 Install:
@@ -94,6 +97,36 @@ Format as a ranked list grouped by tool_type:
    > {editor_comment_zh}
 
 If a group has no items, omit it entirely.
+
+### paper (single by ID)
+
+If `has_translation` is true:
+
+1. **{translation.title_zh}** `{brief_card.attitude}` (if brief_card exists)
+2. If brief_card exists: {brief_card.what}
+   > {brief_card.implication}
+3. "已有完整中文翻译 → {translation.url}"
+
+If `has_translation` is false:
+
+1. If brief_card exists:
+   **{brief_card.title}** `{brief_card.attitude}`
+   {brief_card.what}
+   > {brief_card.implication}
+   趋势：{brief_card.trend}
+2. If no brief_card: "未找到该论文的导读信息。"
+3. "arXiv 原文 → {arxiv_url}"
+
+### paper (keyword search)
+
+1. Header: "论文搜索 · 最近 {days} 天 · "{query}""
+2. For each result:
+   **{title}** `{attitude}` · {date}
+   {what}
+   > {implication}
+   → arXiv: {url}
+3. If results are empty: "最近 {days} 天未找到与 "{query}" 相关的论文。"
+4. Footer: "共 {returned} 篇结果"
 
 ---
 
