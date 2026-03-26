@@ -83,14 +83,22 @@ function truncate(text, max = MAX_TEXT_LENGTH) {
 // ── Source Fetchers ────────────────────────────────────────────────
 
 async function fetchTldr(dateStr) {
-  const html = await fetchWithTimeout(`https://tldr.tech/ai/${dateStr}`);
-  // Reject landing/redirect pages (no newsletter-html blocks = not the actual issue)
-  if (!html.includes("newsletter-html")) {
-    throw new Error("Issue not published yet");
+  // Try today first, fall back to yesterday (TLDR publishes on US time)
+  for (const ds of [dateStr, yesterdayOf(dateStr)]) {
+    const url = `https://tldr.tech/ai/${ds}`;
+    const html = await fetchWithTimeout(url);
+    if (!html.includes("newsletter-html")) continue;
+    const text = htmlToText(html);
+    if (text.length < 300) continue;
+    return { name: "tldr", label: "TLDR AI", url, text: truncate(text) };
   }
-  const text = htmlToText(html);
-  if (text.length < 300) throw new Error("Content too short, likely not a real issue");
-  return { name: "tldr", label: "TLDR AI", url: `https://tldr.tech/ai/${dateStr}`, text: truncate(text) };
+  throw new Error("Issue not published yet (checked today + yesterday)");
+}
+
+function yesterdayOf(dateStr) {
+  const d = new Date(dateStr + "T12:00:00Z");
+  d.setDate(d.getDate() - 1);
+  return formatDate(d);
 }
 
 async function fetchBensBites() {
