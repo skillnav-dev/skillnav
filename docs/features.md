@@ -75,4 +75,7 @@
 | DAILY-02 | 每日简报多渠道发布 | shipped | RSS auto + WeChat/X/Zhihu/XHS copy-ready，publication tracking |
 | DAILY-03 | 简报配图卡片生成 | shipped | HTML 模板 + gstack browse 渲染：6 张 XHS 卡片 (1080x1350) + WeChat 头图 (1080x608)，admin 内预览下载 |
 | SIGNAL-01 | 内容信号层（V2: LLM 编辑漏斗） | shipped | 砍掉 regex 信号解析，LLM 直读 newsletter 原文做交叉验证。ADR-005 |
-| SKILL-01 | OpenClaw Skill 分发 | shipped | skillnav-daily v2.0: 订阅引导 + 三类人群偏好 + cron 定时推送。GitHub: skillnav-dev/skillnav-daily-skill |
+| SKILL-01 | SkillNav Skill（三合一） | shipped | brief + mcp search + trending。GitHub: skillnav-dev/skillnav-skill，ClawHub: skillnav@1.0.0 |
+| SKILL-02 | Skill CTA 全渠道集成 | shipped | 5 个 publisher footer 追加 `/skillnav brief` 安装提示 |
+| OPS-16 | 日报生成 Slack 通知 | shipped | 成功时推送"待审核"提醒 + admin 链接 |
+| PAPER-01 | 论文速递（Phase 1） | shipped | HF Daily Papers → LLM 选稿 → 日报论文板块 + /go/paper/[id] 点击追踪 |
