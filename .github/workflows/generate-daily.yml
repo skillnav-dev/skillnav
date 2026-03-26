@@ -56,6 +56,13 @@ jobs:
           if [ "${{ inputs.dry_run }}" = "true" ]; then ARGS="$ARGS --dry-run"; fi
           node scripts/generate-daily.mjs $ARGS
 
+      - name: Notify Slack on success
+        if: success()
+        run: |
+          curl -sS -X POST -H 'Content-type: application/json' \
+            --data "{\"text\":\"📰 *Daily Brief* 已生成，待审核发布\nhttps://skillnav.dev/admin/daily\"}" \
+            ${{ secrets.SLACK_WEBHOOK_URL }}
+
       - name: Notify Slack on failure
         if: failure()
         run: |
