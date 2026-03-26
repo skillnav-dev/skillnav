@@ -14,10 +14,14 @@ export interface BriefHighlight {
 }
 
 export interface BriefPaper {
-  summary: string;
+  title: string;
   org: string;
-  hook: string;
+  attitude: string;
+  what: string;
+  implication: string;
+  trend: string;
   url: string;
+  github_url: string | null;
 }
 
 export interface ParsedBrief {
@@ -118,9 +122,19 @@ function parseBulletHighlights(contentMd: string): BriefHighlight[] {
 
 /**
  * Parse paper picks from the "## 📄 论文速递" section.
- * Format:
- *   - **summary** (org)
- *     hook → [arXiv](url)
+ *
+ * Actual format (v3, from generate-daily.mjs):
+ *   ### 论文中文标题
+ *   > org · 态度标签 · 代码已开源
+ *
+ *   **做了什么**：description
+ *
+ *   **对你意味着什么** | 态度标签
+ *   implication text
+ *
+ *   **趋势**：trend text
+ *
+ *   → [arXiv](url) · [GitHub](github_url)
  */
 function parsePaperSection(contentMd: string): BriefPaper[] {
   const sectionMatch = contentMd.match(
@@ -128,34 +142,82 @@ function parsePaperSection(contentMd: string): BriefPaper[] {
   );
   if (!sectionMatch) return [];
 
-  const papers: BriefPaper[] = [];
-  const lines = sectionMatch[1].split("\n");
+  // Split into ### blocks within the paper section
+  const blocks = sectionMatch[1]
+    .split(/^(?=### )/m)
+    .filter((b) => b.includes("###"));
 
-  for (let i = 0; i < lines.length; i++) {
-    // Title line: - **summary** (org)
-    const titleMatch = lines[i].match(
-      /^-\s+\*\*([^*]+)\*\*(?:\s*\(([^)]*)\))?/,
-    );
+  const papers: BriefPaper[] = [];
+
+  for (const block of blocks) {
+    const titleMatch = block.match(/###\s+([^\n]+)/);
     if (!titleMatch) continue;
 
-    const summary = titleMatch[1].trim();
-    const org = titleMatch[2]?.trim() || "";
+    const title = titleMatch[1].trim();
+    const lines = block.split("\n");
 
-    // Next line: hook → [arXiv](url)
-    let hook = "";
+    // Extract org + attitude from blockquote: > org · attitude · 代码已开源
+    let org = "";
+    let attitude = "";
+    const quoteLine = lines.find((l) => /^>\s/.test(l));
+    if (quoteLine) {
+      const parts = quoteLine.replace(/^>\s*/, "").split(/\s*[·]\s*/);
+      org = parts[0]?.trim() || "";
+      attitude = parts[1]?.trim() || "";
+    }
+
+    // Extract structured fields
+    let what = "";
+    let implication = "";
+    let trend = "";
     let url = "";
-    if (i + 1 < lines.length) {
-      const hookMatch = lines[i + 1].match(
-        /^\s+(.+?)\s*→\s*\[arXiv\]\(([^)]+)\)/,
-      );
-      if (hookMatch) {
-        hook = hookMatch[1].trim();
-        url = hookMatch[2].trim();
-        i++; // skip the hook line
+    let githubUrl: string | null = null;
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+
+      const whatMatch = line.match(/\*\*做了什么\*\*[：:]\s*(.*)/);
+      if (whatMatch) {
+        what = whatMatch[1].trim();
+        continue;
+      }
+
+      // "对你意味着什么" header — content is on the next line
+      if (/\*\*对你意味着什么\*\*/.test(line)) {
+        if (i + 1 < lines.length && lines[i + 1].trim()) {
+          implication = lines[i + 1].trim();
+        }
+        continue;
+      }
+
+      const trendMatch = line.match(/\*\*趋势\*\*[：:]\s*(.*)/);
+      if (trendMatch) {
+        trend = trendMatch[1].trim();
+        continue;
+      }
+
+      // Link line: → [arXiv](url) · [GitHub](github_url)
+      const arxivMatch = line.match(/→\s*\[arXiv\]\(([^)]+)\)/);
+      if (arxivMatch) {
+        url = arxivMatch[1].trim();
+        const ghMatch = line.match(/\[GitHub\]\(([^)]+)\)/);
+        if (ghMatch) githubUrl = ghMatch[1].trim();
+        continue;
       }
     }
 
-    papers.push({ summary, org, hook, url });
+    if (title) {
+      papers.push({
+        title,
+        org,
+        attitude,
+        what,
+        implication,
+        trend,
+        url,
+        github_url: githubUrl,
+      });
+    }
   }
 
   return papers;
@@ -166,32 +228,35 @@ function parseContentMd(contentMd: string): {
   highlights: BriefHighlight[];
   papers: BriefPaper[];
 } {
-  // Split into ### blocks (entries) for headline + legacy format
-  const entries = contentMd
+  // Strip the paper section before splitting by ### to avoid
+  // paper titles being misinterpreted as highlight entries
+  const contentWithoutPapers = contentMd.replace(
+    /## 📄 论文速递\s*\n[\s\S]*?(?=\n---|\n## |$)/,
+    "",
+  );
+
+  // Split into ### blocks (entries) for headline parsing
+  const entries = contentWithoutPapers
     .split(/^(?=### )/m)
     .filter((b) => b.includes("###"));
 
   let headline: BriefHeadline = { title: "", summary: "", why_important: "" };
-  const highlights: BriefHighlight[] = [];
 
-  for (let i = 0; i < entries.length; i++) {
-    const entry = parseEntry(entries[i]);
-    if (!entry) continue;
-
-    if (i === 0) {
+  // Only the first ### block under 今日头条 is the headline
+  for (const entry of entries) {
+    const parsed = parseEntry(entry);
+    if (parsed) {
       headline = {
-        title: entry.title,
-        summary: entry.summary,
-        why_important: entry.comment,
+        title: parsed.title,
+        summary: parsed.summary,
+        why_important: parsed.comment,
       };
-    } else {
-      highlights.push(entry);
+      break;
     }
   }
 
-  // Also parse bullet-list highlights from ## 📋 值得关注
-  const bulletHighlights = parseBulletHighlights(contentMd);
-  highlights.push(...bulletHighlights);
+  // Parse bullet-list highlights from ## 📋 值得关注
+  const highlights = parseBulletHighlights(contentMd);
 
   // Parse paper picks from ## 📄 论文速递
   const papers = parsePaperSection(contentMd);

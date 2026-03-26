@@ -39,8 +39,12 @@ Format the JSON response as:
 1. **TL;DR**: One bold sentence summarizing the headline
 2. Headline title with `> why_important` in blockquote
 3. Bulleted highlights, each with editor comment in parentheses
-4. If `is_fallback` is true, note the actual date: "(注意：这是 {date} 的日报，今日暂无更新)"
-5. Footer: "完整日报 → {url}"
+4. If `papers` array is non-empty, show a "论文速递" section:
+   - **{title}** `{attitude}`
+     {what}
+     > {implication}
+5. If `is_fallback` is true, note the actual date: "(注意：这是 {date} 的日报，今日暂无更新)"
+6. Footer: "完整日报 → {url}"
 
 ### mcp
 
