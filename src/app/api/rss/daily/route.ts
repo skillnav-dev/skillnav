@@ -24,7 +24,12 @@ export async function GET() {
     .in("status", ["approved", "published"])
     .order("brief_date" as "created_at", { ascending: false })
     .limit(30);
-  const briefs = briefsRaw as unknown as Pick<DailyBriefRow, "id" | "brief_date" | "title" | "summary" | "content_md">[] | null;
+  const briefs = briefsRaw as unknown as
+    | Pick<
+        DailyBriefRow,
+        "id" | "brief_date" | "title" | "summary" | "content_md"
+      >[]
+    | null;
 
   if (error) {
     return new Response("Internal Server Error", { status: 500 });
@@ -40,7 +45,7 @@ export async function GET() {
       <guid isPermaLink="true">${link}</guid>
       <pubDate>${pubDate}</pubDate>
       <description>${escapeXml(brief.summary || "")}</description>
-      <content:encoded><![CDATA[${(brief.content_md || "").replace(/]]>/g, "]]]]><![CDATA[>")}]]></content:encoded>
+      <content:encoded><![CDATA[${(brief.content_md || "").replace(/]]>/g, "]]]]><![CDATA[>")}\n\n---\n\n💻 在 Claude Code 中使用：\`/skillnav brief\` · [安装 Skill](https://github.com/skillnav-dev/skillnav-skill)]]></content:encoded>
     </item>`;
     })
     .join("\n");

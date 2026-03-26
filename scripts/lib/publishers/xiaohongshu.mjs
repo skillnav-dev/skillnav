@@ -88,6 +88,7 @@ export function formatXhsCaption(sections, meta = {}) {
 
   // CTA
   lines.push("👉 搜索「SkillNav」获取更多 AI 工具资讯");
+  lines.push("💻 Claude Code 用户：/skillnav brief 获取日报");
   lines.push("");
 
   // Hashtags

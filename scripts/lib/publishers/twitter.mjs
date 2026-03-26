@@ -65,7 +65,7 @@ export function formatXThread(items, meta = {}) {
   }
 
   // Final tweet: closer
-  tweets.push(`☕ That's today's brief.\nSubscribe: skillnav.dev\n\n${HASHTAGS}`);
+  tweets.push(`☕ That's today's brief.\nSubscribe: skillnav.dev\n\n💻 在 Claude Code 中使用：/skillnav brief\n\n${HASHTAGS}`);
 
   return tweets;
 }

@@ -55,6 +55,10 @@ export function formatZhihuArticle(markdown, meta = {}) {
   lines.push(
     "每日精选 AI Agent 工具与技术资讯，关注 [skillnav.dev](https://skillnav.dev) 获取更多内容。"
   );
+  lines.push("");
+  lines.push(
+    "💻 在 Claude Code 中使用：`/skillnav brief` · [安装 Skill](https://github.com/skillnav-dev/skillnav-skill)"
+  );
 
   return lines.join("\n");
 }

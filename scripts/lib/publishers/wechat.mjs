@@ -118,6 +118,7 @@ ${date ? `<p style="font-size:13px;color:#999;margin:6px 0">${escapeHtml(date)}$
   const footer = `<div style="text-align:center;margin-top:32px;padding-top:16px;border-top:1px solid #eee">
 <p style="font-size:13px;color:#999;margin:4px 0">由 SkillNav 自动生成 · skillnav.dev</p>
 <p style="font-size:13px;color:#2563eb;margin:4px 0">关注公众号，每日获取 AI 工具简报</p>
+<p style="font-size:12px;color:#666;margin:8px 0 4px">💻 在 Claude Code 中使用：<code style="background:#f5f5f5;padding:2px 6px;border-radius:3px;font-family:Menlo,Consolas,monospace;font-size:12px">/skillnav brief</code></p>
 </div>`;
 
   return `<div style="max-width:600px;margin:0 auto;padding:16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">\n${header}\n${html}\n${footer}\n</div>`;
