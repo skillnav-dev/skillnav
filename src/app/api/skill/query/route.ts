@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createStaticClient } from "@/lib/supabase/static";
-import { getLatestBrief } from "@/lib/parse-brief";
+import { getLatestBrief, type BriefSection } from "@/lib/parse-brief";
 import { getTrendingTools } from "@/lib/get-trending-tools";
 
 export const revalidate = 300; // 5 min ISR cache
@@ -21,9 +21,18 @@ function getTodayCST(): string {
   return cst.toISOString().slice(0, 10);
 }
 
-async function handleBrief(supabase: ReturnType<typeof createStaticClient>) {
+const VALID_SECTIONS = ["news", "papers", "tools"] as const;
+
+async function handleBrief(
+  supabase: ReturnType<typeof createStaticClient>,
+  section?: string,
+) {
+  const validSection = VALID_SECTIONS.includes(section as BriefSection & string)
+    ? (section as BriefSection)
+    : undefined;
+
   const today = getTodayCST();
-  const brief = await getLatestBrief(supabase, today);
+  const brief = await getLatestBrief(supabase, today, validSection);
   if (!brief) {
     return errorResponse("NO_BRIEF", "No published brief available.", 404);
   }
@@ -144,7 +153,10 @@ export async function GET(request: NextRequest) {
   try {
     switch (type) {
       case "brief":
-        return await handleBrief(supabase);
+        return await handleBrief(
+          supabase,
+          searchParams.get("section") ?? undefined,
+        );
       case "mcp":
         return await handleMcp(supabase, q, limit);
       case "trending":

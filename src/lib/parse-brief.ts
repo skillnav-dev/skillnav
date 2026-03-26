@@ -27,6 +27,7 @@ export interface BriefPaper {
 export interface ParsedBrief {
   type: "brief";
   date: string;
+  section?: string;
   headline: BriefHeadline;
   highlights: BriefHighlight[];
   papers: BriefPaper[];
@@ -264,9 +265,12 @@ function parseContentMd(contentMd: string): {
   return { headline, highlights, papers };
 }
 
+export type BriefSection = "news" | "papers" | "tools" | undefined;
+
 export async function getLatestBrief(
   supabase: SupabaseClient<Database>,
   today: string,
+  section?: BriefSection,
 ): Promise<ParsedBrief | null> {
   type BriefRow = { brief_date: string; content_md: string };
 
@@ -299,13 +303,23 @@ export async function getLatestBrief(
 
   const { headline, highlights, papers } = parseContentMd(brief.content_md);
 
-  return {
+  // Filter by section if requested
+  const result: ParsedBrief = {
     type: "brief",
     date: brief.brief_date,
-    headline,
-    highlights,
-    papers,
+    headline:
+      section === "papers"
+        ? { title: "", summary: "", why_important: "" }
+        : headline,
+    highlights: section === "papers" ? [] : highlights,
+    papers: section === "news" ? [] : papers,
     url: `https://skillnav.dev/daily/${brief.brief_date}`,
     is_fallback: isFallback,
   };
+
+  if (section) {
+    result.section = section;
+  }
+
+  return result;
 }

@@ -9,7 +9,7 @@ Route based on $ARGUMENTS[0]:
 
 | Command   | Action                                                       |
 |-----------|--------------------------------------------------------------|
-| brief     | WebFetch https://skillnav.dev/api/skill/query?type=brief     |
+| brief     | If $ARGUMENTS[1] is "papers", "news", or "tools": WebFetch https://skillnav.dev/api/skill/query?type=brief&section=$ARGUMENTS[1]. Otherwise: WebFetch https://skillnav.dev/api/skill/query?type=brief |
 | mcp       | WebFetch https://skillnav.dev/api/skill/query?type=mcp&q=$ARGUMENTS[1] |
 | trending  | WebFetch https://skillnav.dev/api/skill/query?type=trending  |
 | (other)   | Show usage message — do NOT fetch any URL                    |
@@ -20,9 +20,11 @@ If $ARGUMENTS is empty or does not match any command above, show this usage mess
 SkillNav — AI 开发者工具站 (skillnav.dev)
 
 Usage:
-  /skillnav brief            今日 AI 日报
-  /skillnav mcp <keyword>    搜索 MCP Server（如 database, github, slack）
-  /skillnav trending         本周热门工具
+  /skillnav brief              今日 AI 日报（完整版）
+  /skillnav brief papers       只看论文导读
+  /skillnav brief news         只看行业动态
+  /skillnav mcp <keyword>      搜索 MCP Server（如 database, github, slack）
+  /skillnav trending           本周热门工具
 
 Install:
   mkdir -p ~/.claude/skills/skillnav && curl -sL https://raw.githubusercontent.com/skillnav-dev/skillnav-skill/main/SKILL.md -o ~/.claude/skills/skillnav/SKILL.md
@@ -32,19 +34,37 @@ Install:
 
 ## Format Rules
 
-### brief
+### brief (full or section-filtered)
 
-Format the JSON response as:
+If `section` field is absent (full brief), format as:
 
 1. **TL;DR**: One bold sentence summarizing the headline
 2. Headline title with `> why_important` in blockquote
 3. Bulleted highlights, each with editor comment in parentheses
-4. If `papers` array is non-empty, show a "论文速递" section:
+4. If `papers` array is non-empty, show "论文速递":
    - **{title}** `{attitude}`
      {what}
      > {implication}
-5. If `is_fallback` is true, note the actual date: "(注意：这是 {date} 的日报，今日暂无更新)"
+5. If `is_fallback` is true: "(注意：这是 {date} 的日报，今日暂无更新)"
 6. Footer: "完整日报 → {url}"
+
+If `section` is `"papers"`, format papers only:
+
+1. Header: "论文速递 · {date}"
+2. For each paper:
+   **{title}** `{attitude}`
+   {what}
+   > {implication}
+   趋势：{trend}
+   → arXiv: {url}
+3. Footer: "完整日报 → {url}"
+
+If `section` is `"news"`, format highlights only:
+
+1. Header: "行业动态 · {date}"
+2. Headline (if non-empty): **{headline.title}** — {headline.why_important}
+3. Bulleted highlights with editor comments
+4. Footer: "完整日报 → {url}"
 
 ### mcp
 
