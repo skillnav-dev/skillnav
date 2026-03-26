@@ -4,7 +4,6 @@ import {
   getLatestBrief,
   parsePapersFromBriefs,
   type BriefSection,
-  type BriefPaper,
 } from "@/lib/parse-brief";
 import { getTrendingTools } from "@/lib/get-trending-tools";
 

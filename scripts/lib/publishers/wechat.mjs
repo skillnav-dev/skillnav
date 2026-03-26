@@ -48,6 +48,9 @@ export function markdownToWechatHtml(markdown, meta = {}) {
   html = html.replace(/^## ⚡ (.+)$/gm, (_, text) =>
     `<h2 style="font-size:15px;font-weight:bold;color:#666;margin:24px 0 10px;line-height:1.4">⚡ ${text}</h2>`
   );
+  html = html.replace(/^## 🔧 (.+)$/gm, (_, text) =>
+    `<h2 style="font-size:17px;font-weight:bold;color:#1a1a2e;margin:28px 0 12px;padding:10px 16px;background:linear-gradient(135deg,#f0fdf4,#dcfce7);border-radius:8px;line-height:1.4">🔧 ${text}</h2>`
+  );
 
   // Fallback for other ## headers
   html = html.replace(/^## (.+)$/gm, (_, text) =>

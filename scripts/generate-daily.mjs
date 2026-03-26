@@ -176,9 +176,81 @@ function formatPapersContext(papers) {
     .join("\n\n");
 }
 
+// ── Tool Signals ────────────────────────────────────────────────────
+
+async function queryToolSignals(supabase, since, limit = 10) {
+  // Three signals: new high-quality tools, trending, editor picks
+  const sinceStr = since.toISOString();
+
+  const [{ data: newTools }, { data: trending }, { data: editorPicks }] =
+    await Promise.all([
+      // New MCP servers with quality_score >= 7, discovered in lookback window
+      supabase
+        .from("mcp_servers")
+        .select(
+          "slug, name, name_zh, description_zh, category, editor_comment_zh, stars, install_command, quality_score",
+        )
+        .eq("status", "published")
+        .gte("quality_score", 7)
+        .gte("discovered_at", sinceStr)
+        .order("quality_score", { ascending: false })
+        .limit(limit),
+      // Trending MCP servers (weekly_stars_delta > 50)
+      supabase
+        .from("mcp_servers")
+        .select(
+          "slug, name, name_zh, description_zh, category, editor_comment_zh, stars, install_command, weekly_stars_delta",
+        )
+        .eq("status", "published")
+        .gte("weekly_stars_delta", 50)
+        .order("weekly_stars_delta", { ascending: false })
+        .limit(limit),
+      // Editor picks (have editor_comment_zh, recently updated)
+      supabase
+        .from("mcp_servers")
+        .select(
+          "slug, name, name_zh, description_zh, category, editor_comment_zh, stars, install_command",
+        )
+        .eq("status", "published")
+        .not("editor_comment_zh", "is", null)
+        .gte("updated_at", sinceStr)
+        .order("stars", { ascending: false })
+        .limit(5),
+    ]);
+
+  // Deduplicate by slug, prefer higher signal
+  const seen = new Set();
+  const all = [];
+  for (const tool of [...(trending || []), ...(newTools || []), ...(editorPicks || [])]) {
+    if (!seen.has(tool.slug)) {
+      seen.add(tool.slug);
+      all.push(tool);
+    }
+  }
+  return all.slice(0, limit);
+}
+
+function formatToolsContext(tools) {
+  if (!tools.length) return "";
+  return tools
+    .map((t, i) => {
+      const lines = [
+        `${i + 1}. ${t.name} (${t.category || "uncategorized"}) ⭐${t.stars}`,
+      ];
+      if (t.name_zh) lines.push(`   中文名: ${t.name_zh}`);
+      if (t.description_zh) lines.push(`   描述: ${t.description_zh.slice(0, 150)}`);
+      if (t.editor_comment_zh) lines.push(`   编辑点评: ${t.editor_comment_zh}`);
+      if (t.install_command) lines.push(`   安装: ${t.install_command}`);
+      if (t.weekly_stars_delta) lines.push(`   周增 stars: +${t.weekly_stars_delta}`);
+      if (t.quality_score) lines.push(`   质量分: ${t.quality_score}/10`);
+      return lines.join("\n");
+    })
+    .join("\n\n");
+}
+
 // ── LLM Curation ───────────────────────────────────────────────────
 
-async function generateEditorialBrief(articles, newsletterContext = "", papersContext = "") {
+async function generateEditorialBrief(articles, newsletterContext = "", papersContext = "", toolsContext = "") {
   const { callLLM } = await import("./lib/llm.mjs");
 
   const articleList = articles
@@ -233,18 +305,25 @@ For each item, check if our article pool covers the topic. If yes, use the artic
 - If fewer than 3 papers are worth recommending, still pick 3 — the bar is "interesting to an AI developer", not "groundbreaking".
 - NEVER fabricate paper IDs or URLs — only use papers from the provided list.
 
+## Tool recommendations (0-3 per day)
+- Pick 0-3 MCP servers / tools worth recommending from the provided tool signals list.
+- Most days should have 0 tools. Only recommend when genuinely noteworthy (new + high quality, or suddenly trending).
+- Each tool gets: slug, name, a one-sentence Chinese recommendation reason (why), and install command.
+- Restraint = brand trust. Empty tools array is perfectly fine.
+
 ## Anti-patterns (NEVER write like this)
 - "这标志着AI发展的重要里程碑" ← empty
 - "值得关注" / "不可忽视" / "意义重大" ← filler
 - comment that restates the title ← useless`;
 
   const hasPapers = papersContext.length > 0;
+  const hasTools = toolsContext.length > 0;
 
   const userPrompt = `${hasNewsletters ? `## Today's AI newsletters (raw text from ${articles.length > 0 ? "multiple" : "5"} sources)\n${newsletterContext}\n` : ""}
 ## Our article pool (${articles.length} articles)
 
 ${articleList}
-${hasPapers ? `\n## HuggingFace Daily Papers (Top 10 by upvotes)\n\n${papersContext}\n` : ""}
+${hasPapers ? `\n## HuggingFace Daily Papers (Top 10 by upvotes)\n\n${papersContext}\n` : ""}${hasTools ? `\n## Tool signals (MCP servers worth considering)\n\n${toolsContext}\n` : ""}
 ## Output format
 
 Return a JSON object:
@@ -282,12 +361,21 @@ Return a JSON object:
       "github_url": "GitHub repo URL if available, or null",
       "url": "arXiv URL from the HF list"
     }
+  ],
+  "tools": [
+    {
+      "slug": "mcp-server-slug from the tool signals list",
+      "name": "Tool display name",
+      "why": "一句话推荐理由 (Chinese, 15-30 chars)",
+      "install": "install command from the tool signals list"
+    }
   ]
 }
 
 Rules:
 - noteworthy: 3-5 items max
 - papers: 3-5 items. Use EXACT id and url from the HF list. Each paper MUST have attitude label.
+- tools: 0-3 items. Only recommend genuinely noteworthy tools. Empty array is fine and preferred.
 - Each slug appears only once
 - For our articles, use the exact slug from the list above
 - For topics not in our pool, use "signal-1", "signal-2", etc. and provide the title
@@ -353,9 +441,19 @@ Rules:
     return true;
   });
 
+  // Normalize tools
+  plan.tools = Array.isArray(plan.tools) ? plan.tools.slice(0, 3) : [];
+  for (const t of plan.tools) {
+    t.slug = String(t.slug || "");
+    t.name = String(t.name || "").slice(0, 100);
+    t.why = String(t.why || "").slice(0, 200);
+    t.install = String(t.install || "");
+  }
+  // Drop tools with missing slug or name
+  plan.tools = plan.tools.filter((t) => t.slug && t.name);
+
   // Build backward-compat structures for downstream consumers
   plan.headlines = plan.headline ? [plan.headline] : [];
-  plan.tools = [];
   plan.quickLinks = plan.noteworthy.map((n) => ({
     slug: n.slug,
     oneLiner: n.comment,
@@ -480,6 +578,23 @@ function assembleMarkdown(editorialBrief, articles, briefDate) {
     }
   }
 
+  // Tool recommendations (0-3)
+  if (editorialBrief.tools?.length) {
+    lines.push("## 🔧 工具雷达");
+    lines.push("");
+
+    for (const tool of editorialBrief.tools) {
+      const installLine = tool.install ? `\`${tool.install}\`` : "";
+      lines.push(`### [${tool.name}](/mcp/${tool.slug})`);
+      lines.push(`${tool.why}`);
+      if (installLine) {
+        lines.push("");
+        lines.push(`安装：${installLine}`);
+      }
+      lines.push("");
+    }
+  }
+
   // Footer
   lines.push("---");
   lines.push(`📮 SkillNav AI 日报 · ${formatDateChinese(briefDate)} · skillnav.dev`);
@@ -586,6 +701,15 @@ async function main() {
     log.info("HF Papers: no data available");
   }
 
+  // Fetch tool signals
+  const toolSignals = await queryToolSignals(supabase, since);
+  const toolsContext = formatToolsContext(toolSignals);
+  if (toolSignals.length) {
+    log.info(`Tool signals: ${toolSignals.length} candidates`);
+  } else {
+    log.info("Tool signals: none found");
+  }
+
   // Generate editorial brief
   let editorialBrief;
   if (noLlm) {
@@ -594,9 +718,10 @@ async function main() {
   } else {
     log.info("Generating editorial brief via LLM...");
     try {
-      editorialBrief = await generateEditorialBrief(articles, newsletterContext, papersContext);
+      editorialBrief = await generateEditorialBrief(articles, newsletterContext, papersContext, toolsContext);
       const paperCount = editorialBrief.papers?.length || 0;
-      log.success(`Brief: "${editorialBrief.title}" with ${editorialBrief.highlights.length} highlights, ${paperCount} papers`);
+      const toolCount = editorialBrief.tools?.length || 0;
+      log.success(`Brief: "${editorialBrief.title}" with ${editorialBrief.highlights.length} highlights, ${paperCount} papers, ${toolCount} tools`);
     } catch (e) {
       log.warn(`LLM failed: ${e.message}. Using fallback.`);
       editorialBrief = fallbackBrief(articles);
@@ -644,7 +769,10 @@ async function main() {
           },
         ]
       : [],
-    tools: [],
+    tools: (editorialBrief.tools || []).map((t) => ({
+      title: t.name,
+      oneLiner: t.why,
+    })),
     quickLinks: (editorialBrief.noteworthy || []).map((n) => {
       const article = articles.find((a) => a.slug === n.slug);
       return {
@@ -653,7 +781,7 @@ async function main() {
       };
     }),
   };
-  const totalCount = xhsSections.headlines.length + xhsSections.quickLinks.length;
+  const totalCount = xhsSections.headlines.length + xhsSections.tools.length + xhsSections.quickLinks.length;
   const contentXhs = formatXhsCaption(xhsSections, {
     title: editorialBrief.title,
     date: formatDateChinese(briefDate),

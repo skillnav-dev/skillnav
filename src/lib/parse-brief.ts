@@ -24,6 +24,14 @@ export interface BriefPaper {
   github_url: string | null;
 }
 
+export interface BriefTool {
+  name: string;
+  slug: string;
+  why: string;
+  install: string;
+  url: string;
+}
+
 export interface ParsedBrief {
   type: "brief";
   date: string;
@@ -31,6 +39,7 @@ export interface ParsedBrief {
   headline: BriefHeadline;
   highlights: BriefHighlight[];
   papers: BriefPaper[];
+  tools: BriefTool[];
   url: string;
   is_fallback: boolean;
 }
@@ -224,17 +233,74 @@ function parsePaperSection(contentMd: string): BriefPaper[] {
   return papers;
 }
 
+/**
+ * Parse tool recommendations from the "## 🔧 工具雷达" section.
+ *
+ * Format (from assembleMarkdown in generate-daily.mjs):
+ *   ### [ToolName](/mcp/slug)
+ *   推荐理由
+ *
+ *   安装：`install-command`
+ */
+function parseToolSection(contentMd: string): BriefTool[] {
+  const sectionMatch = contentMd.match(
+    /## 🔧 工具雷达\s*\n([\s\S]*?)(?=\n---|\n## |$)/,
+  );
+  if (!sectionMatch) return [];
+
+  const blocks = sectionMatch[1]
+    .split(/^(?=### )/m)
+    .filter((b) => b.includes("###"));
+
+  const tools: BriefTool[] = [];
+
+  for (const block of blocks) {
+    // ### [Name](/mcp/slug)
+    const linkedTitle = block.match(/###\s+\[([^\]]+)\]\(\/mcp\/([^)]+)\)/);
+    if (!linkedTitle) continue;
+
+    const name = linkedTitle[1].trim();
+    const slug = linkedTitle[2].trim();
+    const lines = block.split("\n");
+
+    let why = "";
+    let install = "";
+
+    for (const line of lines) {
+      if (line.startsWith("###")) continue;
+      const installMatch = line.match(/安装[：:]\s*`([^`]+)`/);
+      if (installMatch) {
+        install = installMatch[1];
+        continue;
+      }
+      if (line.trim() && !why) {
+        why = line.trim();
+      }
+    }
+
+    tools.push({
+      name,
+      slug,
+      why,
+      install,
+      url: `https://skillnav.dev/mcp/${slug}`,
+    });
+  }
+
+  return tools;
+}
+
 function parseContentMd(contentMd: string): {
   headline: BriefHeadline;
   highlights: BriefHighlight[];
   papers: BriefPaper[];
+  tools: BriefTool[];
 } {
-  // Strip the paper section before splitting by ### to avoid
-  // paper titles being misinterpreted as highlight entries
-  const contentWithoutPapers = contentMd.replace(
-    /## 📄 论文速递\s*\n[\s\S]*?(?=\n---|\n## |$)/,
-    "",
-  );
+  // Strip the paper and tool sections before splitting by ### to avoid
+  // their titles being misinterpreted as highlight entries
+  const contentWithoutPapers = contentMd
+    .replace(/## 📄 论文速递\s*\n[\s\S]*?(?=\n---|\n## |$)/, "")
+    .replace(/## 🔧 工具雷达\s*\n[\s\S]*?(?=\n---|\n## |$)/, "");
 
   // Split into ### blocks (entries) for headline parsing
   const entries = contentWithoutPapers
@@ -262,7 +328,10 @@ function parseContentMd(contentMd: string): {
   // Parse paper picks from ## 📄 论文速递
   const papers = parsePaperSection(contentMd);
 
-  return { headline, highlights, papers };
+  // Parse tool recommendations from ## 🔧 工具雷达
+  const tools = parseToolSection(contentMd);
+
+  return { headline, highlights, papers, tools };
 }
 
 export type BriefSection = "news" | "papers" | "tools" | undefined;
@@ -335,18 +404,22 @@ export async function getLatestBrief(
     isFallback = true;
   }
 
-  const { headline, highlights, papers } = parseContentMd(brief.content_md);
+  const { headline, highlights, papers, tools } = parseContentMd(
+    brief.content_md,
+  );
 
   // Filter by section if requested
+  const isSection = !!section;
   const result: ParsedBrief = {
     type: "brief",
     date: brief.brief_date,
     headline:
-      section === "papers"
+      isSection && section !== "news"
         ? { title: "", summary: "", why_important: "" }
         : headline,
-    highlights: section === "papers" ? [] : highlights,
-    papers: section === "news" ? [] : papers,
+    highlights: isSection && section !== "news" ? [] : highlights,
+    papers: isSection && section !== "papers" ? [] : papers,
+    tools: isSection && section !== "tools" ? [] : tools,
     url: `https://skillnav.dev/daily/${brief.brief_date}`,
     is_fallback: isFallback,
   };
