@@ -91,8 +91,8 @@ function parseSkillMd(content) {
   if (openclawBlockMatch) {
     const blockLines = openclawBlockMatch[1];
 
-    // Extract install command
-    const installMatch = blockLines.match(/[ \t]+install:\s*(.+)/);
+    // Extract install command (scalar value only, skip YAML list items)
+    const installMatch = blockLines.match(/[ \t]+install:\s*(?![-\[])(.+)/);
     if (installMatch) {
       fields.install = installMatch[1].trim().replace(/^["']|["']$/g, "");
     }

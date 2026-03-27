@@ -32,20 +32,20 @@ const LIMIT = limitIdx !== -1 ? Number(args[limitIdx + 1]) : Infinity;
 // ── Helpers ─────────────────────────────────────────────────────────
 
 /**
- * Extract owner/repo from a GitHub URL.
+ * Build install command from a GitHub URL.
+ * Supports both standalone repos and monorepo tree paths:
+ *   https://github.com/owner/repo             → claude skill add --url github.com/owner/repo
+ *   https://github.com/owner/repo/tree/main/… → claude skill add --url github.com/owner/repo/tree/main/…
  * @param {string} url
- * @returns {{ owner: string, repo: string } | null}
+ * @returns {string | null}
  */
-function extractOwnerRepo(url) {
+function buildInstallCommand(url) {
   if (!url) return null;
-  const match = url.match(
-    /github\.com\/([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+)/
-  );
+  const match = url.match(/github\.com\/(.+)/);
   if (!match) return null;
-  return {
-    owner: match[1],
-    repo: match[2].replace(/\.git$/, ""),
-  };
+  let path = match[1].replace(/\.git$/, "").replace(/\/$/, "");
+  if (!path) return null;
+  return `claude skill add --url github.com/${path}`;
 }
 
 // ── DB helpers ──────────────────────────────────────────────────────
@@ -112,14 +112,12 @@ async function main() {
       log.info(`Progress: ${i}/${skills.length} processed, ${stats.updated} updated, ${stats.errors} errors`);
     }
 
-    const parsed = extractOwnerRepo(skill.github_url);
-    if (!parsed) {
-      log.warn(`  Skip ${skill.slug}: cannot extract owner/repo from "${skill.github_url}"`);
+    const installCommand = buildInstallCommand(skill.github_url);
+    if (!installCommand) {
+      log.warn(`  Skip ${skill.slug}: cannot parse "${skill.github_url}"`);
       stats.skipped++;
       continue;
     }
-
-    const installCommand = `claude skill add --url github.com/${parsed.owner}/${parsed.repo}`;
 
     if (DRY_RUN) {
       log.info(`  [dry-run] ${skill.slug} -> ${installCommand}`);
