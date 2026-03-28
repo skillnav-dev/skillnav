@@ -1,3 +1,5 @@
+export const SKILL_VERSION = "2.0.0";
+
 export const siteConfig = {
   name: "SkillNav",
   nameZh: "SkillNav - 中文开发者的 AI 智能体工具站",

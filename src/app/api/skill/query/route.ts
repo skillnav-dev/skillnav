@@ -6,6 +6,8 @@ import {
   type BriefSection,
 } from "@/lib/parse-brief";
 import { getTrendingTools } from "@/lib/get-trending-tools";
+import { SKILL_VERSION } from "@/lib/constants";
+import { LEARN_CONCEPTS } from "@/data/learn";
 
 export const revalidate = 300; // 5 min ISR cache
 
@@ -227,6 +229,142 @@ async function handlePaper(
   });
 }
 
+async function handleSearch(
+  supabase: ReturnType<typeof createStaticClient>,
+  q: string,
+  limit: number,
+) {
+  if (!q) {
+    return errorResponse(
+      "MISSING_QUERY",
+      "Parameter q is required for type=search.",
+      400,
+    );
+  }
+
+  const pattern = `%${q}%`;
+  const qLower = q.toLowerCase();
+
+  // 1. Concepts — in-memory match (12 items)
+  const concepts = LEARN_CONCEPTS.filter(
+    (c) =>
+      c.term.toLowerCase().includes(qLower) ||
+      c.zh.includes(q) ||
+      c.oneLiner.includes(q),
+  ).map((c) => ({
+    result_type: "concept" as const,
+    term: c.term,
+    zh: c.zh,
+    one_liner: c.oneLiner,
+    url: `https://skillnav.dev/learn/what-is-${c.slug}`,
+  }));
+
+  // 2. MCP + Skills — parallel ILIKE queries
+  const [mcpRes, skillRes, articleRes] = await Promise.all([
+    supabase
+      .from("mcp_servers" as "skills")
+      .select(
+        "slug, name, name_zh, description_zh, category, editor_comment_zh, stars, install_command" as "slug",
+      )
+      .eq("status" as "slug", "published")
+      .or(
+        `name.ilike.${pattern},name_zh.ilike.${pattern},description.ilike.${pattern},description_zh.ilike.${pattern}` as string,
+      )
+      .order("stars" as "created_at", { ascending: false })
+      .limit(limit),
+    supabase
+      .from("skills")
+      .select(
+        "slug, name, name_zh, description_zh, category, editor_comment_zh, stars, install_command",
+      )
+      .eq("status", "published")
+      .or(
+        `name.ilike.${pattern},name_zh.ilike.${pattern},description.ilike.${pattern},description_zh.ilike.${pattern}`,
+      )
+      .order("stars", { ascending: false })
+      .limit(limit),
+    supabase
+      .from("articles" as "skills")
+      .select(
+        "slug, title, title_zh, summary_zh, source, reading_time_minutes, published_at" as "slug",
+      )
+      .eq("status" as "slug", "published")
+      .or(`title.ilike.${pattern},title_zh.ilike.${pattern}` as string)
+      .order("published_at" as "created_at", { ascending: false })
+      .limit(limit),
+  ]);
+
+  type ToolRow = {
+    slug: string;
+    name: string;
+    name_zh: string | null;
+    description_zh: string | null;
+    category: string | null;
+    editor_comment_zh: string | null;
+    stars: number;
+    install_command: string | null;
+  };
+  type ArticleRow = {
+    slug: string;
+    title: string;
+    title_zh: string | null;
+    summary_zh: string | null;
+    source: string | null;
+    reading_time_minutes: number | null;
+    published_at: string | null;
+  };
+
+  const mcpResults = ((mcpRes.data as unknown as ToolRow[]) ?? []).map((r) => ({
+    result_type: "mcp" as const,
+    name: r.name,
+    name_zh: r.name_zh,
+    description_zh: r.description_zh,
+    editor_comment_zh: r.editor_comment_zh,
+    stars: r.stars,
+    install_command: r.install_command,
+    url: `https://skillnav.dev/mcp/${r.slug}`,
+  }));
+
+  const skillResults = ((skillRes.data as unknown as ToolRow[]) ?? []).map(
+    (r) => ({
+      result_type: "skill" as const,
+      name: r.name,
+      name_zh: r.name_zh,
+      description_zh: r.description_zh,
+      editor_comment_zh: r.editor_comment_zh,
+      stars: r.stars,
+      install_command: r.install_command,
+      url: `https://skillnav.dev/skills/${r.slug}`,
+    }),
+  );
+
+  const articleResults = (
+    (articleRes.data as unknown as ArticleRow[]) ?? []
+  ).map((r) => ({
+    result_type: "article" as const,
+    title_zh: r.title_zh ?? r.title,
+    summary_zh: r.summary_zh,
+    source: r.source,
+    reading_time: r.reading_time_minutes,
+    url: `https://skillnav.dev/articles/${r.slug}`,
+  }));
+
+  // Merge: concept > mcp > skill > article
+  const results = [
+    ...concepts,
+    ...mcpResults,
+    ...skillResults,
+    ...articleResults,
+  ].slice(0, limit);
+
+  return NextResponse.json({
+    type: "search",
+    query: q,
+    returned: results.length,
+    results,
+  });
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const type = searchParams.get("type");
@@ -236,10 +374,11 @@ export async function GET(request: NextRequest) {
     ? 5
     : Math.min(Math.max(rawLimit, 1), 20);
 
-  if (!type || !["brief", "mcp", "trending", "paper"].includes(type)) {
+  const validTypes = ["brief", "mcp", "trending", "paper", "search"];
+  if (!type || !validTypes.includes(type)) {
     return errorResponse(
       "INVALID_TYPE",
-      "Parameter type must be one of: brief, mcp, trending, paper.",
+      `Parameter type must be one of: ${validTypes.join(", ")}.`,
       400,
     );
   }
@@ -247,26 +386,42 @@ export async function GET(request: NextRequest) {
   const supabase = createStaticClient();
 
   try {
+    let response: NextResponse;
+
     switch (type) {
       case "brief":
-        return await handleBrief(
+        response = await handleBrief(
           supabase,
           searchParams.get("section") ?? undefined,
         );
+        break;
       case "mcp":
-        return await handleMcp(supabase, q, limit);
+        response = await handleMcp(supabase, q, limit);
+        break;
       case "trending":
-        return await handleTrending(supabase, limit);
+        response = await handleTrending(supabase, limit);
+        break;
       case "paper":
-        return await handlePaper(
+        response = await handlePaper(
           supabase,
           searchParams.get("id") ?? "",
           q,
           limit,
         );
+        break;
+      case "search":
+        response = await handleSearch(supabase, q, limit);
+        break;
       default:
         return errorResponse("INVALID_TYPE", "Unknown type.", 400);
     }
+
+    // Inject meta.skill_version into all successful responses
+    const body = await response.json();
+    if (!body.error) {
+      body.meta = { ...body.meta, skill_version: SKILL_VERSION };
+    }
+    return NextResponse.json(body, { status: response.status });
   } catch (err) {
     console.error("[skill/query]", err);
     return errorResponse(

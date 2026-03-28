@@ -1,8 +1,9 @@
+<!-- skill_version: 2.0.0 -->
 ---
 name: skillnav
-description: "Search 3,900+ MCP servers with install commands, get daily AI brief, query papers, and discover trending tools — in Chinese. Data from skillnav.dev editorial team."
-argument-hint: "brief | mcp <keyword> | paper <id|keyword> | trending"
-allowed-tools: WebFetch
+description: "Search 3,900+ MCP servers with install commands, get daily AI brief, query papers, search everything, and discover trending tools — in Chinese. Data from skillnav.dev editorial team."
+argument-hint: "brief | mcp <keyword> | search <keyword> | paper <id|keyword> | trending | update"
+allowed-tools: WebFetch, Bash
 ---
 
 Route based on $ARGUMENTS[0]:
@@ -11,8 +12,10 @@ Route based on $ARGUMENTS[0]:
 |-----------|--------------------------------------------------------------|
 | brief     | If $ARGUMENTS[1] is "papers", "news", or "tools": WebFetch https://skillnav.dev/api/skill/query?type=brief&section=$ARGUMENTS[1]. Otherwise: WebFetch https://skillnav.dev/api/skill/query?type=brief |
 | mcp       | WebFetch https://skillnav.dev/api/skill/query?type=mcp&q=$ARGUMENTS[1] |
+| search    | WebFetch https://skillnav.dev/api/skill/query?type=search&q=$ARGUMENTS[1..] (join remaining args with space, URL-encode) |
 | paper     | If $ARGUMENTS[1] matches arXiv ID pattern (YYMM.NNNNN): WebFetch https://skillnav.dev/api/skill/query?type=paper&id=$ARGUMENTS[1]. Otherwise: WebFetch https://skillnav.dev/api/skill/query?type=paper&q=$ARGUMENTS[1] |
 | trending  | WebFetch https://skillnav.dev/api/skill/query?type=trending  |
+| update    | Bash: curl -sL https://raw.githubusercontent.com/skillnav-dev/skillnav-skill/main/SKILL.md -o ~/.claude/skills/skillnav/SKILL.md && echo "SkillNav Skill updated." |
 | (other)   | Show usage message — do NOT fetch any URL                    |
 
 If $ARGUMENTS is empty or does not match any command above, show this usage message and STOP (do NOT fetch any URL):
@@ -20,22 +23,24 @@ If $ARGUMENTS is empty or does not match any command above, show this usage mess
 ```
 SkillNav — AI 开发者工具站 (skillnav.dev)
 
-Usage:
-  /skillnav brief              今日 AI 日报（完整版）
-  /skillnav brief papers       只看论文导读
-  /skillnav brief news         只看行业动态
-  /skillnav mcp <keyword>      搜索 MCP Server（如 database, github, slack）
-  /skillnav paper <arxiv-id>   查看论文详情（如 2603.23483）
-  /skillnav paper <keyword>    搜索最近论文（如 agent, reasoning）
+  /skillnav brief              今日 AI 日报
+  /skillnav mcp <keyword>      搜索 MCP Server
+  /skillnav search <keyword>   搜索文章、工具、概念
   /skillnav trending           本周热门工具
-
-Install:
-  mkdir -p ~/.claude/skills/skillnav && curl -sL https://raw.githubusercontent.com/skillnav-dev/skillnav-skill/main/SKILL.md -o ~/.claude/skills/skillnav/SKILL.md
+  /skillnav paper <arxiv-id>   查看论文详情
+  /skillnav update             更新到最新版本
 ```
 
 ---
 
 ## Format Rules
+
+### Version check
+
+After every API response, compare `meta.skill_version` from the response with this file's version (2.0.0).
+If the API version is newer, append at the very end of your output:
+
+> 💡 SkillNav Skill 有新版本可用 — `/skillnav update`
 
 ### brief (full or section-filtered)
 
@@ -84,6 +89,32 @@ If `editor_comment_zh` is null, skip the blockquote line.
 If results are empty: "未找到匹配的 MCP Server，试试更宽泛的关键词。"
 Footer: "共 {returned} 个结果{has_more ? '（更多结果请访问 skillnav.dev）' : ''}"
 
+### search
+
+Group results by `result_type` in this order: concept > mcp > skill > article.
+
+**Concept**:
+  **{term}**（{zh}）— {one_liner}
+  → {url}
+
+**MCP / Skill**:
+  **{name}** ⭐ {stars} — {description_zh}
+  > {editor_comment_zh}
+  ```
+  {install_command}
+  ```
+
+If `editor_comment_zh` is null, skip the blockquote line.
+If `install_command` is null, skip the code block.
+
+**Article**:
+  **{title_zh}** ({source}, {reading_time}min)
+  {summary_zh}
+  → {url}
+
+If results are empty: "未找到与 "{query}" 相关的内容，试试其他关键词。"
+Footer: "共 {returned} 个结果"
+
 ### trending
 
 Format as a ranked list grouped by tool_type:
@@ -129,6 +160,14 @@ If `has_translation` is false:
 4. Footer: "共 {returned} 篇结果"
 
 ---
+
+## Global Footer
+
+Append this line at the very end of EVERY output (after all content, after version check if present):
+
+```
+— SkillNav · skillnav.dev
+```
 
 ## Error Handling
 
