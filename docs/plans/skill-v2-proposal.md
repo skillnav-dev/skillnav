@@ -1,7 +1,8 @@
 # SkillNav Skill v2 方案
 
-Status: draft
+Status: active
 Date: 2026-03-26
+Progress: 5/9 (Wave 1 done, Wave 2 pending)
 Research: 5-agent parallel (openclaw/competitor/update/ux/data)
 
 ## 问题
@@ -213,15 +214,15 @@ Footer: "— SkillNav · skillnav.dev"
 
 ## 实施清单
 
-### Wave 1：Skill 本体升级（1 session）
+### Wave 1：Skill 本体升级 ✅ (2026-03-28)
 
-| # | 任务 | 文件 |
-|---|------|------|
-| 1 | API: 所有响应加 meta.skill_version | `src/app/api/skill/query/route.ts` + `src/lib/constants.ts` |
-| 2 | API: 新增 type=search 统一搜索 | `src/app/api/skill/query/route.ts` |
-| 3 | SKILL.md: 加版本注释、update 命令、search 命令、品牌 footer、优化帮助文本 | `skills/skillnav/SKILL.md` |
-| 4 | 同步 GitHub 仓库 skillnav-skill | push SKILL.md |
-| 5 | 本地安装验证 | 测试 5 个命令 + 版本提示 |
+| # | 任务 | 文件 | 状态 |
+|---|------|------|------|
+| 1 | API: 所有响应加 meta.skill_version | `src/app/api/skill/query/route.ts` + `src/lib/constants.ts` | ✅ |
+| 2 | API: 新增 type=search 统一搜索 | `src/app/api/skill/query/route.ts` | ✅ |
+| 3 | SKILL.md: 加版本注释、update 命令、search 命令、品牌 footer、优化帮助文本 | `skills/skillnav/SKILL.md` | ✅ |
+| 4 | 同步 GitHub 仓库 skillnav-skill | push SKILL.md `9cf3820` | ✅ |
+| 5 | 线上验证 | search + meta.skill_version 全部通过 | ✅ |
 
 ### Wave 2：分发上架（1 session）
 
