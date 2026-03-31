@@ -2,8 +2,16 @@
 ---
 name: skillnav
 description: "Search 3,900+ MCP servers with install commands, get daily AI brief, query papers, search everything, and discover trending tools — in Chinese. Data from skillnav.dev editorial team."
+version: 2.0.0
 argument-hint: "brief | mcp <keyword> | search <keyword> | paper <id|keyword> | trending | update"
 allowed-tools: WebFetch, Bash
+metadata:
+  openclaw:
+    emoji: "🧭"
+    homepage: https://github.com/skillnav-dev/skillnav-skill
+    requires:
+      bins:
+        - curl
 ---
 
 Route based on $ARGUMENTS[0]:

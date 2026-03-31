@@ -1,27 +1,23 @@
 # HANDOFF
-<!-- /checkpoint at 2026-03-28 -->
+<!-- /checkpoint at 2026-03-31 -->
 
 ## Active Plan
-Skill v2 — `docs/plans/skill-v2-proposal.md`（5/9, 56%）
+Skill v2 — `docs/plans/skill-v2-proposal.md`（7/9, 78%）
 
 ## Session Tasks
-- [x] MCP install_command 脏数据清理（135 条）+ 回填（1338 条）
-- [x] `backfill-install-command.mjs` 支持 monorepo URL
-- [x] `sync-clawhub.mjs` install 正则修复
-- [x] W1.1: SKILL_VERSION 常量 + meta wrapper → `src/lib/constants.ts` + `route.ts`
-- [x] W1.2: type=search 统一搜索 API → `src/app/api/skill/query/route.ts`
-- [x] W1.3: SKILL.md v2.0.0（search/update/footer/version check）
-- [x] W1.4: 推送 skillnav-skill repo `9cf3820` + 线上验证通过
-- [x] MCP 第二次快照（5440 snapshots，下周再跑一次有 trending delta）
+- [x] ClawHub 发布 `skillnav@2.0.0` via `clawhub publish`
+- [x] awesome-claude-code-toolkit PR#157 提交
+- [x] Failover 逻辑修复：新增 dry pipeline 检测 → `scripts/failover-check.mjs`
+- [x] 本地补采 + 72h 日报生成（3/31 期 draft）
 
 ## Key Files
-- `src/app/api/skill/query/route.ts` — 新增 type=search + meta.skill_version wrapper
-- `src/lib/constants.ts` — SKILL_VERSION = "2.0.0"
-- `skills/skillnav/SKILL.md` — v2.0.0 (6 commands)
-- `scripts/backfill-install-command.mjs` — buildInstallCommand() 支持 monorepo
-- `scripts/sync-clawhub.mjs` — install 正则收紧
+- `skills/skillnav/SKILL.md` — 补全 ClawHub frontmatter (version, emoji, homepage, requires)
+- `scripts/failover-check.mjs` — 新增 Check 2: dry pipeline 检测 (24h/3 runs/0 inserted)
+- `docs/troubleshooting/2026-03-30-dry-pipeline.md` — 断更根因分析 + 修复记录
 
 ## Next Actions
-- [ ] Skill v2 Wave 2: 分发上架 → `docs/plans/skill-v2-proposal.md` Wave 2 章节
-- [ ] 下周跑 `node scripts/refresh-tool-metadata.mjs --snapshot` 产出 MCP trending delta
+- [ ] Skill v2 W2: 写掘金文章 "在 Claude Code 中搜索 3900+ MCP Server"
+- [ ] Skill v2 W2: X @skillnav_dev 公告推文
+- [ ] awesome 列表: VoltAgent / travisvn 待 skillnav-skill 积累 ≥10 stars 后提交
+- [ ] 跑 MCP trending 第二次快照 `node scripts/refresh-tool-metadata.mjs --snapshot`
 - [ ] 4/23 Paper Channel Go/Hold/Kill 评估

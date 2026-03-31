@@ -2,7 +2,7 @@
 
 Status: active
 Date: 2026-03-26
-Progress: 5/9 (Wave 1 done, Wave 2 pending)
+Progress: 7/9 (Wave 1 done, Wave 2 in progress)
 Research: 5-agent parallel (openclaw/competitor/update/ux/data)
 
 ## 问题
@@ -224,14 +224,14 @@ Footer: "— SkillNav · skillnav.dev"
 | 4 | 同步 GitHub 仓库 skillnav-skill | push SKILL.md `9cf3820` | ✅ |
 | 5 | 线上验证 | search + meta.skill_version 全部通过 | ✅ |
 
-### Wave 2：分发上架（1 session）
+### Wave 2：分发上架
 
-| # | 任务 |
-|---|------|
-| 1 | Fork openclaw/clawhub，提交 PR |
-| 2 | 提交 awesome 列表 PR（3 个） |
-| 3 | 写掘金文章 |
-| 4 | X 公告推文 |
+| # | 任务 | 状态 |
+|---|------|------|
+| 1 | ClawHub 发布 `skillnav@2.0.0` | ✅ `clawhub publish` → clawhub.ai/HuiW86/skillnav |
+| 2 | 提交 awesome 列表 PR（3 个） | 🔶 1/3: rohitg00/awesome-claude-code-toolkit#157 已提交；VoltAgent(需归档+用户量) / travisvn(需≥10 stars) 暂缓 |
+| 3 | 写掘金文章 | |
+| 4 | X 公告推文 | |
 
 ## 成功指标
 

@@ -69,6 +69,9 @@ python3 -m http.server 8765 --directory scripts/templates &  # Serve card templa
 $B goto http://localhost:8765/daily-card.html                 # Render in browser
 $B screenshot --clip 0,0,1080,1350 xhs-1.png                 # Capture XHS cards (6 total)
 $B screenshot --clip 0,8240,1080,608 wechat-header.png        # Capture WeChat header
+
+# ClawHub skill publishing
+clawhub publish skills/skillnav/ --slug skillnav --version X.Y.Z --tags latest --changelog "..."
 ```
 
 ## Development Conventions
