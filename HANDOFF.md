@@ -1,23 +1,24 @@
 # HANDOFF
-<!-- /checkpoint at 2026-03-31 -->
+<!-- /checkpoint at 2026-04-01 -->
 
 ## Active Plan
 Skill v2 — `docs/plans/skill-v2-proposal.md`（7/9, 78%）
 
 ## Session Tasks
-- [x] ClawHub 发布 `skillnav@2.0.0` via `clawhub publish`
-- [x] awesome-claude-code-toolkit PR#157 提交
-- [x] Failover 逻辑修复：新增 dry pipeline 检测 → `scripts/failover-check.mjs`
-- [x] 本地补采 + 72h 日报生成（3/31 期 draft）
+- [x] 扩展 translate-paper.mjs 支持 `--local <pdf> --arxiv-id <id>`
+- [x] 修复 5 个 bug（arXiv https、pdf-parse v2、fetch try-catch、Unicode、图片丢失）
+- [x] 4-agent 调研论文翻译最佳实践 → `docs/research/2026-04-01-arxiv-paper-translation.md`
+- [x] 改进 ar5iv 解析保留图片/公式（`toMarkdown()`）+ 翻译 prompt
+- [x] 翻译 5 篇具身智能论文，OpenVLA 改进版效果好
+- [ ] 剩余 4 篇用改进版重翻 → `node scripts/translate-paper.mjs <arxiv-id>`
 
 ## Key Files
-- `skills/skillnav/SKILL.md` — 补全 ClawHub frontmatter (version, emoji, homepage, requires)
-- `scripts/failover-check.mjs` — 新增 Check 2: dry pipeline 检测 (24h/3 runs/0 inserted)
-- `docs/troubleshooting/2026-03-30-dry-pipeline.md` — 断更根因分析 + 修复记录
+- `scripts/translate-paper.mjs` — 论文翻译（本次：本地 PDF、ar5iv 图片、新 prompt）
+- `docs/research/2026-04-01-arxiv-paper-translation.md` — 翻译调研报告
+- `docs/troubleshooting/2026-04-01-translate-paper-bugs.md` — 5 个 bug 记录
 
 ## Next Actions
-- [ ] Skill v2 W2: 写掘金文章 "在 Claude Code 中搜索 3900+ MCP Server"
-- [ ] Skill v2 W2: X @skillnav_dev 公告推文
-- [ ] awesome 列表: VoltAgent / travisvn 待 skillnav-skill 积累 ≥10 stars 后提交
-- [ ] 跑 MCP trending 第二次快照 `node scripts/refresh-tool-metadata.mjs --snapshot`
-- [ ] 4/23 Paper Channel Go/Hold/Kill 评估
+- [ ] 重翻 4 篇 PDF 版本（RT-2/VideoGen/NavFoM/3DLLM-Mem），先删旧记录
+- [ ] 评估 LaTeX 源码提取（Phase 2）和 Claude Sonnet 翻译（Phase 3）
+- [ ] Skill v2 W2: 掘金文章 + X 公告推文
+- [ ] MCP trending 第二次快照 `node scripts/refresh-tool-metadata.mjs --snapshot`

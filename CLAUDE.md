@@ -59,6 +59,8 @@ node scripts/publish-daily.mjs --channel rss             # Publish to specific c
 # Paper translation
 node scripts/translate-paper.mjs 2603.23483              # Translate arXiv paper → articles table (draft)
 node scripts/translate-paper.mjs 2603.23483 --dry-run    # Preview without DB write
+node scripts/translate-paper.mjs --local paper.pdf --arxiv-id 2307.15818          # Local PDF with arXiv metadata
+node scripts/translate-paper.mjs --local paper.pdf --arxiv-id 2307.15818 --dry-run
 
 # Pipeline health & failover
 node scripts/failover-check.mjs                          # Check pipeline freshness, auto-collect if >36h stale
