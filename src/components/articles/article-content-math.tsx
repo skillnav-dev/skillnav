@@ -1,5 +1,3 @@
-"use client";
-
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
@@ -8,23 +6,11 @@ import rehypeKatex from "rehype-katex";
 import "katex/dist/katex.min.css";
 import { CodeBlock } from "@/components/shared/code-block";
 
-interface ArticlePreviewProps {
+interface Props {
   content: string;
 }
 
-/**
- * Markdown preview panel for article editor.
- * Reuses the same ReactMarkdown config as the public article page.
- */
-export function ArticlePreview({ content }: ArticlePreviewProps) {
-  if (!content.trim()) {
-    return (
-      <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-        在左侧编辑区输入内容后，这里会实时预览
-      </div>
-    );
-  }
-
+export default function MathArticleContent({ content }: Props) {
   return (
     <div className="prose prose-neutral dark:prose-invert max-w-none leading-relaxed">
       <ReactMarkdown

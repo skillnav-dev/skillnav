@@ -29,6 +29,9 @@ interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
+export const dynamicParams = true;
+export const revalidate = 86400; // 24h ISR
+
 export async function generateStaticParams() {
   const slugs = await getAllSkillSlugs();
   return slugs.map((slug) => ({ slug }));
@@ -218,7 +221,9 @@ export default async function SkillDetailPage({ params }: PageProps) {
       {related.length > 0 && (
         <section className="border-t border-border/40">
           <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-            <h2 className="mb-6 text-xl font-bold tracking-tight">相关 Skills</h2>
+            <h2 className="mb-6 text-xl font-bold tracking-tight">
+              相关 Skills
+            </h2>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {related.map((s) => (
                 <SkillCard key={s.id} skill={s} />
@@ -231,7 +236,9 @@ export default async function SkillDetailPage({ params }: PageProps) {
       {relatedMcp.length > 0 && (
         <section className="border-t border-border/40">
           <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-            <h2 className="mb-6 text-xl font-bold tracking-tight">相关 MCP 服务</h2>
+            <h2 className="mb-6 text-xl font-bold tracking-tight">
+              相关 MCP 服务
+            </h2>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {relatedMcp.map((s) => (
                 <MCPCard key={s.id} server={s} />

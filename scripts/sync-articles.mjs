@@ -299,10 +299,31 @@ async function extractContent(url) {
   const article = reader.parse();
   if (!article) return null;
   return {
-    content: turndown.turndown(article.content),
+    content: stripBoilerplate(turndown.turndown(article.content)),
     excerpt: article.excerpt,
     coverImage,
   };
+}
+
+/**
+ * Strip common newsletter/blog boilerplate that Readability fails to remove.
+ * Targets: subscribe forms, "follow us" CTAs, share buttons, footer nags.
+ */
+function stripBoilerplate(md) {
+  // Patterns that signal end-of-article boilerplate (case-insensitive)
+  const tailPatterns = [
+    /\n#{1,4}\s*(Subscribe|订阅|Sign up|Newsletter).*/i,
+    /\n\*{0,2}(Subscribe to|Sign up for|Get the latest|Stay updated|How to follow|如何跟进).*/i,
+    /\nEnter your email.*/i,
+    /\n输入.{0,6}邮箱.*/i,
+  ];
+  for (const pat of tailPatterns) {
+    const match = md.search(pat);
+    if (match !== -1 && match > md.length * 0.6) {
+      md = md.slice(0, match).trimEnd();
+    }
+  }
+  return md;
 }
 
 /**

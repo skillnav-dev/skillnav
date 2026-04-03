@@ -55,6 +55,9 @@ interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
+export const dynamicParams = true;
+export const revalidate = 3600; // 1h ISR
+
 export async function generateStaticParams() {
   const slugs = await getAllArticleSlugs();
   return slugs.map((slug) => ({ slug }));
@@ -248,7 +251,9 @@ export default async function ArticlePage({ params }: PageProps) {
         return (
           <section className="border-t border-border/40">
             <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
-              <h2 className="mb-6 text-xl font-bold tracking-tight">概念速查</h2>
+              <h2 className="mb-6 text-xl font-bold tracking-tight">
+                概念速查
+              </h2>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {matched.map((c) => (
                   <Link

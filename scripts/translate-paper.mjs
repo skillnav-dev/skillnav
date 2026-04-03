@@ -445,6 +445,7 @@ function generateSlug(title, id) {
 async function main() {
   const args = process.argv.slice(2);
   const dryRun = args.includes("--dry-run");
+  const forceOverwrite = args.includes("--force");
   const localIdx = args.indexOf("--local");
   const arxivIdx = args.indexOf("--arxiv-id");
   const isLocal = localIdx !== -1;
@@ -625,17 +626,28 @@ async function main() {
     .eq("source_url", sourceUrl)
     .limit(1);
 
-  if (existing?.length) {
+  if (existing?.length && !forceOverwrite) {
     log.warn(`Paper already exists: ${existing[0].slug} (id: ${existing[0].id})`);
-    log.warn("Use the admin UI to update existing translations.");
+    log.warn("Use --force to overwrite existing translation.");
     return;
   }
 
-  const { data, error } = await supabase
-    .from("articles")
-    .insert(record)
-    .select("id, slug")
-    .single();
+  let data, error;
+  if (existing?.length && forceOverwrite) {
+    log.info(`Overwriting existing: ${existing[0].slug} (id: ${existing[0].id})`);
+    ({ data, error } = await supabase
+      .from("articles")
+      .update(record)
+      .eq("id", existing[0].id)
+      .select("id, slug")
+      .single());
+  } else {
+    ({ data, error } = await supabase
+      .from("articles")
+      .insert(record)
+      .select("id, slug")
+      .single());
+  }
 
   if (error) {
     log.error(`Insert failed: ${error.message}`);

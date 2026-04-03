@@ -10,6 +10,8 @@ import { NewsletterCta } from "@/components/home/newsletter-cta";
 import { WebsiteJsonLd } from "@/components/shared/json-ld";
 import { getFeaturedSkills, getFeaturedMcpServers } from "@/lib/data";
 
+export const revalidate = 3600; // 1h ISR
+
 export const metadata: Metadata = {
   alternates: {
     canonical: siteConfig.url,

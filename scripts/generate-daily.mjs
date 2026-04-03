@@ -559,21 +559,19 @@ function assembleMarkdown(editorialBrief, articles, briefDate) {
     lines.push("");
 
     for (const paper of editorialBrief.papers) {
-      const orgTag = paper.org ? ` · ${paper.org}` : "";
       const trackedUrl = `https://skillnav.dev/go/paper/${paper.id}`;
-      const githubLink = paper.github_url ? ` · [GitHub](${paper.github_url})` : "";
+      const githubLink = paper.github_url ? ` · [代码](${paper.github_url})` : "";
 
       lines.push(`### ${paper.title_zh}`);
-      lines.push(`> ${orgTag ? paper.org : ""}${orgTag ? " · " : ""}${paper.attitude}${githubLink ? " · 代码已开源" : ""}`);
+      lines.push(`\`${paper.attitude}\`${paper.org ? ` · ${paper.org}` : ""}${githubLink}`);
       lines.push("");
-      lines.push(`**做了什么**：${paper.what}`);
+      lines.push(paper.what);
       lines.push("");
-      lines.push(`**对你意味着什么** | ${paper.attitude}`);
-      lines.push(paper.implication);
-      lines.push("");
-      lines.push(`**趋势**：${paper.trend}`);
-      lines.push("");
-      lines.push(`→ [arXiv](${trackedUrl})${githubLink}`);
+      if (paper.implication) {
+        lines.push(`💡 ${paper.implication}`);
+        lines.push("");
+      }
+      lines.push(`→ [arXiv](${trackedUrl})`);
       lines.push("");
     }
   }
@@ -620,10 +618,10 @@ async function main() {
     return new Date(cst.toISOString().slice(0, 10));
   }
   const briefDate = dateStr ? new Date(dateStr) : todayCST();
+  // until = end of briefDate in CST (23:59:59 CST = 15:59:59 UTC)
   const until = new Date(briefDate);
-  until.setHours(23, 59, 59, 999);
-  const since = new Date(until);
-  since.setHours(since.getHours() - lookbackHours);
+  until.setUTCHours(15, 59, 59, 999); // CST 23:59:59
+  const since = new Date(until.getTime() - lookbackHours * 3600 * 1000);
 
   // Daily brief is a lightweight task — use a fast provider instead of GPT-5.4
   if (!process.env.LLM_PROVIDER) {
