@@ -59,6 +59,7 @@ node scripts/publish-daily.mjs --channel rss             # Publish to specific c
 # Paper translation
 node scripts/translate-paper.mjs 2603.23483              # Translate arXiv paper → articles table (draft)
 node scripts/translate-paper.mjs 2603.23483 --dry-run    # Preview without DB write
+node scripts/translate-paper.mjs 2603.23483 --force       # Overwrite existing translation
 node scripts/translate-paper.mjs --local paper.pdf --arxiv-id 2307.15818          # Local PDF with arXiv metadata
 node scripts/translate-paper.mjs --local paper.pdf --arxiv-id 2307.15818 --dry-run
 
@@ -241,6 +242,9 @@ deps — Dependencies      | config — Configuration     | dx — Dev experienc
 - shadcn/ui components must be installed before import: `npx shadcn@latest add <component>`
 - Next.js 15 uses async `params` in dynamic routes — destructure with `await` in server components
 - Tailwind v4 uses CSS-based config (`@theme` in globals.css), not `tailwind.config.ts`
+- `Date.setHours()` operates in UTC when Date is from `toISOString().slice()` — use `setUTCHours()` for CST conversion (CST 23:59 = UTC 15:59)
+- New SSR pages MUST set `export const revalidate` — without it, CF Worker renders on every request → 1102 errors
+- Heavy client-only libraries (KaTeX, chart libs) must use `lazy()` / dynamic import — never import at top level in server components
 
 ## Documentation Rules
 

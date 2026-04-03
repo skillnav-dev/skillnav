@@ -344,6 +344,15 @@ Skill 套件(变现) ← 不变
 - 每周一：聚类 + 微调 prompt（15 分钟）
 - 每月：进化回顾（30 分钟）
 
+**M3 进展（2026-04-02）**：
+- [x] 4 篇具身智能论文用改进版重翻（RT-2/VideoGen/NavFoM/3DLLM-Mem）
+- [x] `translate-paper.mjs` 新增 `--force` 覆盖已有记录
+- [x] 日报论文格式优化：attitude 标签去重，去掉冗余小标题
+- [x] 日报时区 bug 修复（`setHours` → `setUTCHours`）
+- [ ] LaTeX 源码提取（Phase 2）评估
+- [ ] Claude Sonnet 高价值论文翻译（Phase 3）评估
+- [ ] 4/23 综合评估：Go/Hold/Kill
+
 ### 时间线
 
 ```
