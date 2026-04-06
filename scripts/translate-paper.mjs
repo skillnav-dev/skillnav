@@ -196,6 +196,12 @@ async function fetchAr5ivHtml(arxivId) {
     return null;
   }
 
+  // Strip bare BibTeX citation keys (e.g. "roberts2021hypersim", "li2021openrooms ; zhu2022learning")
+  // These appear when ar5iv renders \cite{} as link text = citation key
+  for (const s of sections) {
+    s.text = s.text.replace(/\s+[a-z]+\d{4}[a-z][a-z0-9+]*(?:\s*[;,]\s*[a-z]+\d{4}[a-z][a-z0-9+]*)*/g, "");
+  }
+
   const totalChars = sections.reduce((sum, s) => sum + s.text.length, 0);
   const figCount = sections.reduce((sum, s) => sum + (s.text.match(/!\[/g) || []).length, 0);
   const eqCount = sections.reduce((sum, s) => sum + (s.text.match(/\$\$/g) || []).length / 2, 0);
@@ -276,7 +282,12 @@ async function fetchPdfText(arxivId) {
       sections.push({ heading: `Pages ${startPage}-${pageTexts.length}`, text: chunk.trim() });
     }
 
-    return sections.length ? sections : [{ heading: "", text: fullText }];
+    const result = sections.length ? sections : [{ heading: "", text: fullText }];
+    // Strip bare BibTeX citation keys from PDF text
+    for (const s of result) {
+      s.text = s.text.replace(/\s+[a-z]+\d{4}[a-z][a-z0-9+]*(?:\s*[;,]\s*[a-z]+\d{4}[a-z][a-z0-9+]*)*/g, "");
+    }
+    return result;
   } catch (e) {
     log.warn(`PDF parse failed: ${e.message}`);
     return null;
