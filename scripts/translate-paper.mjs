@@ -670,8 +670,8 @@ async function main() {
   const paperMeta = await generatePaperMeta(meta.title, meta.abstract, meta.authors);
   log.info(`Title (zh): ${paperMeta.title_zh}`);
 
-  // Sanitize text for PostgreSQL (remove null bytes and unsupported Unicode escapes)
-  const sanitize = (s) => (s ? s.replace(/\u0000/g, "").replace(/\\u0000/g, "") : s);
+  // Sanitize text for PostgreSQL (remove null bytes, unsupported Unicode, and \r\n)
+  const sanitize = (s) => (s ? s.replace(/\u0000/g, "").replace(/\\u0000/g, "").replace(/\r\n/g, "\n") : s);
 
   // Step 5: Build record
   const sourceUrl = arxivId ? `https://arxiv.org/abs/${arxivId}` : null;

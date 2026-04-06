@@ -30,7 +30,12 @@ type ArticleContentProps =
   | { content: string; slug?: never }
   | { slug: string; content?: never };
 
-function MarkdownRenderer({ content }: { content: string }) {
+function MarkdownRenderer({ content: rawContent }: { content: string }) {
+  // Normalize \r\n to \n — remark-math fails to parse $$ blocks with \r\n
+  const content = useMemo(
+    () => rawContent.replace(/\r\n/g, "\n"),
+    [rawContent],
+  );
   const hasMath = useMemo(() => /\$[\s\S]+?\$/.test(content), [content]);
 
   if (hasMath) {
@@ -102,7 +107,11 @@ async function fetchArticleContent(
   const rows = await res.json();
   if (!rows.length) throw new Error("not found");
 
-  const content = rows[0].content_zh ?? rows[0].content ?? "";
+  // Normalize \r\n to \n — remark-math fails to parse $$ blocks with \r\n
+  const content = (rows[0].content_zh ?? rows[0].content ?? "").replace(
+    /\r\n/g,
+    "\n",
+  );
   return { content, hasMath: /\$[\s\S]+?\$/.test(content) };
 }
 

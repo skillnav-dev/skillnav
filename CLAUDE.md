@@ -68,6 +68,10 @@ node scripts/translate-paper.mjs 2603.23483 --force       # Overwrite existing t
 node scripts/translate-paper.mjs --local paper.pdf --arxiv-id 2307.15818          # Local PDF with arXiv metadata
 node scripts/translate-paper.mjs --local paper.pdf --arxiv-id 2307.15818 --dry-run
 
+# Auto-translate checked radar papers (scans [x] in ~/Vault/知识库/AI/论文雷达/)
+node scripts/auto-translate-radar.mjs                    # Translate all checked papers not yet in DB
+node scripts/auto-translate-radar.mjs --dry-run          # Preview without translating
+
 # Pipeline health & failover
 node scripts/failover-check.mjs                          # Check pipeline freshness, auto-collect if >36h stale
 curl https://skillnav.dev/api/health                     # Check pipeline health (ok/stale)
@@ -256,6 +260,7 @@ deps — Dependencies      | config — Configuration     | dx — Dev experienc
 - `getArticleBySlug` does NOT select content/content_zh — article content loads client-side via Supabase REST API to avoid CF Worker CPU timeout. Never re-add `content` to the server query
 - ar5iv image paths are relative (e.g. `2604.01658v1/x2.png`), base URL must be `https://arxiv.org/html` (not `https://arxiv.org/html/${arxivId}`) — see `translate-paper.mjs` line 91
 - ISR caching requires R2 bucket + Durable Object bindings in `wrangler.jsonc` + `open-next.config.ts` — without these, `revalidate` is ignored and every request re-renders
+- DB content may contain `\r\n` (from LLM output or external sources) — `remark-math` fails to parse multiline `$$` blocks with `\r\n`. Sanitize at write time (`translate-paper.mjs`) and normalize at render time (`article-content.tsx`)
 
 ## Documentation Rules
 
