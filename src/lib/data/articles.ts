@@ -153,6 +153,7 @@ export async function getArticlesWithCount(options?: {
   offset?: number;
   category?: string;
   source?: string;
+  excludeSource?: string;
   search?: string;
   sort?: string;
   contentTier?: string;
@@ -167,6 +168,9 @@ export async function getArticlesWithCount(options?: {
     }
     if (options?.source) {
       results = results.filter((a) => a.source === options.source);
+    }
+    if (options?.excludeSource) {
+      results = results.filter((a) => a.source !== options.excludeSource);
     }
     if (options?.contentTier) {
       results = results.filter((a) => a.contentTier === options.contentTier);
@@ -202,6 +206,8 @@ export async function getArticlesWithCount(options?: {
 
   if (options?.category) query = query.eq("article_type", options.category);
   if (options?.source) query = query.eq("source", options.source);
+  if (options?.excludeSource)
+    query = query.neq("source", options.excludeSource);
   if (options?.contentTier)
     query = query.eq("content_tier", options.contentTier);
   if (options?.search) {
@@ -209,6 +215,48 @@ export async function getArticlesWithCount(options?: {
       `title.ilike.%${options.search}%,title_zh.ilike.%${options.search}%`,
     );
   }
+  if (options?.limit) {
+    const start = options.offset ?? 0;
+    query = query.range(start, start + options.limit - 1);
+  }
+
+  const { data, count, error } = await query;
+  if (error) throw error;
+  return {
+    articles: (data ?? []).map(mapArticleRow),
+    total: count ?? 0,
+  };
+}
+
+/**
+ * Get papers (source='arxiv') with total count for paginated listing.
+ */
+export async function getPapersWithCount(options?: {
+  limit?: number;
+  offset?: number;
+}): Promise<{ articles: Article[]; total: number }> {
+  if (!isSupabaseConfigured()) {
+    const { mockArticles } = await import("@/data/mock-articles");
+    const results = mockArticles.filter((a) => a.source === "arxiv");
+    const total = results.length;
+    const start = options?.offset ?? 0;
+    const sliced = options?.limit
+      ? results.slice(start, start + options.limit)
+      : results;
+    return { articles: sliced, total };
+  }
+
+  const { createServerClient } = await import("@/lib/supabase/server");
+  const { mapArticleRow } = await import("@/lib/supabase/mappers");
+  const supabase = await createServerClient();
+
+  let query = supabase
+    .from("articles")
+    .select("*", { count: "exact" })
+    .eq("status", "published")
+    .eq("source", "arxiv")
+    .order("published_at", { ascending: false });
+
   if (options?.limit) {
     const start = options.offset ?? 0;
     query = query.range(start, start + options.limit - 1);

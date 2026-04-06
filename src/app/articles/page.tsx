@@ -61,6 +61,7 @@ export default async function ArticlesPage({ searchParams }: PageProps) {
       source: source || undefined,
       search: q || undefined,
       sort: sort || undefined,
+      excludeSource: "arxiv",
     }),
   ]);
 
@@ -95,6 +96,7 @@ export default async function ArticlesPage({ searchParams }: PageProps) {
             source={source}
             sort={sort}
             page={page}
+            excludeSource="arxiv"
           />
         </Suspense>
       </div>

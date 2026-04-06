@@ -10,6 +10,7 @@ interface ArticlesGridProps {
   source: string;
   sort: string;
   page: number;
+  excludeSource?: string;
 }
 
 function buildPageUrl(
@@ -36,6 +37,7 @@ export async function ArticlesGrid({
   source,
   sort,
   page,
+  excludeSource,
 }: ArticlesGridProps) {
   const validPage = Math.max(1, page);
   const offset = (validPage - 1) * ARTICLES_PAGE_SIZE;
@@ -45,6 +47,7 @@ export async function ArticlesGrid({
     offset,
     category: category || undefined,
     source: source || undefined,
+    excludeSource,
     search: q || undefined,
     sort: sort || undefined,
   });

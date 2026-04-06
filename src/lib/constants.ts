@@ -20,6 +20,7 @@ export const navItems = [
   { title: "周刊", href: "/weekly" },
   { title: "专栏", href: "/guides" },
   { title: "资讯", href: "/articles" },
+  { title: "论文", href: "/papers" },
   { title: "学习", href: "/learn" },
   { title: "关于", href: "/about" },
 ] as const;
@@ -33,6 +34,7 @@ export const footerLinks = {
       { title: "日报", href: "/daily" },
       { title: "专栏", href: "/guides" },
       { title: "资讯", href: "/articles" },
+      { title: "论文", href: "/papers" },
       { title: "学习中心", href: "/learn" },
     ],
   },

@@ -25,6 +25,7 @@ export type ArticleSource =
   | "latent-space"
   | "ai-coding-daily"
   | "thenewstack"
+  | "arxiv"
   | "manual"
   | "other";
 export type ContentTier = "editorial" | "translated";
