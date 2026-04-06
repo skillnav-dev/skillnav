@@ -139,6 +139,7 @@ function LazyContent({ slug }: { slug: string }) {
   }, [slug]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- setState is in async .then(), not synchronous
     return fetchContent();
   }, [fetchContent]);
 
