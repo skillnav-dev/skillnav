@@ -30,12 +30,20 @@ type ArticleContentProps =
   | { content: string; slug?: never }
   | { slug: string; content?: never };
 
+// Convert inline multiline $$...$$ to fenced format ($$\n...\n$$).
+// remark-math treats \\ + newline as a markdown hard break, splitting the
+// math block. Fenced format avoids this because $$ is on its own line.
+function normalizeMath(s: string): string {
+  return s
+    .replace(/\r\n/g, "\n")
+    .replace(/\$\$(.+[\s\S]*?)\$\$/g, (match, inner) => {
+      if (!inner.includes("\n")) return match; // single-line, keep as-is
+      return `$$\n${inner.trim()}\n$$`;
+    });
+}
+
 function MarkdownRenderer({ content: rawContent }: { content: string }) {
-  // Normalize \r\n to \n — remark-math fails to parse $$ blocks with \r\n
-  const content = useMemo(
-    () => rawContent.replace(/\r\n/g, "\n"),
-    [rawContent],
-  );
+  const content = useMemo(() => normalizeMath(rawContent), [rawContent]);
   const hasMath = useMemo(() => /\$[\s\S]+?\$/.test(content), [content]);
 
   if (hasMath) {
@@ -107,11 +115,7 @@ async function fetchArticleContent(
   const rows = await res.json();
   if (!rows.length) throw new Error("not found");
 
-  // Normalize \r\n to \n — remark-math fails to parse $$ blocks with \r\n
-  const content = (rows[0].content_zh ?? rows[0].content ?? "").replace(
-    /\r\n/g,
-    "\n",
-  );
+  const content = normalizeMath(rows[0].content_zh ?? rows[0].content ?? "");
   return { content, hasMath: /\$[\s\S]+?\$/.test(content) };
 }
 
