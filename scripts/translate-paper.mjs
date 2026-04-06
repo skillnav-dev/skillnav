@@ -676,7 +676,7 @@ async function main() {
 
   let contentZh = translatedParts.join("\n\n");
   // Truncate any leaked References section (belt-and-suspenders)
-  contentZh = contentZh.replace(/\n##?\s*(?:参考文献|References|Bibliography)\s*\*{0,2}\s*\n[\s\S]*$/i, "");
+  contentZh = contentZh.replace(/\n(?:##?\s*|\*{1,2})?\s*(?:参考文献|References|Bibliography)\s*\*{0,2}\s*\n[\s\S]*$/i, "");
   log.info(`Translation complete: ${contentZh.length} chars`);
 
   // Step 4: Generate metadata
