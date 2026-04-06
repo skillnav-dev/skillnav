@@ -30,16 +30,14 @@ type ArticleContentProps =
   | { content: string; slug?: never }
   | { slug: string; content?: never };
 
-// Convert inline multiline $$...$$ to fenced format ($$\n...\n$$).
-// remark-math treats \\ + newline as a markdown hard break, splitting the
-// math block. Fenced format avoids this because $$ is on its own line.
+// Ensure all $$ display math uses fenced format ($$\n...\n$$).
+// remark-math treats \\ + newline inside inline $$...$$ as a markdown
+// hard break, splitting the math block and rendering raw LaTeX.
 function normalizeMath(s: string): string {
   return s
     .replace(/\r\n/g, "\n")
-    .replace(/\$\$(.+[\s\S]*?)\$\$/g, (match, inner) => {
-      if (!inner.includes("\n")) return match; // single-line, keep as-is
-      return `$$\n${inner.trim()}\n$$`;
-    });
+    .replace(/\$\$([^\n])/g, "$$$$\n$1")
+    .replace(/([^\n])\$\$/g, "$1\n$$$$");
 }
 
 function MarkdownRenderer({ content: rawContent }: { content: string }) {
