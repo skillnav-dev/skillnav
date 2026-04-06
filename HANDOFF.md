@@ -1,20 +1,26 @@
 # HANDOFF
-<!-- /checkpoint at 2026-04-03 -->
+<!-- /checkpoint at 2026-04-06 -->
 
 ## Active Plan
-Skill v2 — `docs/plans/skill-v2-proposal.md`（7/9, 78%）
+论文雷达 — `docs/plans/paper-radar.md`（3/3, done）
 
 ## Session Tasks
-- [x] 验证 1102 修复效果：全线正常，ISR + KaTeX lazy load 生效
-- [x] MCP trending 第二次快照：6047 snapshots, 2150 trending, 0 errors
+- [x] paper-radar.mjs 三源采集 + 中文翻译 + Vault 输出
+- [x] translate-paper.mjs 双写 Vault
+- [x] 6 篇论文翻译 + 发布 + 图片 URL 修复
+- [x] CF Worker 1102 修复：ISR 缓存配置 + 列裁剪 + 客户端加载
+- [ ] paper-radar 自动触发翻译 → `scripts/auto-translate-radar.mjs`
+- [ ] Semantic Scholar API Key → `.env.local` 加 `S2_API_KEY`
 
 ## Key Files
-- `scripts/refresh-tool-metadata.mjs` — snapshot + trending 计算（性能瓶颈）
+- `scripts/paper-radar.mjs` — 三源论文感知 → ~/Vault/知识库/AI/论文雷达/
+- `scripts/translate-paper.mjs` — 论文翻译，双写 DB + ~/Vault/知识库/AI/论文/
+- `src/components/articles/article-content.tsx` — 客户端 Supabase 直查内容
+- `src/lib/data/articles.ts` — getArticleBySlug 列裁剪（不含 content）
+- `wrangler.jsonc` + `open-next.config.ts` — ISR R2 缓存 + DO 队列
 
 ## Next Actions
-- [ ] Skill v2 W2: 掘金文章 + X 公告推文
-- [ ] 评估 LaTeX 源码提取（Phase 2）和 Claude Sonnet 翻译（Phase 3）
-- [ ] 优化 `refresh-tool-metadata.mjs` 批量 upsert（当前 71min→目标 <5min）
-
-## Decisions Needed
-- refresh-tool-metadata 性能优化优先级：现在做还是等下次 snapshot 前再做？
+- [ ] 申请 S2 API Key：https://www.semanticscholar.org/product/api
+- [ ] 写 `scripts/auto-translate-radar.mjs`：扫描雷达 [x] → 自动翻译
+- [ ] 配 launchd 定时跑 paper-radar + auto-translate
+- [ ] 验证 ISR R2 缓存写入：`npx wrangler r2 object list skillnav-cache`

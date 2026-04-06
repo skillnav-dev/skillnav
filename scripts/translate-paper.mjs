@@ -25,8 +25,8 @@ import { createLogger } from "./lib/logger.mjs";
 import { validateEnv } from "./lib/validate-env.mjs";
 import { getProviderInfo, callLLMText } from "./lib/llm.mjs";
 import * as cheerio from "cheerio";
-import { readFileSync, existsSync } from "fs";
-import { resolve } from "path";
+import { readFileSync, existsSync, writeFileSync, mkdirSync } from "fs";
+import { resolve, join } from "path";
 
 const log = createLogger("paper");
 
@@ -88,7 +88,9 @@ async function fetchAr5ivHtml(arxivId) {
   // Remove unwanted elements
   $("nav, header, footer, .ltx_bibliography, .ltx_appendix, script, style, .ltx_page_footer, .ltx_page_header").remove();
 
-  const baseUrl = `https://arxiv.org/html/${arxivId}`;
+  // ar5iv image src is relative (e.g. "2604.01658v1/x2.png")
+  // HTML is served at /html/XXXX.XXXXX, so images resolve to /html/XXXX.XXXXXv1/x2.png
+  const baseUrl = "https://arxiv.org/html";
 
   // Convert a DOM subtree to markdown-like text preserving figures and equations
   function toMarkdown($el) {
@@ -428,6 +430,62 @@ Return JSON:
   return JSON.parse(jsonStr);
 }
 
+// ── Vault Write ─────────────────────────────────────────────────────
+
+const VAULT_PAPER_DIR = join(process.env.HOME, "Vault/知识库/AI/论文");
+
+function writeToVault(arxivId, record, paperMeta) {
+  const safeId = arxivId.replace(/[/.]/g, "-");
+  // Short slug: first 40 chars of English title
+  const titleSlug = record.title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .slice(0, 40)
+    .replace(/-+$/, "");
+  const filename = `${safeId}-${titleSlug}.md`;
+  const filePath = join(VAULT_PAPER_DIR, filename);
+
+  const tags = (paperMeta.tags || []).map((t) => t.toLowerCase());
+  if (!tags.includes("论文")) tags.unshift("论文");
+  if (!tags.includes("ai")) tags.unshift("AI");
+
+  const frontmatter = [
+    "---",
+    "type: reusable",
+    `tags: [${tags.join(", ")}]`,
+    "level: 2",
+    `created: ${new Date().toISOString().slice(0, 10)}`,
+    `source: https://arxiv.org/abs/${arxivId}`,
+    `arxiv_id: "${arxivId}"`,
+    "status: draft",
+    "---",
+  ].join("\n");
+
+  const body = [
+    `# ${record.title_zh}`,
+    "",
+    `> **原标题**: ${record.title}`,
+    `> **arXiv**: [${arxivId}](https://arxiv.org/abs/${arxivId})`,
+    "",
+    "## 我的看法",
+    "",
+    "_（入库后补一句话批注）_",
+    "",
+    "## 导读",
+    "",
+    record.intro_zh || record.summary_zh || "",
+    "",
+    "---",
+    "",
+    record.content_zh,
+  ].join("\n");
+
+  mkdirSync(VAULT_PAPER_DIR, { recursive: true });
+  writeFileSync(filePath, `${frontmatter}\n\n${body}`, "utf8");
+  return filePath;
+}
+
 // ── Slug Generation ─────────────────────────────────────────────────
 
 function generateSlug(title, id) {
@@ -447,13 +505,29 @@ async function main() {
   const dryRun = args.includes("--dry-run");
   const forceOverwrite = args.includes("--force");
   const localIdx = args.indexOf("--local");
+  const sourceMdIdx = args.indexOf("--source-md");
   const arxivIdx = args.indexOf("--arxiv-id");
   const isLocal = localIdx !== -1;
+  const isSourceMd = sourceMdIdx !== -1;
 
   let arxivId = null;
   let localPath = null;
+  let sourceMdPath = null;
 
-  if (isLocal) {
+  if (isSourceMd) {
+    sourceMdPath = args[sourceMdIdx + 1];
+    if (!sourceMdPath || sourceMdPath.startsWith("--")) {
+      console.error("Usage: node scripts/translate-paper.mjs --source-md <md-path> --arxiv-id <id> [--dry-run]");
+      process.exit(1);
+    }
+    if (arxivIdx !== -1) {
+      arxivId = args[arxivIdx + 1];
+    }
+    if (!arxivId) {
+      console.error("--source-md requires --arxiv-id for metadata lookup");
+      process.exit(1);
+    }
+  } else if (isLocal) {
     localPath = args[localIdx + 1];
     if (!localPath || localPath.startsWith("--")) {
       console.error("Usage: node scripts/translate-paper.mjs --local <pdf-path> --arxiv-id <id> [--dry-run]");
@@ -467,6 +541,7 @@ async function main() {
     if (!arxivId) {
       console.error("Usage: node scripts/translate-paper.mjs <arxiv-id> [--dry-run]");
       console.error("       node scripts/translate-paper.mjs --local <pdf-path> --arxiv-id <id> [--dry-run]");
+      console.error("       node scripts/translate-paper.mjs --source-md <md-path> --arxiv-id <id> [--dry-run]");
       process.exit(1);
     }
     // Validate arXiv ID format (YYMM.NNNNN with optional version)
@@ -483,13 +558,35 @@ async function main() {
 
   validateEnv(["NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"]);
   const { name, model } = getProviderInfo();
-  log.info(`Translating paper: ${isLocal ? localPath : arxivId}`);
+  log.info(`Translating paper: ${isSourceMd ? sourceMdPath : isLocal ? localPath : arxivId}`);
   log.info(`LLM provider: ${name} (${model})`);
-  log.info(`Options: local=${isLocal}, dry-run=${dryRun}`);
+  log.info(`Options: source-md=${isSourceMd}, local=${isLocal}, dry-run=${dryRun}`);
 
   let meta, sections, textSource;
 
-  if (isLocal) {
+  if (isSourceMd) {
+    // ── Pre-extracted Markdown mode (e.g. MinerU CLI output) ──
+    log.info("Step 1: Fetching arXiv metadata...");
+    meta = await fetchArxivMetadata(arxivId);
+    log.info(`Title: ${meta.title}`);
+
+    log.info("Step 2: Reading pre-extracted markdown...");
+    const absPath = resolve(sourceMdPath);
+    if (!existsSync(absPath)) {
+      log.error(`File not found: ${absPath}`);
+      process.exit(1);
+    }
+    const md = readFileSync(absPath, "utf-8");
+    // Split by ## headings into sections
+    const parts = md.split(/^(?=## )/m);
+    sections = parts.map((part) => {
+      const headingMatch = part.match(/^## (.+)/);
+      const heading = headingMatch ? headingMatch[1].trim() : "";
+      const text = headingMatch ? part.slice(headingMatch[0].length).trim() : part.trim();
+      return { heading, text };
+    }).filter((s) => s.text.length > 50);
+    textSource = "source-md";
+  } else if (isLocal) {
     // ── Local PDF mode ──
     log.info("Step 1: Parsing local PDF...");
     const { sections: pdfSections, rawText } = await parseLocalPdf(localPath);
@@ -612,6 +709,15 @@ async function main() {
     console.log(record.content_zh.slice(0, 500));
     log.info("── End Preview ─────────────────────────────\n");
     log.info("[DRY RUN] No records written to database.");
+    // Still write Vault copy in dry-run for preview
+    if (arxivId) {
+      try {
+        const vaultPath = writeToVault(arxivId, record, paperMeta);
+        log.info(`[DRY RUN] Vault preview written: ${vaultPath}`);
+      } catch (e) {
+        log.warn(`Vault write failed: ${e.message}`);
+      }
+    }
     return;
   }
 
@@ -660,6 +766,16 @@ async function main() {
   log.info(`  Preview: https://skillnav.dev/articles/${data.slug}`);
   log.info(`  Source: ${textSource} | Sections: ${sections.length} | Chars: ${contentZh.length}`);
   log.info(`  Status: draft (review and publish from admin UI)`);
+
+  // Step 7: Write to Vault (best-effort, don't fail on error)
+  if (arxivId) {
+    try {
+      const vaultPath = writeToVault(arxivId, record, paperMeta);
+      log.success(`Vault copy: ${vaultPath}`);
+    } catch (e) {
+      log.warn(`Vault write failed (non-fatal): ${e.message}`);
+    }
+  }
 }
 
 main().catch((err) => {

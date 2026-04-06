@@ -1,4 +1,5 @@
 import type { Article } from "@/data/types";
+import type { ArticleRow } from "@/lib/supabase/types";
 
 const isSupabaseConfigured = () =>
   !!process.env.NEXT_PUBLIC_SUPABASE_URL &&
@@ -59,15 +60,25 @@ export async function getArticleBySlug(slug: string): Promise<Article | null> {
   const { mapArticleRow } = await import("@/lib/supabase/mappers");
   const supabase = await createServerClient();
 
+  // Select without content/content_zh to reduce CF Worker memory pressure.
+  // Long articles load content client-side via Supabase REST API.
+  const LIGHT_COLS =
+    "id, slug, title, title_zh, summary, summary_zh, intro_zh, source, source_url, cover_image, reading_time, article_type, status, relevance_score, content_tier, series, series_number, published_at, created_at" as const;
   const { data, error } = await supabase
     .from("articles")
-    .select("*")
+    .select(LIGHT_COLS)
     .eq("slug", slug)
     .eq("status", "published")
     .single();
 
-  if (error) return null;
-  return mapArticleRow(data);
+  if (error || !data) return null;
+  // Map with empty content — client-side fetch fills it for long articles
+  const row = data as Record<string, unknown>;
+  return mapArticleRow({
+    ...row,
+    content: null,
+    content_zh: null,
+  } as ArticleRow);
 }
 
 /**

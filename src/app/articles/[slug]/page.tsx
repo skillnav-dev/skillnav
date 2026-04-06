@@ -181,7 +181,7 @@ export default async function ArticlePage({ params }: PageProps) {
           </div>
         )}
         <div className="mt-8">
-          <ArticleContent content={article.contentZh ?? article.content} />
+          <ArticleContent slug={article.slug} />
         </div>
         {/* Copyright attribution for translated articles */}
         {article.sourceUrl && (
@@ -215,8 +215,10 @@ export default async function ArticlePage({ params }: PageProps) {
       </div>
       {/* Related learn concepts */}
       {(() => {
+        // Limit text for concept matching to avoid CPU timeout on long papers
+        const rawContent = article.contentZh ?? article.content;
         const text =
-          `${articleTitle} ${article.contentZh ?? article.content}`.toLowerCase();
+          `${articleTitle} ${rawContent.slice(0, 5000)}`.toLowerCase();
         const keywords: Record<string, string[]> = {
           agent: ["agent", "智能体", "agentic"],
           mcp: ["mcp", "model context protocol"],

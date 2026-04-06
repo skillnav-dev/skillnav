@@ -56,9 +56,14 @@ node scripts/generate-daily.mjs --hours 48               # Look back 48h instead
 node scripts/publish-daily.mjs                           # Publish today's approved brief
 node scripts/publish-daily.mjs --channel rss             # Publish to specific channel only
 
-# Paper translation
-node scripts/translate-paper.mjs 2603.23483              # Translate arXiv paper → articles table (draft)
-node scripts/translate-paper.mjs 2603.23483 --dry-run    # Preview without DB write
+# Paper radar (knowledge base sensing)
+node scripts/paper-radar.mjs                              # Generate today's paper radar → ~/Vault/知识库/AI/论文雷达/
+node scripts/paper-radar.mjs --dry-run                    # Preview without writing file
+node scripts/paper-radar.mjs --date 2026-04-06            # Specific date
+
+# Paper translation (dual-write: DB + ~/Vault/知识库/AI/论文/)
+node scripts/translate-paper.mjs 2603.23483              # Translate arXiv paper → articles table (draft) + Vault
+node scripts/translate-paper.mjs 2603.23483 --dry-run    # Preview without DB write (still writes Vault preview)
 node scripts/translate-paper.mjs 2603.23483 --force       # Overwrite existing translation
 node scripts/translate-paper.mjs --local paper.pdf --arxiv-id 2307.15818          # Local PDF with arXiv metadata
 node scripts/translate-paper.mjs --local paper.pdf --arxiv-id 2307.15818 --dry-run
@@ -102,6 +107,7 @@ src/
 │   ├── admin/daily/            # Daily Brief admin: list + [id] detail (preview/edit/approve/publish)
 │   ├── api/health/              # Pipeline health probe: stale if >36h no runs (Better Stack monitored)
 │   ├── api/skill/query/         # Skill API: GET ?type=brief|mcp|trending|paper (public, anon key)
+│   ├── api/content/[slug]/      # Article content API: lazy-load for long articles (bypasses CF Worker CPU limit)
 │   ├── api/admin/daily/        # Admin API: PATCH update, POST approve, POST publish
 │   ├── api/rss/daily/          # RSS feed for daily briefs
 │   ├── go/paper/[id]/          # Paper click tracking: 302 redirect to arXiv + Umami server-side event
@@ -148,6 +154,8 @@ public/
     └── embedding-dimensions.html       # Dimension visualization + cost calc
 
 scripts/
+├── paper-radar.mjs             # Paper sensing: 3-source (HF+S2+Newsletter) → ~/Vault/知識库/AI/論文雷達/
+├── translate-paper.mjs         # Paper translation: arXiv → DB + ~/Vault/知识库/AI/论文/ (dual-write)
 ├── scrape-signals.mjs          # Newsletter layer: fetch 5 newsletters → plain text → JSON (data/daily-newsletters/)
 ├── generate-daily.mjs          # Daily brief generator (newsletters + articles → LLM editorial funnel → multi-format → upsert)
 ├── publish-daily.mjs           # Multi-channel publisher (RSS auto, WeChat/X copy-ready)
@@ -245,6 +253,9 @@ deps — Dependencies      | config — Configuration     | dx — Dev experienc
 - `Date.setHours()` operates in UTC when Date is from `toISOString().slice()` — use `setUTCHours()` for CST conversion (CST 23:59 = UTC 15:59)
 - New SSR pages MUST set `export const revalidate` — without it, CF Worker renders on every request → 1102 errors
 - Heavy client-only libraries (KaTeX, chart libs) must use `lazy()` / dynamic import — never import at top level in server components
+- `getArticleBySlug` does NOT select content/content_zh — article content loads client-side via Supabase REST API to avoid CF Worker CPU timeout. Never re-add `content` to the server query
+- ar5iv image paths are relative (e.g. `2604.01658v1/x2.png`), base URL must be `https://arxiv.org/html` (not `https://arxiv.org/html/${arxivId}`) — see `translate-paper.mjs` line 91
+- ISR caching requires R2 bucket + Durable Object bindings in `wrangler.jsonc` + `open-next.config.ts` — without these, `revalidate` is ignored and every request re-renders
 
 ## Documentation Rules
 
