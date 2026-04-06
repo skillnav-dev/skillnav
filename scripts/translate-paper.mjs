@@ -173,10 +173,11 @@ async function fetchAr5ivHtml(arxivId) {
   const article = $(".ltx_document, .ltx_page_content, article, main").first();
   const root = article.length ? article : $("body");
 
-  // Try to get structured sections
+  // Try to get structured sections (skip References/Bibliography)
   root.find(".ltx_section, section").each((_, el) => {
     const $el = $(el);
     const heading = $el.find("h2, h3, .ltx_title").first().text().trim();
+    if (/^\s*(References|Bibliography)\s*$/i.test(heading)) return;
     const text = toMarkdown($el);
     if (text.length > 50) {
       sections.push({ heading, text });
@@ -673,7 +674,9 @@ async function main() {
     translatedParts.push(translated);
   }
 
-  const contentZh = translatedParts.join("\n\n");
+  let contentZh = translatedParts.join("\n\n");
+  // Truncate any leaked References section (belt-and-suspenders)
+  contentZh = contentZh.replace(/\n##?\s*(?:参考文献|References|Bibliography)\s*\*{0,2}\s*\n[\s\S]*$/i, "");
   log.info(`Translation complete: ${contentZh.length} chars`);
 
   // Step 4: Generate metadata
