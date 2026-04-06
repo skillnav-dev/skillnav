@@ -197,10 +197,13 @@ async function fetchAr5ivHtml(arxivId) {
     return null;
   }
 
-  // Strip bare BibTeX citation keys (e.g. "roberts2021hypersim", "li2021openrooms ; zhu2022learning")
-  // These appear when ar5iv renders \cite{} as link text = citation key
+  // Strip BibTeX citation keys in two formats:
+  // 1. Bare: "roberts2021hypersim ; zhu2022learning" (space-separated)
+  // 2. Bracketed: "[hao2024training, zou2025latent]" (ar5iv \cite{} rendering)
   for (const s of sections) {
-    s.text = s.text.replace(/\s+[a-z]+\d{4}[a-z][a-z0-9+]*(?:\s*[;,]\s*[a-z]+\d{4}[a-z][a-z0-9+]*)*/g, "");
+    s.text = s.text
+      .replace(/\s+[a-z]+\d{4}[a-z][a-z0-9+]*(?:\s*[;,]\s*[a-z]+\d{4}[a-z][a-z0-9+]*)*/g, "")
+      .replace(/\s*\[(?:[a-z]+\d{4}[a-z][a-z0-9+]*\s*[,;]?\s*)+\]/g, "");
   }
 
   const totalChars = sections.reduce((sum, s) => sum + s.text.length, 0);
@@ -286,7 +289,9 @@ async function fetchPdfText(arxivId) {
     const result = sections.length ? sections : [{ heading: "", text: fullText }];
     // Strip bare BibTeX citation keys from PDF text
     for (const s of result) {
-      s.text = s.text.replace(/\s+[a-z]+\d{4}[a-z][a-z0-9+]*(?:\s*[;,]\s*[a-z]+\d{4}[a-z][a-z0-9+]*)*/g, "");
+      s.text = s.text
+        .replace(/\s+[a-z]+\d{4}[a-z][a-z0-9+]*(?:\s*[;,]\s*[a-z]+\d{4}[a-z][a-z0-9+]*)*/g, "")
+        .replace(/\s*\[(?:[a-z]+\d{4}[a-z][a-z0-9+]*\s*[,;]?\s*)+\]/g, "");
     }
     return result;
   } catch (e) {
