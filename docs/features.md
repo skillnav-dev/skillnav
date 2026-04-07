@@ -79,3 +79,6 @@
 | SKILL-02 | Skill CTA 全渠道集成 | shipped | 5 个 publisher footer 追加 `/skillnav brief` 安装提示 |
 | OPS-16 | 日报生成 Slack 通知 | shipped | 成功时推送"待审核"提醒 + admin 链接 |
 | PAPER-01 | 论文速递（Phase 1） | shipped | HF Daily Papers → LLM 选稿 → 日报论文板块 + /go/paper/[id] 点击追踪 |
+| PAPER-02 | 论文独立页面 /papers | shipped | 独立列表页（ISR 5min），资讯页排除 arxiv 论文，导航栏+footer 入口 |
+| PAPER-03 | 论文雷达自动翻译 | shipped | auto-translate-radar.mjs 扫描 [x] 论文 → 去重 → 翻译入库。launchd 22:00 定时 |
+| PAPER-04 | 论文雷达定时感知 | shipped | paper-radar.mjs launchd 每天 06:50 自动跑，三源采集 → Vault 输出 |

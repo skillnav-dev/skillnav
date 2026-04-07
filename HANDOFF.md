@@ -1,26 +1,29 @@
 # HANDOFF
-<!-- /checkpoint at 2026-04-06 -->
+<!-- /checkpoint at 2026-04-07 -->
 
 ## Active Plan
 论文雷达 — `docs/plans/paper-radar.md`（3/3, done）
 
 ## Session Tasks
-- [x] paper-radar.mjs 三源采集 + 中文翻译 + Vault 输出
-- [x] translate-paper.mjs 双写 Vault
-- [x] 6 篇论文翻译 + 发布 + 图片 URL 修复
-- [x] CF Worker 1102 修复：ISR 缓存配置 + 列裁剪 + 客户端加载
-- [ ] paper-radar 自动触发翻译 → `scripts/auto-translate-radar.mjs`
-- [ ] Semantic Scholar API Key → `.env.local` 加 `S2_API_KEY`
+- [x] auto-translate-radar.mjs + launchd 22:00 定时
+- [x] LaTeX 公式渲染修复（normalizeMath fenced 格式）
+- [x] Citation key 清理（bare + bracketed 两种格式）
+- [x] References 段落截断（heading + bold 格式）
+- [x] `/papers` 论文独立页面 + 导航入口
+- [x] 13 篇历史论文审计 + 7 篇重翻（cite/refs/crlf）
+- [x] paper-radar launchd 每天 06:50 定时
+- [x] 今日雷达 10 篇全部翻译发布（共 22 篇论文上线）
+- [ ] 申请 S2 API Key → `.env.local` 加 `S2_API_KEY`
+- [ ] 验证 ISR R2 缓存 → `npx wrangler r2 object list skillnav-cache`
 
 ## Key Files
-- `scripts/paper-radar.mjs` — 三源论文感知 → ~/Vault/知识库/AI/论文雷达/
-- `scripts/translate-paper.mjs` — 论文翻译，双写 DB + ~/Vault/知识库/AI/论文/
-- `src/components/articles/article-content.tsx` — 客户端 Supabase 直查内容
-- `src/lib/data/articles.ts` — getArticleBySlug 列裁剪（不含 content）
-- `wrangler.jsonc` + `open-next.config.ts` — ISR R2 缓存 + DO 队列
+- `src/app/papers/page.tsx` — 论文列表页（ISR 5min）
+- `src/components/articles/article-content.tsx` — normalizeMath() 公式渲染修复
+- `scripts/auto-translate-radar.mjs` — 扫描雷达 [x] → 去重 → 翻译
+- `scripts/translate-paper.mjs` — citation/refs 清理 + \r\n sanitize
+- `scripts/com.skillnav.paper-radar.plist` — 06:50 定时雷达
 
 ## Next Actions
 - [ ] 申请 S2 API Key：https://www.semanticscholar.org/product/api
-- [ ] 写 `scripts/auto-translate-radar.mjs`：扫描雷达 [x] → 自动翻译
-- [ ] 配 launchd 定时跑 paper-radar + auto-translate
 - [ ] 验证 ISR R2 缓存写入：`npx wrangler r2 object list skillnav-cache`
+- [ ] 4/23 论文频道 Go/Hold/Kill 评估

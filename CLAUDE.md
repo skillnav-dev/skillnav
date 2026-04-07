@@ -108,6 +108,7 @@ src/
 │   ├── mcp/                    # MCP Server 精选导航 (static curated data)
 │   ├── daily/                  # Daily Brief public: /daily list (ISR 5min) + /daily/[date] detail
 │   ├── learn/                  # Learning Center: /learn index + /learn/what-is-[slug] detail
+│   ├── papers/                 # Paper listing page (source='arxiv', ISR 5min)
 │   ├── admin/daily/            # Daily Brief admin: list + [id] detail (preview/edit/approve/publish)
 │   ├── api/health/              # Pipeline health probe: stale if >36h no runs (Better Stack monitored)
 │   ├── api/skill/query/         # Skill API: GET ?type=brief|mcp|trending|paper (public, anon key)
@@ -164,7 +165,10 @@ scripts/
 ├── generate-daily.mjs          # Daily brief generator (newsletters + articles → LLM editorial funnel → multi-format → upsert)
 ├── publish-daily.mjs           # Multi-channel publisher (RSS auto, WeChat/X copy-ready)
 ├── templates/daily-card.html   # Card image template (6 XHS cards + WeChat header, rendered via gstack browse)
+├── auto-translate-radar.mjs    # Scan radar [x] papers → deduplicate → translate (launchd 22:00)
 ├── failover-check.mjs          # Local failover: check pipeline_runs >36h → auto-run sync-articles
+├── com.skillnav.paper-radar.plist     # macOS launchd config (daily 06:50 paper radar)
+├── com.skillnav.auto-translate.plist  # macOS launchd config (daily 22:00 auto-translate)
 ├── com.skillnav.failover-check.plist  # macOS launchd config (hourly failover check)
 ├── lib/publishers/             # Platform format adapters (wechat.mjs, twitter.mjs, rss.mjs)
 scripts/lib/
@@ -260,7 +264,9 @@ deps — Dependencies      | config — Configuration     | dx — Dev experienc
 - `getArticleBySlug` does NOT select content/content_zh — article content loads client-side via Supabase REST API to avoid CF Worker CPU timeout. Never re-add `content` to the server query
 - ar5iv image paths are relative (e.g. `2604.01658v1/x2.png`), base URL must be `https://arxiv.org/html` (not `https://arxiv.org/html/${arxivId}`) — see `translate-paper.mjs` line 91
 - ISR caching requires R2 bucket + Durable Object bindings in `wrangler.jsonc` + `open-next.config.ts` — without these, `revalidate` is ignored and every request re-renders
-- DB content may contain `\r\n` (from LLM output or external sources) — `remark-math` fails to parse multiline `$$` blocks with `\r\n`. Sanitize at write time (`translate-paper.mjs`) and normalize at render time (`article-content.tsx`)
+- `remark-math` multiline `$$` display math: `\\` + newline inside inline `$$content$$` is treated as markdown hard break, splitting the math block → raw LaTeX leaks. Fix: `normalizeMath()` in `article-content.tsx` converts all `$$` to fenced format (`$$` on its own line). Also sanitize `\r\n` → `\n` at DB write time (`translate-paper.mjs`)
+- `String.replace()` replacement string: `$$` outputs single `$` (JS special syntax). Use `$$$$` to output literal `$$`
+- Push code → always verify CI passes before telling user "fixed". Run `npm run lint` locally to catch lint errors that block CI deploy
 
 ## Documentation Rules
 
