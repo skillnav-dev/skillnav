@@ -2,28 +2,24 @@
 <!-- /checkpoint at 2026-04-07 -->
 
 ## Active Plan
-论文雷达 — `docs/plans/paper-radar.md`（3/3, done）
+感知层 + 热度看板 — `docs/plans/perception-trending.md`（0/3 phases, approved v3.1）
 
 ## Session Tasks
-- [x] auto-translate-radar.mjs + launchd 22:00 定时
-- [x] LaTeX 公式渲染修复（normalizeMath fenced 格式）
-- [x] Citation key 清理（bare + bracketed 两种格式）
-- [x] References 段落截断（heading + bold 格式）
-- [x] `/papers` 论文独立页面 + 导航入口
-- [x] 13 篇历史论文审计 + 7 篇重翻（cite/refs/crlf）
-- [x] paper-radar launchd 每天 06:50 定时
-- [x] 今日雷达 10 篇全部翻译发布（共 22 篇论文上线）
+- [x] 信息源覆盖面分析（16 RSS + 5 Newsletter + 3 论文 + 工具生态 → 缺 X/HN/Reddit）
+- [x] 竞品调研（follow-builders、阮一峰周刊、GitHub Trending、HF Papers、Toolify、TwitterAPI.io）
+- [x] 方案 v1 → v2（4-agent 评审）→ v3（Codex 11 findings）→ v3.1（产品走查 3 修复）
 - [ ] 申请 S2 API Key → `.env.local` 加 `S2_API_KEY`
 - [ ] 验证 ISR R2 缓存 → `npx wrangler r2 object list skillnav-cache`
 
 ## Key Files
-- `src/app/papers/page.tsx` — 论文列表页（ISR 5min）
-- `src/components/articles/article-content.tsx` — normalizeMath() 公式渲染修复
-- `scripts/auto-translate-radar.mjs` — 扫描雷达 [x] → 去重 → 翻译
-- `scripts/translate-paper.mjs` — citation/refs 清理 + \r\n sanitize
-- `scripts/com.skillnav.paper-radar.plist` — 06:50 定时雷达
+- `docs/plans/perception-trending.md` — 感知层+热度看板方案 v3.1（approved）
+- `docs/adr/005-llm-first-editorial-funnel.md` — 方案必须对齐的架构决策
+- `src/lib/get-trending-tools.ts` — 工具赛道直接复用此函数（需加 monorepo 去重）
+- `scripts/generate-daily.mjs` — X/HN/Reddit 信号扩展 LLM prompt 上下文
 
 ## Next Actions
-- [ ] 申请 S2 API Key：https://www.semanticscholar.org/product/api
-- [ ] 验证 ISR R2 缓存写入：`npx wrangler r2 object list skillnav-cache`
-- [ ] 4/23 论文频道 Go/Hold/Kill 评估
+- [ ] Phase 0: 建 `community_signals` 表 → `supabase/migrations/` 新建 SQL
+- [ ] Phase 0: 注册 TwitterAPI.io 拿 API Key → `.env.local` 加 `X_API_KEY`
+- [ ] Phase 0: 注册 Reddit OAuth 应用 → `.env.local` 加 `REDDIT_CLIENT_ID` + `REDDIT_SECRET`
+- [ ] Phase 0: 定义 KOL 列表 40 人 → `config/x-kol-list.json`
+- [ ] Phase 1: `scripts/scrape-x-signals.mjs` 采集脚本
