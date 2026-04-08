@@ -32,17 +32,21 @@ export function TrackSection({
 }) {
   return (
     <section>
-      <h3 className="mb-3 flex items-center gap-2 text-base font-semibold">
-        {icon}
-        {title}
-      </h3>
+      <div className="mb-4 flex items-center gap-2 border-b-2 border-primary/20 pb-2">
+        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10">
+          {icon}
+        </span>
+        <h3 className="text-base font-bold tracking-tight">{title}</h3>
+      </div>
       {children}
     </section>
   );
 }
 
+const TOP3_RANK =
+  "mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground";
 const RANK_STYLE =
-  "mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary";
+  "mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground";
 const CARD_STYLE =
   "flex items-start gap-3 rounded-lg border border-border/40 bg-card/50 p-3 transition-colors hover:bg-card";
 
@@ -54,7 +58,7 @@ export function PapersTrack({ papers }: { papers: HFPaper[] }) {
     <div className="space-y-3">
       {papers.map((p, i) => (
         <div key={p.id} className={CARD_STYLE}>
-          <span className={RANK_STYLE}>{i + 1}</span>
+          <span className={i < 3 ? TOP3_RANK : RANK_STYLE}>{i + 1}</span>
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-2">
               {p.translatedSlug ? (
@@ -113,7 +117,7 @@ export function ToolsTrack({ tools }: { tools: TrendingTool[] }) {
     <div className="space-y-3">
       {tools.map((t, i) => (
         <div key={t.slug} className={CARD_STYLE}>
-          <span className={RANK_STYLE}>{i + 1}</span>
+          <span className={i < 3 ? TOP3_RANK : RANK_STYLE}>{i + 1}</span>
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-2">
               <Link
@@ -153,7 +157,7 @@ export function ArticlesTrack({ articles }: { articles: ArticleRow[] }) {
     <div className="space-y-3">
       {articles.map((a, i) => (
         <div key={a.slug} className={CARD_STYLE}>
-          <span className={RANK_STYLE}>{i + 1}</span>
+          <span className={i < 3 ? TOP3_RANK : RANK_STYLE}>{i + 1}</span>
           <div className="min-w-0 flex-1">
             <Link
               href={`/articles/${a.slug}`}
@@ -179,10 +183,10 @@ export function ArticlesTrack({ articles }: { articles: ArticleRow[] }) {
 
 // ── Community ───────────────────────────────────────────────────────
 
-const PLATFORM_LABELS: Record<string, string> = {
-  x: "X（推特）",
-  hn: "Hacker News 黑客新闻",
-  reddit: "Reddit 论坛",
+const PLATFORM_CONFIG: Record<string, { label: string; icon: string }> = {
+  x: { label: "X（推特）", icon: "𝕏" },
+  reddit: { label: "Reddit", icon: "📮" },
+  hn: { label: "Hacker News", icon: "🟠" },
 };
 
 function isSafeUrl(url: string): boolean {
@@ -199,64 +203,71 @@ export function CommunityTrack({ signals }: { signals: CommunitySignal[] }) {
   }
 
   return (
-    <div className="space-y-4">
-      {Object.entries(byPlatform).map(([platform, items]) => (
-        <div key={platform}>
-          <h4 className="mb-2 text-xs font-semibold tracking-wider text-muted-foreground">
-            {PLATFORM_LABELS[platform] || platform}
-          </h4>
-          <div className="space-y-2">
-            {items.slice(0, 5).map((s, i) => {
-              const href = isSafeUrl(s.url) ? s.url : "#";
-              return (
-                <a
-                  key={`${platform}-${i}`}
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-start gap-2 rounded-lg border border-border/40 bg-card/50 p-3 transition-colors hover:bg-card"
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="line-clamp-2 text-sm leading-snug">
-                      {platform === "x" ? (
-                        <>
-                          <span className="font-medium text-primary">
-                            @{s.author_handle}
-                          </span>{" "}
-                          {s.content_summary_zh ||
-                            s.content_summary?.slice(0, 120)}
-                        </>
-                      ) : (
-                        <span className="font-medium">
-                          {s.content_summary_zh || s.title}
-                        </span>
-                      )}
-                    </p>
-                    <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
-                      {platform === "x" ? (
+    <div className="space-y-5">
+      {Object.entries(byPlatform).map(([platform, items]) => {
+        const config = PLATFORM_CONFIG[platform];
+        return (
+          <div key={platform}>
+            <h4 className="mb-2.5 flex items-center gap-1.5 border-l-2 border-primary/40 pl-2 text-sm font-semibold">
+              {config?.icon && <span>{config.icon}</span>}
+              {config?.label || platform}
+              <span className="ml-auto text-xs font-normal text-muted-foreground">
+                {items.length} 条
+              </span>
+            </h4>
+            <div className="space-y-2">
+              {items.slice(0, 5).map((s, i) => {
+                const href = isSafeUrl(s.url) ? s.url : "#";
+                return (
+                  <a
+                    key={`${platform}-${i}`}
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-start gap-2 rounded-lg border border-border/40 bg-card/50 p-3 transition-colors hover:bg-card"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="line-clamp-2 text-sm leading-snug">
+                        {platform === "x" ? (
+                          <>
+                            <span className="font-medium text-primary">
+                              @{s.author_handle}
+                            </span>{" "}
+                            {s.content_summary_zh ||
+                              s.content_summary?.slice(0, 120)}
+                          </>
+                        ) : (
+                          <span className="font-medium">
+                            {s.content_summary_zh || s.title}
+                          </span>
+                        )}
+                      </p>
+                      <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
+                        {platform === "x" ? (
+                          <span className="flex items-center gap-0.5">
+                            <Heart className="h-3 w-3" />
+                            {s.likes}
+                          </span>
+                        ) : (
+                          <span className="flex items-center gap-0.5">
+                            <ArrowUp className="h-3 w-3" />
+                            {s.score}
+                          </span>
+                        )}
                         <span className="flex items-center gap-0.5">
-                          <Heart className="h-3 w-3" />
-                          {s.likes}
+                          <MessageSquare className="h-3 w-3" />
+                          {s.comments}
                         </span>
-                      ) : (
-                        <span className="flex items-center gap-0.5">
-                          <ArrowUp className="h-3 w-3" />
-                          {s.score}
-                        </span>
-                      )}
-                      <span className="flex items-center gap-0.5">
-                        <MessageSquare className="h-3 w-3" />
-                        {s.comments}
-                      </span>
+                      </div>
                     </div>
-                  </div>
-                  <ExternalLink className="mt-1 h-3 w-3 shrink-0 text-muted-foreground" />
-                </a>
-              );
-            })}
+                    <ExternalLink className="mt-1 h-3 w-3 shrink-0 text-muted-foreground" />
+                  </a>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
