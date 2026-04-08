@@ -21,46 +21,57 @@ export interface TrendingResult {
   tools: TrendingTool[];
 }
 
-const SKILL_FIELDS =
-  "slug, name, name_zh, editor_comment_zh, stars, weekly_stars_delta, freshness, github_url" as "slug";
-const MCP_FIELDS =
-  "slug, name, name_zh, editor_comment_zh, stars, weekly_stars_delta, freshness, github_url" as "slug";
+type RawRow = {
+  slug: string;
+  name: string;
+  name_zh: string | null;
+  editor_comment_zh: string | null;
+  stars: number;
+  weekly_stars_delta: number;
+  freshness: string;
+  github_url: string | null;
+};
+
+const SELECT_FIELDS =
+  "slug, name, name_zh, editor_comment_zh, stars, weekly_stars_delta, freshness, github_url";
+
+// Use Supabase REST API directly for mcp_servers to avoid TypeScript type hack
+// that caused runtime issues on CF Workers
+async function fetchMcpTrending(limit: number): Promise<RawRow[]> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+  const params = new URLSearchParams({
+    select: SELECT_FIELDS,
+    status: "eq.published",
+    weekly_stars_delta: "gte.1",
+    github_url: "not.like.*modelcontextprotocol/servers*",
+    order: "weekly_stars_delta.desc",
+    limit: String(limit),
+  });
+  const res = await fetch(`${url}/rest/v1/mcp_servers?${params}`, {
+    headers: { apikey: key, Authorization: `Bearer ${key}` },
+    next: { revalidate: 300 },
+  });
+  if (!res.ok) return [];
+  return res.json();
+}
 
 export async function getTrendingTools(
   supabase: SupabaseClient<Database>,
   limit = 10,
 ): Promise<TrendingResult> {
-  // Fetch extra rows to compensate for monorepo dedup in trending-data.ts
   const queryLimit = limit * 3;
-  const [{ data: skills }, { data: mcps }] = await Promise.all([
+  const [{ data: skills }, mcps] = await Promise.all([
     supabase
       .from("skills")
-      .select(SKILL_FIELDS)
+      .select(SELECT_FIELDS as "slug")
       .gte("weekly_stars_delta" as "slug", 5)
       .eq("status" as "slug", "published")
       .not("github_url" as "slug", "like", "%anthropics/skills%")
       .order("weekly_stars_delta" as "created_at", { ascending: false })
       .limit(queryLimit),
-    supabase
-      .from("mcp_servers" as "skills")
-      .select(MCP_FIELDS)
-      .gte("weekly_stars_delta" as "slug", 1)
-      .eq("status" as "slug", "published")
-      .not("github_url" as "slug", "like", "%modelcontextprotocol/servers%")
-      .order("weekly_stars_delta" as "created_at", { ascending: false })
-      .limit(queryLimit),
+    fetchMcpTrending(queryLimit),
   ]);
-
-  type RawRow = {
-    slug: string;
-    name: string;
-    name_zh: string | null;
-    editor_comment_zh: string | null;
-    stars: number;
-    weekly_stars_delta: number;
-    freshness: string;
-    github_url: string | null;
-  };
 
   const merged: TrendingTool[] = [
     ...((skills as unknown as RawRow[]) ?? []).map((s) => ({
@@ -68,7 +79,7 @@ export async function getTrendingTools(
       tool_type: "skill" as const,
       url: `https://skillnav.dev/skills/${s.slug}`,
     })),
-    ...((mcps as unknown as RawRow[]) ?? []).map((m) => ({
+    ...mcps.map((m) => ({
       ...m,
       tool_type: "mcp" as const,
       url: `https://skillnav.dev/mcp/${m.slug}`,
