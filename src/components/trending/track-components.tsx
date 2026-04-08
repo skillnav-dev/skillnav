@@ -122,8 +122,8 @@ export function ToolsTrack({ tools }: { tools: TrendingTool[] }) {
               </span>
             </div>
             <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-              <span className="rounded bg-muted px-1.5 py-0.5 uppercase">
-                {t.tool_type}
+              <span className="rounded bg-muted px-1.5 py-0.5">
+                {t.tool_type === "skill" ? "Skill" : "MCP"}
               </span>
               <span className="flex items-center gap-0.5">
                 <Star className="h-3 w-3" />
