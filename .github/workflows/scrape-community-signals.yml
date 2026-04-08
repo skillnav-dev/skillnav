@@ -2,7 +2,7 @@ name: Scrape Community Signals
 
 on:
   schedule:
-    # HN: twice daily CST 08:00 + 20:00 (UTC 00:00 + 12:00)
+    # HN + Reddit: twice daily CST 08:00 + 20:00 (UTC 00:00 + 12:00)
     # X: once daily CST 07:00 (UTC 23:00 previous day)
     # Combined: run at UTC 00:00 and 12:00
     - cron: "0 0,12 * * *"
@@ -14,6 +14,10 @@ on:
         default: false
       skip_hn:
         description: "Skip Hacker News collection"
+        type: boolean
+        default: false
+      skip_reddit:
+        description: "Skip Reddit collection"
         type: boolean
         default: false
       dry_run:
@@ -53,6 +57,13 @@ jobs:
           ARGS=""
           if [ "${{ inputs.dry_run }}" = "true" ]; then ARGS="--dry-run"; fi
           node scripts/scrape-hn-signals.mjs $ARGS
+
+      - name: Collect Reddit signals
+        if: inputs.skip_reddit != 'true'
+        run: |
+          ARGS=""
+          if [ "${{ inputs.dry_run }}" = "true" ]; then ARGS="--dry-run"; fi
+          node scripts/scrape-reddit-signals.mjs $ARGS
 
       - name: Collect X signals
         if: inputs.skip_x != 'true'
