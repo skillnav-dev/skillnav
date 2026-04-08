@@ -1,25 +1,26 @@
 # HANDOFF
-<!-- /checkpoint at 2026-04-07 -->
+<!-- /checkpoint at 2026-04-08 -->
 
 ## Active Plan
-感知层 + 热度看板 — `docs/plans/perception-trending.md`（0/3 phases, approved v3.1）
+感知层 + 热度看板 — `docs/plans/perception-trending.md`（2/3 phases, Phase 0-2 done）
 
 ## Session Tasks
-- [x] 信息源覆盖面分析（16 RSS + 5 Newsletter + 3 论文 + 工具生态 → 缺 X/HN/Reddit）
-- [x] 竞品调研（follow-builders、阮一峰周刊、GitHub Trending、HF Papers、Toolify、TwitterAPI.io）
-- [x] 方案 v1 → v2（4-agent 评审）→ v3（Codex 11 findings）→ v3.1（产品走查 3 修复）
-- [ ] 申请 S2 API Key → `.env.local` 加 `S2_API_KEY`
-- [ ] 验证 ISR R2 缓存 → `npx wrangler r2 object list skillnav-cache`
+- [x] Phase 0: community_signals 建表 + KOL 列表 40 人 + X API Key
+- [x] Phase 1: X/HN 采集脚本 + CI workflow + Admin API + Daily Brief 集成
+- [x] Phase 2: /trending 四赛道看板 + 感知源状态栏 + 导航入口
+- [x] 两轮多 agent 评审（5+3 agents）修复 10 个发现
+- [ ] TwitterAPI.io 充值 → 恢复 X 采集（当前 402 credits exhausted）
+- [ ] Reddit API 审批申请 → 走 Reddit 新审批流程
 
 ## Key Files
-- `docs/plans/perception-trending.md` — 感知层+热度看板方案 v3.1（approved）
-- `docs/adr/005-llm-first-editorial-funnel.md` — 方案必须对齐的架构决策
-- `src/lib/get-trending-tools.ts` — 工具赛道直接复用此函数（需加 monorepo 去重）
-- `scripts/generate-daily.mjs` — X/HN/Reddit 信号扩展 LLM prompt 上下文
+- `docs/plans/perception-trending.md` — 方案 v3.1（Phase 0-2 done）
+- `src/app/trending/page.tsx` — 热度看板页面入口（117 行）
+- `src/lib/trending-data.ts` — 四赛道数据获取（243 行）
+- `scripts/scrape-x-signals.mjs` — X 采集（40 KOL，6s 间隔，402 early-exit）
+- `scripts/scrape-hn-signals.mjs` — HN 采集（词边界正则 3 级过滤）
+- `.github/workflows/scrape-community-signals.yml` — CI 每天 2 次
 
 ## Next Actions
-- [ ] Phase 0: 建 `community_signals` 表 → `supabase/migrations/` 新建 SQL
-- [ ] Phase 0: 注册 TwitterAPI.io 拿 API Key → `.env.local` 加 `X_API_KEY`
-- [ ] Phase 0: 注册 Reddit OAuth 应用 → `.env.local` 加 `REDDIT_CLIENT_ID` + `REDDIT_SECRET`
-- [ ] Phase 0: 定义 KOL 列表 40 人 → `config/x-kol-list.json`
-- [ ] Phase 1: `scripts/scrape-x-signals.mjs` 采集脚本
+- [ ] 充值 TwitterAPI.io → X 采集自动恢复 → 验证 DB 有 X 数据
+- [ ] 部署后访问 `https://skillnav.dev/trending` 验证页面效果
+- [ ] Phase 3 启动前：积累 1-2 周数据，做回测评估

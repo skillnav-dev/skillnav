@@ -72,6 +72,12 @@ node scripts/translate-paper.mjs --local paper.pdf --arxiv-id 2307.15818 --dry-r
 node scripts/auto-translate-radar.mjs                    # Translate all checked papers not yet in DB
 node scripts/auto-translate-radar.mjs --dry-run          # Preview without translating
 
+# Community signals (X/Twitter + HN)
+node scripts/scrape-x-signals.mjs                        # Collect X/Twitter KOL signals → community_signals
+node scripts/scrape-x-signals.mjs --dry-run              # Preview without DB write
+node scripts/scrape-hn-signals.mjs                       # Collect HN top stories → community_signals
+node scripts/scrape-hn-signals.mjs --dry-run             # Preview without DB write
+
 # Pipeline health & failover
 node scripts/failover-check.mjs                          # Check pipeline freshness, auto-collect if >36h stale
 curl https://skillnav.dev/api/health                     # Check pipeline health (ok/stale)
@@ -106,6 +112,7 @@ src/
 │   ├── articles/               # Article list + [slug] detail (SSG)
 │   ├── skills/                 # Skills listing + [slug] detail
 │   ├── mcp/                    # MCP Server 精选导航 (static curated data)
+│   ├── trending/               # Trending dashboard: four-track (papers/tools/articles/community), ISR 5min
 │   ├── daily/                  # Daily Brief public: /daily list (ISR 5min) + /daily/[date] detail
 │   ├── learn/                  # Learning Center: /learn index + /learn/what-is-[slug] detail
 │   ├── papers/                 # Paper listing page (source='arxiv', ISR 5min)
@@ -114,6 +121,7 @@ src/
 │   ├── api/skill/query/         # Skill API: GET ?type=brief|mcp|trending|paper (public, anon key)
 │   ├── api/content/[slug]/      # Article content API: lazy-load for long articles (bypasses CF Worker CPU limit)
 │   ├── api/admin/daily/        # Admin API: PATCH update, POST approve, POST publish
+│   ├── api/admin/community/    # Community signal moderation: PATCH is_hidden
 │   ├── api/rss/daily/          # RSS feed for daily briefs
 │   ├── go/paper/[id]/          # Paper click tracking: 302 redirect to arXiv + Umami server-side event
 │   ├── layout.tsx              # Root layout (zh lang, fonts, Header/Footer)
@@ -127,6 +135,7 @@ src/
 │   ├── skills/                 # Skill card
 │   ├── mcp/                    # MCP card, sidebar, content sections (what-is/how-to/tools), FAQ
 │   ├── learn/                  # Concept card, related concepts, visual diagrams
+│   ├── trending/               # Trending track components + source health bar
 │   ├── layout/                 # Header, footer, mobile nav, theme toggle
 │   ├── shared/                 # Section header, security badge, JSON-LD
 │   └── ui/                     # shadcn/ui primitives
@@ -140,7 +149,8 @@ src/
     ├── constants.ts            # Site-wide constants (name, URL, description)
     ├── fonts.ts                # Font configuration
     ├── parse-brief.ts          # Daily brief content_md → structured JSON
-    └── get-trending-tools.ts   # Skills + MCP trending merge
+    ├── get-trending-tools.ts   # Skills + MCP trending merge
+    └── trending-data.ts        # Trending page data fetchers (HF Papers, articles, community signals)
 
 public/
 ├── daily-cards/                # Generated card images for social distribution
@@ -165,6 +175,8 @@ scripts/
 ├── generate-daily.mjs          # Daily brief generator (newsletters + articles → LLM editorial funnel → multi-format → upsert)
 ├── publish-daily.mjs           # Multi-channel publisher (RSS auto, WeChat/X copy-ready)
 ├── templates/daily-card.html   # Card image template (6 XHS cards + WeChat header, rendered via gstack browse)
+├── scrape-x-signals.mjs        # X/Twitter KOL collection: 40 KOLs → LLM summary → community_signals
+├── scrape-hn-signals.mjs       # HN collection: Top 500 → word-boundary keyword filter → community_signals
 ├── auto-translate-radar.mjs    # Scan radar [x] papers → deduplicate → translate (launchd 22:00)
 ├── failover-check.mjs          # Local failover: check pipeline_runs >36h → auto-run sync-articles
 ├── com.skillnav.paper-radar.plist     # macOS launchd config (daily 06:50 paper radar)
@@ -173,6 +185,7 @@ scripts/
 ├── lib/publishers/             # Platform format adapters (wechat.mjs, twitter.mjs, rss.mjs)
 scripts/lib/
 ├── llm.mjs                     # LLM providers + compile prompt + circuit breaker (3 fail→open→10min→half-open)
+├── x-client.mjs                # TwitterAPI.io abstraction (proxy support, switchable provider)
 ├── glossary.json               # Centralized terminology (keep/translate/bracket policies)
 ├── report-run.mjs              # Pipeline run reporting (claimRun→duration_s=null lock→reportRun→update)
 └── run-pipeline.mjs            # Universal pipeline wrapper (lock check→claimRun→main→reportRun→exit)

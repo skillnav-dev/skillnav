@@ -1,6 +1,7 @@
 # 感知层 + 热度看板方案
 
-Status: **approved (v3.1)**
+Status: **Phase 0-2 done, Phase 3 pending**
+Progress: 2/3 phases
 Date: 2026-04-07
 Author: Claude (战略合伙人) + 人工拍板
 Depends-on: content-strategy-v3.md, ADR-005 (LLM-first editorial funnel)
@@ -372,44 +373,43 @@ v1（Phase 3 回测后）：百分位排名法归一化，合并展示。
 
 > v3 修正（Codex #4）：审核控制前置到 Phase 1，在社区内容公开展示前必须有 admin 隐藏能力。
 
-### Phase 0: 准备（2-3 天）
+### Phase 0: 准备（2-3 天）✅ done 2026-04-08
 
-- [ ] Reddit OAuth 应用注册（提前启动，审批可能 1-3 天）
-- [ ] TwitterAPI.io 注册，拿到 API Key
-- [ ] `community_signals` 表 migration（一个 SQL 文件）
-- [ ] 定义 KOL 列表 40 人
+- [x] TwitterAPI.io 注册，拿到 API Key → GitHub Secret `X_API_KEY`
+- [x] `community_signals` 表 migration → `supabase/migrations/20260407_community_signals.sql`
+- [x] 定义 KOL 列表 40 人 → `config/x-kol-list.json`
+- [ ] ~~Reddit OAuth 应用注册~~ — Reddit 2025-11 取消自助 API 注册，需走审批流程，暂缓
 
-### Phase 1: 新感知源 + 审核能力（5-8 天）
+### Phase 1: 新感知源 + 审核能力（5-8 天）✅ done 2026-04-08
 
 **P1-a: X/Twitter 采集**
-- [ ] `scripts/lib/x-client.mjs` — API 抽象层
-- [ ] `scripts/scrape-x-signals.mjs` — 采集 → community_signals 表
-- [ ] LLM 中文摘要（采集时生成 content_summary_zh）
-- [ ] launchd 定时：每天 CST 07:00
+- [x] `scripts/lib/x-client.mjs` — API 抽象层（含 undici ProxyAgent 代理支持）
+- [x] `scripts/scrape-x-signals.mjs` — 采集 → community_signals 表（含 402 early-exit）
+- [x] LLM 中文摘要（采集时生成 content_summary_zh）
+- [x] GitHub Actions CI 定时 → `.github/workflows/scrape-community-signals.yml`（UTC 00:00+12:00）
 
-**P1-b: HN + Reddit 采集**
-- [ ] `scripts/scrape-hn-signals.mjs` — Top 500 + 正/负关键词 → community_signals
-- [ ] `scripts/scrape-reddit-signals.mjs` — 3 subreddit → community_signals
-- [ ] launchd 定时：HN CST 08:00+20:00，Reddit CST 08:00
+**P1-b: HN 采集**（Reddit 暂缓）
+- [x] `scripts/scrape-hn-signals.mjs` — Top 500 + 词边界正则 3 级过滤 → community_signals
+- [x] HN 30 条数据已入库验证（CI dry-run + 正式采集均通过）
+- [ ] ~~Reddit 采集~~ — 暂缓，等 Reddit API 审批
 
 **P1-c: 审核控制（前置）**
-- [ ] `community_signals.is_hidden` 字段（已在建表时包含）
-- [ ] `/api/admin/community/[id]` — PATCH is_hidden
-- [ ] generate-daily.mjs 扩展：X/HN/Reddit 原始文本加入 LLM prompt 上下文
+- [x] `community_signals.is_hidden` 字段（建表时已包含）
+- [x] `/api/admin/community/[id]` — PATCH is_hidden
+- [x] generate-daily.mjs 扩展：X/HN 信号加入 LLM prompt 上下文 + cross-referencing 规则更新
 
-**时区纪律**：所有"今日"窗口统一 CST 00:00-23:59。signal_date 用 CST 日期。
+### Phase 2: `/trending` 页面（3-5 天）✅ done 2026-04-08
 
-### Phase 2: `/trending` 页面（3-5 天，与 P1 并行）
-
-- [ ] `src/app/trending/page.tsx` — 四赛道看板，server component 直查 Supabase
-- [ ] 论文赛道：查 articles (source=arxiv, 最近 24h/7d)
-- [ ] 工具赛道：调用 `getTrendingTools()`
-- [ ] 资讯赛道：查 articles (source≠arxiv, relevance_score + recency)
-- [ ] 社区赛道：查 community_signals (is_hidden=false, 按平台分组)
-- [ ] 感知源状态栏组件 — `/api/admin/source-health` 查询
-- [ ] 导航栏加入"热度"入口
-- [ ] ISR 5min + `export const revalidate = 300`
-- [ ] 今日/本周切换（本周 = 7 天窗口，复用已有查询模式）
+- [x] `src/app/trending/page.tsx` — 四赛道看板（117 行，数据+组件已拆分）
+- [x] 论文赛道：HF Daily Papers API 实时查 + cross-ref 已翻译论文
+- [x] 工具赛道：`getTrendingTools()` + monorepo 去重
+- [x] 资讯赛道：articles 表 relevance_score + recency
+- [x] 社区赛道：community_signals 按平台分组（X/HN/Reddit）
+- [x] 感知源状态栏 → `src/components/trending/source-health-bar.tsx`
+- [x] 导航栏"热度"入口
+- [x] ISR 5min + `export const revalidate = 300`
+- [x] 今日/本周切换
+- [x] 两轮多 agent 评审（5+3 agents）修复 10 个发现
 
 ### Phase 3: 打磨（上线后持续）
 
