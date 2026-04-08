@@ -136,7 +136,7 @@ async function main() {
     try {
       execFileSync("node", [scriptPath, arxivId], {
         stdio: "inherit",
-        timeout: 5 * 60 * 1000, // 5 min per paper
+        timeout: 15 * 60 * 1000, // 15 min — long papers (20+ chunks) need ~10 min
       });
       success++;
     } catch (err) {
