@@ -30,6 +30,8 @@ export async function getTrendingTools(
   supabase: SupabaseClient<Database>,
   limit = 10,
 ): Promise<TrendingResult> {
+  // Fetch extra rows to compensate for monorepo dedup in trending-data.ts
+  const queryLimit = limit * 3;
   const [{ data: skills }, { data: mcps }] = await Promise.all([
     supabase
       .from("skills")
@@ -37,14 +39,14 @@ export async function getTrendingTools(
       .gte("weekly_stars_delta" as "slug", 5)
       .eq("status" as "slug", "published")
       .order("weekly_stars_delta" as "created_at", { ascending: false })
-      .limit(limit),
+      .limit(queryLimit),
     supabase
       .from("mcp_servers" as "skills")
       .select(MCP_FIELDS)
       .gte("weekly_stars_delta" as "slug", 5)
       .eq("status" as "slug", "published")
       .order("weekly_stars_delta" as "created_at", { ascending: false })
-      .limit(limit),
+      .limit(queryLimit),
   ]);
 
   type RawRow = {
