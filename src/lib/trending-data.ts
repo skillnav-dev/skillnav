@@ -136,26 +136,6 @@ async function crossRefTranslated(papers: HFPaper[]): Promise<HFPaper[]> {
   }));
 }
 
-// Known monorepo github URLs — tools sharing these repos have inflated deltas
-const MONOREPO_URLS = [
-  "github.com/anthropics/skills",
-  "github.com/openai/codex",
-  "github.com/modelcontextprotocol/servers",
-];
-
-function dedupeMonorepo(tools: TrendingTool[]): TrendingTool[] {
-  const seen = new Map<string, TrendingTool>();
-  return tools.filter((t) => {
-    const ghUrl = t.github_url || "";
-    if (MONOREPO_URLS.some((m) => ghUrl.includes(m))) return false;
-    const repoKey =
-      ghUrl.replace(/\/tree\/.*$/, "").replace(/\/$/, "") || t.url;
-    if (seen.has(repoKey)) return false;
-    seen.set(repoKey, t);
-    return true;
-  });
-}
-
 async function fetchArticles(days: number): Promise<ArticleRow[]> {
   const supabase = createStaticClient();
   const since = new Date();
@@ -245,7 +225,7 @@ export async function fetchTrendingData(days: number): Promise<TrendingData> {
     fetchSourceHealth(rawPapers, articles, communitySignals),
   ]);
 
-  const tools = dedupeMonorepo(trendingResult.tools).slice(0, 10);
+  const tools = trendingResult.tools.slice(0, 10);
 
   return { papers, tools, articles, communitySignals, health };
 }
