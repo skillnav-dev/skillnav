@@ -53,15 +53,15 @@ export interface TrendingData {
 // ── Source labels ────────────────────────────────────────────────────
 
 export const SOURCE_LABELS: Record<string, string> = {
-  anthropic: "Anthropic",
-  openai: "OpenAI",
-  langchain: "LangChain",
-  github: "GitHub",
-  huggingface: "Hugging Face",
-  crewai: "CrewAI",
-  simonw: "Simon Willison",
-  "latent-space": "Latent Space",
-  thenewstack: "The New Stack",
+  anthropic: "Anthropic 官方",
+  openai: "OpenAI 官方",
+  langchain: "LangChain 官方",
+  github: "GitHub 博客",
+  huggingface: "Hugging Face 官方",
+  crewai: "CrewAI 官方",
+  simonw: "Simon Willison 博客",
+  "latent-space": "Latent Space 播客",
+  thenewstack: "The New Stack 专栏",
 };
 
 // ── Data fetchers ───────────────────────────────────────────────────

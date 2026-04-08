@@ -13,7 +13,7 @@ export function SourceHealthBar({ health }: { health: SourceHealth }) {
     { label: `${health.rss} 信息源`, ok: health.rss > 0 },
     { label: `X ${health.x}条`, ok: health.x > 0 },
     { label: `HN ${health.hn}条`, ok: health.hn > 0 },
-    { label: "HF Papers", ok: health.hf },
+    { label: "HF 论文", ok: health.hf },
   ];
 
   const timeAgo = health.lastUpdated

@@ -175,9 +175,9 @@ export function ArticlesTrack({ articles }: { articles: ArticleRow[] }) {
 // ── Community ───────────────────────────────────────────────────────
 
 const PLATFORM_LABELS: Record<string, string> = {
-  x: "X/Twitter",
-  hn: "Hacker News",
-  reddit: "Reddit",
+  x: "X（推特）",
+  hn: "Hacker News 黑客新闻",
+  reddit: "Reddit 论坛",
 };
 
 function isSafeUrl(url: string): boolean {
