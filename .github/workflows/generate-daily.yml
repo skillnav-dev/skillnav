@@ -2,7 +2,7 @@ name: Generate Daily Brief
 
 on:
   workflow_run:
-    workflows: ["Sync Articles"]
+    workflows: ["Sync Articles", "Scrape Community Signals"]
     types: [completed]
   workflow_dispatch:
     inputs:

@@ -1,0 +1,246 @@
+[
+  {
+    "handle": "sama",
+    "name": "Sam Altman",
+    "category": "leader",
+    "focus": "OpenAI"
+  },
+  {
+    "handle": "DarioAmodei",
+    "name": "Dario Amodei",
+    "category": "leader",
+    "focus": "Anthropic"
+  },
+  {
+    "handle": "demishassabis",
+    "name": "Demis Hassabis",
+    "category": "leader",
+    "focus": "DeepMind"
+  },
+  {
+    "handle": "kevinweil",
+    "name": "Kevin Weil",
+    "category": "leader",
+    "focus": "OpenAI product"
+  },
+  {
+    "handle": "amasad",
+    "name": "Amjad Masad",
+    "category": "leader",
+    "focus": "Replit"
+  },
+  {
+    "handle": "rauchg",
+    "name": "Guillermo Rauch",
+    "category": "leader",
+    "focus": "Vercel"
+  },
+  {
+    "handle": "joshwoodward",
+    "name": "Josh Woodward",
+    "category": "leader",
+    "focus": "Google AI"
+  },
+
+  {
+    "handle": "karpathy",
+    "name": "Andrej Karpathy",
+    "category": "researcher",
+    "focus": "LLMs"
+  },
+  {
+    "handle": "AmandaAskell",
+    "name": "Amanda Askell",
+    "category": "researcher",
+    "focus": "alignment"
+  },
+  {
+    "handle": "alexalbert__",
+    "name": "Alex Albert",
+    "category": "researcher",
+    "focus": "Claude"
+  },
+  {
+    "handle": "ylecun",
+    "name": "Yann LeCun",
+    "category": "researcher",
+    "focus": "AI research"
+  },
+  {
+    "handle": "DrJimFan",
+    "name": "Jim Fan",
+    "category": "researcher",
+    "focus": "embodied AI"
+  },
+
+  {
+    "handle": "swyx",
+    "name": "Swyx",
+    "category": "advocate",
+    "focus": "AI engineering"
+  },
+  {
+    "handle": "simonw",
+    "name": "Simon Willison",
+    "category": "advocate",
+    "focus": "LLM tools"
+  },
+  {
+    "handle": "danshipper",
+    "name": "Dan Shipper",
+    "category": "advocate",
+    "focus": "AI workflows"
+  },
+  {
+    "handle": "petergyang",
+    "name": "Peter Yang",
+    "category": "advocate",
+    "focus": "AI product"
+  },
+  {
+    "handle": "steipete",
+    "name": "Peter Steinberger",
+    "category": "advocate",
+    "focus": "AI coding"
+  },
+  {
+    "handle": "mattshumer_",
+    "name": "Matt Shumer",
+    "category": "advocate",
+    "focus": "agents"
+  },
+  {
+    "handle": "levie",
+    "name": "Aaron Levie",
+    "category": "advocate",
+    "focus": "enterprise AI"
+  },
+  {
+    "handle": "OfficialLoganK",
+    "name": "Logan Kilpatrick",
+    "category": "advocate",
+    "focus": "Google AI"
+  },
+  {
+    "handle": "emaboringkill",
+    "name": "Emily Zhang",
+    "category": "advocate",
+    "focus": "AI safety"
+  },
+
+  {
+    "handle": "hwchase17",
+    "name": "Harrison Chase",
+    "category": "creator",
+    "focus": "LangChain"
+  },
+  {
+    "handle": "jerryjliu0",
+    "name": "Jerry Liu",
+    "category": "creator",
+    "focus": "LlamaIndex"
+  },
+  {
+    "handle": "mntruell",
+    "name": "Michael Truell",
+    "category": "creator",
+    "focus": "Cursor"
+  },
+  {
+    "handle": "thenanyu",
+    "name": "Nan Yu",
+    "category": "creator",
+    "focus": "AI dev tools"
+  },
+  {
+    "handle": "_catwu",
+    "name": "Cat Wu",
+    "category": "creator",
+    "focus": "AI dev tools"
+  },
+  {
+    "handle": "alexgraveley",
+    "name": "Alex Graveley",
+    "category": "creator",
+    "focus": "Copilot"
+  },
+  {
+    "handle": "jxnlco",
+    "name": "Jason Liu",
+    "category": "creator",
+    "focus": "structured AI"
+  },
+  {
+    "handle": "abacaborern",
+    "name": "Anton Bacaj",
+    "category": "creator",
+    "focus": "MCP"
+  },
+  {
+    "handle": "ericciarla",
+    "name": "Eric Ciarla",
+    "category": "creator",
+    "focus": "Firecrawl"
+  },
+
+  {
+    "handle": "yoheinakajima",
+    "name": "Yohei Nakajima",
+    "category": "builder",
+    "focus": "agents"
+  },
+  {
+    "handle": "nutlope",
+    "name": "Hassan El Mghari",
+    "category": "builder",
+    "focus": "AI apps"
+  },
+  {
+    "handle": "mckaywrigley",
+    "name": "McKay Wrigley",
+    "category": "builder",
+    "focus": "AI coding"
+  },
+  {
+    "handle": "ryolu_",
+    "name": "Ryo Lu",
+    "category": "builder",
+    "focus": "AI products"
+  },
+  {
+    "handle": "trq212",
+    "name": "Thariq",
+    "category": "builder",
+    "focus": "AI tools"
+  },
+  {
+    "handle": "nikunj",
+    "name": "Nikunj Kothari",
+    "category": "builder",
+    "focus": "AI infra"
+  },
+  {
+    "handle": "adityaag",
+    "name": "Aditya Agarwal",
+    "category": "builder",
+    "focus": "AI apps"
+  },
+  {
+    "handle": "bioaborern",
+    "name": "Bio Borern",
+    "category": "builder",
+    "focus": "open source"
+  },
+  {
+    "handle": "charliermarsh",
+    "name": "Charlie Marsh",
+    "category": "builder",
+    "focus": "Ruff/Astral"
+  },
+  {
+    "handle": "goodside",
+    "name": "Riley Goodside",
+    "category": "builder",
+    "focus": "prompting"
+  }
+]

@@ -1,0 +1,69 @@
+name: Scrape Community Signals
+
+on:
+  schedule:
+    # HN: twice daily CST 08:00 + 20:00 (UTC 00:00 + 12:00)
+    # X: once daily CST 07:00 (UTC 23:00 previous day)
+    # Combined: run at UTC 00:00 and 12:00
+    - cron: "0 0,12 * * *"
+  workflow_dispatch:
+    inputs:
+      skip_x:
+        description: "Skip X/Twitter collection"
+        type: boolean
+        default: false
+      skip_hn:
+        description: "Skip Hacker News collection"
+        type: boolean
+        default: false
+      dry_run:
+        description: "Dry run mode"
+        type: boolean
+        default: false
+
+concurrency:
+  group: scrape-community-signals
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      LLM_PROVIDER: deepseek
+      LLM_FALLBACK_PROVIDER: gemini
+      X_API_KEY: ${{ secrets.X_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - run: npm ci
+
+      - name: Collect HN signals
+        if: inputs.skip_hn != 'true'
+        run: |
+          ARGS=""
+          if [ "${{ inputs.dry_run }}" = "true" ]; then ARGS="--dry-run"; fi
+          node scripts/scrape-hn-signals.mjs $ARGS
+
+      - name: Collect X signals
+        if: inputs.skip_x != 'true'
+        run: |
+          ARGS=""
+          if [ "${{ inputs.dry_run }}" = "true" ]; then ARGS="--dry-run"; fi
+          node scripts/scrape-x-signals.mjs $ARGS
+
+      - name: Notify Slack on failure
+        if: failure()
+        run: |
+          curl -sS -X POST -H 'Content-type: application/json' \
+            --data "{\"text\":\"❌ *Community Signals* collection failed\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>\"}" \
+            ${{ secrets.SLACK_WEBHOOK_URL }}
