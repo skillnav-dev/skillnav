@@ -79,6 +79,7 @@ async function main() {
 
   let totalFetched = 0;
   let totalErrors = 0;
+  let consecutive402 = 0;
   let allTweets = [];
 
   for (let i = 0; i < KOL_LIST.length; i++) {
@@ -89,9 +90,21 @@ async function main() {
       const tweets = await fetchUserTweets(kol.handle, TWEETS_PER_KOL);
       allTweets.push(...tweets);
       totalFetched += tweets.length;
+      consecutive402 = 0;
     } catch (e) {
       totalErrors++;
       log.warn(`@${kol.handle} failed: ${e.message}`);
+
+      // Early exit: 3 consecutive 402 (credits exhausted) → stop wasting time
+      if (e.message.includes("402")) {
+        consecutive402++;
+        if (consecutive402 >= 3) {
+          log.warn(`3 consecutive 402 errors — API credits exhausted, skipping remaining ${KOL_LIST.length - i - 1} KOLs`);
+          break;
+        }
+      } else {
+        consecutive402 = 0;
+      }
     }
 
     if (i < KOL_LIST.length - 1) await sleep(BATCH_DELAY_MS);
