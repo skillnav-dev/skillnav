@@ -62,7 +62,7 @@ export function PapersTrack({ papers }: { papers: HFPaper[] }) {
                   href={`/papers/${p.translatedSlug}`}
                   className="line-clamp-2 text-sm font-medium leading-snug hover:text-primary"
                 >
-                  {p.title}
+                  {p.title_zh || p.title}
                 </Link>
               ) : (
                 <a
@@ -71,7 +71,7 @@ export function PapersTrack({ papers }: { papers: HFPaper[] }) {
                   rel="noopener noreferrer"
                   className="line-clamp-2 text-sm font-medium leading-snug hover:text-primary"
                 >
-                  {p.title}
+                  {p.title_zh || p.title}
                   <ExternalLink className="ml-1 inline h-3 w-3 text-muted-foreground" />
                 </a>
               )}
@@ -80,6 +80,11 @@ export function PapersTrack({ papers }: { papers: HFPaper[] }) {
                 {p.upvotes}
               </span>
             </div>
+            {p.title_zh && (
+              <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
+                {p.title}
+              </p>
+            )}
             <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
               {p.org && <span>{p.org}</span>}
               {p.githubRepo && (

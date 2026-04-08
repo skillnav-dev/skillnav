@@ -6,6 +6,7 @@ import { getTrendingTools, type TrendingTool } from "@/lib/get-trending-tools";
 export interface HFPaper {
   id: string;
   title: string;
+  title_zh: string | null;
   upvotes: number;
   org: string;
   githubRepo: string;
@@ -37,6 +38,7 @@ export interface SourceHealth {
   rss: number;
   x: number;
   hn: number;
+  reddit: number;
   hf: boolean;
   totalToday: number;
   lastUpdated: string | null;
@@ -94,6 +96,7 @@ async function fetchHFPapers(limit = 10): Promise<HFPaper[]> {
         }) => ({
           id: item.paper?.id || "",
           title: item.paper?.title || "",
+          title_zh: null as string | null,
           upvotes: item.paper?.upvotes || 0,
           org: item.paper?.organization?.fullname || "",
           githubRepo: item.paper?.githubRepo || "",
@@ -111,24 +114,25 @@ async function crossRefTranslated(papers: HFPaper[]): Promise<HFPaper[]> {
   const arxivIds = papers.map((p) => p.id);
   const { data } = await supabase
     .from("articles")
-    .select("slug, source_url")
+    .select("slug, title_zh, source_url")
     .eq("source", "arxiv")
     .eq("status", "published")
     .in(
       "source_url",
       arxivIds.map((id) => `https://arxiv.org/abs/${id}`),
     )
-    .returns<{ slug: string; source_url: string }[]>();
+    .returns<{ slug: string; title_zh: string | null; source_url: string }[]>();
 
-  const slugMap = new Map<string, string>();
+  const refMap = new Map<string, { slug: string; title_zh: string | null }>();
   for (const row of data ?? []) {
     const id = row.source_url.replace("https://arxiv.org/abs/", "");
-    slugMap.set(id, row.slug);
+    refMap.set(id, { slug: row.slug, title_zh: row.title_zh });
   }
 
   return papers.map((p) => ({
     ...p,
-    translatedSlug: slugMap.get(p.id) || null,
+    translatedSlug: refMap.get(p.id)?.slug || null,
+    title_zh: refMap.get(p.id)?.title_zh || null,
   }));
 }
 
@@ -197,6 +201,7 @@ async function fetchSourceHealth(
   const sourcesSet = new Set(articles.map((a) => a.source));
   const xCount = signals.filter((s) => s.platform === "x").length;
   const hnCount = signals.filter((s) => s.platform === "hn").length;
+  const redditCount = signals.filter((s) => s.platform === "reddit").length;
 
   const { data: lastRun } = await supabase
     .from("pipeline_runs")
@@ -211,6 +216,7 @@ async function fetchSourceHealth(
     rss: sourcesSet.size,
     x: xCount,
     hn: hnCount,
+    reddit: redditCount,
     hf: papers.length > 0,
     totalToday: articles.length + signals.length + papers.length,
     lastUpdated,
