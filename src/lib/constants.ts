@@ -16,6 +16,7 @@ export const siteConfig = {
 export const navItems = [
   { title: "Skills", href: "/skills" },
   { title: "MCP", href: "/mcp" },
+  { title: "热度", href: "/trending" },
   { title: "日报", href: "/daily" },
   { title: "周刊", href: "/weekly" },
   { title: "专栏", href: "/guides" },
