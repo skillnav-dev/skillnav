@@ -126,8 +126,10 @@ async function main() {
   }
   log.info(`Generated ${summaryMap.size} summaries`);
 
-  // Build rows for upsert
-  const rows = allTweets.map((t) => ({
+  // Build rows for upsert (validate URLs to prevent XSS via javascript: etc.)
+  const rows = allTweets
+    .filter((t) => t.url.startsWith("https://"))
+    .map((t) => ({
     platform: "x",
     external_id: t.id,
     author: t.author,

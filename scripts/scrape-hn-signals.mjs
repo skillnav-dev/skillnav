@@ -79,9 +79,19 @@ async function fetchJSON(url) {
   return res.json();
 }
 
+// Pre-compile word-boundary regexes for accurate matching
+// Avoids "ai" matching "maintain", "phi" matching "philosophy", etc.
+const _regexCache = new Map();
+function _getKeywordRegex(kw) {
+  if (!_regexCache.has(kw)) {
+    const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    _regexCache.set(kw, new RegExp(`\\b${escaped}\\b`, "i"));
+  }
+  return _regexCache.get(kw);
+}
+
 function matchesKeywords(text, keywords) {
-  const lower = text.toLowerCase();
-  return keywords.some((kw) => lower.includes(kw));
+  return keywords.some((kw) => _getKeywordRegex(kw).test(text));
 }
 
 function isRelevant(story) {
@@ -191,23 +201,27 @@ async function main() {
   }
   log.info(`Generated ${summaryMap.size} summaries`);
 
-  // Build rows
-  const rows = relevant.map((s) => ({
-    platform: "hn",
-    external_id: String(s.id),
-    author: s.by || null,
-    author_handle: s.by || null,
-    title: (s.title || "").slice(0, 500),
-    content_summary: (s.title || "").slice(0, 1000),
-    content_summary_zh: summaryMap.get(s.id) || null,
-    url: s.url || HN_ITEM_LINK(s.id),
-    score: s.score || 0,
-    likes: 0,
-    retweets: 0,
-    comments: s.descendants || 0,
-    signal_date: signalDate,
-    is_hidden: false,
-  }));
+  // Build rows (validate URLs: HN stories may have external URLs or HN discussion links)
+  const rows = relevant.map((s) => {
+    const rawUrl = s.url || HN_ITEM_LINK(s.id);
+    const url = rawUrl.startsWith("http") ? rawUrl : HN_ITEM_LINK(s.id);
+    return {
+      platform: "hn",
+      external_id: String(s.id),
+      author: s.by || null,
+      author_handle: s.by || null,
+      title: (s.title || "").slice(0, 500),
+      content_summary: (s.title || "").slice(0, 1000),
+      content_summary_zh: summaryMap.get(s.id) || null,
+      url,
+      score: s.score || 0,
+      likes: 0,
+      retweets: 0,
+      comments: s.descendants || 0,
+      signal_date: signalDate,
+      is_hidden: false,
+    };
+  });
 
   if (dryRun) {
     log.info(`[DRY RUN] Would upsert ${rows.length} HN signals`);
