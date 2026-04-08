@@ -183,16 +183,16 @@ async function fetchCommunitySignals(days: number): Promise<CommunitySignal[]> {
   const sinceDate = since.toISOString().slice(0, 10);
 
   const { data } = await supabase
-    .from("community_signals" as "skills")
+    .from("community_signals")
     .select(
-      "platform, author_handle, title, content_summary, content_summary_zh, url, score, likes, comments" as "slug",
+      "platform, author_handle, title, content_summary, content_summary_zh, url, score, likes, comments",
     )
-    .eq("is_hidden" as "slug", false)
-    .gte("signal_date" as "slug", sinceDate)
-    .order("score" as "created_at", { ascending: false })
+    .eq("is_hidden", false)
+    .gte("signal_date", sinceDate)
+    .order("score", { ascending: false })
     .limit(30);
 
-  return (data as unknown as CommunitySignal[]) ?? [];
+  return (data as CommunitySignal[]) ?? [];
 }
 
 async function fetchSourceHealth(
@@ -206,13 +206,13 @@ async function fetchSourceHealth(
   const hnCount = signals.filter((s) => s.platform === "hn").length;
 
   const { data: lastRun } = await supabase
-    .from("pipeline_runs" as "skills")
-    .select("started_at" as "slug")
-    .order("started_at" as "created_at", { ascending: false })
-    .limit(1);
+    .from("pipeline_runs")
+    .select("started_at")
+    .order("started_at", { ascending: false })
+    .limit(1)
+    .returns<{ started_at: string }[]>();
 
-  const lastUpdated =
-    (lastRun as unknown as { started_at: string }[])?.[0]?.started_at || null;
+  const lastUpdated = lastRun?.[0]?.started_at || null;
 
   return {
     rss: sourcesSet.size,

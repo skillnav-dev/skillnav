@@ -254,6 +254,46 @@ export interface Database {
           Database["public"]["Tables"]["pipeline_runs"]["Insert"]
         >;
       };
+      community_signals: {
+        Row: {
+          id: number;
+          platform: "x" | "hn" | "reddit";
+          external_id: string;
+          author: string | null;
+          author_handle: string | null;
+          title: string | null;
+          content_summary: string | null;
+          content_summary_zh: string | null;
+          url: string;
+          score: number;
+          likes: number;
+          retweets: number;
+          comments: number;
+          signal_date: string;
+          fetched_at: string;
+          is_hidden: boolean;
+        };
+        Insert: {
+          platform: "x" | "hn" | "reddit";
+          external_id: string;
+          author?: string | null;
+          author_handle?: string | null;
+          title?: string | null;
+          content_summary?: string | null;
+          content_summary_zh?: string | null;
+          url: string;
+          score?: number;
+          likes?: number;
+          retweets?: number;
+          comments?: number;
+          signal_date: string;
+          fetched_at?: string;
+          is_hidden?: boolean;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["community_signals"]["Insert"]
+        >;
+      };
       submissions: {
         Row: {
           id: string;
@@ -288,3 +328,5 @@ export type BriefPublicationRow =
   Database["public"]["Tables"]["brief_publications"]["Row"];
 export type PipelineRunRow =
   Database["public"]["Tables"]["pipeline_runs"]["Row"];
+export type CommunitySignalRow =
+  Database["public"]["Tables"]["community_signals"]["Row"];
