@@ -59,7 +59,7 @@ export function PapersTrack({ papers }: { papers: HFPaper[] }) {
             <div className="flex items-start justify-between gap-2">
               {p.translatedSlug ? (
                 <Link
-                  href={`/papers/${p.translatedSlug}`}
+                  href={`/articles/${p.translatedSlug}`}
                   className="line-clamp-2 text-sm font-medium leading-snug hover:text-primary"
                 >
                   {p.title_zh || p.title}
@@ -202,11 +202,11 @@ export function CommunityTrack({ signals }: { signals: CommunitySignal[] }) {
     <div className="space-y-4">
       {Object.entries(byPlatform).map(([platform, items]) => (
         <div key={platform}>
-          <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <h4 className="mb-2 text-xs font-semibold tracking-wider text-muted-foreground">
             {PLATFORM_LABELS[platform] || platform}
           </h4>
           <div className="space-y-2">
-            {items.slice(0, 8).map((s, i) => {
+            {items.slice(0, 5).map((s, i) => {
               const href = isSafeUrl(s.url) ? s.url : "#";
               return (
                 <a

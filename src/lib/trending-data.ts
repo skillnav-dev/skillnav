@@ -146,8 +146,10 @@ const MONOREPO_URLS = [
 function dedupeMonorepo(tools: TrendingTool[]): TrendingTool[] {
   const seen = new Map<string, TrendingTool>();
   return tools.filter((t) => {
-    if (MONOREPO_URLS.some((m) => t.url.includes(m))) return false;
-    const repoKey = t.url.replace(/\/tree\/.*$/, "").replace(/\/$/, "");
+    const ghUrl = t.github_url || "";
+    if (MONOREPO_URLS.some((m) => ghUrl.includes(m))) return false;
+    const repoKey =
+      ghUrl.replace(/\/tree\/.*$/, "").replace(/\/$/, "") || t.url;
     if (seen.has(repoKey)) return false;
     seen.set(repoKey, t);
     return true;

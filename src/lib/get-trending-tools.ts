@@ -11,6 +11,7 @@ export interface TrendingTool {
   weekly_stars_delta: number;
   freshness: string;
   url: string;
+  github_url: string | null;
 }
 
 export interface TrendingResult {
@@ -21,9 +22,9 @@ export interface TrendingResult {
 }
 
 const SKILL_FIELDS =
-  "slug, name, name_zh, editor_comment_zh, stars, weekly_stars_delta, freshness" as "slug";
+  "slug, name, name_zh, editor_comment_zh, stars, weekly_stars_delta, freshness, github_url" as "slug";
 const MCP_FIELDS =
-  "slug, name, name_zh, editor_comment_zh, stars, weekly_stars_delta, freshness" as "slug";
+  "slug, name, name_zh, editor_comment_zh, stars, weekly_stars_delta, freshness, github_url" as "slug";
 
 export async function getTrendingTools(
   supabase: SupabaseClient<Database>,
@@ -54,6 +55,7 @@ export async function getTrendingTools(
     stars: number;
     weekly_stars_delta: number;
     freshness: string;
+    github_url: string | null;
   };
 
   const merged: TrendingTool[] = [
