@@ -5,17 +5,24 @@
 感知层 + 热度看板 — `docs/plans/perception-trending.md`（2/3 phases, Phase 0-2 done）
 
 ## Session Tasks
-- [x] 修复 auto-translate-radar.mjs 超时问题（5min → 15min）→ `scripts/auto-translate-radar.mjs:139`
-- [x] 翻译 2026-04-08 雷达 8 篇论文并发布
-- [ ] TwitterAPI.io 充值 → 恢复 X 采集（当前 402 credits exhausted）
-- [ ] Reddit API 审批申请 → 走 Reddit 新审批流程
+- [x] X 采集恢复：dotenv + x-client 响应解析修复 → 108 条入库
+- [x] HN 采集恢复：dotenv 修复 → 30 条入库
+- [x] Reddit 采集新建：`scripts/scrape-reddit-signals.mjs` → 30 条入库
+- [x] 全线切 DeepSeek：`.env.local` + 6 个 CI workflow
+- [x] Trending 页面走查：论文链接 404、中文标签、monorepo dedup、社区均衡
+- [ ] Trending 工具赛道 MCP 查询 CF Worker 失败 → `src/lib/get-trending-tools.ts`
 
 ## Key Files
-- `scripts/auto-translate-radar.mjs` — 批量翻译入口（timeout 修复）
-- `docs/plans/perception-trending.md` — 方案 v3.1（Phase 0-2 done）
-- `scripts/scrape-x-signals.mjs` — X 采集（待充值恢复）
+- `scripts/scrape-reddit-signals.mjs` — 新建的 Reddit 采集脚本
+- `scripts/lib/x-client.mjs` — TwitterAPI.io 响应解析修复
+- `src/lib/get-trending-tools.ts` — 工具查询 + monorepo 排除（MCP 待修）
+- `src/lib/trending-data.ts` — 论文中文标题 + Reddit health bar
+- `src/components/trending/track-components.tsx` — UI 中文化 + 排版修复
 
 ## Next Actions
-- [ ] 充值 TwitterAPI.io → X 采集自动恢复 → 验证 DB 有 X 数据
-- [ ] 部署后访问 `https://skillnav.dev/trending` 验证页面效果
-- [ ] Phase 3 启动前：积累 1-2 周数据，做回测评估
+- [ ] 调查 MCP 查询在 CF Worker 失败的根因 → 在 `get-trending-tools.ts` 加 error logging 后部署观察
+- [ ] OpenAI 订阅恢复后改回 `LLM_PROVIDER=gpt`（`.env.local` + 6 个 CI workflow）
+- [ ] Phase 3 回测评估：积累 1-2 周三源社区数据后评估
+
+## Decisions Needed
+- MCP 查询修复策略：加 DB types 定义 vs 独立 Supabase client vs REST API fallback
