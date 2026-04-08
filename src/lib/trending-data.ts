@@ -1,9 +1,5 @@
 import { createStaticClient } from "@/lib/supabase/static";
-import {
-  getTrendingTools,
-  type TrendingTool,
-  type TrendingResult,
-} from "@/lib/get-trending-tools";
+import { getTrendingTools, type TrendingTool } from "@/lib/get-trending-tools";
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -115,19 +111,17 @@ async function crossRefTranslated(papers: HFPaper[]): Promise<HFPaper[]> {
   const arxivIds = papers.map((p) => p.id);
   const { data } = await supabase
     .from("articles")
-    .select("slug, source_url" as "slug")
-    .eq("source" as "slug", "arxiv")
-    .eq("status" as "slug", "published")
+    .select("slug, source_url")
+    .eq("source", "arxiv")
+    .eq("status", "published")
     .in(
-      "source_url" as "slug",
+      "source_url",
       arxivIds.map((id) => `https://arxiv.org/abs/${id}`),
-    );
+    )
+    .returns<{ slug: string; source_url: string }[]>();
 
   const slugMap = new Map<string, string>();
-  for (const row of (data as unknown as {
-    slug: string;
-    source_url: string;
-  }[]) ?? []) {
+  for (const row of data ?? []) {
     const id = row.source_url.replace("https://arxiv.org/abs/", "");
     slugMap.set(id, row.slug);
   }
@@ -163,17 +157,16 @@ async function fetchArticles(days: number): Promise<ArticleRow[]> {
 
   const { data } = await supabase
     .from("articles")
-    .select(
-      "slug, title_zh, title, source, published_at, relevance_score" as "slug",
-    )
-    .eq("status" as "slug", "published")
-    .neq("source" as "slug", "arxiv")
-    .gte("published_at" as "slug", since.toISOString())
-    .order("relevance_score" as "created_at", { ascending: false })
-    .order("published_at" as "created_at", { ascending: false })
-    .limit(10);
+    .select("slug, title_zh, title, source, published_at, relevance_score")
+    .eq("status", "published")
+    .neq("source", "arxiv")
+    .gte("published_at", since.toISOString())
+    .order("relevance_score", { ascending: false })
+    .order("published_at", { ascending: false })
+    .limit(10)
+    .returns<ArticleRow[]>();
 
-  return (data as unknown as ArticleRow[]) ?? [];
+  return data ?? [];
 }
 
 async function fetchCommunitySignals(days: number): Promise<CommunitySignal[]> {

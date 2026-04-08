@@ -11,8 +11,8 @@ import {
   ArticlesTrack,
   CommunityTrack,
   TrackSection,
-  SourceHealthBar,
 } from "@/components/trending/track-components";
+import { SourceHealthBar } from "@/components/trending/source-health-bar";
 
 export const revalidate = 300; // ISR: 5 min
 
