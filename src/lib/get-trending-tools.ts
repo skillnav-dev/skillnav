@@ -38,13 +38,15 @@ export async function getTrendingTools(
       .select(SKILL_FIELDS)
       .gte("weekly_stars_delta" as "slug", 5)
       .eq("status" as "slug", "published")
+      .not("github_url" as "slug", "like", "%anthropics/skills%")
       .order("weekly_stars_delta" as "created_at", { ascending: false })
       .limit(queryLimit),
     supabase
       .from("mcp_servers" as "skills")
       .select(MCP_FIELDS)
-      .gte("weekly_stars_delta" as "slug", 5)
+      .gte("weekly_stars_delta" as "slug", 1)
       .eq("status" as "slug", "published")
+      .not("github_url" as "slug", "like", "%modelcontextprotocol/servers%")
       .order("weekly_stars_delta" as "created_at", { ascending: false })
       .limit(queryLimit),
   ]);
