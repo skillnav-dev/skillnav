@@ -103,6 +103,54 @@ async function queryRecentArticles(supabase, since, until, limit = 20) {
   return filtered;
 }
 
+// ── Community Signals (X/Twitter + HN) ───────────────────────────
+
+async function queryCommunitySignals(supabase, signalDate) {
+  const { data, error } = await supabase
+    .from("community_signals")
+    .select("platform, author_handle, title, content_summary, content_summary_zh, url, score, likes, comments")
+    .eq("signal_date", signalDate)
+    .eq("is_hidden", false)
+    .order("score", { ascending: false })
+    .limit(30);
+
+  if (error) {
+    log.warn(`Community signals query failed: ${error.message}`);
+    return [];
+  }
+  return data || [];
+}
+
+function formatCommunityContext(signals) {
+  if (!signals.length) return "";
+
+  const byPlatform = { x: [], hn: [] };
+  for (const s of signals) {
+    if (byPlatform[s.platform]) byPlatform[s.platform].push(s);
+  }
+
+  const lines = [];
+
+  if (byPlatform.x.length) {
+    lines.push("### X/Twitter (AI developer KOLs)");
+    for (const s of byPlatform.x.slice(0, 15)) {
+      const text = s.content_summary_zh || s.content_summary || "";
+      lines.push(`- @${s.author_handle} (${s.likes}❤): ${text.slice(0, 200)}`);
+    }
+  }
+
+  if (byPlatform.hn.length) {
+    lines.push("\n### Hacker News (top AI/dev stories)");
+    for (const s of byPlatform.hn.slice(0, 15)) {
+      const title = s.title || s.content_summary || "";
+      const zh = s.content_summary_zh ? ` → ${s.content_summary_zh}` : "";
+      lines.push(`- [${s.score}▲] ${title}${zh} (${s.comments} comments)`);
+    }
+  }
+
+  return lines.join("\n");
+}
+
 // ── Newsletter Layer ──────────────────────────────────────────────
 
 function loadNewsletters(dateLabel) {
@@ -250,7 +298,7 @@ function formatToolsContext(tools) {
 
 // ── LLM Curation ───────────────────────────────────────────────────
 
-async function generateEditorialBrief(articles, newsletterContext = "", papersContext = "", toolsContext = "") {
+async function generateEditorialBrief(articles, newsletterContext = "", papersContext = "", toolsContext = "", communityContext = "") {
   const { callLLM } = await import("./lib/llm.mjs");
 
   const articleList = articles
@@ -268,16 +316,16 @@ async function generateEditorialBrief(articles, newsletterContext = "", papersCo
   const systemPrompt = `You are the chief editor of SkillNav Daily Brief, a Chinese-language daily digest for AI developers.
 
 ## Your role
-You have two inputs: (1) raw text from today's top AI newsletters, and (2) our article pool.
-Your job: cross-reference the newsletters, identify the most important stories, and produce a brief with clear editorial hierarchy.
+You have multiple inputs: (1) raw text from today's top AI newsletters, (2) our article pool, (3) community signals from X/Twitter AI KOLs and Hacker News.
+Your job: cross-reference ALL sources, identify the most important stories, and produce a brief with clear editorial hierarchy.
 
 ## Editorial funnel (strict rules)
-- HEADLINE (0 or 1): A topic mentioned by 2+ newsletters, OR a genuine industry inflection point. Write "why it matters" with a specific impact statement. If nothing qualifies, set headline to null — do NOT force a headline.
+- HEADLINE (0 or 1): A topic mentioned by 2+ sources (newsletters, X posts, HN threads), OR a genuine industry inflection point. Write "why it matters" with a specific impact statement. If nothing qualifies, set headline to null — do NOT force a headline.
 - NOTEWORTHY (3-5): Topics worth a developer's attention. Each gets a one-line editorial comment that adds insight beyond the title.
-- SKIP everything else. Most newsletter items are noise. Pushing less = brand trust.
+- SKIP everything else. Most items are noise. Pushing less = brand trust.
 
 ## Cross-referencing
-Read ALL newsletter texts carefully. When multiple newsletters cover the same topic (even with different wording), that's a strong signal. Prefer topics validated by 2+ sources.
+Read ALL inputs carefully. When multiple sources cover the same topic (newsletters + X posts, or X + HN, even with different wording), that's a strong signal. X/Twitter posts from KOLs often surface stories 12-24h before newsletters — treat these as early signals. HN threads with 100+ points indicate developer community interest.
 
 ## Linking to our articles
 For each item, check if our article pool covers the topic. If yes, use the article's slug. If not, use slug "signal-{N}" (e.g., "signal-1") — we'll display these as text-only items.
@@ -318,8 +366,9 @@ For each item, check if our article pool covers the topic. If yes, use the artic
 
   const hasPapers = papersContext.length > 0;
   const hasTools = toolsContext.length > 0;
+  const hasCommunity = communityContext.length > 100;
 
-  const userPrompt = `${hasNewsletters ? `## Today's AI newsletters (raw text from ${articles.length > 0 ? "multiple" : "5"} sources)\n${newsletterContext}\n` : ""}
+  const userPrompt = `${hasNewsletters ? `## Today's AI newsletters (raw text from ${articles.length > 0 ? "multiple" : "5"} sources)\n${newsletterContext}\n` : ""}${hasCommunity ? `\n## Community signals (X/Twitter KOLs + Hacker News)\n\n${communityContext}\n` : ""}
 ## Our article pool (${articles.length} articles)
 
 ${articleList}
@@ -708,6 +757,15 @@ async function main() {
     log.info("Tool signals: none found");
   }
 
+  // Fetch community signals (X/Twitter + HN)
+  const communitySignals = await queryCommunitySignals(supabase, dateLabel);
+  const communityContext = formatCommunityContext(communitySignals);
+  if (communitySignals.length) {
+    log.info(`Community signals: ${communitySignals.length} (X: ${communitySignals.filter(s => s.platform === 'x').length}, HN: ${communitySignals.filter(s => s.platform === 'hn').length})`);
+  } else {
+    log.info("Community signals: none found");
+  }
+
   // Generate editorial brief
   let editorialBrief;
   if (noLlm) {
@@ -716,7 +774,7 @@ async function main() {
   } else {
     log.info("Generating editorial brief via LLM...");
     try {
-      editorialBrief = await generateEditorialBrief(articles, newsletterContext, papersContext, toolsContext);
+      editorialBrief = await generateEditorialBrief(articles, newsletterContext, papersContext, toolsContext, communityContext);
       const paperCount = editorialBrief.papers?.length || 0;
       const toolCount = editorialBrief.tools?.length || 0;
       log.success(`Brief: "${editorialBrief.title}" with ${editorialBrief.highlights.length} highlights, ${paperCount} papers, ${toolCount} tools`);
