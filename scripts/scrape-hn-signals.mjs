@@ -10,6 +10,10 @@
  *   node scripts/scrape-hn-signals.mjs --dry-run   # Preview without DB write
  */
 
+import dotenv from "dotenv";
+dotenv.config({ path: ".env.local" });
+dotenv.config();
+
 import { createLogger } from "./lib/logger.mjs";
 import { runPipeline } from "./lib/run-pipeline.mjs";
 import { createAdminClient } from "./lib/supabase-admin.mjs";

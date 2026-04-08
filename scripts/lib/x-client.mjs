@@ -54,9 +54,10 @@ export async function fetchUserTweets(handle, limit = 3) {
 
   const data = await res.json();
 
-  // Normalize response — API may return { tweets: [...] }, { data: [...] }, or just [...]
+  // Normalize response — API returns { data: { tweets: [...] } } or { tweets: [...] } or [...]
   let tweets = [];
-  if (Array.isArray(data.tweets)) tweets = data.tweets;
+  if (Array.isArray(data?.data?.tweets)) tweets = data.data.tweets;
+  else if (Array.isArray(data.tweets)) tweets = data.tweets;
   else if (Array.isArray(data.data)) tweets = data.data;
   else if (Array.isArray(data)) tweets = data;
   // If API returns an object with no array, return empty

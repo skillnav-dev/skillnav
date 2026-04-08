@@ -10,6 +10,10 @@
  *   node scripts/scrape-x-signals.mjs --dry-run   # Preview without DB write
  */
 
+import dotenv from "dotenv";
+dotenv.config({ path: ".env.local" });
+dotenv.config();
+
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
