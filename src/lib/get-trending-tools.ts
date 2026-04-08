@@ -42,7 +42,7 @@ export async function getTrendingTools(
   const queryLimit = limit * 3;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sb = supabase as any;
-  const [{ data: skills }, { data: mcps }] = await Promise.all([
+  const [skillsResult, mcpResult] = await Promise.all([
     supabase
       .from("skills")
       .select(SELECT_FIELDS as "slug")
@@ -60,6 +60,20 @@ export async function getTrendingTools(
       .order("weekly_stars_delta", { ascending: false })
       .limit(queryLimit),
   ]);
+
+  const skills = skillsResult.data;
+  const mcps = mcpResult.data;
+
+  // Debug: log MCP query result for CF Worker investigation
+  if (mcpResult.error) {
+    console.error(
+      "[trending] MCP query error:",
+      JSON.stringify(mcpResult.error),
+    );
+  }
+  console.log(
+    `[trending] skills=${skills?.length ?? 0}, mcps=${mcps?.length ?? 0}, mcpError=${!!mcpResult.error}`,
+  );
 
   const merged: TrendingTool[] = [
     ...((skills as unknown as RawRow[]) ?? []).map((s) => ({
