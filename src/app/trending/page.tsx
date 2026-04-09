@@ -56,27 +56,34 @@ export default async function TrendingPage({ searchParams }: PageProps) {
             title="AI 开发者生态热度"
             description="四赛道每日热点，数据驱动的生态脉搏"
           />
-          <div className="flex shrink-0 gap-1 rounded-lg border border-border/60 p-0.5">
-            <Link
-              href="/trending"
-              className={`rounded-md px-3 py-1 text-sm transition-colors ${
-                period === "today"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              今日
-            </Link>
-            <Link
-              href="/trending?period=week"
-              className={`rounded-md px-3 py-1 text-sm transition-colors ${
-                period === "week"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              本周
-            </Link>
+          <div className="flex shrink-0 flex-col items-end gap-1.5">
+            <span className="text-xs text-muted-foreground">
+              {health.lastUpdated
+                ? `数据更新于 ${new Date(new Date(health.lastUpdated).getTime() + 8 * 3600_000).toLocaleString("zh-CN", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: false })}`
+                : ""}
+            </span>
+            <div className="flex shrink-0 gap-1 rounded-lg border border-border/60 p-0.5">
+              <Link
+                href="/trending"
+                className={`rounded-md px-3 py-1 text-sm transition-colors ${
+                  period === "today"
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                今日
+              </Link>
+              <Link
+                href="/trending?period=week"
+                className={`rounded-md px-3 py-1 text-sm transition-colors ${
+                  period === "week"
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                本周
+              </Link>
+            </div>
           </div>
         </div>
 
