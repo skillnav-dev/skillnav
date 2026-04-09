@@ -242,5 +242,48 @@
     "name": "Riley Goodside",
     "category": "builder",
     "focus": "prompting"
+  },
+
+  {
+    "handle": "chelaborernfinn",
+    "name": "Chelsea Finn",
+    "category": "researcher",
+    "focus": "robot learning"
+  },
+  {
+    "handle": "lerrelpinto",
+    "name": "Lerrel Pinto",
+    "category": "researcher",
+    "focus": "robot manipulation"
+  },
+  {
+    "handle": "TedXiao3",
+    "name": "Ted Xiao",
+    "category": "researcher",
+    "focus": "robot foundation models"
+  },
+  {
+    "handle": "figure_robot",
+    "name": "Figure",
+    "category": "company",
+    "focus": "humanoid robots"
+  },
+  {
+    "handle": "1aboratory",
+    "name": "1X Technologies",
+    "category": "company",
+    "focus": "humanoid robots"
+  },
+  {
+    "handle": "alexkoch_ai",
+    "name": "Alex Koch",
+    "category": "builder",
+    "focus": "open source robots"
+  },
+  {
+    "handle": "tonyzzhao",
+    "name": "Tony Z. Zhao",
+    "category": "researcher",
+    "focus": "robot learning"
   }
 ]

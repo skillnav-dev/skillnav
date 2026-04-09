@@ -27,6 +27,8 @@ const SUBREDDITS = [
   "LocalLLaMA",
   "artificial",
   "ClaudeAI",
+  "robotics",
+  "reinforcementlearning",
   "ChatGPT",
   "singularity",
   "LangChain",

@@ -50,6 +50,8 @@ const POSITIVE_KEYWORDS = [
   "devin", "replit",
   // Infra
   "gpu", "cuda", "inference", "mlops", "training",
+  // Embodied AI / Robotics
+  "robot", "humanoid", "embodied", "manipulation", "locomotion",
 ];
 
 const NEGATIVE_KEYWORDS = [
