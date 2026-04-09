@@ -44,12 +44,20 @@ export interface SourceHealth {
   lastUpdated: string | null;
 }
 
+export interface TrackTimestamps {
+  papers: string | null;
+  tools: string | null;
+  articles: string | null;
+  community: string | null;
+}
+
 export interface TrendingData {
   papers: HFPaper[];
   tools: TrendingTool[];
   articles: ArticleRow[];
   communitySignals: CommunitySignal[];
   health: SourceHealth;
+  trackUpdatedAt: TrackTimestamps;
 }
 
 // ── Source labels ────────────────────────────────────────────────────
@@ -205,19 +213,65 @@ async function fetchSourceHealth(
   };
 }
 
+async function fetchTrackTimestamps(): Promise<TrackTimestamps> {
+  const supabase = createStaticClient();
+  const pipelines = [
+    "generate-daily",
+    "sync-articles",
+    "x-signals",
+    "hn-signals",
+    "reddit-signals",
+  ];
+
+  const { data } = await supabase
+    .from("pipeline_runs")
+    .select("pipeline, started_at")
+    .in("pipeline", pipelines)
+    .order("started_at", { ascending: false })
+    .limit(30);
+
+  const latest: Record<string, string> = {};
+  for (const r of (data as { pipeline: string; started_at: string }[]) ?? []) {
+    if (!latest[r.pipeline]) latest[r.pipeline] = r.started_at;
+  }
+
+  // Community = most recent of x/hn/reddit
+  const communityTimes = [
+    latest["x-signals"],
+    latest["hn-signals"],
+    latest["reddit-signals"],
+  ].filter(Boolean);
+  const communityLatest = communityTimes.length
+    ? communityTimes.sort().pop()!
+    : null;
+
+  return {
+    papers: null, // HF API is live, no pipeline timestamp
+    tools: latest["sync-articles"] || null,
+    articles: latest["sync-articles"] || null,
+    community: communityLatest,
+  };
+}
+
 // ── Main data loader ────────────────────────────────────────────────
 
 export async function fetchTrendingData(days: number): Promise<TrendingData> {
   const supabase = createStaticClient();
 
-  // Fetch all four tracks + cross-ref in parallel
-  const [rawPapers, trendingResult, articles, communitySignals] =
-    await Promise.all([
-      fetchHFPapers(10),
-      getTrendingTools(supabase, 20),
-      fetchArticles(days),
-      fetchCommunitySignals(days),
-    ]);
+  // Fetch all four tracks + cross-ref + timestamps in parallel
+  const [
+    rawPapers,
+    trendingResult,
+    articles,
+    communitySignals,
+    trackUpdatedAt,
+  ] = await Promise.all([
+    fetchHFPapers(10),
+    getTrendingTools(supabase, 20),
+    fetchArticles(days),
+    fetchCommunitySignals(days),
+    fetchTrackTimestamps(),
+  ]);
 
   // These two depend on the above, run in parallel with each other
   const [papers, health] = await Promise.all([
@@ -227,5 +281,5 @@ export async function fetchTrendingData(days: number): Promise<TrendingData> {
 
   const tools = trendingResult.tools.slice(0, 10);
 
-  return { papers, tools, articles, communitySignals, health };
+  return { papers, tools, articles, communitySignals, health, trackUpdatedAt };
 }

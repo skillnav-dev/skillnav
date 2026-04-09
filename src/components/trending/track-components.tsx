@@ -21,13 +21,25 @@ function EmptyTrack({ message }: { message: string }) {
   );
 }
 
+function formatTrackTime(iso: string | null): string {
+  if (!iso) return "实时";
+  const d = new Date(new Date(iso).getTime() + 8 * 3600_000);
+  const m = d.getUTCMonth() + 1;
+  const day = d.getUTCDate();
+  const h = String(d.getUTCHours()).padStart(2, "0");
+  const min = String(d.getUTCMinutes()).padStart(2, "0");
+  return `${m}/${day} ${h}:${min}`;
+}
+
 export function TrackSection({
   icon,
   title,
+  updatedAt,
   children,
 }: {
   icon: React.ReactNode;
   title: string;
+  updatedAt?: string | null;
   children: React.ReactNode;
 }) {
   return (
@@ -37,6 +49,11 @@ export function TrackSection({
           {icon}
         </span>
         <h3 className="text-base font-bold tracking-tight">{title}</h3>
+        {updatedAt !== undefined && (
+          <span className="ml-auto text-[11px] text-muted-foreground">
+            {formatTrackTime(updatedAt)}
+          </span>
+        )}
       </div>
       {children}
     </section>
