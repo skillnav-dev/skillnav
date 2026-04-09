@@ -1,28 +1,28 @@
 # HANDOFF
-<!-- /checkpoint at 2026-04-08 -->
+<!-- /checkpoint at 2026-04-09 -->
 
 ## Active Plan
 感知层 + 热度看板 — `docs/plans/perception-trending.md`（2/3 phases, Phase 0-2 done）
 
 ## Session Tasks
-- [x] X 采集恢复：dotenv + x-client 响应解析修复 → 108 条入库
-- [x] HN 采集恢复：dotenv 修复 → 30 条入库
-- [x] Reddit 采集新建：`scripts/scrape-reddit-signals.mjs` → 30 条入库
-- [x] 全线切 DeepSeek：`.env.local` + 6 个 CI workflow
-- [x] Trending 页面走查：论文链接 404、中文标签、monorepo dedup、社区均衡
-- [ ] Trending 工具赛道 MCP 查询 CF Worker 失败 → `src/lib/get-trending-tools.ts`
+- [x] MCP 查询根因排查：确认查询正常，根因是 monorepo 占满排名位
+- [x] Codex 独立审查确认分析
+- [x] 修复：per-repo 去重 + half/half 混合组合 → `src/lib/get-trending-tools.ts`
+- [x] Trending 视觉层次优化：section header + top3 徽章 + 社区子标题
+- [x] per-track 更新时间戳（替代误导性全局时间戳）
+- [x] 论文翻译 5 篇（Video-MME-v2, Claw-Eval, Agent Trajectories, Vanast, Beyond Accuracy）
+- [x] 具身智能感知源覆盖：X +7 KOL, HN +5 关键词, Reddit +2 subreddit
 
 ## Key Files
-- `scripts/scrape-reddit-signals.mjs` — 新建的 Reddit 采集脚本
-- `scripts/lib/x-client.mjs` — TwitterAPI.io 响应解析修复
-- `src/lib/get-trending-tools.ts` — 工具查询 + monorepo 排除（MCP 待修）
-- `src/lib/trending-data.ts` — 论文中文标题 + Reddit health bar
-- `src/components/trending/track-components.tsx` — UI 中文化 + 排版修复
+- `src/lib/get-trending-tools.ts` — per-repo 去重 + 混合组合核心逻辑
+- `src/lib/trending-data.ts` — 移除冗余 dedupeMonorepo + 新增 fetchTrackTimestamps
+- `src/components/trending/track-components.tsx` — 视觉层次改进 + per-track 时间戳
+- `config/x-kol-list.json` — 47 KOL（新增 7 具身智能）
+- `scripts/scrape-hn-signals.mjs` — 新增 robotics 正向关键词
+- `scripts/scrape-reddit-signals.mjs` — 新增 r/robotics + r/reinforcementlearning
 
 ## Next Actions
-- [ ] 调查 MCP 查询在 CF Worker 失败的根因 → 在 `get-trending-tools.ts` 加 error logging 后部署观察
+- [ ] Phase 3 回测评估：积累 1-2 周具身智能数据后评估覆盖效果
+- [ ] 社区热议"新"标签：标记当日新入库的信号，增强变化感知
+- [ ] X KOL handle 验证：新增的 7 个具身 KOL handle 需确认有效（首次采集时观察）
 - [ ] OpenAI 订阅恢复后改回 `LLM_PROVIDER=gpt`（`.env.local` + 6 个 CI workflow）
-- [ ] Phase 3 回测评估：积累 1-2 周三源社区数据后评估
-
-## Decisions Needed
-- MCP 查询修复策略：加 DB types 定义 vs 独立 Supabase client vs REST API fallback
