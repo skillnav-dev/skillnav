@@ -4,8 +4,8 @@ on:
   schedule:
     # HN + Reddit: twice daily CST 08:00 + 20:00 (UTC 00:00 + 12:00)
     # X: once daily CST 07:00 (UTC 23:00 previous day)
-    # Combined: run at UTC 00:00 and 12:00
-    - cron: "0 0,12 * * *"
+    # Combined: run at UTC 00:00, 06:00 and 12:00 (CST 08:00, 14:00, 20:00)
+    - cron: "0 0,6,12 * * *"
   workflow_dispatch:
     inputs:
       skip_x:
