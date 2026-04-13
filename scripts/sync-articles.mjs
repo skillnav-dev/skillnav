@@ -169,6 +169,34 @@ const SOURCES = [
     defaultType: "analysis",
     relevanceFilter: RELEVANCE_KEYWORDS,
   },
+  {
+    name: "deepmind",
+    label: "Google DeepMind Blog",
+    feedUrl: "https://deepmind.google/blog/rss.xml",
+    defaultType: "analysis",
+    relevanceFilter: null, // First-party research source, accept all
+  },
+  {
+    name: "techcrunch-ai",
+    label: "TechCrunch AI",
+    feedUrl: "https://techcrunch.com/category/artificial-intelligence/feed/",
+    defaultType: "analysis",
+    relevanceFilter: RELEVANCE_KEYWORDS, // High-volume news source, filter for relevance
+  },
+  {
+    name: "import-ai",
+    label: "Import AI (Jack Clark)",
+    feedUrl: "https://jack-clark.net/feed/",
+    defaultType: "analysis",
+    relevanceFilter: null, // Deep research newsletter, accept all
+  },
+  {
+    name: "bair",
+    label: "Berkeley AI Research",
+    feedUrl: "https://bair.berkeley.edu/blog/feed.xml",
+    defaultType: "analysis",
+    relevanceFilter: null, // Academic research blog, accept all
+  },
 ];
 
 /**
