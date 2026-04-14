@@ -127,10 +127,14 @@ async function main() {
 
   let success = 0;
   let failed = 0;
+  let needsManual = 0;
+  const manualList = [];
 
   for (const { arxivId } of pending) {
     log.info(`\n${"─".repeat(60)}`);
-    log.info(`Translating ${arxivId} (${success + failed + 1}/${pending.length})`);
+    log.info(
+      `Translating ${arxivId} (${success + failed + needsManual + 1}/${pending.length})`
+    );
     log.info("─".repeat(60));
 
     try {
@@ -140,13 +144,32 @@ async function main() {
       });
       success++;
     } catch (err) {
-      log.error(`Failed to translate ${arxivId}: ${err.message}`);
-      failed++;
+      // Exit code 2 = quality gate failed (translate-paper.mjs).
+      // Needs manual MinerU fallback — do NOT count as hard failure.
+      if (err.status === 2) {
+        log.warn(`Quality gate failed for ${arxivId} — needs manual MinerU fallback`);
+        needsManual++;
+        manualList.push(arxivId);
+      } else {
+        log.error(`Failed to translate ${arxivId}: ${err.message}`);
+        failed++;
+      }
     }
   }
 
   log.info(`\n${"═".repeat(60)}`);
-  log.info(`Done. Success: ${success}, Failed: ${failed}, Skipped: ${existing.size}`);
+  log.info(
+    `Done. Success: ${success}, Failed: ${failed}, Needs manual: ${needsManual}, Skipped: ${existing.size}`
+  );
+
+  if (manualList.length) {
+    log.info(`\nManual MinerU fallback needed for ${manualList.length} paper(s):`);
+    for (const id of manualList) {
+      log.info(
+        `  ${id}: run MinerU locally, then node scripts/translate-paper.mjs --source-md <out.md> --arxiv-id ${id} --force`
+      );
+    }
+  }
 }
 
 main().catch((err) => {

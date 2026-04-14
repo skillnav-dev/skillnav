@@ -716,6 +716,26 @@ async function main() {
     published_at: meta.published ? new Date(meta.published).toISOString() : new Date().toISOString(),
   };
 
+  // Quality gate: reject degenerate translations before any write (DB or Vault).
+  // Catches ar5iv partial extraction (e.g. abstract-only) and PDF parse failures.
+  // Threshold rationale: legit translated papers are 8K-40K Chinese chars / 5+ sections.
+  // Known failures: WildDet3D 608 chars/1 section, LPM 1.0 1060 chars/2 sections.
+  const MIN_CONTENT_CHARS = 3000;
+  const MIN_SECTIONS = 5;
+  if (record.content_zh.length < MIN_CONTENT_CHARS || sections.length < MIN_SECTIONS) {
+    log.error(
+      `Quality gate FAILED: ${record.content_zh.length} chars, ${sections.length} sections ` +
+        `(min: ${MIN_CONTENT_CHARS} chars, ${MIN_SECTIONS} sections)`
+    );
+    log.error(`Source: ${textSource} — likely ar5iv partial extraction or PDF parse failure`);
+    log.error(`Manual MinerU fallback:`);
+    log.error(`  1. Run MinerU CLI locally on the PDF to produce Markdown`);
+    log.error(
+      `  2. node scripts/translate-paper.mjs --source-md <mineru-output.md> --arxiv-id ${arxivId || "<id>"} --force`
+    );
+    process.exit(2); // distinct exit code so auto-translate-radar can categorize
+  }
+
   if (dryRun) {
     log.info("\n── Preview ─────────────────────────────────");
     log.info(`Slug: ${record.slug}`);
