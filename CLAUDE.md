@@ -12,84 +12,28 @@ GitHub org: `skillnav-dev` | Domain: `skillnav.dev` (Cloudflare Registrar)
 
 | Layer | Choice | Notes |
 |-------|--------|-------|
-| Framework | Next.js 15 (App Router + RSC + ISR) | 13K+ interactive listings, not pure static |
+| Framework | Next.js 15 (App Router + RSC + ISR) | 13K+ interactive listings |
 | UI | Tailwind CSS + shadcn/ui | |
 | i18n | next-intl | zh/en |
-| Database | Supabase (PostgreSQL + PGroonga) | Auth/Storage/Realtime + Chinese full-text search |
-| Search | MVP: Orama (client-side) → Meilisearch | Zero-cost start, upgrade when needed |
-| Deploy | Cloudflare Workers (OpenNext adapter) | Zero bandwidth cost |
-| CMS | MVP: MDX + Git → Payload CMS | |
+| Database | Supabase (PostgreSQL + PGroonga) | Chinese full-text search |
+| Search | MVP: Orama (client-side) → Meilisearch | |
+| Deploy | Cloudflare Workers (OpenNext adapter) | Zero bandwidth |
 | Analytics | Umami + Google Analytics + GSC | |
 | Email | Resend + React Email | |
 | Payment | LemonSqueezy | |
 
-Key decisions: Next.js over Astro (ISR for 13K+ pages) · Supabase over D1 (PGroonga Chinese search) · Cloudflare over Vercel (zero bandwidth) · Orama → Meilisearch (zero-cost MVP search)
-
 ## Database Schema
 
-Core tables: `skills` (slug, name, name_zh, category, tags, stars, security_score) and `articles` (slug, title, title_zh, content, source_url, published_at). Full schema defined in product plan — see Knowledge Base References.
+Core tables: `skills` (slug, name, name_zh, category, tags, stars, security_score) and `articles` (slug, title, title_zh, content, source_url, published_at).
 
 ## Commands
 
+<!-- Full command list in .claude/rules/commands.md (auto-loaded) -->
+
 ```bash
-npm run dev        # Local dev server
+npm run dev        # Local dev
 npm run build      # Production build
-npm run lint       # Run linter
-
-# Content pipeline
-node scripts/sync-articles.mjs                          # Full article sync (all sources)
-node scripts/sync-articles.mjs --retranslate-published   # Re-compile published articles with current prompt
-node scripts/sync-articles.mjs --retranslate-drafts      # Re-compile draft articles
-node scripts/backfill-mcp-description-zh.mjs --tier B --apply  # Backfill B-tier Chinese descriptions
-node scripts/govern-articles.mjs --audit                 # Article status/score report
-node scripts/audit-content.mjs                           # Skills content quality audit
-
-# Newsletter layer (feeds editorial funnel in generate-daily)
-node scripts/scrape-signals.mjs                          # Fetch 5 newsletters as plain text
-node scripts/scrape-signals.mjs --date 2026-03-19        # Specific date
-node scripts/scrape-signals.mjs --dry-run                # Preview without writing file
-
-# Daily brief pipeline
-node scripts/generate-daily.mjs                          # Generate today's daily brief (reads newsletters + articles)
-node scripts/generate-daily.mjs --dry-run                # Preview without writing to DB
-node scripts/generate-daily.mjs --hours 48               # Look back 48h instead of 24h
-node scripts/publish-daily.mjs                           # Publish today's approved brief
-node scripts/publish-daily.mjs --channel rss             # Publish to specific channel only
-
-# Paper radar (knowledge base sensing)
-node scripts/paper-radar.mjs                              # Generate today's paper radar → ~/Vault/知识库/AI/论文雷达/
-node scripts/paper-radar.mjs --dry-run                    # Preview without writing file
-node scripts/paper-radar.mjs --date 2026-04-06            # Specific date
-
-# Paper translation (dual-write: DB + ~/Vault/知识库/AI/论文/)
-node scripts/translate-paper.mjs 2603.23483              # Translate arXiv paper → articles table (draft) + Vault
-node scripts/translate-paper.mjs 2603.23483 --dry-run    # Preview without DB write (still writes Vault preview)
-node scripts/translate-paper.mjs 2603.23483 --force       # Overwrite existing translation
-node scripts/translate-paper.mjs --local paper.pdf --arxiv-id 2307.15818          # Local PDF with arXiv metadata
-node scripts/translate-paper.mjs --local paper.pdf --arxiv-id 2307.15818 --dry-run
-
-# Auto-translate checked radar papers (scans [x] in ~/Vault/知识库/AI/论文雷达/)
-node scripts/auto-translate-radar.mjs                    # Translate all checked papers not yet in DB
-node scripts/auto-translate-radar.mjs --dry-run          # Preview without translating
-
-# Community signals (X/Twitter + HN)
-node scripts/scrape-x-signals.mjs                        # Collect X/Twitter KOL signals → community_signals
-node scripts/scrape-x-signals.mjs --dry-run              # Preview without DB write
-node scripts/scrape-hn-signals.mjs                       # Collect HN top stories → community_signals
-node scripts/scrape-hn-signals.mjs --dry-run             # Preview without DB write
-
-# Pipeline health & failover
-node scripts/failover-check.mjs                          # Check pipeline freshness, auto-collect if >36h stale
-curl https://skillnav.dev/api/health                     # Check pipeline health (ok/stale)
-
-# Card image generation (requires gstack browse)
-python3 -m http.server 8765 --directory scripts/templates &  # Serve card template
-$B goto http://localhost:8765/daily-card.html                 # Render in browser
-$B screenshot --clip 0,0,1080,1350 xhs-1.png                 # Capture XHS cards (6 total)
-$B screenshot --clip 0,8240,1080,608 wechat-header.png        # Capture WeChat header
-
-# ClawHub skill publishing
-clawhub publish skills/skillnav/ --slug skillnav --version X.Y.Z --tags latest --changelog "..."
+npm run lint       # Linter
 ```
 
 ## Development Conventions
@@ -101,98 +45,11 @@ clawhub publish skills/skillnav/ --slug skillnav --version X.Y.Z --tags latest -
 
 ## Deployment
 
-Cloudflare Workers (OpenNext adapter) · Domain: skillnav.dev · CI/CD: GitHub Actions · China: Argo Smart Routing + HK/JP/SG edge (no ICP)
+Cloudflare Workers (OpenNext adapter) · Domain: skillnav.dev · CI/CD: GitHub Actions
 
 ## Architecture
 
-```
-src/
-├── app/                        # Pages & routing (App Router)
-│   ├── page.tsx                # Homepage (5 sections assembled)
-│   ├── articles/               # Article list + [slug] detail (SSG)
-│   ├── skills/                 # Skills listing + [slug] detail
-│   ├── mcp/                    # MCP Server 精选导航 (static curated data)
-│   ├── trending/               # Trending dashboard: four-track (papers/tools/articles/community), ISR 5min
-│   ├── daily/                  # Daily Brief public: /daily list (ISR 5min) + /daily/[date] detail
-│   ├── learn/                  # Learning Center: /learn index + /learn/what-is-[slug] detail
-│   ├── papers/                 # Paper listing page (source='arxiv', ISR 5min)
-│   ├── admin/daily/            # Daily Brief admin: list + [id] detail (preview/edit/approve/publish)
-│   ├── api/health/              # Pipeline health probe: stale if >36h no runs (Better Stack monitored)
-│   ├── api/skill/query/         # Skill API: GET ?type=brief|mcp|trending|paper (public, anon key)
-│   ├── api/content/[slug]/      # Article content API: lazy-load for long articles (bypasses CF Worker CPU limit)
-│   ├── api/admin/daily/        # Admin API: PATCH update, POST approve, POST publish
-│   ├── api/admin/community/    # Community signal moderation: PATCH is_hidden
-│   ├── api/rss/daily/          # RSS feed for daily briefs
-│   ├── go/paper/[id]/          # Paper click tracking: 302 redirect to arXiv + Umami server-side event
-│   ├── layout.tsx              # Root layout (zh lang, fonts, Header/Footer)
-│   ├── globals.css             # Brand color variables (deep indigo theme)
-│   ├── robots.ts / sitemap.ts  # SEO
-│   ├── not-found.tsx           # Custom 404
-│   └── error.tsx               # Root error boundary (500)
-├── components/
-│   ├── home/                   # Homepage sections (hero, stats, featured, articles, newsletter)
-│   ├── articles/               # Article card, meta, content, series-nav
-│   ├── skills/                 # Skill card
-│   ├── mcp/                    # MCP card, sidebar, content sections (what-is/how-to/tools), FAQ
-│   ├── learn/                  # Concept card, related concepts, visual diagrams
-│   ├── trending/               # Trending track components + source health bar
-│   ├── layout/                 # Header, footer, mobile nav, theme toggle
-│   ├── shared/                 # Section header, security badge, JSON-LD
-│   └── ui/                     # shadcn/ui primitives
-├── data/                       # Mock data (skills, articles) + type definitions
-│   ├── types.ts                # Skill / Article interfaces
-│   ├── series.ts               # Series metadata (chapters, authors) — static config
-│   ├── learn.ts                # Learning Center concept metadata (slug, term, seo)
-│   ├── mock-skills.ts          # 10 mock Skills
-│   └── mock-articles.ts        # 7 mock articles with full Chinese content
-└── lib/                        # Utilities
-    ├── constants.ts            # Site-wide constants (name, URL, description)
-    ├── fonts.ts                # Font configuration
-    ├── parse-brief.ts          # Daily brief content_md → structured JSON
-    ├── get-trending-tools.ts   # Skills + MCP trending merge
-    └── trending-data.ts        # Trending page data fetchers (HF Papers, articles, community signals)
-
-public/
-├── daily-cards/                # Generated card images for social distribution
-│   └── YYYY-MM-DD/             # Per-date: xhs-{1-6}.png (1080x1350) + wechat-header.png (1080x608)
-└── guides/                     # Interactive deep guides (11 standalone HTML)
-    ├── ai-guide.html           # 10-chapter AI architecture guide
-    ├── mcp-interactive-guide.html      # MCP config simulator
-    ├── ai-coding-tools-compare.html    # Cursor/Copilot/Claude Code matrix
-    ├── prompt-engineering-workshop.html # Prompt playground
-    ├── agent-design-patterns.html      # ReAct/PaE/Multi-Agent flow animation
-    ├── rag-vs-finetuning-decision-tree.html # Decision tree
-    ├── llm-selection-guide.html        # Interactive filter
-    ├── token-economics-calculator.html # Cost calculator
-    ├── ai-safety-guardrails-simulator.html # Attack/defense demo
-    ├── vector-database-comparison.html # DB recommendation
-    └── embedding-dimensions.html       # Dimension visualization + cost calc
-
-scripts/
-├── paper-radar.mjs             # Paper sensing: 3-source (HF+S2+Newsletter) → ~/Vault/知識库/AI/論文雷達/
-├── translate-paper.mjs         # Paper translation: arXiv → DB + ~/Vault/知识库/AI/论文/ (dual-write)
-├── scrape-signals.mjs          # Newsletter layer: fetch 5 newsletters → plain text → JSON (data/daily-newsletters/)
-├── generate-daily.mjs          # Daily brief generator (newsletters + articles → LLM editorial funnel → multi-format → upsert)
-├── publish-daily.mjs           # Multi-channel publisher (RSS auto, WeChat/X copy-ready)
-├── templates/daily-card.html   # Card image template (6 XHS cards + WeChat header, rendered via gstack browse)
-├── scrape-x-signals.mjs        # X/Twitter KOL collection: 40 KOLs → LLM summary → community_signals
-├── scrape-hn-signals.mjs       # HN collection: Top 500 → word-boundary keyword filter → community_signals
-├── auto-translate-radar.mjs    # Scan radar [x] papers → deduplicate → translate (launchd 22:00)
-├── failover-check.mjs          # Local failover: check pipeline_runs >36h → auto-run sync-articles
-├── com.skillnav.paper-radar.plist     # macOS launchd config (daily 06:50 paper radar)
-├── com.skillnav.auto-translate.plist  # macOS launchd config (daily 22:00 auto-translate)
-├── com.skillnav.failover-check.plist  # macOS launchd config (hourly failover check)
-├── lib/publishers/             # Platform format adapters (wechat.mjs, twitter.mjs, rss.mjs)
-scripts/lib/
-├── llm.mjs                     # LLM providers + compile prompt + circuit breaker (3 fail→open→10min→half-open)
-├── x-client.mjs                # TwitterAPI.io abstraction (proxy support, switchable provider)
-├── glossary.json               # Centralized terminology (keep/translate/bracket policies)
-├── report-run.mjs              # Pipeline run reporting (claimRun→duration_s=null lock→reportRun→update)
-└── run-pipeline.mjs            # Universal pipeline wrapper (lock check→claimRun→main→reportRun→exit)
-
-skills/
-└── skillnav/SKILL.md           # SkillNav Skill definition (sub-command routing + format rules)
-```
+<!-- Full architecture tree in .claude/rules/architecture.md (auto-loaded) -->
 
 Call direction: `page.tsx` → `components/` → `data/` → `lib/`
 
@@ -200,49 +57,36 @@ Call direction: `page.tsx` → `components/` → `data/` → `lib/`
 
 ```
 docs/
-├── README.md                    # Knowledge index (navigation hub)
-│
-│   ── 契约层 ──
-├── product-spec.md              # Product structure contract (IA, journeys, permissions)
-├── design-spec.md               # Visual design contract (tokens, components, patterns)
-├── specs/                       # Domain specs (content strategy, pipeline, ops)
-│
-│   ── 状态层 ──
-├── features.md                  # Feature inventory
-├── approved-deps.md             # Dependency allowlist
-│
-│   ── 知识层 ──
-├── plans/                       # Implementation plans (9)
-├── adr/                         # Architecture decision records
-├── research/                    # Tech research (22, date-prefixed)
-│   └── distribution/            # Distribution channel research
-├── troubleshooting/             # Issue knowledge base
-│
-└── archive/                     # Superseded docs (AI does not auto-load)
+├── README.md                    # Knowledge index
+├── product-spec.md / design-spec.md  # Contracts
+├── specs/                       # Domain specs
+├── features.md / approved-deps.md    # State
+├── plans/ / adr/ / research/ / troubleshooting/  # Knowledge
+└── archive/                     # Superseded (not auto-loaded)
 ```
 
 ## Knowledge Retrieval Rules
 
-- Before tech research: search `docs/research/` first (avoid duplicate research)
-- Before debugging: search `docs/troubleshooting/` first (avoid repeat mistakes)
-- Before tech decisions: search `docs/adr/` first (avoid revisiting rejected options)
-- Before adding dependencies: check `docs/approved-deps.md` (avoid banned packages)
-- Retrieval method: grep tags or title keywords
+- Before tech research: search `docs/research/` first
+- Before debugging: search `docs/troubleshooting/` first
+- Before tech decisions: search `docs/adr/` first
+- Before adding deps: check `docs/approved-deps.md`
 
 ## Key Rules
 
 - NEVER commit .env files or any file containing secrets
 - NEVER use `git add .` — add files individually
-- MUST read a file before modifying it — confirm types/functions exist before referencing
+- MUST read a file before modifying it
 - MUST run `npm run build` to verify after multi-file changes
-- New code MUST reference existing similar implementations for style consistency (anchor file pattern)
-- Use shadcn/ui components exclusively — NEVER introduce Ant Design / MUI / Chakra
+- New code MUST reference existing similar implementations for style consistency
+- Use shadcn/ui components exclusively — NEVER introduce other UI libs
 - Use Tailwind utility classes — NEVER write raw CSS
 - Single file should not exceed 300 lines — split if approaching limit
+- Push code → always verify CI passes. Run `npm run lint` locally first
 
 ## Work Mode
 
-- Show implementation plan (files to modify + changes) before writing code, wait for approval
+- Show implementation plan before writing code, wait for approval
 - When modifying shared types, search all references first and list impact scope
 - Small steps: complete one working state → verify → commit → next step
 - If a fix fails twice on the same issue, stop and reassess approach
@@ -251,60 +95,29 @@ docs/
 
 ```
 home — Homepage          | skills — Skills module     | articles — Articles module
-ui — Shared UI/layout    | data — Data layer/types    | seo — SEO (sitemap, robots, JSON-LD)
-deps — Dependencies      | config — Configuration     | dx — Dev experience/tooling
+ui — Shared UI/layout    | data — Data layer/types    | seo — SEO
+deps — Dependencies      | config — Configuration     | dx — Dev experience
 ```
 
 ## Project Glossary
 
-| Term | Meaning in this project | Not |
-|------|------------------------|-----|
-| Skill | A Claude Code custom skill (SKILL.md definition) | Not a general ability |
-| ClawHub | Third-party Skills registry (clawhub.com) | Not our product |
-| PGroonga | PostgreSQL extension for Chinese full-text search | Not standard pg_trgm |
-| ISR | Incremental Static Regeneration (Next.js) | Not server-side rendering |
-| OpenNext | Adapter to deploy Next.js on Cloudflare Workers | Not official Next.js tooling |
+| Term | Meaning | Not |
+|------|---------|-----|
+| Skill | A Claude Code custom skill (SKILL.md) | Not a general ability |
+| ClawHub | Third-party Skills registry | Not our product |
+| PGroonga | PostgreSQL Chinese full-text search | Not pg_trgm |
+| ISR | Incremental Static Regeneration | Not SSR |
+| OpenNext | Next.js → Cloudflare adapter | Not official |
 
 ## Known Pitfalls
 
-- `useEffect(() => { setMounted(true) }, [])` triggers `react-hooks/set-state-in-effect` lint error — use `useSyncExternalStore` or suppress with care
-- shadcn/ui components must be installed before import: `npx shadcn@latest add <component>`
-- Next.js 15 uses async `params` in dynamic routes — destructure with `await` in server components
-- Tailwind v4 uses CSS-based config (`@theme` in globals.css), not `tailwind.config.ts`
-- `Date.setHours()` operates in UTC when Date is from `toISOString().slice()` — use `setUTCHours()` for CST conversion (CST 23:59 = UTC 15:59)
-- New SSR pages MUST set `export const revalidate` — without it, CF Worker renders on every request → 1102 errors
-- Heavy client-only libraries (KaTeX, chart libs) must use `lazy()` / dynamic import — never import at top level in server components
-- `getArticleBySlug` does NOT select content/content_zh — article content loads client-side via Supabase REST API to avoid CF Worker CPU timeout. Never re-add `content` to the server query
-- ar5iv image paths are relative (e.g. `2604.01658v1/x2.png`), base URL must be `https://arxiv.org/html` (not `https://arxiv.org/html/${arxivId}`) — see `translate-paper.mjs` line 91
-- ISR caching requires R2 bucket + Durable Object bindings in `wrangler.jsonc` + `open-next.config.ts` — without these, `revalidate` is ignored and every request re-renders
-- `remark-math` multiline `$$` display math: `\\` + newline inside inline `$$content$$` is treated as markdown hard break, splitting the math block → raw LaTeX leaks. Fix: `normalizeMath()` in `article-content.tsx` converts all `$$` to fenced format (`$$` on its own line). Also sanitize `\r\n` → `\n` at DB write time (`translate-paper.mjs`)
-- `String.replace()` replacement string: `$$` outputs single `$` (JS special syntax). Use `$$$$` to output literal `$$`
-- Push code → always verify CI passes before telling user "fixed". Run `npm run lint` locally to catch lint errors that block CI deploy
+<!-- File-specific pitfalls auto-loaded from .claude/rules/ (react-nextjs.md, scripts.md, styling.md) -->
+
+General: shadcn/ui components must be installed before import (`npx shadcn@latest add <component>`)
 
 ## Documentation Rules
 
 - Update `docs/features.md` when shipping or deprecating features
 - Update `docs/approved-deps.md` when adding new dependencies
 - Create `docs/adr/ADR-xxx.md` for major architecture decisions
-- Update CLAUDE.md "Architecture" section when adding modules/directories
-- Update CLAUDE.md "Commands" section when adding dev commands
-- Update CHANGELOG.md for milestone-level changes
-
-## Context Management
-
-When executing `/compact`, preserve:
-1. Current task objective (one sentence)
-2. Completed and remaining steps
-3. Modified file list with key changes
-4. Test commands and verification results
-5. Architectural decisions made in this session
-
-## Knowledge Base References
-
-Detailed docs in personal knowledge base:
-
-| Document | Path |
-|----------|------|
-| 产品方案 | `/Users/apple/WeChatProjects/tishici/docs/playbook/skillnav-product-plan.md` |
-| 商业化路线图 | `/Users/apple/WeChatProjects/tishici/docs/playbook/skillnav-monetization-roadmap.md` |
-| 赛道调研 | `/Users/apple/WeChatProjects/tishici/docs/playbook/openclaw-skills-research.md` |
+- Update CLAUDE.md when adding modules or dev commands
