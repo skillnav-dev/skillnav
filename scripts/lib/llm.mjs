@@ -53,7 +53,7 @@ const PROVIDERS = {
     model: "gpt-5.4",
     apiKeyEnv: "GPT_API_KEY",
     type: "openai-responses",
-    reasoning: { effort: "xhigh" },
+    reasoning: { effort: "low" },
   },
 };
 
@@ -61,7 +61,7 @@ const PROVIDERS = {
 const CHUNK_THRESHOLD = 15000; // Below this: single-call translation
 const SUMMARIZE_THRESHOLD = 50000; // Above this: structured summary instead of full translation
 const CHUNK_SIZE = 12000; // Target size per chunk
-const LLM_TIMEOUT_MS = 120_000; // 120s per request
+const LLM_TIMEOUT_MS = parseInt(process.env.LLM_TIMEOUT_MS, 10) || 120_000; // 120s per request, overridable via env
 
 const VALID_ARTICLE_TYPES = ["tutorial", "analysis", "guide"];
 
