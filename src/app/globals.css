@@ -14,6 +14,8 @@
     "Hiragino Sans GB", sans-serif;
   --font-mono:
     var(--font-mono), "Noto Sans Mono", "SF Mono", Menlo, Consolas, monospace;
+  --font-serif: var(--font-serif), "Songti SC", "SimSun", serif;
+  --font-latin-serif: var(--font-latin-serif), var(--font-serif), serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -52,6 +54,11 @@
   --color-warning: var(--warning);
   --color-danger: var(--danger);
   --color-unscanned: var(--unscanned);
+  /* Trending track semantic colors */
+  --color-track-paper: var(--track-paper);
+  --color-track-tool: var(--track-tool);
+  --color-track-news: var(--track-news);
+  --color-track-community: var(--track-community);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -113,6 +120,11 @@
   --warning: oklch(0.7 0.16 75);
   --danger: oklch(0.58 0.22 25);
   --unscanned: oklch(0.6 0.02 260);
+  /* Trending tracks — paper=gold / tool=green / news=violet / community=blue */
+  --track-paper: oklch(0.55 0.12 80);
+  --track-tool: oklch(0.5 0.12 140);
+  --track-news: oklch(0.5 0.12 310);
+  --track-community: oklch(0.5 0.13 240);
   /* Charts */
   --chart-1: oklch(0.45 0.18 260);
   --chart-2: oklch(0.65 0.2 185);
@@ -158,6 +170,11 @@
   --warning: oklch(0.75 0.16 75);
   --danger: oklch(0.65 0.22 25);
   --unscanned: oklch(0.55 0.02 260);
+  /* Trending tracks — slightly brighter for dark */
+  --track-paper: oklch(0.75 0.14 80);
+  --track-tool: oklch(0.72 0.15 140);
+  --track-news: oklch(0.72 0.15 310);
+  --track-community: oklch(0.7 0.15 240);
   /* Charts */
   --chart-1: oklch(0.6 0.2 260);
   --chart-2: oklch(0.7 0.18 185);

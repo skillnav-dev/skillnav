@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Script from "next/script";
-import { inter, geistMono } from "@/lib/fonts";
+import { inter, jetBrainsMono, notoSerifSC, fraunces } from "@/lib/fonts";
 import { siteConfig } from "@/lib/constants";
 import { Providers } from "@/components/providers";
 import { SiteHeader } from "@/components/layout/site-header";
@@ -48,7 +48,7 @@ export default function RootLayout({
   return (
     <html lang="zh-CN" suppressHydrationWarning>
       <body
-        className={`${inter.variable} ${geistMono.variable} font-sans antialiased`}
+        className={`${inter.variable} ${jetBrainsMono.variable} ${notoSerifSC.variable} ${fraunces.variable} font-sans antialiased`}
       >
         <Providers>
           <div className="relative flex min-h-svh flex-col">
