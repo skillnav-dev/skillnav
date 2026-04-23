@@ -182,8 +182,13 @@ async function main() {
 
   log.success(`Upserted ${upserted} X signals for ${signalDate}`);
 
+  // Derive status: all-failed → failed, some-failed → partial, all-ok → success
+  const allFailed = totalErrors >= KOL_LIST.length;
+  const someFailed = totalErrors > 0;
+  const status = allFailed ? "failed" : someFailed ? "partial" : "success";
+
   return {
-    status: totalErrors > KOL_LIST.length / 2 ? "partial" : "success",
+    status,
     summary: { fetched: totalFetched, upserted, errors: totalErrors, kols: KOL_LIST.length },
     exitCode: 0,
   };

@@ -119,9 +119,25 @@ async function fetchSubreddit(subreddit) {
     log.warn(`Rate limited on r/${subreddit}, skipping`);
     return [];
   }
-  if (!res.ok) throw new Error(`r/${subreddit} HTTP ${res.status}`);
 
-  const data = await res.json();
+  const ctype = res.headers.get("content-type") || "";
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`r/${subreddit} HTTP ${res.status} [${ctype}] body=${body.slice(0, 200).replace(/\s+/g, " ")}`);
+  }
+
+  // Read body as text first so we can include it in the error message if JSON parse fails
+  // (Reddit block pages sometimes return 200 with HTML content)
+  const bodyText = await res.text();
+  let data;
+  try {
+    data = JSON.parse(bodyText);
+  } catch {
+    throw new Error(
+      `r/${subreddit} 200 but non-JSON [${ctype}] body=${bodyText.slice(0, 200).replace(/\s+/g, " ")}`
+    );
+  }
   const children = data?.data?.children || [];
 
   return children
@@ -161,6 +177,7 @@ async function main() {
   // Fetch posts from all subreddits with rate-limit delay
   const allPosts = [];
   let errors = 0;
+  const subredditsFailed = [];
 
   for (let i = 0; i < SUBREDDITS.length; i++) {
     const sub = SUBREDDITS[i];
@@ -170,6 +187,7 @@ async function main() {
       log.progress(i + 1, SUBREDDITS.length, errors, `r/${sub} (${posts.length})`);
     } catch (e) {
       errors++;
+      subredditsFailed.push(sub);
       log.warn(`r/${sub} failed: ${e.message}`);
     }
     // Rate limit: wait between requests
@@ -177,7 +195,12 @@ async function main() {
   }
   log.progressEnd();
 
-  log.info(`Fetched ${allPosts.length} posts from ${SUBREDDITS.length} subreddits`);
+  log.info(`Fetched ${allPosts.length} posts from ${SUBREDDITS.length} subreddits (errors=${errors})`);
+
+  // Derive pipeline status: all-failed → failed, some-failed → partial, all-ok → success
+  const allFailed = errors === SUBREDDITS.length;
+  const someFailed = errors > 0 && errors < SUBREDDITS.length;
+  const baseStatus = allFailed ? "failed" : someFailed ? "partial" : "success";
 
   // Dedup by post ID
   const seen = new Set();
@@ -197,7 +220,11 @@ async function main() {
 
   if (relevant.length === 0) {
     log.warn("No relevant posts found today");
-    return { status: "success", summary: { scanned: uniquePosts.length, relevant: 0, upserted: 0 }, exitCode: 0 };
+    return {
+      status: baseStatus,
+      summary: { scanned: uniquePosts.length, relevant: 0, upserted: 0, errors, subredditsFailed },
+      exitCode: 0,
+    };
   }
 
   // LLM summarize in batches
@@ -265,8 +292,8 @@ async function main() {
   log.success(`Upserted ${upserted} Reddit signals for ${signalDate}`);
 
   return {
-    status: "success",
-    summary: { scanned: uniquePosts.length, relevant: relevant.length, upserted },
+    status: baseStatus,
+    summary: { scanned: uniquePosts.length, relevant: relevant.length, upserted, errors, subredditsFailed },
     exitCode: 0,
   };
 }

@@ -181,6 +181,9 @@ async function main() {
   const stories = await fetchStoriesConcurrent(topIds);
   log.info(`Fetched ${stories.length} stories`);
 
+  // Detect complete fetch failure: expected stories but got none
+  const fetchFailed = topIds.length > 0 && stories.length === 0;
+
   // Filter for AI/dev relevance
   const relevant = stories
     .filter(isRelevant)
@@ -191,7 +194,11 @@ async function main() {
 
   if (relevant.length === 0) {
     log.warn("No relevant stories found today");
-    return { status: "success", summary: { scanned: stories.length, relevant: 0, upserted: 0 }, exitCode: 0 };
+    return {
+      status: fetchFailed ? "failed" : "success",
+      summary: { scanned: stories.length, relevant: 0, upserted: 0, fetchFailed },
+      exitCode: 0,
+    };
   }
 
   // LLM summarize in batches
@@ -259,7 +266,7 @@ async function main() {
 
   return {
     status: "success",
-    summary: { scanned: stories.length, relevant: relevant.length, upserted },
+    summary: { scanned: stories.length, relevant: relevant.length, upserted, fetchFailed: false },
     exitCode: 0,
   };
 }

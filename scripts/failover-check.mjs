@@ -3,9 +3,11 @@
 /**
  * Local failover: check pipeline freshness AND yield, run collection if needed.
  * Designed to run via macOS launchd (hourly).
- * Two triggers:
- *   1. Stale: no pipeline_runs at all for >36h
- *   2. Dry: CI is running but inserting 0 articles for >24h
+ * Triggers:
+ *   1. Stale: no pipeline_runs at all for >36h → run sync-articles
+ *   2. Dry sync-articles: 0 inserts for >24h → run sync-articles
+ *   3. Dry community-signals (reddit/x/hn): 0 upserted across recent runs → log warning
+ *      (no auto-trigger; community sources often blocked at IP/auth layer which local run won't fix)
  * Reuses concurrency lock from run-pipeline.mjs — won't double-run with CI.
  */
 
@@ -16,8 +18,25 @@ dotenv.config({ path: new URL("../.env", import.meta.url).pathname });
 import { createAdminClient } from "./lib/supabase-admin.mjs";
 
 const STALE_HOURS = 36;
-const DRY_HOURS = 24; // trigger if 0 inserts for this long
-const DRY_MIN_RUNS = 3; // need at least N runs to judge
+const DRY_HOURS = 24;
+const DRY_MIN_RUNS = 3;
+
+const COMMUNITY_PIPELINES = ["reddit-signals", "x-signals", "hn-signals"];
+
+async function isPipelineDry(supabase, pipeline, metric) {
+  const cutoff = new Date(Date.now() - DRY_HOURS * 60 * 60 * 1000).toISOString();
+  const { data, error } = await supabase
+    .from("pipeline_runs")
+    .select("started_at, status, summary")
+    .eq("pipeline", pipeline)
+    .gte("started_at", cutoff)
+    .order("started_at", { ascending: false });
+
+  if (error || !data || data.length < DRY_MIN_RUNS) return { dry: false, runs: data?.length ?? 0, total: 0 };
+
+  const total = data.reduce((sum, r) => sum + (r.summary?.[metric] ?? 0), 0);
+  return { dry: total === 0, runs: data.length, total };
+}
 
 async function main() {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -55,41 +74,37 @@ async function main() {
     }
   }
 
-  // Check 2: CI running but producing nothing (dry pipeline)
+  // Check 2: sync-articles dry (auto-trigger local run)
   if (!reason) {
-    const cutoff = new Date(Date.now() - DRY_HOURS * 60 * 60 * 1000).toISOString();
-    const { data: recentRuns, error: recentErr } = await supabase
-      .from("pipeline_runs")
-      .select("started_at, summary")
-      .eq("pipeline", "sync-articles")
-      .eq("status", "success")
-      .gte("started_at", cutoff)
-      .order("started_at", { ascending: false });
+    const { dry, runs, total } = await isPipelineDry(supabase, "sync-articles", "inserted");
+    if (runs > 0) {
+      console.log(`[failover] sync-articles last ${DRY_HOURS}h: ${runs} runs, ${total} inserted.`);
+    }
+    if (dry) {
+      reason = "dry-sync";
+      console.log(`[failover] Dry sync-articles: ${runs} runs with 0 inserts.`);
+    }
+  }
 
-    if (!recentErr && recentRuns && recentRuns.length >= DRY_MIN_RUNS) {
-      const totalInserted = recentRuns.reduce(
-        (sum, r) => sum + (r.summary?.inserted ?? 0),
-        0
+  // Check 3: community-signals dry (warn only, no auto-trigger)
+  for (const pipeline of COMMUNITY_PIPELINES) {
+    const { dry, runs, total } = await isPipelineDry(supabase, pipeline, "upserted");
+    if (runs > 0) {
+      console.log(`[failover] ${pipeline} last ${DRY_HOURS}h: ${runs} runs, ${total} upserted.`);
+    }
+    if (dry) {
+      console.warn(
+        `[failover] ⚠ DRY ${pipeline}: ${runs} runs with 0 upserted. Likely IP/auth issue — not auto-triggering local run.`
       );
-      console.log(
-        `[failover] Last ${DRY_HOURS}h: ${recentRuns.length} sync runs, ${totalInserted} articles inserted.`
-      );
-      if (totalInserted === 0) {
-        reason = "dry";
-        console.log(
-          `[failover] Dry pipeline: ${recentRuns.length} runs with 0 inserts in ${DRY_HOURS}h.`
-        );
-      }
     }
   }
 
   if (!reason) {
-    console.log("[failover] Pipeline is healthy. No action needed.");
+    console.log("[failover] No sync-articles action needed.");
     return;
   }
 
-  console.log(`[failover] Trigger: ${reason}. Starting local collection...`);
-
+  console.log(`[failover] Trigger: ${reason}. Starting local sync-articles...`);
 
   // Dynamically import and run sync-articles
   // The concurrency lock in run-pipeline.mjs prevents double-run
