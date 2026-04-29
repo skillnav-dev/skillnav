@@ -442,6 +442,12 @@ GOOD examples (write like this):
 ## SEO
 - The first paragraph of contentZh must directly state what this article is about, what problem it addresses, or the key finding — making it extractable by AI search engines.
 
+## JSON output rules (CRITICAL — prevents parse failures)
+- For quoted speech / titles / nicknames inside string values (titleZh, introZh, summaryZh, contentZh), use Chinese typography quotes: “ ” (U+201C/U+201D) and ‘ ’ (U+2018/U+2019).
+- NEVER use ASCII straight quotes (") inside string values for quoting — they break JSON. Reserve " strictly for JSON field delimiters.
+- Example BAD:  "contentZh": "他称这是"非常有趣的公告"。"   ← inner " breaks JSON
+- Example GOOD: "contentZh": "他称这是“非常有趣的公告”。"   ← Chinese quotes are safe
+
 You must respond with valid JSON only, no markdown fences.`.replace("{{GLOSSARY}}", buildGlossaryPrompt());
 
 // ── Chunking Utilities ───────────────────────────────────────────────
@@ -800,7 +806,14 @@ Content preview: ${contentPreview}`;
 function sanitizeJsonString(str) {
   // Fix invalid escape sequences: \x where x is not a valid JSON escape char
   // Valid JSON escapes: \" \\ \/ \b \f \n \r \t \uXXXX
-  return str.replace(/\\(?!["\\/bfnrtu])/g, "\\\\");
+  let out = str.replace(/\\(?!["\\/bfnrtu])/g, "\\\\");
+  // Heuristic recovery: ASCII " surrounded by CJK chars (ideographs + CJK punctuation
+  // + fullwidth forms) on both sides is almost always an unescaped inner quote inside
+  // a string value, not a structural delimiter. Legit closing quotes are followed by
+  // ASCII chars (, } ] etc.), not CJK.
+  const cjk = "[\\u4E00-\\u9FFF\\u3000-\\u303F\\uFF00-\\uFFEF]";
+  out = out.replace(new RegExp(`(${cjk})"(?=${cjk})`, "g"), '$1\\"');
+  return out;
 }
 
 /**
