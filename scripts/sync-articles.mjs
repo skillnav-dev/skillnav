@@ -997,7 +997,9 @@ async function main() {
       failed: totalFailed,
     },
     errorMsg: totalFailed > 0 ? `${totalFailed} articles failed` : null,
-    exitCode: totalFailed > 0 ? 1 : 0,
+    // Only fail CI on catastrophic failure (nothing inserted AND failures occurred).
+    // Partial failures are tracked via pipeline_runs.status='partial' for monitoring.
+    exitCode: totalInserted === 0 && totalFailed > 0 ? 1 : 0,
   };
 }
 
