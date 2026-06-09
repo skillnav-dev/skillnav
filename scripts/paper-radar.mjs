@@ -40,36 +40,80 @@ function todayCST() {
   return cst.toISOString().slice(0, 10);
 }
 
+// ── Network Readiness ───────────────────────────────────────────────
+
+// launchd fires at fixed clock times; if the Mac was asleep, Wi-Fi may not
+// have reconnected yet, making every source fetch fail with "fetch failed".
+// Wait for real connectivity before fetching so a wake-triggered run doesn't
+// write an empty radar that clobbers a good one.
+async function waitForNetwork({ maxAttempts = 6, baseDelay = 10_000 } = {}) {
+  const probes = [
+    "https://huggingface.co/favicon.ico",
+    "https://api.semanticscholar.org/",
+  ];
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    for (const url of probes) {
+      try {
+        // Any response (even 4xx/5xx) proves the network stack is up.
+        await fetch(url, { method: "HEAD", signal: AbortSignal.timeout(8_000) });
+        return true;
+      } catch {
+        // try next probe host
+      }
+    }
+    if (attempt < maxAttempts - 1) {
+      const delay = baseDelay * (attempt + 1);
+      log.warn(
+        `Network not ready, retry ${attempt + 1}/${maxAttempts - 1} in ${delay / 1000}s...`,
+      );
+      await new Promise((r) => setTimeout(r, delay));
+    }
+  }
+  return false;
+}
+
 // ── Source 1: HuggingFace Daily Papers ──────────────────────────────
 
 async function fetchHFPapers(limit = 15) {
-  try {
-    const res = await fetch("https://huggingface.co/api/daily_papers", {
-      signal: AbortSignal.timeout(15_000),
-    });
-    if (!res.ok) {
-      log.warn(`HF Daily Papers API returned ${res.status}`);
-      return [];
+  // Retry on network errors — launchd 14:00 trigger may run before WiFi reconnects
+  const maxAttempts = 3;
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    try {
+      if (attempt > 0) {
+        const delay = attempt * 5000;
+        log.warn(`HF Daily Papers retry ${attempt}/${maxAttempts - 1} in ${delay / 1000}s...`);
+        await new Promise((r) => setTimeout(r, delay));
+      }
+      const res = await fetch("https://huggingface.co/api/daily_papers", {
+        signal: AbortSignal.timeout(15_000),
+      });
+      if (!res.ok) {
+        log.warn(`HF Daily Papers API returned ${res.status}`);
+        return [];
+      }
+      const data = await res.json();
+      return data
+        .sort((a, b) => (b.paper?.upvotes || 0) - (a.paper?.upvotes || 0))
+        .slice(0, limit)
+        .map((item) => ({
+          id: item.paper?.id,
+          title: item.paper?.title?.replace(/\s+/g, " ").trim(),
+          upvotes: item.paper?.upvotes || 0,
+          org: item.paper?.organization?.fullname || "",
+          summary: item.paper?.ai_summary || "",
+          keywords: item.paper?.ai_keywords || [],
+          githubUrl: item.paper?.githubRepo || "",
+          githubStars: item.paper?.githubStars ?? null,
+          source: "hf",
+        }));
+    } catch (e) {
+      if (attempt === maxAttempts - 1) {
+        log.warn(`HF Daily Papers fetch failed after ${maxAttempts} attempts: ${e.message}`);
+        return [];
+      }
     }
-    const data = await res.json();
-    return data
-      .sort((a, b) => (b.paper?.upvotes || 0) - (a.paper?.upvotes || 0))
-      .slice(0, limit)
-      .map((item) => ({
-        id: item.paper?.id,
-        title: item.paper?.title?.replace(/\s+/g, " ").trim(),
-        upvotes: item.paper?.upvotes || 0,
-        org: item.paper?.organization?.fullname || "",
-        summary: item.paper?.ai_summary || "",
-        keywords: item.paper?.ai_keywords || [],
-        githubUrl: item.paper?.githubRepo || "",
-        githubStars: item.paper?.githubStars ?? null,
-        source: "hf",
-      }));
-  } catch (e) {
-    log.warn(`HF Daily Papers fetch failed: ${e.message}`);
-    return [];
   }
+  return [];
 }
 
 // ── Source 2: Semantic Scholar ───────────────────────────────────────
@@ -437,6 +481,7 @@ function generateMarkdown(papers, dateLabel) {
 async function main() {
   const args = process.argv.slice(2);
   const dryRun = args.includes("--dry-run");
+  const force = args.includes("--force");
   const dateIdx = args.indexOf("--date");
   const dateLabel = dateIdx !== -1 ? args[dateIdx + 1] : todayCST();
 
@@ -446,7 +491,32 @@ async function main() {
   }
 
   log.info(`Paper Radar for: ${dateLabel}`);
-  log.info(`Options: dry-run=${dryRun}`);
+  log.info(`Options: dry-run=${dryRun}, force=${force}`);
+
+  const outPath = pathMod.join(VAULT_RADAR_DIR, `${dateLabel}.md`);
+
+  // Idempotent: skip if today's radar already has papers — protects manual
+  // runs and the user's [x] selections from being clobbered by a later run.
+  if (!dryRun && !force && fs.existsSync(outPath)) {
+    const existing = fs.readFileSync(outPath, "utf8");
+    if (/^- \[[ x]\] /m.test(existing)) {
+      log.info(
+        `Radar for ${dateLabel} already generated with papers — skipping (use --force to regenerate)`,
+      );
+      return;
+    }
+  }
+
+  // Wait for connectivity — a wake-triggered launchd run may fire before
+  // Wi-Fi reconnects, which would fail every source and write an empty radar.
+  const online = await waitForNetwork();
+  if (!online) {
+    log.warn(
+      "Network unreachable after retries — skipping run (no file written) so a later slot can retry",
+    );
+    process.exitCode = 1;
+    return;
+  }
 
   // Fetch from all 3 sources in parallel (each with independent error handling)
   const [hfPapers, s2Papers, newsletterData] = await Promise.all([
@@ -494,11 +564,17 @@ async function main() {
   }
 
   // Write to Vault
-  const outPath = pathMod.join(VAULT_RADAR_DIR, `${dateLabel}.md`);
   fs.mkdirSync(VAULT_RADAR_DIR, { recursive: true });
   fs.writeFileSync(outPath, markdown, "utf8");
   log.success(`Radar written: ${outPath}`);
   log.info(`  Papers: ${papers.length} | Multi-source: ${multiCount}`);
+
+  // Empty radar = all sources failed. Exit non-zero so the run is not a
+  // silent success — a later scheduled run will retry and regenerate.
+  if (papers.length === 0) {
+    log.warn("No papers from any source — marking run as failed");
+    process.exitCode = 1;
+  }
 
   // Auto-archive old radars (> 3 days)
   const archiveDir = pathMod.join(VAULT_RADAR_DIR, "_归档");
