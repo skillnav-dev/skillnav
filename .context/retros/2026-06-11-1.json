@@ -1,0 +1,35 @@
+{
+  "date": "2026-06-11",
+  "window": "64d",
+  "window_range": "2026-04-08 → 2026-06-11",
+  "metrics": {
+    "commits": 48,
+    "contributors": 1,
+    "insertions": 6360,
+    "deletions": 2147,
+    "net_loc": 4213,
+    "active_days": 25,
+    "checkpoint_pct": 0.58,
+    "fix_pct": 0.21,
+    "feat_pct": 0.04,
+    "peak_hours": [15, 18],
+    "unpushed_commits": 14,
+    "unpushed_since": "2026-04-30",
+    "uncommitted_files": 60,
+    "commit_gap": "2026-05-13 → 2026-06-08 (26 days, only 3 commits after)"
+  },
+  "authors": {
+    "Mauna Loa": {
+      "commits": 48,
+      "insertions": 6360,
+      "deletions": 2147,
+      "top_area": "HANDOFF.md / scripts"
+    }
+  },
+  "hotspots": [
+    "HANDOFF.md(29)",
+    "src/lib/get-trending-tools.ts(5)",
+    "scripts/lib/llm.mjs(3)"
+  ],
+  "tweetable": "2026-04-08→06-11: 48 commits, +6.4k/-2.1k LOC, 25 active days | 14 commits unpushed since 4/30 | 5/13→6/8 26-day gap"
+}
