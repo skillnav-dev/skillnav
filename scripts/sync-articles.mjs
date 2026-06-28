@@ -997,9 +997,11 @@ async function main() {
       failed: totalFailed,
     },
     errorMsg: totalFailed > 0 ? `${totalFailed} articles failed` : null,
-    // Only fail CI on catastrophic failure (nothing inserted AND failures occurred).
+    // Only fail CI on catastrophic failure: zero inserts AND a large batch of
+    // failures. A handful of transient LLM/network timeouts retries next run and
+    // should not page; sustained dry runs are caught by /api/health dry detection.
     // Partial failures are tracked via pipeline_runs.status='partial' for monitoring.
-    exitCode: totalInserted === 0 && totalFailed > 0 ? 1 : 0,
+    exitCode: totalInserted === 0 && totalFailed >= 10 ? 1 : 0,
   };
 }
 

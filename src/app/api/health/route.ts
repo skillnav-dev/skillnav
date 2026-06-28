@@ -23,6 +23,11 @@ const SCRAPE_PIPELINES = new Set([
   "sync-articles",
 ]);
 
+// Pipelines whose "no data" state is a known, expected condition — exempt from
+// dry detection so it does not mask real outages. x-signals: TwitterAPI.io free
+// quota exhausted (402), so 0 inserts is expected. Failed-run detection still applies.
+const KNOWN_DRY_EXEMPT = new Set(["x-signals"]);
+
 export async function GET() {
   const supabase = createStaticClient();
   const windowStart = new Date(
@@ -81,7 +86,7 @@ export async function GET() {
       continue;
     }
 
-    if (SCRAPE_PIPELINES.has(pipeline)) {
+    if (SCRAPE_PIPELINES.has(pipeline) && !KNOWN_DRY_EXEMPT.has(pipeline)) {
       const allDry = runs.every((r) => {
         const upserted =
           typeof r.summary?.upserted === "number" ? r.summary.upserted : null;
