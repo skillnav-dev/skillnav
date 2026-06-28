@@ -131,6 +131,12 @@ async function main() {
   const manualList = [];
 
   for (const { arxivId } of pending) {
+    // Space out papers to stay under arXiv rate limits
+    if (success + failed + needsManual > 0) {
+      log.info("Waiting 15s before next paper (arXiv rate limit)...");
+      await new Promise((r) => setTimeout(r, 15_000));
+    }
+
     log.info(`\n${"─".repeat(60)}`);
     log.info(
       `Translating ${arxivId} (${success + failed + needsManual + 1}/${pending.length})`

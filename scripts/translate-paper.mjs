@@ -32,9 +32,30 @@ const log = createLogger("paper");
 
 // ── arXiv Metadata ──────────────────────────────────────────────────
 
-async function fetchArxivMetadata(arxivId) {
+// Primary source: arXiv Atom API. Fast structured data, but rate-limited hard.
+async function fetchArxivMetadataFromApi(arxivId) {
   const url = `https://export.arxiv.org/api/query?id_list=${arxivId}`;
-  const res = await fetch(url, { signal: AbortSignal.timeout(15_000) });
+
+  // Short retry for transient blips — persistent failures fall back to the abs page
+  const delays = [5_000, 15_000];
+  let res;
+  for (let attempt = 0; attempt <= delays.length; attempt++) {
+    try {
+      if (attempt > 0) {
+        log.warn(`arXiv API retry ${attempt}/${delays.length} in ${delays[attempt - 1] / 1000}s...`);
+        await new Promise((r) => setTimeout(r, delays[attempt - 1]));
+      }
+      res = await fetch(url, { signal: AbortSignal.timeout(30_000) });
+      if (res.status === 429) {
+        if (attempt === delays.length) throw new Error("arXiv API returned 429");
+        continue;
+      }
+      break;
+    } catch (e) {
+      if (attempt === delays.length) throw e;
+      log.warn(`arXiv API fetch failed: ${e.message}`);
+    }
+  }
   if (!res.ok) throw new Error(`arXiv API returned ${res.status}`);
 
   const xml = await res.text();
@@ -47,17 +68,64 @@ async function fetchArxivMetadata(arxivId) {
   const abstract = entry.match(/<summary>([\s\S]*?)<\/summary>/)?.[1]?.trim();
   const published = entry.match(/<published>([\s\S]*?)<\/published>/)?.[1]?.trim();
 
-  // Authors
   const authorMatches = [...entry.matchAll(/<author>[\s\S]*?<name>([\s\S]*?)<\/name>[\s\S]*?<\/author>/g)];
   const authors = authorMatches.map((m) => m[1].trim());
 
-  // Categories
   const catMatches = [...entry.matchAll(/<category[^>]*term="([^"]+)"/g)];
   const categories = catMatches.map((m) => m[1]);
 
   if (!title) throw new Error(`Could not parse title for arXiv ID: ${arxivId}`);
 
   return { title, abstract, authors, categories, published };
+}
+
+// Fallback source: arXiv abs HTML page. A regular web page, far less
+// aggressively rate-limited than the API — used when the API 429s.
+async function fetchArxivMetadataFromAbsPage(arxivId) {
+  const url = `https://arxiv.org/abs/${arxivId}`;
+  log.warn(`Falling back to arXiv abs page: ${url}`);
+
+  const res = await fetch(url, {
+    signal: AbortSignal.timeout(30_000),
+    headers: { "User-Agent": "Mozilla/5.0 SkillNav-PaperRadar/1.0 (skillnav.dev)" },
+  });
+  if (!res.ok) throw new Error(`arXiv abs page returned ${res.status}`);
+
+  const $ = cheerio.load(await res.text());
+  const meta = (name) => $(`meta[name="${name}"]`).attr("content");
+
+  const title = meta("citation_title")?.replace(/\s+/g, " ").trim();
+  if (!title) throw new Error(`Could not parse title from abs page: ${arxivId}`);
+
+  // citation_author is "Last, First" — flip to "First Last" to match API format
+  const authors = $('meta[name="citation_author"]')
+    .map((_, el) => {
+      const v = $(el).attr("content")?.trim() || "";
+      const parts = v.split(",").map((p) => p.trim());
+      return parts.length === 2 ? `${parts[1]} ${parts[0]}` : v;
+    })
+    .get()
+    .filter(Boolean);
+
+  const abstract = meta("citation_abstract")?.replace(/\s+/g, " ").trim();
+  const published = meta("citation_date")?.trim() || meta("citation_online_date")?.trim();
+
+  // Categories only feed a log line — best-effort extraction of (cs.XX) codes
+  const subjectsText = $("td.tablecell.subjects").text();
+  const categories = [
+    ...subjectsText.matchAll(/\(([a-zA-Z-]+\.[a-zA-Z-]{2,})\)/g),
+  ].map((m) => m[1]);
+
+  return { title, abstract, authors, categories, published };
+}
+
+async function fetchArxivMetadata(arxivId) {
+  try {
+    return await fetchArxivMetadataFromApi(arxivId);
+  } catch (e) {
+    log.warn(`arXiv API failed: ${e.message}`);
+    return await fetchArxivMetadataFromAbsPage(arxivId);
+  }
 }
 
 // ── Full Text Extraction ────────────────────────────────────────────
