@@ -182,10 +182,12 @@ async function main() {
 
   log.success(`Upserted ${upserted} X signals for ${signalDate}`);
 
-  // Derive status: all-failed → failed, some-failed → partial, all-ok → success
+  // Derive status: all-failed → failure, some-failed → partial, all-ok → success
+  // "failure" is the canonical enum in pipeline_runs CHECK — "failed" gets
+  // silently rejected by the constraint (reportRun never throws)
   const allFailed = totalErrors >= KOL_LIST.length;
   const someFailed = totalErrors > 0;
-  const status = allFailed ? "failed" : someFailed ? "partial" : "success";
+  const status = allFailed ? "failure" : someFailed ? "partial" : "success";
 
   return {
     status,

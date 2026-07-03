@@ -197,10 +197,12 @@ async function main() {
 
   log.info(`Fetched ${allPosts.length} posts from ${SUBREDDITS.length} subreddits (errors=${errors})`);
 
-  // Derive pipeline status: all-failed → failed, some-failed → partial, all-ok → success
+  // Derive pipeline status: all-failed → failure, some-failed → partial, all-ok → success
+  // "failure" is the canonical enum in pipeline_runs CHECK — "failed" gets
+  // silently rejected by the constraint (reportRun never throws)
   const allFailed = errors === SUBREDDITS.length;
   const someFailed = errors > 0 && errors < SUBREDDITS.length;
-  const baseStatus = allFailed ? "failed" : someFailed ? "partial" : "success";
+  const baseStatus = allFailed ? "failure" : someFailed ? "partial" : "success";
 
   // Dedup by post ID
   const seen = new Set();

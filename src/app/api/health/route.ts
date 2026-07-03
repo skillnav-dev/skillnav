@@ -78,7 +78,7 @@ export async function GET() {
   for (const [pipeline, runs] of runsByPipeline) {
     if (runs.length < DEGRADED_MIN_RUNS) continue;
 
-    if (runs.every((r) => r.status === "failed")) {
+    if (runs.every((r) => r.status === "failure")) {
       degraded.push({
         pipeline,
         reason: `last ${DEGRADED_MIN_RUNS} runs all failed`,

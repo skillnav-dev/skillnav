@@ -195,7 +195,7 @@ async function main() {
   if (relevant.length === 0) {
     log.warn("No relevant stories found today");
     return {
-      status: fetchFailed ? "failed" : "success",
+      status: fetchFailed ? "failure" : "success",
       summary: { scanned: stories.length, relevant: 0, upserted: 0, fetchFailed },
       exitCode: 0,
     };
