@@ -635,16 +635,23 @@ async function main() {
   // 1. Curated adapters (original 7 repos)
   if (!sourceFilter || sourceFilter === "curated") {
     for (const adapter of adapters) {
-      const { skills, errors } = await syncAdapter(adapter, {
-        dryRun,
-        limit,
-        skipExisting,
-        existingSlugs,
-        incremental,
-        existingUrls,
-      });
-      allSkills.push(...skills);
-      totalErrors += errors;
+      // Degrade gracefully: a single repo's tree fetch failing (e.g. transient
+      // GitHub rate limit) must not abort the whole run and fire a false alarm.
+      try {
+        const { skills, errors } = await syncAdapter(adapter, {
+          dryRun,
+          limit,
+          skipExisting,
+          existingSlugs,
+          incremental,
+          existingUrls,
+        });
+        allSkills.push(...skills);
+        totalErrors += errors;
+      } catch (err) {
+        log.warn(`Skipping ${adapter.owner}/${adapter.repo}: ${err.message}`);
+        totalErrors += 1;
+      }
     }
     sourceCounts["curated"] = allSkills.length;
   }
