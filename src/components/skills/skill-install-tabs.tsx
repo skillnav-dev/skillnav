@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Terminal } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { isDeadSourceUrl } from "@/lib/skill-source";
 import { CopyButton } from "@/components/shared/copy-button";
 
 interface SkillInstallTabsProps {
@@ -47,7 +48,8 @@ function claudeCommand(
   skillName?: string,
 ): string {
   if (installCommand) return installCommand;
-  if (githubUrl) {
+  // Skip URLs whose upstream repo is gone — they would produce a command that 404s.
+  if (githubUrl && !isDeadSourceUrl(githubUrl)) {
     const slug = ownerRepoFromUrl(githubUrl);
     if (slug) return `claude skill add --url https://github.com/${slug}`;
   }

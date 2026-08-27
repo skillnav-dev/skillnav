@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { SecurityBadge } from "@/components/shared/security-badge";
 import { PlatformBadge } from "@/components/skills/platform-badge";
 import { formatNumber } from "@/lib/utils";
+import { liveSourceUrl } from "@/lib/skill-source";
 import type { Skill } from "@/data/types";
 
 const sourceLabels: Record<string, string> = {
@@ -176,12 +177,12 @@ export function SkillSidebar({ skill }: SkillSidebarProps) {
         </div>
       )}
 
-      {/* External links card (conditional) */}
-      {(skill.sourceUrl || skill.githubUrl) && (
+      {/* External links card (conditional; dead upstream URLs are suppressed) */}
+      {(liveSourceUrl(skill.sourceUrl) || liveSourceUrl(skill.githubUrl)) && (
         <div className="rounded-xl ring-1 ring-gray-950/10 bg-card p-6 dark:ring-gray-50/10">
           <h3 className="mb-3 text-sm font-semibold">链接</h3>
           <div className="space-y-2">
-            {skill.sourceUrl && (
+            {liveSourceUrl(skill.sourceUrl) && (
               <a
                 href={skill.sourceUrl}
                 target="_blank"
@@ -192,7 +193,7 @@ export function SkillSidebar({ skill }: SkillSidebarProps) {
                 查看来源
               </a>
             )}
-            {skill.githubUrl && (
+            {liveSourceUrl(skill.githubUrl) && (
               <a
                 href={skill.githubUrl}
                 target="_blank"

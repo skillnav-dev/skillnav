@@ -11,6 +11,7 @@ import { SkillContent } from "@/components/skills/skill-content";
 import { SkillInstallTabs } from "@/components/skills/skill-install-tabs";
 import { PlatformBadge } from "@/components/skills/platform-badge";
 import { siteConfig } from "@/lib/constants";
+import { liveSourceUrl } from "@/lib/skill-source";
 import { getSkillBySlug, getAllSkillSlugs } from "@/lib/data";
 
 interface PageProps {
@@ -155,7 +156,7 @@ export default async function EnSkillDetailPage({ params }: PageProps) {
           </div>
 
           <aside className="space-y-4">
-            {skill.githubUrl && (
+            {liveSourceUrl(skill.githubUrl) && (
               <a
                 href={skill.githubUrl}
                 target="_blank"
