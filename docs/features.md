@@ -26,7 +26,7 @@
 | ID | 功能 | 状态 | 说明 |
 |----|------|------|------|
 | OPS-01 | RSS 文章双时段同步 | shipped | UTC 22:15 + 10:15，9 个源 |
-| OPS-02 | Skills 定期同步 | shipped | ClawHub + Anthropic + curated，周一 |
+| OPS-02 | Skills 定期同步 | shipped | Anthropic + curated，周一。ClawHub 源已停用（ADR-007） |
 | OPS-03 | MCP 定期同步 | shipped | Registry + Smithery，周一 |
 | OPS-04 | GitHub 元数据刷新 | shipped | Stars/Forks 日刷新 + 周快照趋势 |
 | OPS-05 | 数据回填管线 | shipped | name_zh/tags/desc_zh/editor_comments |

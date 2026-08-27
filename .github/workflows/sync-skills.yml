@@ -1,18 +1,16 @@
 name: Sync Skills
 
+# ClawHub sync was removed on 2026-08-23. The upstream `openclaw/skills` repo was
+# deleted, leaving all 9252 synced rows as dead links, and the replacement registry
+# API exposes a 68k+ catalog with a ~24% permanently-409 rate — too large for CI and
+# too low-quality to be worth curating. Those rows were backed up and dropped from
+# the DB; see docs/adr/ for the decision record.
+
 on:
   schedule:
     - cron: "0 2 * * 1" # UTC 02:00 Monday = Beijing 10:00
   workflow_dispatch:
     inputs:
-      skip_existing:
-        description: "Skip existing skills (incremental)"
-        type: boolean
-        default: true
-      backfill_content:
-        description: "Backfill NULL content from GitHub"
-        type: boolean
-        default: false
       limit:
         description: "Max items to process"
         required: false
@@ -26,44 +24,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  clawhub:
-    runs-on: ubuntu-latest
-    timeout-minutes: 90
-    env:
-      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
-
-      - run: npm ci
-
-      - name: Sync ClawHub skills
-        run: |
-          ARGS=""
-          if [ "${{ inputs.backfill_content }}" = "true" ]; then
-            ARGS="$ARGS --backfill-content"
-          elif [ "${{ inputs.skip_existing }}" != "false" ]; then
-            ARGS="$ARGS --skip-existing"
-          fi
-          if [ "${{ inputs.limit }}" ]; then ARGS="$ARGS --limit ${{ inputs.limit }}"; fi
-          if [ "${{ inputs.dry_run }}" = "true" ]; then ARGS="$ARGS --dry-run"; fi
-          node scripts/sync-clawhub.mjs $ARGS
-
-      - name: Notify Slack on failure
-        if: failure()
-        run: |
-          curl -sS -X POST -H 'Content-type: application/json' \
-            --data "{\"text\":\"❌ *Sync Skills (ClawHub)* failed\\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>\"}" \
-            ${{ secrets.SLACK_WEBHOOK_URL }}
-
   anthropic:
-    needs: clawhub
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
