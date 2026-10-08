@@ -115,7 +115,7 @@
 | validate-env.mjs | `validateEnv(["KEY1","KEY2"])`（validate-env.mjs:6），缺失 exit(2) | main 入口前校验环境变量 |
 | x-client.mjs | `fetchUserTweets`（x-client.mjs:26） | 仅 X 线 |
 | sources/ | `normalizeGithubUrl(url)` @ sources/awesome-skills.mjs:24 | 新增结构化数据源。目录约定：每源一文件、导出单个 fetch 函数 |
-| publishers/ | `generateRssXml` @ rss.mjs、`markdownToWechatHtml` @ wechat.mjs、`formatZhihuArticle` @ zhihu.mjs、`formatXhsCaption` @ xiaohongshu.mjs、`formatXThread` @ twitter.mjs | 输出层需多渠道格式转换时 |
+| publishers/ | `markdownToWechatHtml` @ wechat.mjs、`formatZhihuArticle` @ zhihu.mjs、`formatXhsCaption` @ xiaohongshu.mjs、`formatXThread` @ twitter.mjs（RSS 由 `src/app/api/rss/daily/route.ts` 直接生成） | 输出层需多渠道格式转换时 |
 
 ### 环境变量清单
 
