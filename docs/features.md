@@ -48,7 +48,7 @@
 | UI-01 | 首页场景导航 | shipped | Hero + Stats + "你想做什么"8 场景入口 + 编辑精选 + 精选工具 + 最新文章 + X 关注 CTA |
 | UI-02 | 暗色模式 | shipped | next-themes |
 | UI-03 | 移动端适配 | shipped | 响应式 + 触控优化 |
-| UI-04 | Admin 后台 | shipped | Skills/Articles/MCP 统一管理 |
+| UI-04 | Admin 后台 | shipped | Skills/Articles/MCP 统一管理。会话为 jose 签名 cookie，所有 server action 与 admin API 统一校验（`check:admin-guards` 在部署前检查） |
 | UI-05 | 英文路由（/en/） | shipped | 双语内容 |
 | UI-06 | 错误边界（error.tsx） | shipped | 根级 500 错误页，重试 + 返回首页 |
 

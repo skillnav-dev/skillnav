@@ -1,9 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { requireAdmin } from "@/lib/admin-auth";
 import { updateSkill } from "@/lib/data/admin";
 
 export async function saveSkill(formData: FormData) {
+  await requireAdmin();
+
   const id = formData.get("id") as string;
 
   const data: {

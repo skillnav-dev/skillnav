@@ -29,6 +29,9 @@ jobs:
       - name: Type check
         run: npx tsc --noEmit
 
+      - name: Admin auth guard check
+        run: npm run check:admin-guards
+
       - name: Build & Deploy
         run: npx opennextjs-cloudflare build && npx opennextjs-cloudflare deploy
         env:

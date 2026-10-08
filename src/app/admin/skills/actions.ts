@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { requireAdmin } from "@/lib/admin-auth";
 import {
   updateSkillStatus,
   batchUpdateSkillStatus,
@@ -10,6 +11,8 @@ import {
 export async function changeSkillStatus(
   formData: FormData,
 ): Promise<{ ok: boolean; error?: string }> {
+  await requireAdmin();
+
   const id = formData.get("id") as string;
   const newStatus = formData.get("newStatus") as string;
 
@@ -32,6 +35,8 @@ export async function changeSkillStatus(
 export async function batchChangeSkillStatus(
   formData: FormData,
 ): Promise<{ ok: boolean; count?: number; error?: string }> {
+  await requireAdmin();
+
   const idsRaw = formData.get("ids") as string;
   const status = formData.get("status") as string;
 
@@ -64,6 +69,8 @@ export async function batchChangeSkillStatus(
 export async function batchDeleteSkills(
   formData: FormData,
 ): Promise<{ ok: boolean; count?: number; error?: string }> {
+  await requireAdmin();
+
   const idsRaw = formData.get("ids") as string;
 
   if (!idsRaw) {

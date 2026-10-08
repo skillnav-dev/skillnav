@@ -1,9 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { requireAdmin } from "@/lib/admin-auth";
 import { updateArticle, deleteArticle } from "@/lib/data/admin";
 
 export async function saveArticle(formData: FormData) {
+  await requireAdmin();
+
   const id = formData.get("id") as string;
 
   const data: {
@@ -41,6 +44,8 @@ export async function saveArticle(formData: FormData) {
 export async function deleteArticleAction(
   id: string,
 ): Promise<{ ok: boolean; error?: string }> {
+  await requireAdmin();
+
   try {
     await deleteArticle(id);
   } catch (err) {

@@ -34,6 +34,7 @@ Core tables: `skills` (slug, name, name_zh, category, tags, stars, security_scor
 npm run dev        # Local dev
 npm run build      # Production build
 npm run lint       # Linter
+npm run check:admin-guards  # Every admin server action / API must check auth
 ```
 
 ## Development Conventions
