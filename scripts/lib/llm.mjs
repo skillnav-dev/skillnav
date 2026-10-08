@@ -2,66 +2,21 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
+import { callLLM, callLLMText, getProviderInfo } from "./llm-provider.mjs";
+
 /**
- * Shared LLM utility module.
- * Supports multiple providers via LLM_PROVIDER env var.
- *
- * Providers:
- *   - deepseek (default): DEEPSEEK_API_KEY, model deepseek-chat
- *   - gemini:             GEMINI_API_KEY, model gemini-2.0-flash
- *   - anthropic:          ANTHROPIC_API_KEY, model claude-haiku-4-5-20251001
- *   - openai:             OPENAI_API_KEY, model gpt-5.5 (OpenAI Responses API, OPENAI_BASE_URL for proxy)
- *   - gpt:                GPT_API_KEY, model gpt-5.5 (OpenAI Responses API via proxy)
+ * Shared LLM utility module: translation, summarisation and scoring prompts.
+ * Provider selection, retries and fallback live in llm-provider.mjs
+ * (LLM_PROVIDER, LLM_FALLBACK_PROVIDER; providers: gpt (default), openai,
+ * deepseek, gemini, anthropic).
  */
 
-// ── Provider Configuration ───────────────────────────────────────────
-
-const PROVIDERS = {
-  deepseek: {
-    name: "DeepSeek V3",
-    baseUrl: "https://api.deepseek.com/v1",
-    model: "deepseek-chat",
-    apiKeyEnv: "DEEPSEEK_API_KEY",
-    type: "openai-compatible",
-    maxOutputTokens: 8192,
-  },
-  gemini: {
-    name: "Gemini 2.0 Flash",
-    baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai",
-    model: "gemini-2.0-flash",
-    apiKeyEnv: "GEMINI_API_KEY",
-    type: "openai-compatible",
-  },
-  anthropic: {
-    name: "Claude Haiku",
-    model: "claude-haiku-4-5-20251001",
-    apiKeyEnv: "ANTHROPIC_API_KEY",
-    type: "anthropic",
-  },
-  openai: {
-    name: "GPT-5.5",
-    baseUrl: "https://api.openai.com/v1",
-    baseUrlEnv: "OPENAI_BASE_URL",
-    model: "gpt-5.5",
-    apiKeyEnv: "OPENAI_API_KEY",
-    type: "openai-responses",
-    reasoning: { effort: "xhigh" },
-  },
-  gpt: {
-    name: "GPT-5.5",
-    baseUrl: "https://gmn.chuangzuoli.com/v1",
-    model: "gpt-5.5",
-    apiKeyEnv: "GPT_API_KEY",
-    type: "openai-responses",
-    reasoning: { effort: "low" },
-  },
-};
+export { callLLM, callLLMText, getProviderInfo };
 
 // Thresholds for translation strategy
 const CHUNK_THRESHOLD = 15000; // Below this: single-call translation
 const SUMMARIZE_THRESHOLD = 50000; // Above this: structured summary instead of full translation
 const CHUNK_SIZE = 12000; // Target size per chunk
-const LLM_TIMEOUT_MS = parseInt(process.env.LLM_TIMEOUT_MS, 10) || 120_000; // 120s per request, overridable via env
 
 const VALID_ARTICLE_TYPES = ["tutorial", "analysis", "guide"];
 
@@ -94,286 +49,6 @@ function buildGlossaryPrompt() {
   lines.push("- Be consistent: once you choose a translation for a term, use it throughout the entire article");
 
   return lines.join("\n");
-}
-
-// ── Retry & Circuit Breaker ─────────────────────────────────────────
-// Retry with backoff on transient failures (502, timeout, network).
-// Circuit breaker: 3 failures → open (use fallback) → 10min cooldown → half-open (try primary once)
-const RETRY_COUNT = 3;              // retries per call before giving up
-const RETRY_BASE_DELAY_MS = 5_000;  // 5s → 10s → 20s (~35s total)
-const RETRY_MAX_DELAY_MS = 30_000;  // cap individual delay at 30s
-
-const CIRCUIT_FAILURE_THRESHOLD = 3;       // failures before opening circuit
-const CIRCUIT_COOLDOWN_MS = 10 * 60_000;   // 10 minutes before half-open
-
-// Circuit states: "closed" (normal) → "open" (fallback) → "half-open" (probe primary)
-let circuitState = "closed";
-let circuitFailures = 0;
-let circuitOpenedAt = 0;
-
-// ── Provider Resolution ──────────────────────────────────────────────
-
-function resolveProvider(name) {
-  const provider = PROVIDERS[name];
-  if (!provider) {
-    throw new Error(
-      `Unknown LLM_PROVIDER: "${name}". Available: ${Object.keys(PROVIDERS).join(", ")}`
-    );
-  }
-  const apiKey = process.env[provider.apiKeyEnv];
-  if (!apiKey) return null; // key not available
-  const baseUrl =
-    (provider.baseUrlEnv && process.env[provider.baseUrlEnv]) || provider.baseUrl;
-  return { ...provider, providerName: name, apiKey, baseUrl };
-}
-
-function getProvider() {
-  const primaryName = process.env.LLM_PROVIDER || "gpt";
-  const fallbackName = process.env.LLM_FALLBACK_PROVIDER;
-
-  // Circuit open or half-open → use fallback if available
-  if (circuitState !== "closed" && fallbackName) {
-    // Half-open: check if cooldown elapsed, probe primary once
-    if (circuitState === "open" && Date.now() - circuitOpenedAt >= CIRCUIT_COOLDOWN_MS) {
-      circuitState = "half-open";
-      console.log(`\x1b[33m[llm] Circuit half-open — probing primary provider\x1b[0m`);
-      // Fall through to return primary
-    } else if (circuitState === "open") {
-      const fb = resolveProvider(fallbackName);
-      if (fb) return fb;
-    }
-    // half-open: return primary for the probe attempt
-    if (circuitState === "half-open") {
-      const primary = resolveProvider(primaryName);
-      if (primary) return primary;
-    }
-  }
-
-  const primary = resolveProvider(primaryName);
-  if (!primary) {
-    throw new Error(
-      `${PROVIDERS[primaryName]?.apiKeyEnv || primaryName} is not set. Required for provider "${primaryName}".`
-    );
-  }
-  return primary;
-}
-
-function onCallSuccess() {
-  if (circuitState !== "closed") {
-    console.log(`\x1b[32m[llm] Circuit closed — primary provider recovered\x1b[0m`);
-  }
-  circuitState = "closed";
-  circuitFailures = 0;
-}
-
-function onCallFailure() {
-  circuitFailures++;
-  const fallbackName = process.env.LLM_FALLBACK_PROVIDER;
-
-  if (circuitState === "half-open") {
-    // Probe failed → reopen circuit, reset cooldown
-    circuitState = "open";
-    circuitOpenedAt = Date.now();
-    console.log(`\x1b[33m[llm] Half-open probe failed — circuit reopened for ${CIRCUIT_COOLDOWN_MS / 60000}min\x1b[0m`);
-    return;
-  }
-
-  if (circuitState === "closed" && fallbackName && circuitFailures >= CIRCUIT_FAILURE_THRESHOLD) {
-    const fb = resolveProvider(fallbackName);
-    if (fb) {
-      circuitState = "open";
-      circuitOpenedAt = Date.now();
-      console.log(
-        `\x1b[33m[llm] ${circuitFailures} consecutive failures — circuit opened, switching to fallback: ${fb.name} (${fallbackName})\x1b[0m`
-      );
-    }
-  }
-}
-
-/**
- * Get current provider info (for logging).
- * @returns {{ name: string, model: string, provider: string }}
- */
-export function getProviderInfo() {
-  const name = process.env.LLM_PROVIDER || "gpt";
-  const provider = PROVIDERS[name];
-  return provider
-    ? { provider: name, name: provider.name, model: provider.model }
-    : { provider: name, name: "unknown", model: "unknown" };
-}
-
-// ── LLM Call Implementations ─────────────────────────────────────────
-
-/**
- * Call an OpenAI-compatible API (DeepSeek, OpenAI, etc.)
- * @param {boolean} [jsonMode=true] - Whether to request JSON response format
- */
-async function callOpenAICompatible(provider, systemPrompt, userPrompt, maxTokens, jsonMode = true) {
-  const effectiveMaxTokens = provider.maxOutputTokens
-    ? Math.min(maxTokens, provider.maxOutputTokens)
-    : maxTokens;
-  const body = {
-    model: provider.model,
-    max_tokens: effectiveMaxTokens,
-    messages: [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt },
-    ],
-  };
-  if (jsonMode) body.response_format = { type: "json_object" };
-
-  const res = await fetch(`${provider.baseUrl}/chat/completions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${provider.apiKey}`,
-    },
-    body: JSON.stringify(body),
-    signal: AbortSignal.timeout(LLM_TIMEOUT_MS),
-  });
-
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`${provider.name} API error ${res.status}: ${body.slice(0, 300)}`);
-  }
-
-  const data = await res.json();
-  return data.choices[0].message.content;
-}
-
-/**
- * Call OpenAI Responses API (e.g. GPT-5 via proxy).
- */
-async function callOpenAIResponses(provider, systemPrompt, userPrompt, maxTokens) {
-  const res = await fetch(`${provider.baseUrl}/responses`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${provider.apiKey}`,
-    },
-    signal: AbortSignal.timeout(LLM_TIMEOUT_MS),
-    body: JSON.stringify({
-      model: provider.model,
-      max_output_tokens: maxTokens,
-      ...(provider.reasoning && { reasoning: provider.reasoning }),
-      input: [
-        {
-          type: "message",
-          role: "developer",
-          content: [{ type: "input_text", text: systemPrompt }],
-        },
-        {
-          type: "message",
-          role: "user",
-          content: [{ type: "input_text", text: userPrompt }],
-        },
-      ],
-    }),
-  });
-
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`${provider.name} API error ${res.status}: ${body.slice(0, 300)}`);
-  }
-
-  const data = await res.json();
-  // Responses API returns output[].content[].text
-  const message = data.output?.find((o) => o.type === "message");
-  const text = message?.content?.find((c) => c.type === "output_text")?.text;
-  if (!text) {
-    throw new Error(`${provider.name}: unexpected response structure: ${JSON.stringify(data).slice(0, 300)}`);
-  }
-  return text;
-}
-
-/**
- * Call the Anthropic API via SDK.
- */
-async function callAnthropic(provider, systemPrompt, userPrompt, maxTokens) {
-  const { default: Anthropic } = await import("@anthropic-ai/sdk");
-  const client = new Anthropic({ apiKey: provider.apiKey, timeout: LLM_TIMEOUT_MS });
-
-  const response = await client.messages.create({
-    model: provider.model,
-    max_tokens: maxTokens,
-    system: systemPrompt,
-    messages: [{ role: "user", content: userPrompt }],
-  });
-
-  return response.content[0].text;
-}
-
-/**
- * Check if an error is transient (worth retrying).
- */
-function isTransientError(err) {
-  const msg = err.message || "";
-  return /502|503|504|timeout|fetch failed|ECONNRESET|ETIMEDOUT|socket hang up/i.test(msg);
-}
-
-/**
- * Sleep for a given number of milliseconds.
- */
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-/**
- * Call with retry + exponential backoff for transient errors.
- */
-async function callWithRetry(provider, systemPrompt, userPrompt, maxTokens, jsonMode) {
-  let lastErr;
-  for (let attempt = 0; attempt <= RETRY_COUNT; attempt++) {
-    try {
-      const result = await dispatchCall(provider, systemPrompt, userPrompt, maxTokens, jsonMode);
-      onCallSuccess();
-      return result;
-    } catch (err) {
-      lastErr = err;
-      onCallFailure();
-      if (attempt < RETRY_COUNT && isTransientError(err)) {
-        const delay = Math.min(RETRY_BASE_DELAY_MS * Math.pow(2, attempt), RETRY_MAX_DELAY_MS);
-        console.log(
-          `\x1b[33m[llm] Transient error (attempt ${attempt + 1}/${RETRY_COUNT + 1}): ${err.message.slice(0, 100)}. Retrying in ${delay / 1000}s...\x1b[0m`
-        );
-        await sleep(delay);
-        continue;
-      }
-      break;
-    }
-  }
-  throw lastErr;
-}
-
-/**
- * Unified LLM call dispatcher (JSON mode for openai-compatible providers).
- * Retries transient errors (502, timeout) with exponential backoff.
- */
-export async function callLLM(systemPrompt, userPrompt, maxTokens = 16384) {
-  const provider = getProvider();
-  return callWithRetry(provider, systemPrompt, userPrompt, maxTokens, true);
-}
-
-/**
- * Unified LLM call dispatcher (plain text mode — no JSON format constraint).
- * Use this for classification tasks that return numbered lists, etc.
- */
-export async function callLLMText(systemPrompt, userPrompt, maxTokens = 4096) {
-  const provider = getProvider();
-  return callWithRetry(provider, systemPrompt, userPrompt, maxTokens, false);
-}
-
-/**
- * Dispatch to the correct call implementation based on provider type.
- */
-function dispatchCall(provider, systemPrompt, userPrompt, maxTokens, jsonMode) {
-  if (provider.type === "anthropic") {
-    return callAnthropic(provider, systemPrompt, userPrompt, maxTokens);
-  }
-  if (provider.type === "openai-responses") {
-    return callOpenAIResponses(provider, systemPrompt, userPrompt, maxTokens);
-  }
-  return callOpenAICompatible(provider, systemPrompt, userPrompt, maxTokens, jsonMode);
 }
 
 // ── Shared Prompts ───────────────────────────────────────────────────
@@ -476,18 +151,22 @@ function splitIntoChunks(content, maxSize = CHUNK_SIZE) {
     }
   );
 
+  // Size as it will be after code blocks are restored (placeholders are short)
+  const realLength = (text) =>
+    text.replace(/__CODE_BLOCK_(\d+)__/g, (_, idx) => codeBlocks[Number(idx)]).length;
+
   // Split by markdown headings (## or ###)
   const sections = withPlaceholders.split(/(?=\n#{2,3}\s)/);
 
   // Further split large sections by paragraphs
   const pieces = [];
   for (const section of sections) {
-    if (section.length <= maxSize) {
+    if (realLength(section) <= maxSize) {
       pieces.push(section);
     } else {
       const paragraphs = section.split(/\n\n/);
       for (const para of paragraphs) {
-        if (para.length <= maxSize) {
+        if (realLength(para) <= maxSize) {
           pieces.push(para);
         } else {
           // Last resort: split by sentence boundaries (Chinese or English)
@@ -498,17 +177,23 @@ function splitIntoChunks(content, maxSize = CHUNK_SIZE) {
     }
   }
 
-  // Greedy merge: combine pieces into chunks up to maxSize
+  // Greedy merge: combine pieces into chunks up to maxSize.
+  // A single code block larger than maxSize stays whole in its own chunk.
   const chunks = [];
   let current = "";
+  let currentLength = 0;
   for (const piece of pieces) {
+    const pieceLength = realLength(piece);
     if (!current) {
       current = piece;
-    } else if (current.length + piece.length + 2 <= maxSize) {
+      currentLength = pieceLength;
+    } else if (currentLength + pieceLength + 2 <= maxSize) {
       current += "\n\n" + piece;
+      currentLength += pieceLength + 2;
     } else {
       chunks.push(current);
       current = piece;
+      currentLength = pieceLength;
     }
   }
   if (current) chunks.push(current);
