@@ -24,6 +24,7 @@
 ## 数据 & 后端
 
 - @supabase/supabase-js / @supabase/ssr — 数据库 + Auth
+- jose — 后台会话签名与校验（HS256 JWT，兼容 Cloudflare Workers）
 - rss-parser — RSS 源解析
 - @mozilla/readability / jsdom — 网页正文提取
 - turndown — HTML→Markdown

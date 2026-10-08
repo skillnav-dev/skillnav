@@ -1,5 +1,5 @@
 import { createServerClient } from "@/lib/supabase/server";
-import { cookies } from "next/headers";
+import { isAdmin } from "@/lib/admin-auth";
 import { NextResponse } from "next/server";
 
 // POST /api/admin/daily/[id]/approve — mark brief as approved
@@ -7,9 +7,7 @@ export async function POST(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const cookieStore = await cookies();
-  const session = cookieStore.get("admin_session");
-  if (!session?.value) {
+  if (!(await isAdmin())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
