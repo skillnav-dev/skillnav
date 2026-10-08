@@ -1,9 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { assertAdmin } from "@/lib/admin-session";
 import { updateMcpServer, deleteMcpServer } from "@/lib/data/admin";
 
 export async function saveMcpServer(formData: FormData) {
+  await assertAdmin();
   const id = formData.get("id") as string;
 
   const data: {
@@ -46,6 +48,7 @@ export async function saveMcpServer(formData: FormData) {
 export async function deleteMcpAction(
   id: string,
 ): Promise<{ ok: boolean; error?: string }> {
+  await assertAdmin();
   try {
     await deleteMcpServer(id);
     revalidatePath("/admin/mcp");

@@ -1,15 +1,13 @@
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { isAdmin } from "@/lib/admin-session";
 
 /**
  * Server-side auth guard for admin pages.
  * Call at the top of each protected page's server component.
- * Redirects to /admin/login if no valid session cookie.
+ * Redirects to /admin/login unless the request carries a valid signed session.
  */
 export async function requireAdmin() {
-  const cookieStore = await cookies();
-  const session = cookieStore.get("admin_session");
-  if (!session?.value) {
+  if (!(await isAdmin())) {
     redirect("/admin/login");
   }
 }

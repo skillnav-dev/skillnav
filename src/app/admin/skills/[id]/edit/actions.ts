@@ -1,9 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { assertAdmin } from "@/lib/admin-session";
 import { updateSkill } from "@/lib/data/admin";
 
 export async function saveSkill(formData: FormData) {
+  await assertAdmin();
   const id = formData.get("id") as string;
 
   const data: {

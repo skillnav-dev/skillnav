@@ -1,19 +1,13 @@
 import { createServerClient } from "@/lib/supabase/server";
-import { cookies } from "next/headers";
+import { isAdmin } from "@/lib/admin-session";
 import { NextRequest, NextResponse } from "next/server";
-
-async function checkAdmin() {
-  const cookieStore = await cookies();
-  const session = cookieStore.get("admin_session");
-  return !!session?.value;
-}
 
 // PATCH /api/admin/community/[id] — toggle is_hidden for moderation
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  if (!(await checkAdmin())) {
+  if (!(await isAdmin())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

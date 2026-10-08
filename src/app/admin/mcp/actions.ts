@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { assertAdmin } from "@/lib/admin-session";
 import {
   updateMcpStatus,
   batchUpdateMcpStatus,
@@ -11,6 +12,7 @@ import {
 export async function changeMcpStatus(
   formData: FormData,
 ): Promise<{ ok: boolean; error?: string }> {
+  await assertAdmin();
   const id = formData.get("id") as string;
   const newStatus = formData.get("newStatus") as string;
 
@@ -34,6 +36,7 @@ export async function changeMcpStatus(
 export async function batchChangeMcpStatus(
   formData: FormData,
 ): Promise<{ ok: boolean; count?: number; error?: string }> {
+  await assertAdmin();
   const idsRaw = formData.get("ids") as string;
   const status = formData.get("status") as string;
 
@@ -67,6 +70,7 @@ export async function batchChangeMcpStatus(
 export async function batchDeleteMcpAction(
   formData: FormData,
 ): Promise<{ ok: boolean; count?: number; error?: string }> {
+  await assertAdmin();
   const idsRaw = formData.get("ids") as string;
 
   if (!idsRaw) {
@@ -99,6 +103,7 @@ export async function batchDeleteMcpAction(
 export async function batchChangeMcpTier(
   formData: FormData,
 ): Promise<{ ok: boolean; count?: number; error?: string }> {
+  await assertAdmin();
   const idsRaw = formData.get("ids") as string;
   const tier = formData.get("tier") as string;
 

@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { assertAdmin } from "@/lib/admin-session";
 import {
   updateArticleStatus,
   batchUpdateArticleStatus,
@@ -10,6 +11,7 @@ import {
 export async function changeArticleStatus(
   formData: FormData,
 ): Promise<{ ok: boolean; error?: string }> {
+  await assertAdmin();
   const id = formData.get("id") as string;
   const newStatus = formData.get("newStatus") as string;
 
@@ -32,6 +34,7 @@ export async function changeArticleStatus(
 export async function batchChangeArticleStatus(
   formData: FormData,
 ): Promise<{ ok: boolean; count?: number; error?: string }> {
+  await assertAdmin();
   const idsRaw = formData.get("ids") as string;
   const status = formData.get("status") as string;
 
@@ -64,6 +67,7 @@ export async function batchChangeArticleStatus(
 export async function batchDeleteArticles(
   formData: FormData,
 ): Promise<{ ok: boolean; count?: number; error?: string }> {
+  await assertAdmin();
   const idsRaw = formData.get("ids") as string;
 
   if (!idsRaw) {

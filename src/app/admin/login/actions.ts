@@ -3,6 +3,12 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import crypto from "node:crypto";
+import {
+  ADMIN_SESSION_COOKIE,
+  ADMIN_SESSION_MAX_AGE_S,
+  createSessionToken,
+  getAdminPassword,
+} from "@/lib/admin-session";
 
 // Simple constant-time comparison to prevent timing attacks
 function safeCompare(a: string, b: string): boolean {
@@ -25,7 +31,7 @@ export async function loginAction(
     return { error: "请输入密码" };
   }
 
-  const adminPassword = process.env.ADMIN_PASSWORD;
+  const adminPassword = getAdminPassword();
   if (!adminPassword) {
     return { error: "管理密码未配置" };
   }
@@ -34,17 +40,13 @@ export async function loginAction(
     return { error: "密码错误" };
   }
 
-  // Generate a session token
-  const token = crypto.randomBytes(32).toString("hex");
-
   const cookieStore = await cookies();
-  cookieStore.set("admin_session", token, {
+  cookieStore.set(ADMIN_SESSION_COOKIE, createSessionToken(), {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    // 7 days
-    maxAge: 60 * 60 * 24 * 7,
+    maxAge: ADMIN_SESSION_MAX_AGE_S,
   });
 
   redirect("/admin");
