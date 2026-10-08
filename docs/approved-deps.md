@@ -28,6 +28,9 @@
 - @mozilla/readability / jsdom — 网页正文提取
 - turndown — HTML→Markdown
 - react-markdown / remark-gfm / rehype-highlight — Markdown 渲染
+- remark-math / rehype-katex / katex — 论文公式渲染
+- cheerio — HTML 解析（arXiv 论文抓取）
+- undici — HTTP 代理（`ProxyAgent`，X 抓取走代理）
 
 ## AI
 
