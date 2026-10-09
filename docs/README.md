@@ -48,6 +48,7 @@
 | 编号 | 决策 | 状态 |
 |------|------|------|
 | [001](adr/001-mcp-directory-strategy.md) | MCP 三层目录策略 | Accepted |
+| [008](adr/008-database-backup.md) | 数据库每晚异地备份（pg_dump + restic → R2） | Accepted |
 
 ### Research（技术调研）
 

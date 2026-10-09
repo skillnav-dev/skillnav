@@ -280,6 +280,7 @@ node scripts/govern-articles.mjs --apply           # 按评分调整状态
 |---------|--------|---------|------|-----|
 | 06:15 | sync-articles（晨间） | cron | 30-60min | DeepSeek |
 | 采集后 | generate-daily | workflow_run | 10-15min | DeepSeek |
+| 03:17 | db-backup（数据库备份） | cron | ~3min | — |
 | 07:45 | health-check | cron | 5min | — |
 | 18:15 | sync-articles（午后） | cron | 30-60min | DeepSeek |
 | 采集后 | generate-daily | workflow_run | 10-15min | DeepSeek |
@@ -331,6 +332,7 @@ node scripts/govern-articles.mjs --apply           # 按评分调整状态
 |------|-----------|-----------|
 | 文章采集 + 日报 | ~900min | ~900min |
 | 健康检查 | ~60min | ~60min |
+| 数据库备份（2026-10 新增） | — | ~90min |
 | 元数据刷新 | ~450min | ~120min |
 | 数据回填 | ~1800min | ~240min |
 | Skills/MCP/治理 | ~360min | ~360min |
@@ -493,6 +495,22 @@ mkdir -p ~/.claude/skills/skillnav && curl -sL \
 1. DeepSeek → 自动 fallback 到 Gemini（sync-articles、generate-daily）
 2. GPT → 无 fallback（backfill、curated-skills）— 次日自动重试
 3. 手动切换: `LLM_PROVIDER=gemini node scripts/sync-articles.mjs`
+
+**数据库数据丢失或被改坏**（备份方案见 [ADR-008](adr/008-database-backup.md)）:
+1. 先停掉会写库的工作流（sync-*、backfill-data），避免继续覆盖
+2. 在本机安装 restic 和 PostgreSQL 17 客户端，从密码管理器取出 R2 和 restic 的凭证：
+   ```bash
+   export RESTIC_REPOSITORY=... RESTIC_PASSWORD=... AWS_ACCESS_KEY_ID=... AWS_SECRET_ACCESS_KEY=... AWS_DEFAULT_REGION=auto
+   restic snapshots --tag skillnav-db              # 选要恢复的那天
+   restic restore <snapshot-id> --target ./restore
+   ```
+3. 先恢复到临时库核对，再决定整库还是单表恢复。单表示例：
+   ```bash
+   pg_restore --no-owner --no-privileges --data-only -t skills -d "$TEMP_DB_URL" ./restore/.../skillnav-public.dump
+   ```
+4. 恢复到生产前，先手动跑一次 db-backup，保留出事后的现场
+
+**备份是否可用**：每季度至少手动运行一次 db-backup，勾选 `restore_drill`，看 Job Summary 里的逐表对比。
 
 **漏发日报**:
 ```bash
