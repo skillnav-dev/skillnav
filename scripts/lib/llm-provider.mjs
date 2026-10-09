@@ -2,15 +2,15 @@ import { generateText, wrapLanguageModel, APICallError, RetryError } from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { createAnthropic } from "@ai-sdk/anthropic";
-import { createFallback } from "ai-fallback";
+import { createFallback, defaultShouldRetryThisError } from "ai-fallback";
 
 /**
  * LLM provider layer on top of the Vercel AI SDK.
  *
  * Primary provider: LLM_PROVIDER (default "gpt").
- * Optional fallback: LLM_FALLBACK_PROVIDER. On a retryable error (408/429/5xx,
- * network) ai-fallback switches to the fallback and stays there for
- * FALLBACK_RESET_MS before probing the primary again.
+ * Optional fallback: LLM_FALLBACK_PROVIDER. When the primary cannot serve the
+ * call (401/402/403/408/429/5xx, network failure) ai-fallback switches to the
+ * fallback and stays there for FALLBACK_RESET_MS before probing the primary again.
  * Retries: AI SDK exponential backoff (honours retry-after), MAX_RETRIES per call.
  *
  * Evaluated against the previous hand-rolled retry/circuit breaker in
@@ -140,6 +140,18 @@ function providerOptionsFor(p) {
   return { openai: { reasoningEffort: p.reasoning.effort, reasoningSummary: null } };
 }
 
+/**
+ * Switch to the fallback provider on ai-fallback's defaults (401, 403, 408,
+ * 429, 5xx, overload messages) plus 402 (account out of credit) and network
+ * failures, which carry no status code but are marked retryable.
+ * 400 and other request errors still fail fast.
+ */
+function shouldSwitchProvider(error) {
+  if (error?.statusCode === 402) return true;
+  if (APICallError.isInstance(error) && error.isRetryable) return true;
+  return defaultShouldRetryThisError(error);
+}
+
 function modelEntry(p, jsonMode) {
   return { model: buildModel(p, jsonMode), providerOptions: providerOptionsFor(p) };
 }
@@ -167,6 +179,7 @@ function getModel(jsonMode) {
       model: createFallback({
         models: [primary, fallback].map((p) => modelEntry(p, jsonMode)),
         modelResetInterval: FALLBACK_RESET_MS,
+        shouldRetryThisError: shouldSwitchProvider,
         onError: (error, modelId) => {
           console.log(
             `\x1b[33m[llm] ${modelId} failed (${error?.statusCode ?? error?.name}): switching to next provider\x1b[0m`
