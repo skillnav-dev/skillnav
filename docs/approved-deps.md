@@ -35,7 +35,9 @@
 
 ## AI
 
-- @anthropic-ai/sdk — Anthropic API（脚本层）
+- @anthropic-ai/sdk — Anthropic API（脚本层，translate-batch 直接使用）
+- ai / @ai-sdk/openai / @ai-sdk/openai-compatible / @ai-sdk/anthropic — 统一模型接入层（scripts/lib/llm-provider.mjs）
+- ai-fallback — 主备模型切换（大版本须与 ai 对应：v3 ↔ ai 7）
 - dotenv — 环境变量加载
 
 ## 部署

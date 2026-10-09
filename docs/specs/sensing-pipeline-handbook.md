@@ -109,7 +109,7 @@
 
 | 模块 | 调用签名 | 何时接 |
 |---|---|---|
-| llm.mjs | `callLLM(system, user, maxTokens=16384)`（llm.mjs:352，JSON mode）、`callLLMText(...)` :361、`translateArticle({title, summary, content})` :534、`scoreArticleRelevance(...)` :754 | 需要 LLM 增强时。内建多 provider + fallback 熔断器（3 次失败→open→10min→half-open，:106-107）+ 3 次重试指数退避（:102-103）+ glossary 注入（:75）+ JSON sanitize（:806） |
+| llm.mjs | `callLLM(system, user, maxTokens=16384)`（JSON mode，仅 OpenAI 兼容 provider 生效）、`callLLMText(...)`、`translateArticle({title, summary, content})`、`scoreArticleRelevance(...)` | 需要 LLM 增强时。provider 层在 `llm-provider.mjs`（Vercel AI SDK）：408/429/5xx/超时自动重试 3 次（遵守 retry-after）；配置 `LLM_FALLBACK_PROVIDER` 时，主 provider 出现可重试错误即切到备用，10 分钟后再试主 provider；单次请求超时 `LLM_TIMEOUT_MS`（默认 120s）。业务层：glossary 注入、长文分块、JSON sanitize |
 | retry.mjs | `withRetry(fn, { maxRetries=3, baseDelay=1000, label })`（retry.mjs:32） | 非 LLM 的 HTTP 抓取；400/401/403/404 不重试（:6-21）。llm.mjs 自带重试，不要再包 |
 | quality.mjs | `scoreArticle({title_zh, content_zh, source})`（quality.mjs:43）→ `{audience_fit, credibility, action, reason}`；`applyQualityDecision(current, action)` :77 只降不升 | 内容需质量门时；评分失败兜底 draft（:67-70） |
 | validate-env.mjs | `validateEnv(["KEY1","KEY2"])`（validate-env.mjs:6），缺失 exit(2) | main 入口前校验环境变量 |
@@ -122,7 +122,7 @@
 | 变量 | 谁需要 | 登记处 | 缺失时表现 |
 |---|---|---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` | supabase-admin.mjs（含 runPipeline 锁与上报） | .env.local + CI secrets | createAdminClient 抛错，锁与上报全失效 |
-| `DEEPSEEK_API_KEY` / `GEMINI_API_KEY` / `GPT_API_KEY` | llm.mjs（按 provider 取用） | .env.local + CI secrets | 该 provider 调用失败 → 熔断切 fallback |
+| `DEEPSEEK_API_KEY` / `GEMINI_API_KEY` / `GPT_API_KEY` | llm.mjs（按 provider 取用） | .env.local + CI secrets | 该 provider 调用失败 → 切到 `LLM_FALLBACK_PROVIDER` |
 | `LLM_PROVIDER` / `LLM_FALLBACK_PROVIDER` | llm.mjs 路由（现役 deepseek/gpt） | .env.local + workflow job `env:` 直写 | 走错 provider（如 OpenAI 403） |
 | `X_API_KEY` | x-client.mjs（仅 X 线） | .env.local + CI secrets | X 抓取全 401/402 |
 | `SLACK_WEBHOOK_URL` | workflow 失败通知 step | 仅 CI secrets | 失败静默无通知 |
@@ -188,7 +188,7 @@ runPipeline(main, { logger: log, defaultPipeline: "my-pipeline" });
 **环境/配额**
 - [ ] 脚本漏 `dotenv.config()`，本地读不到 .env（CI secrets 掩盖问题）→ dotenv 双加载 → 见 §4 步骤 2
 - [ ] 付费 API 额度耗尽后逐条空耗 → 连续 402 early-exit 熔断 → 见 §2.6
-- [ ] LLM 重试过激 / 主 provider 持续失败 → llm.mjs 自带重试 + 熔断，不要自己再包 → 见 §3 可选表
+- [ ] LLM 重试过激 / 主 provider 持续失败 → llm.mjs 自带重试 + 主备切换，不要自己再包 → 见 §3 可选表
 - [ ] 新增 secret 只登记了一处 → 三处同步 → 见 §3 环境变量清单
 
 **IP 封锁（GitHub Actions 专属）**
