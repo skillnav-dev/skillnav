@@ -63,7 +63,8 @@ scripts/
 ├── scrape-reddit-signals.mjs   # Reddit .json API → community_signals (no API key needed)
 ├── auto-translate-radar.mjs    # Scan radar [x] papers → translate (launchd 22:00)
 ├── failover-check.mjs          # Pipeline freshness check (>36h → auto-run)
-├── lib/llm.mjs                 # LLM providers + circuit breaker
+├── lib/llm.mjs                 # Translation / scoring prompts (re-exports llm-provider)
+├── lib/llm-provider.mjs        # LLM providers on Vercel AI SDK + ai-fallback (retry, fallback, timeout)
 ├── lib/x-client.mjs            # TwitterAPI.io abstraction
 ├── lib/glossary.json           # Centralized terminology
 └── lib/run-pipeline.mjs        # Universal pipeline wrapper (lock→claim→main→report)
