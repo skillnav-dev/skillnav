@@ -1,0 +1,163 @@
+name: Database Backup
+
+# Nightly encrypted off-site backup of the Supabase `public` schema.
+# Supabase Free has no platform backups (see docs/adr/008-database-backup.md).
+# Manual run with restore_drill=true also restores the new backup into a
+# throwaway Postgres and compares row counts with the live database.
+
+on:
+  schedule:
+    - cron: "17 19 * * *" # UTC 19:17 = CST 03:17, quiet hour, off the top of the hour
+  workflow_dispatch:
+    inputs:
+      restore_drill:
+        description: "After backing up, restore the latest snapshot into a temporary database and compare row counts"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: db-backup
+  cancel-in-progress: false
+
+env:
+  # pg_dump must be >= the server major version; Supabase runs Postgres 15 or 17.
+  PG_CLIENT_MAJOR: "17"
+  RESTIC_VERSION: "0.19.1"
+  # From https://github.com/restic/restic/releases/download/v0.19.1/SHA256SUMS
+  RESTIC_SHA256: "f415415624dcc452f2a02b8c33641791a8c6d6d3b65bbb3543fcf9a25151585c"
+  RESTIC_REPOSITORY: ${{ secrets.RESTIC_REPOSITORY }}
+  RESTIC_PASSWORD: ${{ secrets.RESTIC_PASSWORD }}
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_DEFAULT_REGION: auto # R2
+
+jobs:
+  backup:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+    steps:
+      - name: Install PostgreSQL client (PGDG)
+        run: |
+          set -euo pipefail
+          sudo apt-get install -y -q postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y -q "postgresql-client-${PG_CLIENT_MAJOR}"
+          echo "/usr/lib/postgresql/${PG_CLIENT_MAJOR}/bin" >> "$GITHUB_PATH"
+
+      - name: Install restic (sha256-verified)
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP"
+          curl -fsSLO "https://github.com/restic/restic/releases/download/v${RESTIC_VERSION}/restic_${RESTIC_VERSION}_linux_amd64.bz2"
+          echo "${RESTIC_SHA256}  restic_${RESTIC_VERSION}_linux_amd64.bz2" | sha256sum -c -
+          bunzip2 "restic_${RESTIC_VERSION}_linux_amd64.bz2"
+          sudo install -m 0755 "restic_${RESTIC_VERSION}_linux_amd64" /usr/local/bin/restic
+
+      - name: Check pg_dump major >= server major
+        run: |
+          set -euo pipefail
+          server=$(psql "$SUPABASE_DB_URL" -XAtc 'show server_version_num')
+          client=$(pg_dump --version | sed -E 's/.* ([0-9]+)\..*/\1/')
+          echo "server_version_num=$server pg_dump_major=$client"
+          if [ "$client" -lt $((server / 10000)) ]; then
+            echo "::error::pg_dump $client is older than server $((server / 10000))"; exit 1
+          fi
+
+      - name: Dump public schema and self-check
+        run: |
+          set -euo pipefail
+          umask 077
+          mkdir -p "$RUNNER_TEMP/backup"
+          pg_dump "$SUPABASE_DB_URL" -Fc -n public -f "$RUNNER_TEMP/backup/skillnav-public.dump"
+          # --list only reads the TOC and passes on corrupt dumps; -f /dev/null decodes all data.
+          pg_restore -f /dev/null "$RUNNER_TEMP/backup/skillnav-public.dump"
+          tables=$(pg_restore --list "$RUNNER_TEMP/backup/skillnav-public.dump" | grep -c ' TABLE DATA public ')
+          size=$(du -h "$RUNNER_TEMP/backup/skillnav-public.dump" | cut -f1)
+          echo "tables=$tables size=$size"
+          echo "Dump: $tables tables, $size" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload to restic, apply retention, check
+        run: |
+          set -euo pipefail
+          restic cat config >/dev/null 2>&1 || restic init
+          restic backup --host skillnav-ci --tag skillnav-db "$RUNNER_TEMP/backup"
+          restic forget --host skillnav-ci --tag skillnav-db --keep-daily 7 --prune
+          restic check --read-data-subset=10%
+          restic snapshots --host skillnav-ci --tag skillnav-db
+
+      - name: Remove local dump
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/backup"
+
+      - name: Notify Slack on failure
+        if: failure()
+        run: |
+          curl -sS -X POST -H 'Content-type: application/json' \
+            --data "{\"text\":\"🚨 *Database Backup* failed\\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>\"}" \
+            ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  restore-drill:
+    needs: backup
+    if: github.event_name == 'workflow_dispatch' && inputs.restore_drill
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: drill # throwaway container, never reachable outside the job
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      DRILL_DB_URL: postgresql://postgres:drill@127.0.0.1:5432/postgres
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install PostgreSQL client (PGDG)
+        run: |
+          set -euo pipefail
+          sudo apt-get install -y -q postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y -q "postgresql-client-${PG_CLIENT_MAJOR}"
+          echo "/usr/lib/postgresql/${PG_CLIENT_MAJOR}/bin" >> "$GITHUB_PATH"
+
+      - name: Install restic (sha256-verified)
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP"
+          curl -fsSLO "https://github.com/restic/restic/releases/download/v${RESTIC_VERSION}/restic_${RESTIC_VERSION}_linux_amd64.bz2"
+          echo "${RESTIC_SHA256}  restic_${RESTIC_VERSION}_linux_amd64.bz2" | sha256sum -c -
+          bunzip2 "restic_${RESTIC_VERSION}_linux_amd64.bz2"
+          sudo install -m 0755 "restic_${RESTIC_VERSION}_linux_amd64" /usr/local/bin/restic
+
+      - name: Fetch latest snapshot
+        run: |
+          set -euo pipefail
+          umask 077
+          restic restore latest --host skillnav-ci --tag skillnav-db --target "$RUNNER_TEMP/restore"
+          find "$RUNNER_TEMP/restore" -name 'skillnav-public.dump' -exec mv {} "$RUNNER_TEMP/drill.dump" \;
+          test -s "$RUNNER_TEMP/drill.dump"
+
+      - name: Restore and compare with live
+        working-directory: ${{ runner.temp }}
+        run: bash "$GITHUB_WORKSPACE/scripts/db/restore-drill.sh" "$RUNNER_TEMP/drill.dump" "$DRILL_DB_URL" "$SUPABASE_DB_URL"
+
+      - name: Remove restored files
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/restore" "$RUNNER_TEMP/drill.dump" "$RUNNER_TEMP/restore-errors.log"
+
+      - name: Notify Slack on failure
+        if: failure()
+        run: |
+          curl -sS -X POST -H 'Content-type: application/json' \
+            --data "{\"text\":\"🚨 *Database restore drill* failed\\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>\"}" \
+            ${{ secrets.SLACK_WEBHOOK_URL }}
