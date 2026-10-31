@@ -216,7 +216,8 @@ export async function getMcpServersWithCount(options?: {
 }
 
 /**
- * Get a single MCP server by slug (no status filter).
+ * Get a single published MCP server by slug.
+ * Draft / hidden rows return null so their detail pages 404 (ADR-009).
  */
 export async function getMcpServerBySlug(
   slug: string,
@@ -235,6 +236,7 @@ export async function getMcpServerBySlug(
     .from("mcp_servers")
     .select("*")
     .eq("slug", slug)
+    .eq("status", "published")
     .single();
 
   if (error) return null;

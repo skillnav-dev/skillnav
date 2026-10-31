@@ -1,0 +1,89 @@
+name: Unpublish Catalog
+
+# One-off operation for the strict-quality rebuild of Skills / MCP (ADR-009).
+# Hides every published row except quality_tier = 'S'. The snapshot of what was
+# hidden is uploaded as an artifact (90 days) and can be replayed with mode=restore.
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "dry-run: count only | apply: hide rows | restore: re-publish from a previous run's snapshot"
+        required: true
+        default: "dry-run"
+        type: choice
+        options:
+          - dry-run
+          - apply
+          - restore
+      table:
+        description: "Limit to one table (leave empty for both)"
+        required: false
+        type: choice
+        options:
+          - ""
+          - skills
+          - mcp_servers
+      restore_run_id:
+        description: "restore only: run ID of the apply run whose snapshot to replay"
+        required: false
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: unpublish-catalog
+  cancel-in-progress: false
+
+jobs:
+  unpublish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - run: npm ci
+
+      - name: Download snapshot to restore
+        if: inputs.mode == 'restore'
+        uses: actions/download-artifact@v4
+        with:
+          name: unpublish-snapshot
+          path: snapshot
+          run-id: ${{ inputs.restore_run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run
+        run: |
+          ARGS=""
+          if [ -n "${{ inputs.table }}" ]; then ARGS="--table ${{ inputs.table }}"; fi
+          case "${{ inputs.mode }}" in
+            dry-run) node scripts/unpublish-catalog.mjs --dry-run --out snapshot $ARGS ;;
+            apply)   node scripts/unpublish-catalog.mjs --apply --out snapshot $ARGS ;;
+            restore) node scripts/unpublish-catalog.mjs --restore "$(ls snapshot/unpublish-*.json | head -1)" $ARGS ;;
+          esac
+
+      - name: Upload snapshot
+        if: inputs.mode != 'restore' && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unpublish-snapshot
+          path: snapshot/
+          retention-days: 90
+          if-no-files-found: ignore
+
+      - name: Notify Slack on failure
+        if: failure() || cancelled()
+        run: |
+          curl -sS -X POST -H 'Content-type: application/json' \
+            --data "{\"text\":\"❌ *Unpublish Catalog* (${{ inputs.mode }}) failed\\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>\"}" \
+            ${{ secrets.SLACK_WEBHOOK_URL }}

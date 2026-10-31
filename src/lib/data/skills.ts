@@ -96,6 +96,7 @@ export async function getSkillBySlug(slug: string): Promise<Skill | null> {
     .from("skills")
     .select("*")
     .eq("slug", slug)
+    .eq("status", "published")
     .single();
 
   if (error) return null;

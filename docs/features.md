@@ -4,16 +4,16 @@
 
 | ID | 功能 | 状态 | 说明 |
 |----|------|------|------|
-| SKL-01 | Skills 列表 + 详情页 | shipped | 168 Skills（7 仓库），仓库为一级实体，安装命令指向具体 skill |
+| SKL-01 | Skills 列表 + 详情页 | wip | 2026-10-31 起清空重建（ADR-009）：仅保留 S 级，其余下架待按严格标准重新上架；未发布条目详情页 404 |
 | SKL-02 | Skills 中文翻译（name_zh/description_zh） | shipped | LLM 批量翻译 |
 | SKL-03 | Skills 标签系统 | shipped | LLM 生成 3-5 标签 |
 | SKL-04 | Skills 编辑评论 | shipped | Wirecutter 风格一句话推荐 |
 | ART-01 | 文章列表 + 详情页 | shipped | 213+ 篇 published，RSS 采集 + 编译翻译 |
 | ART-03 | 封面文章（编辑精选） | wip | 三层内容架构：flagship(editorial)/standard(translated)/not-worth。首篇 Vibe Physics 已发布。ADR-003 |
 | ART-02 | 文章封面图提取 | shipped | 从 source_url 提取 og:image |
-| MCP-01 | MCP 列表 + 详情页 | shipped | 3,947 published（S/A/B 三层），B-tier noindex，结构化模板（什么是/如何使用/核心功能/FAQ） |
+| MCP-01 | MCP 列表 + 详情页 | wip | 2026-10-31 起清空重建（ADR-009）：仅保留 S 级，B 级长尾策略废弃，按白名单重新上架；未发布条目详情页 404 |
 | MCP-02 | MCP 工具定义（tools JSONB） | shipped | 从 Smithery API 回填 |
-| MCP-03 | MCP 自动分级治理 | shipped | 基于星数/工具数/验证状态 |
+| MCP-03 | MCP 自动分级治理 | deprecated | 定时任务已停用（ADR-009），仅可手动 audit 出报告，不再自动发布 |
 | MCP-04 | S-tier 编辑精选 | shipped | 从 A-tier 中精选 + 编辑评论 |
 | WKL-01 | 周刊生成 + 页面 | shipped | 三支柱生成 + DB 数据层 + 列表/详情页 + 首期已发布 |
 | LEARN-01 | 学习中心索引 + 概念页 | shipped | 12 概念页全部上线（3 P1 + 9 P2），含可视化图表 + 文章交叉链接 |
