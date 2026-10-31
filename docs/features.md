@@ -20,6 +20,7 @@
 | GUIDE-01 | 专栏系列支持 | shipped | series 标签 + 导航组件 + backfill 脚本 + /guides 落地页 |
 | GUIDE-02 | 交互式深度指南 | shipped | 11 个独立 HTML 指南（AI 架构/MCP 实战/AI Coding 对比/Prompt 工坊/Agent 模式/RAG vs FT/LLM 选型/Token 计算器/安全护栏/向量数据库/Embedding 维度） |
 | GH-01 | GitHub 开源导航页 | shipped | AI Agent 生态项目导航 |
+| GROK-01 | Grok Bot 栏目 | shipped | `/grok-bot` 静态精选页（xAI 桌面 Agent）：速览、核心能力、上手步骤、落地场景、与 Skills/MCP 定位对比、教程、FAQ。数据在 `src/data/grok-bot.ts` |
 
 ## 运营系统
 
