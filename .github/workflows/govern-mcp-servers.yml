@@ -1,14 +1,14 @@
 name: Govern MCP Servers
 
+# Schedule removed 2026-10-31 (ADR-009): the catalog is now whitelist-curated,
+# so nothing may be auto-published. Run manually in audit mode for tier reports.
 on:
-  schedule:
-    - cron: "30 5 * * 5" # UTC 05:30 Friday = CST 13:30, governance after MCP sync
   workflow_dispatch:
     inputs:
       mode:
         description: "Governance mode"
         required: true
-        default: "apply"
+        default: "audit"
         type: choice
         options:
           - audit
