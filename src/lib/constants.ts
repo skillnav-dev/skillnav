@@ -16,6 +16,7 @@ export const siteConfig = {
 export const navItems = [
   { title: "Skills", href: "/skills" },
   { title: "MCP", href: "/mcp" },
+  { title: "Grok Bot", href: "/grok-bot" },
   { title: "热度", href: "/trending" },
   { title: "日报", href: "/daily" },
   { title: "周刊", href: "/weekly" },
@@ -32,6 +33,7 @@ export const footerLinks = {
     links: [
       { title: "Skills 导航", href: "/skills" },
       { title: "MCP 导航", href: "/mcp" },
+      { title: "Grok Bot", href: "/grok-bot" },
       { title: "日报", href: "/daily" },
       { title: "专栏", href: "/guides" },
       { title: "资讯", href: "/articles" },

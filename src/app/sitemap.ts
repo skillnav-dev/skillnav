@@ -42,6 +42,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     },
     {
+      url: `${siteConfig.url}/grok-bot`,
+      changeFrequency: "weekly",
+      priority: 0.7,
+    },
+    {
       url: `${siteConfig.url}/weekly`,
       changeFrequency: "weekly",
       priority: 0.7,

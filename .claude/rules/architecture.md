@@ -7,6 +7,7 @@ src/
 │   ├── articles/               # Article list + [slug] detail (SSG)
 │   ├── skills/                 # Skills listing + [slug] detail
 │   ├── mcp/                    # MCP Server 精选导航 (static curated data)
+│   ├── grok-bot/               # Grok Bot section (static curated, data in data/grok-bot.ts)
 │   ├── trending/               # Trending dashboard: four-track (papers/tools/articles/community), ISR 5min
 │   ├── daily/                  # Daily Brief public: /daily list (ISR 5min) + /daily/[date] detail
 │   ├── learn/                  # Learning Center: /learn index + /learn/what-is-[slug] detail
@@ -28,6 +29,7 @@ src/
 │   ├── home/                   # Homepage sections (hero, stats, featured, articles, newsletter)
 │   ├── articles/               # Article card, meta, content, series-nav
 │   ├── skills/                 # Skill card
+│   ├── grok-bot/               # Grok Bot page sections (hero, capabilities, compare, resources/FAQ)
 │   ├── mcp/                    # MCP card, sidebar, content sections (what-is/how-to/tools), FAQ
 │   ├── learn/                  # Concept card, related concepts, visual diagrams
 │   ├── trending/               # Trending track components + source health bar
