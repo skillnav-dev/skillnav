@@ -103,10 +103,12 @@ async function fetchCandidates(supabase) {
     let query = supabase
       .from("skills")
       .select("slug, name, description, description_zh, category, tags, content")
-      .eq("status", "published")
       .is("description_zh", null)
       .order("stars", { ascending: false })
       .range(offset, offset + PAGE_SIZE - 1);
+    // An explicit slug list targets those rows whatever their status, so
+    // whitelisted-but-unpublished skills can get copy before going live (ADR-009).
+    query = slugFilter ? query.in("slug", slugFilter) : query.eq("status", "published");
 
     const { data, error } = await query;
     if (error) throw new Error(`DB read: ${error.message}`);

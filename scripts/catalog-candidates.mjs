@@ -83,9 +83,12 @@ async function fetchRows(supabase) {
       .not("github_url", "is", null)
       .order("slug", { ascending: true })
       .range(offset, offset + PAGE_SIZE - 1);
-    // MCP drafts number ~50k; only rows that were ever published or hidden
-    // are realistic candidates for a curated list.
-    if (table === "mcp_servers") query = query.in("status", ["published", "hidden"]);
+    // MCP drafts number ~50k. Candidates are rows that were ever published or
+    // hidden, plus drafts whose last known star count already clears the bar
+    // (Govern never succeeded, so many well-known servers are still drafts).
+    if (table === "mcp_servers") {
+      query = query.or(`status.in.(published,hidden),stars.gte.${minStars}`);
+    }
 
     const { data, error } = await query;
     if (error) throw new Error(`Fetch ${table}: ${error.message}`);
