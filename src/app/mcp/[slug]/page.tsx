@@ -18,6 +18,8 @@ import {
 import { McpDetailSidebar } from "@/components/mcp/mcp-detail-sidebar";
 import { McpFaq } from "@/components/mcp/mcp-faq";
 import { McpReadme } from "@/components/mcp/mcp-readme";
+import { PermissionsCard } from "@/components/shared/permissions-card";
+import { getReviewedPermissions } from "@/lib/data/permissions";
 import { SkillCard } from "@/components/skills/skill-card";
 import { siteConfig } from "@/lib/constants";
 import {
@@ -90,7 +92,7 @@ export default async function McpDetailPage({ params }: PageProps) {
   if (!server) notFound();
 
   // Parallel fetch: related servers + README + related skills
-  const [allInCategory, readme, allSkills] = await Promise.all([
+  const [allInCategory, readme, allSkills, permissions] = await Promise.all([
     server.category
       ? getMcpServers({ category: server.category, limit: 4 })
       : Promise.resolve([]),
@@ -98,6 +100,7 @@ export default async function McpDetailPage({ params }: PageProps) {
     server.category
       ? getSkills({ category: server.category, limit: 4 })
       : Promise.resolve([]),
+    getReviewedPermissions("mcp", server.slug),
   ]);
   const related = allInCategory.filter((s) => s.id !== server.id).slice(0, 3);
   const relatedSkills = allSkills.slice(0, 3);
@@ -250,6 +253,7 @@ export default async function McpDetailPage({ params }: PageProps) {
           <div className="min-w-0 space-y-6">
             <McpWhatIs server={server} />
             <McpHowToUse server={server} />
+            {permissions && <PermissionsCard data={permissions} />}
             <McpToolsList server={server} />
             {readme && <McpReadme content={readme} />}
             <McpFaq server={server} />

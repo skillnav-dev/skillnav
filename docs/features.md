@@ -19,6 +19,7 @@
 | MCP-05 | 多客户端安装配置 | shipped | 详情页按客户端生成配置（Claude Code / Cursor / VS Code / Codex / Trae / 通义灵码 / CodeBuddy），npx/bunx/pnpm 切换，Cursor 与 Trae 一键导入链接；复制上报 Umami `install-copy` 事件 |
 | MCP-06 | 国内网络安装排障 FAQ | shipped | MCP 详情页 FAQ 按启动方式给出 npm / pnpm / bun 镜像、uv / pip 镜像、代理、Node 版本、Windows `cmd /c` 排障，命令可复制，同步进 FAQ JSON-LD。数据在 `src/data/mcp-troubleshooting.ts` |
 | CAT-01 | 「SkillNav 精选」收录徽章 | shipped | `/badge/skills/<slug>.svg`、`/badge/mcp/<slug>.svg`，仅已上架条目返回 SVG，其余 404；详情页侧栏一键复制 README Markdown（Umami `badge-copy` 事件） |
+| CAT-02 | 权限边界（编辑审核） | shipped | 详情页「权限边界」卡片：读写文件、执行命令、联网、需要密钥 + 风险提示，标注「编辑审核于」日期。AI 初稿由 `scripts/generate-permissions.mjs` 写进 `tool_permissions`（Backfill Data Quality 的 `permissions` 任务，每周三给新条目补稿），在 `/admin/permissions` 审核通过后才公开（RLS 只放行已审核行）。需先执行迁移 `20261101_tool_permissions.sql` |
 | API-01 | 公开查询 API 文档 | shipped | `/docs/api` 中英双语说明页 + `/llms.txt` 的 Public API 一节，同一份数据 `src/data/public-api.ts`；`/api/skill/query` 加 CORS `*`、边缘缓存 5 分钟，并过滤 q 里的 PostgREST 过滤语法字符。限流依赖 Cloudflare 层，未单独实现 |
 | WKL-01 | 周刊生成 + 页面 | shipped | 三支柱生成 + DB 数据层 + 列表/详情页 + 首期已发布 |
 | LEARN-01 | 学习中心索引 + 概念页 | shipped | 12 概念页全部上线（3 P1 + 9 P2），含可视化图表 + 文章交叉链接 |

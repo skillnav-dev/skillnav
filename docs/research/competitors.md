@@ -146,17 +146,17 @@ SkillNav 长期跟踪的竞品清单：每家的网址、类别、为什么盯�
 | 1 | 多客户端安装配置 | AgentHub、MCP.so | M | 已上线（PR #19） |
 | 2 | Cursor 一键深链 | AskSkill | S | 已上线（PR #19） |
 | 3 | npx / bunx / pnpm 切换 | AskSkill | S | 已上线（PR #19） |
-| 4 | 国内 npm 镜像排障 FAQ | AgentHub | S | 待合并（#23） |
-| 5 | 权限边界 / 安全评估段落 | AskSkill、SkillGuide | M | 未开始（#24） |
-| 6 | 收录徽章 | AgentHub | S | 待合并（#25） |
-| 7 | 日报"今日覆盖 N 个源" | AI 简报 | S | 待合并（#26） |
+| 4 | 国内 npm 镜像排障 FAQ | AgentHub | S | 已上线（PR #35） |
+| 5 | 权限边界 / 安全评估段落 | AskSkill、SkillGuide | M | 待合并（#24） |
+| 6 | 收录徽章 | AgentHub | S | 已上线（PR #35） |
+| 7 | 日报"今日覆盖 N 个源" | AI 简报 | S | 已上线（PR #35） |
 | 8 | 装机必备 + 技能包 | SkillGuide、skills.sh | M | 未开始（#27） |
 | 9 | 按职业发现 | AskSkill | S | 未开始（#28） |
 | 10 | 国内生态专区 | AgentHub | M | 未开始（#29） |
 | 11 | 新数据源（官方 Registry、ClawHub、Glama） | AgentHub | L | 未开始（#30） |
 | 12 | 自动质量分 | Glama、MCP.so、MDSkill | M | 未开始（#31） |
 | 13 | 热度榜（总榜 / 本周新榜） | skills.sh、SkillGuide | M | 未开始（#32） |
-| 14 | 公开搜索 API + llms.txt | AgentHub | S | 待合并（#33） |
+| 14 | 公开搜索 API + llms.txt | AgentHub | S | 已上线（PR #35） |
 | 15 | 本地一键安装助手 | SkillGuide | L | 未开始（#34） |
 
 **暂不抄**：MCP 托管和网关（Glama、Smithery）、广告位和付费收录（MCP.so、AskSkill）、用户提交。前两项投入重，广告会削弱"精选"的可信度。
