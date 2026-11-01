@@ -3,9 +3,12 @@
 /**
  * Publish the curated catalog from a reviewed whitelist (ADR-009).
  *
- * Every row whose github_url points at a whitelisted repo becomes published.
- * Rows missing a Chinese name or description are reported and, unless
- * --allow-missing-zh is passed, left unpublished so they can be backfilled first.
+ * Every row whose github_url points at a whitelisted repo becomes published,
+ * except slugs listed under "exclude" in the whitelist file (duplicates, junk).
+ * Rows missing Chinese copy are reported and, unless --allow-missing-zh is
+ * passed, left unpublished so they can be backfilled first. Skills need
+ * name_zh + description_zh; MCP servers only description_zh (their names are
+ * product names and are shown as-is).
  *
  * Modes:
  *   --dry-run   Report what would be published (no DB writes)
@@ -90,16 +93,17 @@ async function main() {
   validateEnv(["NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"]);
   const supabase = createAdminClient();
 
-  const whitelist = new Set(
-    JSON.parse(readFileSync(listFile, "utf8")).repos.map((r) => r.toLowerCase())
-  );
+  const list = JSON.parse(readFileSync(listFile, "utf8"));
+  const whitelist = new Set(list.repos.map((r) => r.toLowerCase()));
+  const excluded = new Set(list.exclude ?? []);
+  const hasZh = (r) => Boolean(r.description_zh && (table === "mcp_servers" || r.name_zh));
   log.info(`Mode: ${applyMode ? "APPLY" : "DRY RUN"} | ${table} | ${whitelist.size} repos from ${listFile}`);
 
   const rows = await fetchRows(supabase);
   const byRepo = new Map([...whitelist].map((r) => [r, []]));
   for (const row of rows) {
     const key = repoKey(row.github_url);
-    if (key && byRepo.has(key)) byRepo.get(key).push(row);
+    if (key && byRepo.has(key) && !excluded.has(row.slug)) byRepo.get(key).push(row);
   }
 
   const toPublish = [];
@@ -112,19 +116,24 @@ async function main() {
   ];
 
   for (const [repo, repoRows] of byRepo) {
-    const missing = repoRows.filter((r) => !r.name_zh || !r.description_zh);
-    const ready = allowMissingZh ? repoRows : repoRows.filter((r) => r.name_zh && r.description_zh);
+    const missing = repoRows.filter((r) => !hasZh(r));
+    const ready = allowMissingZh ? repoRows : repoRows.filter(hasZh);
     toPublish.push(...ready.filter((r) => r.status !== "published"));
     missingZh.push(...missing);
     const published = repoRows.filter((r) => r.status === "published").length;
     lines.push(`| ${repo} | ${repoRows.length} | ${published} | ${missing.length} |`);
+    // Repos with several rows are often the same server listed by several registries
+    if (repoRows.length > 1) {
+      for (const r of repoRows) lines.push(`|   ↳ ${r.slug} (${r.status}) | | | |`);
+    }
   }
 
   const notFound = [...byRepo].filter(([, r]) => r.length === 0).map(([repo]) => repo);
   const summary = [
     "",
     `To publish: **${toPublish.length}** rows`,
-    `Missing Chinese name/description: ${missingZh.length} rows${allowMissingZh ? " (published anyway)" : " (skipped)"}`,
+    excluded.size ? `Excluded by slug: ${excluded.size}` : "",
+    `Missing Chinese copy: ${missingZh.length} rows${allowMissingZh ? " (published anyway)" : " (skipped)"}`,
     notFound.length ? `Repos with no rows in DB: ${notFound.join(", ")}` : "All whitelisted repos have rows in DB",
     "",
     missingZh.length ? `Missing zh slugs: ${missingZh.map((r) => r.slug).join(", ")}` : "",

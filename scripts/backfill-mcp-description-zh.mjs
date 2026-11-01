@@ -9,6 +9,7 @@
  *   node scripts/backfill-mcp-description-zh.mjs --apply       # Live update
  *   node scripts/backfill-mcp-description-zh.mjs --limit 20    # Process first N servers
  *   node scripts/backfill-mcp-description-zh.mjs --tier B --apply  # Process B-tier
+ *   node scripts/backfill-mcp-description-zh.mjs --apply --slugs a,b  # Specific slugs, any tier/status
  */
 
 import dotenv from "dotenv";
@@ -36,6 +37,8 @@ const limitIdx = args.indexOf("--limit");
 const LIMIT = limitIdx !== -1 ? Number(args[limitIdx + 1]) : Infinity;
 const tierIdx = args.indexOf("--tier");
 const TIER_FILTER = tierIdx !== -1 ? args[tierIdx + 1].toUpperCase() : "A";
+const slugsIdx = args.indexOf("--slugs");
+const SLUGS = slugsIdx !== -1 ? args[slugsIdx + 1].split(",").map((s) => s.trim()).filter(Boolean) : null;
 
 // ── Helpers ─────────────────────────────────────────────────────────
 
@@ -54,6 +57,18 @@ function parseJsonResponse(text) {
 // ── DB helpers ──────────────────────────────────────────────────────
 
 async function fetchMcpServersMissingDescZh(supabase) {
+  // Explicit slugs (e.g. whitelisted rows still hidden/draft): ignore tier and status
+  if (SLUGS) {
+    const { data, error } = await supabase
+      .from("mcp_servers")
+      .select("slug, name, description")
+      .in("slug", SLUGS)
+      .is("description_zh", null)
+      .not("description", "is", null);
+    if (error) throw new Error(`DB read mcp_servers: ${error.message}`);
+    return data ?? [];
+  }
+
   const allRows = [];
   let offset = 0;
 
@@ -92,7 +107,11 @@ async function main() {
 
   // ── Step 1: Fetch A-tier MCP servers missing description_zh ────
 
-  log.info(`Fetching ${TIER_FILTER}-tier MCP servers where description_zh IS NULL...`);
+  log.info(
+    SLUGS
+      ? `Fetching ${SLUGS.length} given MCP servers where description_zh IS NULL...`
+      : `Fetching ${TIER_FILTER}-tier MCP servers where description_zh IS NULL...`
+  );
   let servers = await fetchMcpServersMissingDescZh(supabase);
   log.info(`Found ${servers.length} servers needing description_zh`);
 
