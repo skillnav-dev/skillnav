@@ -8,9 +8,12 @@
  * the bare repo URL make `npx skills add` install every skill in that repo.
  *
  * For each published skill whose github_url is a bare repo URL, list the
- * repo's SKILL.md files and, when exactly one skill folder matches the row's
- * name or slug, rewrite github_url to that folder. Repos with a single root
- * SKILL.md, and rows with no unique match, are left as they are and reported.
+ * repo's SKILL.md files and rewrite github_url to a folder when
+ *   - the row's name (or slug) is exactly one folder's name, or
+ *   - the repo holds a single skill, in a subfolder.
+ * Rows that stand for a whole skill pack (many folders, none named like the
+ * row) keep the repo URL on purpose: installing the pack is what they offer.
+ * Template folders are ignored.
  *
  * Usage:
  *   node scripts/backfill-skill-source-paths.mjs            # Dry run (default)
@@ -46,17 +49,18 @@ async function listSkillFolders(owner, repo) {
   const folders = (tree.tree || [])
     .filter((n) => n.type === "blob" && /(^|\/)SKILL\.md$/i.test(n.path))
     .map((n) => n.path.replace(/\/?SKILL\.md$/i, ""))
-    .filter(Boolean); // drop a root SKILL.md
+    .filter((p) => p && !/(^|\/)template$/i.test(p)); // drop root SKILL.md and templates
   return { branch, folders };
 }
 
-/** The one folder whose name matches the row, or null. */
+/** The folder this row stands for, or null when it stands for the whole pack. */
 function matchFolder(row, folders) {
+  if (folders.length === 1) return folders[0];
   const name = norm(row.name);
   const slug = norm(row.slug);
   const hits = folders.filter((path) => {
     const folder = norm(path.split("/").pop());
-    return folder === name || folder === slug || slug.endsWith(`-${folder}`);
+    return folder === name || folder === slug;
   });
   return hits.length === 1 ? hits[0] : null;
 }
@@ -103,7 +107,7 @@ async function main() {
       }
       const folder = matchFolder(row, listing.folders);
       if (!folder) {
-        lines.push(`| ${row.slug} | no unique match among ${listing.folders.length} skill folders, unchanged |`);
+        lines.push(`| ${row.slug} | skill pack (${listing.folders.length} folders), unchanged |`);
         continue;
       }
       const url = `https://github.com/${key}/tree/${listing.branch}/${folder}`;
