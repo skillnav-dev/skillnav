@@ -1,4 +1,6 @@
 import { CopyButton } from "@/components/shared/copy-button";
+import { McpInstallTabs } from "@/components/mcp/mcp-install-tabs";
+import { deriveServerSpec } from "@/lib/install-spec";
 import type { McpServer } from "@/data/types";
 
 interface McpContentProps {
@@ -24,13 +26,27 @@ export function McpWhatIs({ server }: McpContentProps) {
 }
 
 export function McpHowToUse({ server }: McpContentProps) {
-  if (!server.installCommand && !server.installConfig) return null;
+  const spec = deriveServerSpec(server);
+  if (!spec && !server.installCommand && !server.installConfig) return null;
 
   return (
     <section className="rounded-xl ring-1 ring-border/40 bg-card p-6 shadow-sm">
       <h2 className="mb-3 text-lg font-semibold">
         如何使用 {server.nameZh ?? server.name}
       </h2>
+      {spec ? (
+        <McpInstallTabs slug={server.slug} spec={spec} />
+      ) : (
+        <McpRawInstall server={server} />
+      )}
+    </section>
+  );
+}
+
+/** Fallback for install data we cannot normalize: show it as-is. */
+function McpRawInstall({ server }: McpContentProps) {
+  return (
+    <>
       {server.installCommand && (
         <div className="space-y-2">
           <h3 className="text-sm font-medium text-muted-foreground">
@@ -54,7 +70,7 @@ export function McpHowToUse({ server }: McpContentProps) {
           </pre>
         </div>
       )}
-    </section>
+    </>
   );
 }
 

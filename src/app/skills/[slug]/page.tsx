@@ -17,6 +17,7 @@ import {
 import { ArticleCard } from "@/components/articles/article-card";
 import { MCPCard } from "@/components/mcp/mcp-card";
 import { siteConfig } from "@/lib/constants";
+import { primarySkillInstallCommand } from "@/lib/skill-install";
 import {
   getSkillBySlug,
   getSkills,
@@ -84,6 +85,10 @@ export default async function SkillDetailPage({ params }: PageProps) {
     .filter((s) => s.name !== skill.name)
     .slice(0, 3);
 
+  const installCmd = primarySkillInstallCommand(
+    skill.githubUrl,
+    skill.installCommand,
+  );
   return (
     <>
       <BreadcrumbJsonLd
@@ -101,7 +106,7 @@ export default async function SkillDetailPage({ params }: PageProps) {
         platform={skill.platform}
         category={skill.category}
         stars={skill.stars}
-        installCommand={skill.installCommand}
+        installCommand={installCmd}
       />
       <FAQJsonLd
         questions={[
@@ -109,11 +114,11 @@ export default async function SkillDetailPage({ params }: PageProps) {
             question: `${skill.name} 是什么？`,
             answer: skill.descriptionZh ?? skill.description,
           },
-          ...(skill.installCommand
+          ...(installCmd
             ? [
                 {
                   question: `如何安装 ${skill.name}？`,
-                  answer: `运行命令：${skill.installCommand}`,
+                  answer: `运行命令：${installCmd}`,
                 },
               ]
             : []),

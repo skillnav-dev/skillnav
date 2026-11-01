@@ -8,6 +8,7 @@
 | SKL-02 | Skills 中文翻译（name_zh/description_zh） | shipped | LLM 批量翻译 |
 | SKL-03 | Skills 标签系统 | shipped | LLM 生成 3-5 标签 |
 | SKL-04 | Skills 编辑评论 | shipped | Wirecutter 风格一句话推荐 |
+| SKL-05 | Skills 跨 Agent 安装命令 | shipped | 改用 `npx skills add owner/repo --skill <name> -a <agent>`（Claude Code / Codex / Cursor / Gemini CLI / Trae），替换不存在的 `claude skill add` |
 | ART-01 | 文章列表 + 详情页 | shipped | 213+ 篇 published，RSS 采集 + 编译翻译 |
 | ART-03 | 封面文章（编辑精选） | wip | 三层内容架构：flagship(editorial)/standard(translated)/not-worth。首篇 Vibe Physics 已发布。ADR-003 |
 | ART-02 | 文章封面图提取 | shipped | 从 source_url 提取 og:image |
@@ -15,6 +16,7 @@
 | MCP-02 | MCP 工具定义（tools JSONB） | shipped | 从 Smithery API 回填 |
 | MCP-03 | MCP 自动分级治理 | deprecated | 定时任务已停用（ADR-009），仅可手动 audit 出报告，不再自动发布 |
 | MCP-04 | S-tier 编辑精选 | shipped | 从 A-tier 中精选 + 编辑评论 |
+| MCP-05 | 多客户端安装配置 | shipped | 详情页按客户端生成配置（Claude Code / Cursor / VS Code / Codex / Trae / 通义灵码 / CodeBuddy），npx/bunx/pnpm 切换，Cursor 与 Trae 一键导入链接；复制上报 Umami `install-copy` 事件 |
 | WKL-01 | 周刊生成 + 页面 | shipped | 三支柱生成 + DB 数据层 + 列表/详情页 + 首期已发布 |
 | LEARN-01 | 学习中心索引 + 概念页 | shipped | 12 概念页全部上线（3 P1 + 9 P2），含可视化图表 + 文章交叉链接 |
 | GUIDE-01 | 专栏系列支持 | shipped | series 标签 + 导航组件 + backfill 脚本 + /guides 落地页 |

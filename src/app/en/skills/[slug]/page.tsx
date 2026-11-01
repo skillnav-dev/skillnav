@@ -11,6 +11,7 @@ import { SkillContent } from "@/components/skills/skill-content";
 import { SkillInstallTabs } from "@/components/skills/skill-install-tabs";
 import { PlatformBadge } from "@/components/skills/platform-badge";
 import { siteConfig } from "@/lib/constants";
+import { primarySkillInstallCommand } from "@/lib/skill-install";
 import { liveSourceUrl } from "@/lib/skill-source";
 import { getSkillBySlug, getAllSkillSlugs } from "@/lib/data";
 
@@ -58,6 +59,10 @@ export default async function EnSkillDetailPage({ params }: PageProps) {
   const skill = await getSkillBySlug(slug);
   if (!skill) notFound();
 
+  const installCmd = primarySkillInstallCommand(
+    skill.githubUrl,
+    skill.installCommand,
+  );
   return (
     <>
       <BreadcrumbJsonLd
@@ -75,7 +80,7 @@ export default async function EnSkillDetailPage({ params }: PageProps) {
         platform={skill.platform}
         category={skill.category}
         stars={skill.stars}
-        installCommand={skill.installCommand}
+        installCommand={installCmd}
       />
       <FAQJsonLd
         questions={[
@@ -83,11 +88,11 @@ export default async function EnSkillDetailPage({ params }: PageProps) {
             question: `What is ${skill.name}?`,
             answer: skill.description,
           },
-          ...(skill.installCommand
+          ...(installCmd
             ? [
                 {
                   question: `How to install ${skill.name}?`,
-                  answer: `Run: ${skill.installCommand}`,
+                  answer: `Run: ${installCmd}`,
                 },
               ]
             : []),
