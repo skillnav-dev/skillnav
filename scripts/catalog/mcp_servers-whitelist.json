@@ -86,5 +86,8 @@
     "r-huijts/strava-mcp",
     "vibheksoni/stealth-browser-mcp",
     "kentcdodds/kody"
+  ],
+  "exclude": [
+    "com-microsoft--template-server-name"
   ]
 }
