@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { Terminal } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { isDeadSourceUrl } from "@/lib/skill-source";
+import { trackEvent } from "@/lib/track";
+import { buildSkillInstallTabs, parseSkillSource } from "@/lib/skill-install";
 import { CopyButton } from "@/components/shared/copy-button";
 
 interface SkillInstallTabsProps {
@@ -15,81 +16,6 @@ interface SkillInstallTabsProps {
   skillName?: string;
 }
 
-interface TabDef {
-  id: string;
-  label: string;
-  command: string;
-}
-
-/**
- * Derive the owner/repo slug from a GitHub URL.
- * e.g. "https://github.com/anthropics/skill-foo" -> "anthropics/skill-foo"
- */
-function ownerRepoFromUrl(url: string): string | null {
-  try {
-    const { pathname } = new URL(url);
-    const parts = pathname
-      .replace(/^\//, "")
-      .replace(/\.git$/, "")
-      .split("/");
-    if (parts.length >= 2) return `${parts[0]}/${parts[1]}`;
-  } catch {
-    // ignore
-  }
-  return null;
-}
-
-/**
- * Build a Claude Code install command from available data.
- */
-function claudeCommand(
-  installCommand?: string,
-  githubUrl?: string,
-  skillName?: string,
-): string {
-  if (installCommand) return installCommand;
-  // Skip URLs whose upstream repo is gone — they would produce a command that 404s.
-  if (githubUrl && !isDeadSourceUrl(githubUrl)) {
-    const slug = ownerRepoFromUrl(githubUrl);
-    if (slug) return `claude skill add --url https://github.com/${slug}`;
-  }
-  return `claude skill add ${skillName || "skill"}`;
-}
-
-/**
- * Transform a Claude Code command into the equivalent for another CLI.
- */
-function transformCommand(claudeCmd: string, targetPrefix: string): string {
-  // Replace "claude skill add" / "claude skill install" variants
-  return claudeCmd.replace(/^claude\s+skill\s+(add|install)/, targetPrefix);
-}
-
-function buildTabs(
-  installCommand?: string,
-  githubUrl?: string,
-  skillName?: string,
-): TabDef[] {
-  const base = claudeCommand(installCommand, githubUrl, skillName);
-
-  return [
-    {
-      id: "claude",
-      label: "Claude Code",
-      command: base,
-    },
-    {
-      id: "codex",
-      label: "Codex CLI",
-      command: transformCommand(base, "codex skill install"),
-    },
-    {
-      id: "gemini",
-      label: "Gemini CLI",
-      command: transformCommand(base, "gemini skill add"),
-    },
-  ];
-}
-
 export function SkillInstallTabs({
   installCommand,
   requiresEnv,
@@ -97,8 +23,10 @@ export function SkillInstallTabs({
   githubUrl,
   skillName,
 }: SkillInstallTabsProps) {
-  const tabs = buildTabs(installCommand, githubUrl, skillName);
-  const [activeTab, setActiveTab] = useState(tabs[0].id);
+  const tabs = buildSkillInstallTabs(githubUrl, installCommand);
+  const source = parseSkillSource(githubUrl);
+  const folder = source?.folder ?? skillName ?? "skill-name";
+  const [activeTab, setActiveTab] = useState(tabs[0]?.id ?? "");
 
   const hasEnv = requiresEnv && requiresEnv.length > 0;
   const hasBins = requiresBins && requiresBins.length > 0;
@@ -113,33 +41,65 @@ export function SkillInstallTabs({
       </div>
 
       {/* Tab buttons */}
-      <div className="mb-3 flex gap-1 rounded-md bg-muted p-1">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={cn(
-              "rounded-sm px-3 py-1.5 text-xs font-medium transition-colors",
-              activeTab === tab.id
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      {tabs.length > 1 && (
+        <div className="mb-3 flex gap-1 overflow-x-auto rounded-md bg-muted p-1">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={cn(
+                "rounded-sm px-3 py-1.5 text-xs font-medium transition-colors",
+                activeTab === tab.id
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Command block */}
       {activeCommand && (
-        <div className="mb-4">
+        <div className="mb-4 space-y-2">
           <div className="flex items-center justify-between gap-2 rounded-md bg-muted px-4 py-3">
             <code className="flex-1 overflow-x-auto font-mono text-xs sm:text-sm">
               {activeCommand}
             </code>
-            <CopyButton text={activeCommand} />
+            <CopyButton
+              text={activeCommand}
+              onCopy={() =>
+                trackEvent("install-copy", {
+                  type: "skill",
+                  slug: skillName ?? "",
+                  client: activeTab,
+                })
+              }
+            />
           </div>
+          {source && (
+            <p className="text-xs text-muted-foreground">
+              默认装到当前项目，加 <code className="font-mono">-g</code>{" "}
+              装到全局。也可以手动安装：把
+              {source.path ? (
+                <>
+                  仓库里的 <code className="font-mono">{source.path}</code>{" "}
+                  文件夹
+                </>
+              ) : (
+                "仓库根目录（含 SKILL.md）"
+              )}
+              复制到{" "}
+              <code className="font-mono">~/.claude/skills/{folder}/</code>。
+            </p>
+          )}
         </div>
+      )}
+      {!activeCommand && (
+        <p className="mb-4 text-sm text-muted-foreground">
+          暂无可用的安装命令，请前往源仓库查看安装说明。
+        </p>
       )}
 
       {/* Dependencies section */}
