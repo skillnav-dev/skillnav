@@ -132,6 +132,7 @@ async function fetchExistingServers(supabase) {
     const { data, error } = await supabase
       .from("mcp_servers")
       .select("slug, github_url")
+      .order("slug", { ascending: true }) // stable order so range pages don't skip rows (#10)
       .range(from, from + PAGE_SIZE - 1);
 
     if (error) throw error;
