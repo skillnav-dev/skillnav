@@ -8,18 +8,22 @@ interface CopyButtonProps {
   text: string;
   label?: string;
   className?: string;
+  /** Called after a successful copy (e.g. for analytics). */
+  onCopy?: () => void;
 }
 
 export function CopyButton({
   text,
   label = "复制",
   className,
+  onCopy,
 }: CopyButtonProps) {
   const [copied, setCopied] = useState(false);
 
   async function handleCopy() {
     try {
       await navigator.clipboard.writeText(text);
+      onCopy?.();
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
