@@ -1,5 +1,5 @@
 {
-  "_comment": "Repos whose MCP servers are published in the strict-quality catalog (ADR-009). Approved by Rosa 2026-11-01: tier A (official/vendor, 43) + tier B (high-quality community MCP, 42). S-tier rows kept live by the unpublish step are unaffected.",
+  "_comment": "Repos whose MCP servers are published in the strict-quality catalog (ADR-009). Approved by Rosa 2026-11-01: tier A (official/vendor, 43) + tier B (high-quality community MCP, 42). S-tier rows kept live by the unpublish step are unaffected. `exclude` lists duplicate rows of the same server from other registries (keep one per server) and junk rows.",
   "repos": [
     "modelcontextprotocol/servers",
     "upstash/context7",
@@ -88,6 +88,16 @@
     "kentcdodds/kody"
   ],
   "exclude": [
-    "com-microsoft--template-server-name"
+    "com-microsoft--template-server-name",
+    "io-github-tavily-ai--tavily-mcp",
+    "io-github-nrwl--nx-console",
+    "ai-smithery--ref-tools-ref-tools-mcp",
+    "io-github-ref-tools--ref-tools-mcp",
+    "io-github-cameroncooke--xcodebuildmcp",
+    "io-github-ivanmurzak--unity-mcp",
+    "ai-smithery--brave",
+    "ai-smithery--chir24-unreal-mcp",
+    "ai-smithery--chir24-unreal-mcp-server",
+    "io-github-bgauryy--octocode-mcp"
   ]
 }

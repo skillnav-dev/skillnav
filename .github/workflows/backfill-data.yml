@@ -15,6 +15,10 @@ on:
         description: "Only write Chinese name + description for these skill slugs, any status (comma-separated). Other tasks are skipped when set."
         required: false
         type: string
+      mcp_slugs:
+        description: "Only write Chinese description for these MCP slugs, any tier/status (comma-separated). Other tasks are skipped when set."
+        required: false
+        type: string
 
 concurrency:
   group: backfill-data
@@ -43,6 +47,8 @@ jobs:
         run: |
           if [ -n "${{ inputs.skill_slugs }}" ]; then
             echo "run=skill-slugs" >> "$GITHUB_OUTPUT"
+          elif [ -n "${{ inputs.mcp_slugs }}" ]; then
+            echo "run=mcp-slugs" >> "$GITHUB_OUTPUT"
           elif [ "${{ github.event_name }}" = "schedule" ]; then
             echo "run=name-zh,tags,mcp-desc-zh,mcp-reclassify,editor-comments" >> "$GITHUB_OUTPUT"
           else
@@ -54,6 +60,10 @@ jobs:
         run: |
           node scripts/backfill-skills-name-zh.mjs --apply --slugs "${{ inputs.skill_slugs }}"
           node scripts/generate-skill-descriptions.mjs --apply --slugs "${{ inputs.skill_slugs }}"
+
+      - name: Chinese description for specific MCP servers
+        if: steps.tasks.outputs.run == 'mcp-slugs'
+        run: node scripts/backfill-mcp-description-zh.mjs --apply --slugs "${{ inputs.mcp_slugs }}"
 
       - name: Backfill skills name_zh
         if: contains(steps.tasks.outputs.run, 'name-zh')
