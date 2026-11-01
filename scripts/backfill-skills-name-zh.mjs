@@ -8,6 +8,7 @@
  *   node scripts/backfill-skills-name-zh.mjs              # Dry run (default)
  *   node scripts/backfill-skills-name-zh.mjs --apply       # Live update
  *   node scripts/backfill-skills-name-zh.mjs --limit 20    # Process first N skills
+ *   node scripts/backfill-skills-name-zh.mjs --apply --slugs a,b  # Specific slugs, any status
  */
 
 import dotenv from "dotenv";
@@ -33,6 +34,8 @@ const args = process.argv.slice(2);
 const DRY_RUN = !args.includes("--apply");
 const limitIdx = args.indexOf("--limit");
 const LIMIT = limitIdx !== -1 ? Number(args[limitIdx + 1]) : Infinity;
+const slugsIdx = args.indexOf("--slugs");
+const SLUGS = slugsIdx !== -1 ? args[slugsIdx + 1].split(",").map((s) => s.trim()).filter(Boolean) : null;
 
 // ── Helpers ─────────────────────────────────────────────────────────
 
@@ -58,12 +61,14 @@ async function fetchSkillsMissingNameZh(supabase) {
   let offset = 0;
 
   while (true) {
-    const { data, error } = await supabase
+    let query = supabase
       .from("skills")
       .select("slug, name, description")
-      .eq("status", "published")
       .is("name_zh", null)
       .range(offset, offset + PAGE_SIZE - 1);
+    // An explicit slug list targets those rows whatever their status (ADR-009).
+    query = SLUGS ? query.in("slug", SLUGS) : query.eq("status", "published");
+    const { data, error } = await query;
 
     if (error) throw new Error(`DB read skills: ${error.message}`);
     if (!data || data.length === 0) break;
