@@ -25,6 +25,7 @@ import { createAdminClient } from "./lib/supabase-admin.mjs";
 import { githubGraphQLBatch } from "./lib/github.mjs";
 import { createLogger } from "./lib/logger.mjs";
 import { validateEnv } from "./lib/validate-env.mjs";
+import { MAX_AGE_DAYS, judgeRepo, parseGithubUrl } from "./lib/catalog-criteria.mjs";
 
 const log = createLogger("candidates");
 
@@ -44,29 +45,9 @@ if (!["skills", "mcp_servers"].includes(table)) {
 const minStars = Number(argValue("--min-stars") || (table === "skills" ? 200 : 500));
 const outDir = argValue("--out") || "data/candidates";
 
-// ── Criteria ──────────────────────────────────────────────────────────
-
-const MAX_AGE_DAYS = 180;
 const PAGE_SIZE = 1000;
 
-/** Orgs whose repos count as official / vendor-maintained (lowercase). */
-const OFFICIAL_ORGS = new Set([
-  "anthropics", "modelcontextprotocol", "openai", "google", "google-gemini",
-  "googleapis", "microsoft", "github", "vercel", "vercel-labs", "cloudflare",
-  "supabase", "neondatabase", "stripe", "getsentry", "huggingface", "aws",
-  "awslabs", "upstash", "notionhq", "linear", "figma", "atlassian", "mongodb",
-  "redis", "elastic", "grafana", "hashicorp", "docker", "jetbrains", "brave",
-  "exa-labs", "firecrawl", "browserbase", "context7", "zapier", "shopify",
-]);
-
 // ── Helpers ───────────────────────────────────────────────────────────
-
-function parseGithubUrl(url) {
-  if (!url) return null;
-  const m = url.match(/github\.com\/([^/]+)\/([^/#?]+)/i);
-  if (!m) return null;
-  return { owner: m[1], repo: m[2].replace(/\.git$/, "") };
-}
 
 async function fetchRows(supabase) {
   const fields =
@@ -100,23 +81,6 @@ async function fetchRows(supabase) {
   return rows;
 }
 
-/**
- * Judge one repo against the criteria.
- * @returns {{ pass: boolean, reasons: string[] }}
- */
-function judge(owner, gh) {
-  if (!gh) return { pass: false, reasons: ["repo not found"] };
-  const reasons = [];
-  const official = OFFICIAL_ORGS.has(owner.toLowerCase());
-  const ageDays = gh.pushedAt ? (Date.now() - Date.parse(gh.pushedAt)) / 86400000 : Infinity;
-
-  if (gh.isArchived) reasons.push("archived");
-  if (ageDays > MAX_AGE_DAYS) reasons.push(`no push in ${Math.round(ageDays)}d`);
-  if (!official && gh.stargazerCount < minStars) reasons.push(`stars ${gh.stargazerCount} < ${minStars}`);
-
-  return { pass: reasons.length === 0, reasons: official ? ["official", ...reasons] : reasons };
-}
-
 // ── Main ──────────────────────────────────────────────────────────────
 
 async function main() {
@@ -144,7 +108,7 @@ async function main() {
   const report = [];
   for (const [key, g] of groups) {
     const gh = ghData.get(`${g.owner}/${g.repo}`) ?? ghData.get(key);
-    const { pass, reasons } = judge(g.owner, gh);
+    const { pass, reasons } = judgeRepo(g.owner, gh, minStars);
     report.push({
       repo: `${g.owner}/${g.repo}`,
       stars: gh?.stargazerCount ?? null,

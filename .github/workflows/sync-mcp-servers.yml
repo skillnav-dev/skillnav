@@ -1,8 +1,8 @@
 name: Sync MCP Servers
 
+# Manual only. The weekly schedule was replaced by MCP Weekly Candidates
+# (ADR-009): bulk-importing the whole registry produced ~55k unreviewed drafts.
 on:
-  schedule:
-    - cron: "0 5 * * 4" # UTC 05:00 Thursday = CST 13:00, MCP day
   workflow_dispatch:
     inputs:
       source:
