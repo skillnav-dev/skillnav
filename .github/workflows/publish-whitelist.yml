@@ -1,0 +1,65 @@
+name: Publish Whitelist
+
+# Publishes the reviewed catalog whitelist (scripts/catalog/<table>-whitelist.json), ADR-009.
+# Always run dry-run first and check the summary.
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "dry-run: report only | apply: publish"
+        required: true
+        default: "dry-run"
+        type: choice
+        options:
+          - dry-run
+          - apply
+      table:
+        description: "Which catalog"
+        required: true
+        default: "skills"
+        type: choice
+        options:
+          - skills
+          - mcp_servers
+      allow_missing_zh:
+        description: "Publish rows that still lack a Chinese name/description"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-whitelist
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - run: npm ci
+
+      - name: Run
+        run: |
+          ARGS="--${{ inputs.mode }} --table ${{ inputs.table }}"
+          if [ "${{ inputs.allow_missing_zh }}" = "true" ]; then ARGS="$ARGS --allow-missing-zh"; fi
+          node scripts/publish-whitelist.mjs $ARGS
+
+      - name: Notify Slack on failure
+        if: failure() || cancelled()
+        run: |
+          curl -sS -X POST -H 'Content-type: application/json' \
+            --data "{\"text\":\"❌ *Publish Whitelist* (${{ inputs.mode }}) failed\\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>\"}" \
+            ${{ secrets.SLACK_WEBHOOK_URL }}
