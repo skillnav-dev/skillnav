@@ -27,6 +27,11 @@ import {
   getSkills,
 } from "@/lib/data";
 import { fetchReadme } from "@/lib/github-readme";
+import { deriveServerSpec } from "@/lib/install-spec";
+import {
+  getTroubleshootingItems,
+  troubleshootingAnswerText,
+} from "@/data/mcp-troubleshooting";
 import { formatNumber } from "@/lib/utils";
 
 interface PageProps {
@@ -96,6 +101,7 @@ export default async function McpDetailPage({ params }: PageProps) {
   ]);
   const related = allInCategory.filter((s) => s.id !== server.id).slice(0, 3);
   const relatedSkills = allSkills.slice(0, 3);
+  const troubleshooting = getTroubleshootingItems(deriveServerSpec(server));
 
   return (
     <>
@@ -146,6 +152,10 @@ export default async function McpDetailPage({ params }: PageProps) {
                 },
               ]
             : []),
+          ...troubleshooting.map((item) => ({
+            question: item.question,
+            answer: troubleshootingAnswerText(item),
+          })),
         ]}
       />
 
