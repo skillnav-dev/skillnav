@@ -151,6 +151,65 @@ function formatCommunityContext(signals) {
   return lines.join("\n");
 }
 
+// ── Source Coverage ─────────────────────────────────────────────────
+// Recorded on each brief so /daily can show "今日覆盖 N 个源" with per-source
+// status. Failed sources are listed too, so readers see what was missing.
+
+const NEWSLETTER_LABELS = {
+  tldr: "TLDR AI",
+  bensbites: "Ben's Bites",
+  rundown: "The Rundown AI",
+  superhuman: "Superhuman AI",
+  neuron: "The Neuron",
+};
+
+const COMMUNITY_LABELS = { x: "X / Twitter", hn: "Hacker News", reddit: "Reddit" };
+
+async function queryCommunityCounts(supabase, signalDate) {
+  const { data, error } = await supabase
+    .from("community_signals")
+    .select("platform")
+    .eq("signal_date", signalDate)
+    .eq("is_hidden", false)
+    .limit(2000);
+  if (error) {
+    log.warn(`Community coverage query failed: ${error.message}`);
+    return null;
+  }
+  const counts = {};
+  for (const row of data || []) counts[row.platform] = (counts[row.platform] || 0) + 1;
+  return counts;
+}
+
+function buildCoverage({ articles, newsletters, hfPapers, communityCounts }) {
+  const sources = [];
+
+  const articleCounts = {};
+  for (const a of articles) articleCounts[a.source] = (articleCounts[a.source] || 0) + 1;
+  for (const [name, count] of Object.entries(articleCounts)) {
+    sources.push({ name, label: SOURCE_LABELS[name] || name, group: "资讯", ok: true, count });
+  }
+
+  const okNewsletters = new Map((newsletters?.sources || []).map((n) => [n.name, n]));
+  for (const [name, label] of Object.entries(NEWSLETTER_LABELS)) {
+    sources.push({ name, label: okNewsletters.get(name)?.label || label, group: "Newsletter", ok: okNewsletters.has(name) });
+  }
+
+  sources.push({ name: "hf-papers", label: "Hugging Face Daily Papers", group: "论文", ok: hfPapers.length > 0, count: hfPapers.length });
+
+  for (const [name, label] of Object.entries(COMMUNITY_LABELS)) {
+    const count = communityCounts?.[name] || 0;
+    sources.push({ name, label, group: "社区", ok: count > 0, count });
+  }
+
+  return {
+    total: sources.length,
+    ok: sources.filter((s) => s.ok).length,
+    generated_at: new Date().toISOString(),
+    sources,
+  };
+}
+
 // ── Newsletter Layer ──────────────────────────────────────────────
 
 function loadNewsletters(dateLabel) {
@@ -766,6 +825,14 @@ async function main() {
     log.info("Community signals: none found");
   }
 
+  const coverage = buildCoverage({
+    articles,
+    newsletters,
+    hfPapers,
+    communityCounts: await queryCommunityCounts(supabase, dateLabel),
+  });
+  log.info(`Coverage: ${coverage.ok}/${coverage.total} sources OK`);
+
   // Generate editorial brief
   let editorialBrief;
   if (noLlm) {
@@ -860,6 +927,7 @@ async function main() {
     content_zhihu: contentZhihu,
     content_xhs: contentXhs,
     article_ids: articleIds,
+    coverage,
     status: "draft",
   };
 
@@ -877,12 +945,24 @@ async function main() {
     log.info(`Summary: ${record.summary}`);
     log.info(`Highlights: ${editorialBrief.highlights.length}`);
     log.info(`Articles referenced: ${articleIds.length}`);
+    log.info(`Coverage: ${coverage.sources.map((c) => `${c.label}${c.ok ? "" : "(✗)"}`).join(", ")}`);
     log.info("[DRY RUN] No records written to database.");
   } else {
     // Upsert (idempotent on brief_date)
-    const { error: upsertErr } = await supabase
+    let { error: upsertErr } = await supabase
       .from("daily_briefs")
       .upsert(record, { onConflict: "brief_date" });
+
+    // Until the coverage migration is applied, retry without the column
+    // instead of failing the whole brief.
+    if (upsertErr && /coverage/.test(upsertErr.message)) {
+      log.warn(`coverage column missing (${upsertErr.message}); saving brief without it`);
+      const withoutCoverage = { ...record };
+      delete withoutCoverage.coverage;
+      ({ error: upsertErr } = await supabase
+        .from("daily_briefs")
+        .upsert(withoutCoverage, { onConflict: "brief_date" }));
+    }
 
     if (upsertErr) {
       log.error(`Upsert failed: ${upsertErr.message}`);

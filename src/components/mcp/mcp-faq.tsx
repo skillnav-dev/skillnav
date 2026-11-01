@@ -1,4 +1,7 @@
 import type { McpServer } from "@/data/types";
+import { McpTroubleshooting } from "@/components/mcp/mcp-troubleshooting";
+import { getTroubleshootingItems } from "@/data/mcp-troubleshooting";
+import { deriveServerSpec } from "@/lib/install-spec";
 
 interface McpFaqProps {
   server: McpServer;
@@ -6,6 +9,7 @@ interface McpFaqProps {
 
 export function McpFaq({ server }: McpFaqProps) {
   const displayName = server.nameZh ?? server.name;
+  const troubleshooting = getTroubleshootingItems(deriveServerSpec(server));
 
   return (
     <section className="rounded-xl ring-1 ring-border/40 bg-card p-6 shadow-sm">
@@ -45,6 +49,7 @@ export function McpFaq({ server }: McpFaqProps) {
             </p>
           </div>
         )}
+        <McpTroubleshooting items={troubleshooting} />
       </div>
     </section>
   );
