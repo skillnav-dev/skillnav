@@ -190,6 +190,24 @@ export const githubProjects: GitHubProject[] = [
     license: "GPL-3.0",
   },
 
+  {
+    slug: "dsh-superagent-prototype",
+    name: "DSH Super-agent Prototype",
+    nameZh: "DSH 超级智能体原型",
+    repo: "deepseek-ai/dsh-superagent-prototype",
+    description:
+      "A multi-agent research prototype by the DeepSeek Harness team, with a persistent Router coordinating isolated Workers. GitHub and Feishu triggers return results to the original thread, while a dashboard highlights items needing human intervention.",
+    descriptionZh:
+      "DeepSeek Harness 团队的多智能体研究原型，Router 常驻协调、Worker 隔离执行，GitHub/飞书触发，结果回原线程，面板显示需人介入项。",
+    category: "Agent 框架",
+    tags: ["typescript", "multi-agent", "research", "github", "feishu"],
+    stars: 2800,
+    language: "TypeScript",
+    license: "MIT",
+    editorComment:
+      "研究原型，非官方产品；依赖 DSH 开发者预览，需常驻主机与专用 GitHub 账号。",
+  },
+
   // ── AI 编码 ──────────────────────────────────────────────
   {
     slug: "openhands",

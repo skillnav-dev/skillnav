@@ -276,6 +276,55 @@ const neonAdapter = {
   },
 };
 
+// ─── benjitaylor/skills ──────────────────────────────────────────────
+// Structure: stageshow/SKILL.md; sync only this skill, licensed MIT in stageshow/LICENSE.
+// Install: npx skills add benjitaylor/skills --skill stageshow
+const benjiTaylorAdapter = {
+  owner: "benjitaylor",
+  repo: "skills",
+  ref: "main",
+  platform: ["claude"],
+
+  findSkillPaths(entries) {
+    return entries
+      .filter((e) => e.type === "blob" && e.path === "stageshow/SKILL.md")
+      .map((e) => e.path);
+  },
+
+  makeSlug(path) {
+    // stageshow/SKILL.md → benjitaylor--stageshow
+    return `benjitaylor--${slugify(path.split("/")[0])}`;
+  },
+};
+
+// ─── JimLiu/baoyu-design ─────────────────────────────────────────────
+// Common layouts: <name>/SKILL.md or skills/<name>/SKILL.md.
+// Includes claude-slides, claude-design, claude-design-system, claude-dashboard,
+// dataviz, and future skills; exclude nested examples and reference documents.
+// Install: npx skills add JimLiu/baoyu-design
+const baoyuDesignAdapter = {
+  owner: "JimLiu",
+  repo: "baoyu-design",
+  ref: "main",
+  platform: ["claude"],
+
+  findSkillPaths(entries) {
+    return entries
+      .filter(
+        (e) =>
+          e.type === "blob" &&
+          /^(?:skills\/)?[^/.][^/]*\/SKILL\.md$/.test(e.path)
+      )
+      .map((e) => e.path);
+  },
+
+  makeSlug(path) {
+    // [skills/]<name>/SKILL.md → baoyu-design--<name>
+    const parts = path.split("/");
+    return `baoyu-design--${slugify(parts[parts.length - 2])}`;
+  },
+};
+
 // ─── Export all adapters ─────────────────────────────────────────────
 export const CURATED_ADAPTERS = [
   anthropicsAdapter,
@@ -285,6 +334,8 @@ export const CURATED_ADAPTERS = [
   alirezarezvaniAdapter,
   developerKitAdapter,
   neonAdapter,
+  benjiTaylorAdapter,
+  baoyuDesignAdapter,
 ];
 
 /**
