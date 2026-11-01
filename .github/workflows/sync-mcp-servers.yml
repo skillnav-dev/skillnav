@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       source:
-        description: "Source filter (mcp-registry, smithery)"
+        description: "Source filter (mcp-registry)"
         required: false
       incremental:
         description: "Only sync new servers"
