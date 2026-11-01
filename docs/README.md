@@ -54,6 +54,7 @@
 
 | 文档 | 日期 | 领域 |
 |------|------|------|
+| [competitors](research/competitors.md) | 持续更新 | 竞品网站目录（必盯 9 + 可跟 7） |
 | [benchmark-design-analysis](research/2026-03-08-benchmark-design-analysis.md) | 2026-03-08 | 设计 |
 | [competitive-content-analysis](research/2026-03-08-competitive-content-analysis.md) | 2026-03-08 | 竞品 |
 | [competitive-ux-analysis](research/2026-03-08-competitive-ux-analysis.md) | 2026-03-08 | 竞品 |
