@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { siteConfig } from "@/lib/constants";
+import { PACKS } from "@/data/packs";
 import {
   getSitemapSkills,
   getSitemapArticles,
@@ -83,6 +84,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "monthly",
       priority: 0.5,
     },
+    {
+      url: `${siteConfig.url}/packs`,
+      changeFrequency: "weekly",
+      priority: 0.7,
+    },
+    ...PACKS.map((p) => ({
+      url: `${siteConfig.url}/packs/${p.slug}`,
+      changeFrequency: "weekly" as const,
+      priority: 0.6,
+    })),
     {
       url: `${siteConfig.url}/docs/api`,
       changeFrequency: "monthly",
