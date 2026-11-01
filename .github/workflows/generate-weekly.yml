@@ -56,7 +56,7 @@ jobs:
           node scripts/generate-weekly.mjs $ARGS
 
       - name: Notify Slack on failure
-        if: failure()
+        if: failure() || cancelled()
         run: |
           curl -sS -X POST -H 'Content-type: application/json' \
             --data "{\"text\":\"❌ *Generate Weekly* failed\\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>\"}" \

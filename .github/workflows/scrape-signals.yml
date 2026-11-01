@@ -48,7 +48,7 @@ jobs:
           retention-days: 30
 
       - name: Notify Slack on failure
-        if: failure()
+        if: failure() || cancelled()
         run: |
           curl -sS -X POST -H 'Content-type: application/json' \
             --data "{\"text\":\"❌ *Scrape Daily Signals* failed\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>\"}" \

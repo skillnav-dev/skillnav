@@ -36,9 +36,11 @@ function normalizeRepoUrl(url) {
 /**
  * Fetch a single page from the registry API.
  */
-async function fetchPage(cursor) {
+async function fetchPage(cursor, { updatedSince, latestOnly } = {}) {
   const params = new URLSearchParams({ limit: String(PAGE_SIZE) });
   if (cursor) params.set("cursor", cursor);
+  if (updatedSince) params.set("updated_since", updatedSince);
+  if (latestOnly) params.set("version", "latest");
 
   const url = `${BASE_URL}?${params}`;
   const res = await fetch(url, {
@@ -58,10 +60,15 @@ async function fetchPage(cursor) {
  * Fetch all servers from the Official MCP Registry.
  * Returns deduplicated server entries.
  *
+ * @param {{ updatedSince?: string, latestOnly?: boolean }} [opts]
+ *   updatedSince: ISO time; only servers updated after it (registry `updated_since`)
+ *   latestOnly: only the latest version of each server (registry `version=latest`)
  * @returns {Promise<Array<{ name, displayName, description, githubUrl, source, version, remoteUrl, publishedAt }>>}
  */
-export async function fetchMcpRegistryServers() {
-  log.info("Fetching servers from Official MCP Registry...");
+export async function fetchMcpRegistryServers(opts = {}) {
+  log.info(
+    `Fetching servers from Official MCP Registry...${opts.updatedSince ? ` (updated since ${opts.updatedSince})` : ""}`
+  );
 
   const allServers = [];
   let cursor = undefined;
@@ -74,7 +81,7 @@ export async function fetchMcpRegistryServers() {
 
     let data;
     try {
-      data = await withRetry(() => fetchPage(cursor), {
+      data = await withRetry(() => fetchPage(cursor, opts), {
         label: `registry-page-${page}`,
         maxRetries: 2,
       });

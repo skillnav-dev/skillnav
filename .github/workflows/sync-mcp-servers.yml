@@ -1,8 +1,8 @@
 name: Sync MCP Servers
 
+# Manual only. The weekly schedule was replaced by MCP Weekly Candidates
+# (ADR-009): bulk-importing the whole registry produced ~55k unreviewed drafts.
 on:
-  schedule:
-    - cron: "0 5 * * 4" # UTC 05:00 Thursday = CST 13:00, MCP day
   workflow_dispatch:
     inputs:
       source:
@@ -45,7 +45,9 @@ jobs:
         run: |
           ARGS=""
           if [ "${{ inputs.source }}" ]; then ARGS="$ARGS --source ${{ inputs.source }}"; fi
-          if [ "${{ github.event.schedule }}" = "0 5 * * 1" ] || [ "${{ inputs.incremental }}" != "false" ]; then
+          # Scheduled runs are always incremental (only insert new servers); a full
+          # refresh is manual via incremental=false.
+          if [ "${{ github.event_name }}" = "schedule" ] || [ "${{ inputs.incremental }}" != "false" ]; then
             ARGS="$ARGS --incremental"
           fi
           if [ "${{ inputs.limit }}" ]; then ARGS="$ARGS --limit ${{ inputs.limit }}"; fi
@@ -53,7 +55,7 @@ jobs:
           node scripts/sync-mcp-servers.mjs $ARGS
 
       - name: Notify Slack on failure
-        if: failure()
+        if: failure() || cancelled()
         run: |
           curl -sS -X POST -H 'Content-type: application/json' \
             --data "{\"text\":\"❌ *Sync MCP Servers* failed\\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>\"}" \

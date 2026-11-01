@@ -68,18 +68,21 @@ function parseGithubUrl(url) {
  * @param {import("@supabase/supabase-js").SupabaseClient} supabase
  * @param {string} table
  * @param {string} selectFields
+ * @param {{ publishedOnly?: boolean }} [opts]
  * @returns {Promise<any[]>}
  */
-async function fetchAllRows(supabase, table, selectFields) {
+async function fetchAllRows(supabase, table, selectFields, opts = {}) {
   const PAGE_SIZE = 1000;
   const allRows = [];
   let offset = 0;
 
   while (true) {
-    const { data, error } = await supabase
-      .from(table)
-      .select(selectFields)
-      .range(offset, offset + PAGE_SIZE - 1);
+    let query = supabase.from(table).select(selectFields);
+    // Catalog tables: only the published rows are refreshed (ADR-009). Hidden and
+    // draft rows number ~55k for mcp_servers and made this job time out (#8).
+    // A stable order keeps range pagination from skipping or repeating rows.
+    if (opts.publishedOnly) query = query.eq("status", "published").order("slug", { ascending: true });
+    const { data, error } = await query.range(offset, offset + PAGE_SIZE - 1);
 
     if (error) throw new Error(`DB read ${table}: ${error.message}`);
     if (!data || data.length === 0) break;
@@ -117,13 +120,12 @@ async function main() {
   const skills = await fetchAllRows(
     supabase,
     "skills",
-    "slug, github_url, stars, freshness, status"
+    "slug, github_url, stars, freshness, status",
+    { publishedOnly: true }
   );
 
-  // Filter to non-hidden skills with github_url
-  const activeSkills = skills.filter(
-    (s) => s.github_url && s.status !== "hidden"
-  );
+  // Filter to published skills with github_url
+  const activeSkills = skills.filter((s) => s.github_url);
   log.info(`Found ${activeSkills.length} skills with GitHub URLs (of ${skills.length} total)`);
 
   // ── Step 2: Fetch MCP servers with github_url ─────────────────────
@@ -133,7 +135,8 @@ async function main() {
     const mcps = await fetchAllRows(
       supabase,
       "mcp_servers",
-      "slug, github_url, stars, freshness"
+      "slug, github_url, stars, freshness",
+      { publishedOnly: true }
     );
     activeMcps = mcps.filter((m) => m.github_url);
     log.info(`Found ${activeMcps.length} MCP servers with GitHub URLs`);

@@ -30,7 +30,7 @@
 |----|------|------|------|
 | OPS-01 | RSS 文章双时段同步 | shipped | UTC 22:15 + 10:15，9 个源 |
 | OPS-02 | Skills 定期同步 | shipped | Anthropic + curated，周一。ClawHub 源已停用（ADR-007） |
-| OPS-03 | MCP 定期同步 | shipped | Registry + Smithery，周一 |
+| OPS-03 | MCP 每周候选扫描 | shipped | 2026-11-01 起替代全量同步（ADR-009）：每周一扫描官方 Registry 近 8 天的新仓库，符合标准的插入草稿并把审核清单发到 Slack；审核通过后加入 `scripts/catalog/mcp_servers-whitelist.json` 再发布。全量 `Sync MCP Servers` 改为仅手动 |
 | OPS-04 | GitHub 元数据刷新 | shipped | Stars/Forks 日刷新 + 周快照趋势 |
 | OPS-05 | 数据回填管线 | shipped | name_zh/tags/desc_zh/editor_comments |
 | OPS-06 | 数据质量健康检查 | shipped | 每日 23:45，Job Summary 报告 |

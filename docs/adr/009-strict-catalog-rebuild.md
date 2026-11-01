@@ -53,3 +53,14 @@ inclusion criteria ("宁缺毋滥"), accepting the SEO loss of the long-tail pag
   ~55k repos to a few hundred and fixing the timeouts.
 - Follow-up work: candidate-list script against the criteria, whitelist
   publish, pipeline fixes in #8, #10, #11.
+
+## Update 2026-11-01: pipelines after the rebuild
+
+- Skills (83) and MCP (57 new + 66 S-tier) were republished from
+  `scripts/catalog/*-whitelist.json`.
+- Refresh Tool Metadata only refreshes published rows (#8).
+- The scheduled bulk MCP sync is replaced by **MCP Weekly Candidates**
+  (Monday): new registry repos that meet the criteria are inserted as drafts and
+  listed for review in Slack. Approval = add the repo to the whitelist, backfill
+  Chinese copy, run Publish Whitelist. `Sync MCP Servers` stays manual only.
+- Every workflow's Slack failure step also fires on timeout/cancel (#11).

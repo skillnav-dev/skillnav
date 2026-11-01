@@ -86,7 +86,7 @@ jobs:
         run: node scripts/backfill-editor-comments.mjs --type all || true
 
       - name: Notify Slack on failure
-        if: failure()
+        if: failure() || cancelled()
         run: |
           curl -sS -X POST -H 'Content-type: application/json' \
             --data "{\"text\":\"Backfill Data Quality had failures\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>\"}" \

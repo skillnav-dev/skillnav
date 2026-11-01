@@ -1,0 +1,69 @@
+name: MCP Weekly Candidates
+
+# Weekly scan of the Official MCP Registry for new repos that meet the catalog
+# criteria (ADR-009). Inserts them as drafts and posts the review list to Slack.
+# Nothing is published here: approved repos go into the MCP whitelist.
+
+on:
+  schedule:
+    - cron: "0 5 * * 1" # UTC 05:00 Monday = CST 13:00
+  workflow_dispatch:
+    inputs:
+      since_days:
+        description: "Look back this many days in the registry"
+        required: false
+        default: "8"
+      min_stars:
+        description: "Star threshold for non-official repos"
+        required: false
+        default: "500"
+      dry_run:
+        description: "Report only, insert nothing"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mcp-weekly-candidates
+  cancel-in-progress: false
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - run: npm ci
+
+      - name: Scan registry
+        id: scan
+        run: |
+          ARGS="--since-days ${{ inputs.since_days || '8' }} --min-stars ${{ inputs.min_stars || '500' }}"
+          if [ "${{ inputs.dry_run }}" = "true" ]; then ARGS="$ARGS --dry-run"; fi
+          node scripts/mcp-weekly-candidates.mjs $ARGS
+
+      - name: Post review list to Slack
+        if: steps.scan.outputs.passing != '' && steps.scan.outputs.passing != '0'
+        run: |
+          curl -sS -X POST -H 'Content-type: application/json' \
+            --data "{\"text\":\"🆕 *MCP 每周候选*：${{ steps.scan.outputs.passing }} 个新仓库符合标准，等待审核\\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|查看清单>\"}" \
+            ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Notify Slack on failure
+        if: failure() || cancelled()
+        run: |
+          curl -sS -X POST -H 'Content-type: application/json' \
+            --data "{\"text\":\"❌ *MCP Weekly Candidates* failed\\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>\"}" \
+            ${{ secrets.SLACK_WEBHOOK_URL }}
