@@ -30,7 +30,7 @@ function getServiceRoleKey(): string | undefined {
   return process.env.SUPABASE_SERVICE_ROLE_KEY;
 }
 
-function createAdminClient() {
+export function createAdminClient() {
   return createClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     getServiceRoleKey() || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
