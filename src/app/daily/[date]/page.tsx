@@ -7,6 +7,8 @@ import { ArticleContent } from "@/components/articles/article-content";
 import { BreadcrumbJsonLd } from "@/components/shared/json-ld";
 import { siteConfig } from "@/lib/constants";
 import { createStaticClient } from "@/lib/supabase/static";
+import { getBriefCoverage } from "@/lib/daily-coverage";
+import { CoverageLine } from "@/components/daily/coverage-line";
 
 export const revalidate = 300; // 5 min ISR
 
@@ -104,7 +106,11 @@ export default async function DailyDetailPage({ params }: PageProps) {
   const brief = await getBriefByDate(date);
   if (!brief) notFound();
 
-  const { newer, older } = await getAdjacentDates(date);
+  const [{ newer, older }, coverageMap] = await Promise.all([
+    getAdjacentDates(date),
+    getBriefCoverage([date]),
+  ]);
+  const coverage = coverageMap.get(date);
 
   return (
     <>
@@ -137,6 +143,7 @@ export default async function DailyDetailPage({ params }: PageProps) {
             RSS
           </Link>
         </div>
+        {coverage && <CoverageLine coverage={coverage} />}
 
         <div className="mt-8">
           <ArticleContent content={brief.content_md} />

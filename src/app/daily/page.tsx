@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Calendar, Newspaper } from "lucide-react";
+import { Calendar, Newspaper, Radar } from "lucide-react";
 import { SectionHeader } from "@/components/shared/section-header";
 import { BreadcrumbJsonLd } from "@/components/shared/json-ld";
 import { createStaticClient } from "@/lib/supabase/static";
 import { siteConfig } from "@/lib/constants";
+import { getBriefCoverage } from "@/lib/daily-coverage";
 
 export const revalidate = 300; // 5 min ISR
 
@@ -41,6 +42,7 @@ async function getDailyBriefs(): Promise<BriefRow[]> {
 
 export default async function DailyPage() {
   const briefs = await getDailyBriefs();
+  const coverage = await getBriefCoverage(briefs.map((b) => b.brief_date));
 
   return (
     <>
@@ -88,6 +90,12 @@ export default async function DailyPage() {
                       day: "numeric",
                     })}
                   </time>
+                  {coverage.has(brief.brief_date) && (
+                    <span className="ml-auto inline-flex items-center gap-1">
+                      <Radar className="size-3.5" />
+                      覆盖 {coverage.get(brief.brief_date)!.ok} 个源
+                    </span>
+                  )}
                 </div>
                 <h2 className="mt-3 text-base font-semibold group-hover:text-primary">
                   {brief.title}
