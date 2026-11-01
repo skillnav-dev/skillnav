@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
     inputs:
       tasks:
-        description: "Tasks to run (comma-separated: name-zh,tags,mcp-desc-zh,mcp-reclassify,editor-comments; manual only: skill-paths, skill-paths-apply)"
+        description: "Tasks to run (comma-separated: name-zh,tags,mcp-desc-zh,mcp-reclassify,editor-comments,permissions; manual only: skill-paths, skill-paths-apply)"
         required: false
-        default: "name-zh,tags,mcp-desc-zh,mcp-reclassify,editor-comments"
+        default: "name-zh,tags,mcp-desc-zh,mcp-reclassify,editor-comments,permissions"
         type: string
       skill_slugs:
         description: "Only write Chinese name + description for these skill slugs, any status (comma-separated). Other tasks are skipped when set."
@@ -51,7 +51,7 @@ jobs:
           elif [ -n "${{ inputs.mcp_slugs }}" ]; then
             echo "run=mcp-slugs" >> "$GITHUB_OUTPUT"
           elif [ "${{ github.event_name }}" = "schedule" ]; then
-            echo "run=name-zh,tags,mcp-desc-zh,mcp-reclassify,editor-comments" >> "$GITHUB_OUTPUT"
+            echo "run=name-zh,tags,mcp-desc-zh,mcp-reclassify,editor-comments,permissions" >> "$GITHUB_OUTPUT"
           else
             echo "run=${{ inputs.tasks }}" >> "$GITHUB_OUTPUT"
           fi
@@ -93,6 +93,11 @@ jobs:
       - name: Backfill editor comments
         if: contains(steps.tasks.outputs.run, 'editor-comments')
         run: node scripts/backfill-editor-comments.mjs --type all || true
+
+      # Drafts only: entries stay hidden until approved in /admin/permissions
+      - name: Draft permission boundaries for new listings
+        if: contains(steps.tasks.outputs.run, 'permissions')
+        run: node scripts/generate-permissions.mjs --apply || true
 
       - name: Notify Slack on failure
         if: failure() || cancelled()

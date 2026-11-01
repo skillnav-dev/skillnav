@@ -16,6 +16,7 @@ const adminNavItems = [
   { title: "文章管理", href: "/admin/articles" },
   { title: "Skill 管理", href: "/admin/skills" },
   { title: "MCP 管理", href: "/admin/mcp" },
+  { title: "权限审核", href: "/admin/permissions" },
 ] as const;
 
 // Auth is checked at page level via requireAdmin() helper,

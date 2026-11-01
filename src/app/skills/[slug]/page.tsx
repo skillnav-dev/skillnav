@@ -5,6 +5,8 @@ import { PageBreadcrumb } from "@/components/shared/page-breadcrumb";
 import { SkillCard } from "@/components/skills/skill-card";
 import { SkillContent } from "@/components/skills/skill-content";
 import { SkillInstallTabs } from "@/components/skills/skill-install-tabs";
+import { PermissionsCard } from "@/components/shared/permissions-card";
+import { getReviewedPermissions } from "@/lib/data/permissions";
 import { SkillSidebar } from "@/components/skills/skill-sidebar";
 import { SkillMobileMetaBar } from "@/components/skills/skill-mobile-meta";
 import { GiscusComments } from "@/components/shared/giscus-comments";
@@ -74,11 +76,12 @@ export default async function SkillDetailPage({ params }: PageProps) {
   if (!skill) notFound();
 
   // Parallel fetch: related skills + related articles + related MCP servers
-  const [allSkills, { articles: relatedArticles }, allMcpServers] =
+  const [allSkills, { articles: relatedArticles }, allMcpServers, permissions] =
     await Promise.all([
       getSkills({ category: skill.category, limit: 4 }),
       getArticlesWithCount({ search: skill.name, limit: 3 }),
       getMcpServers({ category: skill.category, limit: 4 }),
+      getReviewedPermissions("skill", skill.slug),
     ]);
   const related = allSkills.filter((s) => s.id !== skill.id).slice(0, 3);
   const relatedMcp = allMcpServers
@@ -195,6 +198,8 @@ export default async function SkillDetailPage({ params }: PageProps) {
               githubUrl={skill.githubUrl}
               skillName={skill.name}
             />
+
+            {permissions && <PermissionsCard data={permissions} />}
 
             {/* Full SKILL.md documentation */}
             <SkillContent content={skill.content} contentZh={skill.contentZh} />
