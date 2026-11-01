@@ -48,6 +48,8 @@ jobs:
           ARGS="--table ${{ inputs.table }} --out candidates"
           if [ -n "${{ inputs.min_stars }}" ]; then ARGS="$ARGS --min-stars ${{ inputs.min_stars }}"; fi
           node scripts/catalog-candidates.mjs $ARGS
+          # Echo the report into the job log so it can be read without downloading the artifact
+          cat candidates/*-candidates.md
 
       - name: Upload report
         if: always()
