@@ -81,3 +81,11 @@ export function buildSkillInstallTabs(
   }
   return [];
 }
+
+/** The Claude Code install command, for JSON-LD / FAQ text; undefined if none. */
+export function primarySkillInstallCommand(
+  githubUrl?: string,
+  installCommand?: string,
+): string | undefined {
+  return buildSkillInstallTabs(githubUrl, installCommand)[0]?.command;
+}
