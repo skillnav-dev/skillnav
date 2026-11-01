@@ -14,6 +14,7 @@ import { PlatformBadge } from "@/components/skills/platform-badge";
 import { formatNumber } from "@/lib/utils";
 import { liveSourceUrl } from "@/lib/skill-source";
 import type { Skill } from "@/data/types";
+import { CuratedBadgeCard } from "@/components/shared/curated-badge-card";
 
 const sourceLabels: Record<string, string> = {
   clawhub: "ClawHub",
@@ -207,6 +208,8 @@ export function SkillSidebar({ skill }: SkillSidebarProps) {
           </div>
         </div>
       )}
+
+      <CuratedBadgeCard type="skills" slug={skill.slug} />
     </aside>
   );
 }

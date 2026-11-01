@@ -3,6 +3,7 @@ import { Star, Github, ExternalLink, Tag, Calendar, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { formatNumber } from "@/lib/utils";
 import type { McpServer } from "@/data/types";
+import { CuratedBadgeCard } from "@/components/shared/curated-badge-card";
 
 const freshnessLabels: Record<string, string> = {
   fresh: "近期更新",
@@ -159,6 +160,8 @@ export function McpDetailSidebar({ server }: McpDetailSidebarProps) {
           </div>
         </div>
       )}
+
+      <CuratedBadgeCard type="mcp" slug={server.slug} />
     </aside>
   );
 }
