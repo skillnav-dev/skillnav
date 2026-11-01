@@ -1,0 +1,66 @@
+name: Catalog Candidates
+
+# Read-only review list for the strict Skills / MCP rebuild (ADR-009).
+# Report lands in the run summary and as an artifact; no DB writes.
+
+on:
+  workflow_dispatch:
+    inputs:
+      table:
+        description: "Which catalog to evaluate"
+        required: true
+        default: "skills"
+        type: choice
+        options:
+          - skills
+          - mcp_servers
+      min_stars:
+        description: "Star threshold for non-official repos (default: skills 200, MCP 500)"
+        required: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: catalog-candidates
+  cancel-in-progress: false
+
+jobs:
+  candidates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - run: npm ci
+
+      - name: Build candidate list
+        run: |
+          ARGS="--table ${{ inputs.table }} --out candidates"
+          if [ -n "${{ inputs.min_stars }}" ]; then ARGS="$ARGS --min-stars ${{ inputs.min_stars }}"; fi
+          node scripts/catalog-candidates.mjs $ARGS
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: candidates-${{ inputs.table }}
+          path: candidates/
+          retention-days: 30
+          if-no-files-found: ignore
+
+      - name: Notify Slack on failure
+        if: failure() || cancelled()
+        run: |
+          curl -sS -X POST -H 'Content-type: application/json' \
+            --data "{\"text\":\"❌ *Catalog Candidates* (${{ inputs.table }}) failed\\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>\"}" \
+            ${{ secrets.SLACK_WEBHOOK_URL }}
