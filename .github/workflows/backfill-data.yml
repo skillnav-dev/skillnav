@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       tasks:
-        description: "Tasks to run (comma-separated: name-zh,tags,mcp-desc-zh,mcp-reclassify,editor-comments)"
+        description: "Tasks to run (comma-separated: name-zh,tags,mcp-desc-zh,mcp-reclassify,editor-comments; manual only: skill-paths, skill-paths-apply)"
         required: false
         default: "name-zh,tags,mcp-desc-zh,mcp-reclassify,editor-comments"
         type: string
@@ -31,6 +31,7 @@ jobs:
     env:
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GPT_API_KEY: ${{ secrets.GPT_API_KEY }}
       DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
       LLM_PROVIDER: deepseek
@@ -64,6 +65,14 @@ jobs:
       - name: Chinese description for specific MCP servers
         if: steps.tasks.outputs.run == 'mcp-slugs'
         run: node scripts/backfill-mcp-description-zh.mjs --apply --slugs "${{ inputs.mcp_slugs }}"
+
+      - name: Point skills at their own folder (dry run)
+        if: contains(steps.tasks.outputs.run, 'skill-paths') && !contains(steps.tasks.outputs.run, 'skill-paths-apply')
+        run: node scripts/backfill-skill-source-paths.mjs
+
+      - name: Point skills at their own folder
+        if: contains(steps.tasks.outputs.run, 'skill-paths-apply')
+        run: node scripts/backfill-skill-source-paths.mjs --apply
 
       - name: Backfill skills name_zh
         if: contains(steps.tasks.outputs.run, 'name-zh')
