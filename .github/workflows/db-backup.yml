@@ -96,7 +96,7 @@ jobs:
         run: rm -rf "$RUNNER_TEMP/backup"
 
       - name: Notify Slack on failure
-        if: failure()
+        if: failure() || cancelled()
         run: |
           curl -sS -X POST -H 'Content-type: application/json' \
             --data "{\"text\":\"🚨 *Database Backup* failed\\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>\"}" \
@@ -156,7 +156,7 @@ jobs:
         run: rm -rf "$RUNNER_TEMP/restore" "$RUNNER_TEMP/drill.dump" "$RUNNER_TEMP/restore-errors.log"
 
       - name: Notify Slack on failure
-        if: failure()
+        if: failure() || cancelled()
         run: |
           curl -sS -X POST -H 'Content-type: application/json' \
             --data "{\"text\":\"🚨 *Database restore drill* failed\\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>\"}" \
