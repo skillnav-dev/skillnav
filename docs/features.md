@@ -17,6 +17,8 @@
 | MCP-03 | MCP 自动分级治理 | deprecated | 定时任务已停用（ADR-009），仅可手动 audit 出报告，不再自动发布 |
 | MCP-04 | S-tier 编辑精选 | shipped | 从 A-tier 中精选 + 编辑评论 |
 | MCP-05 | 多客户端安装配置 | shipped | 详情页按客户端生成配置（Claude Code / Cursor / VS Code / Codex / Trae / 通义灵码 / CodeBuddy），npx/bunx/pnpm 切换，Cursor 与 Trae 一键导入链接；复制上报 Umami `install-copy` 事件 |
+| MCP-06 | 国内网络安装排障 FAQ | shipped | MCP 详情页 FAQ 按启动方式给出 npm / pnpm / bun 镜像、uv / pip 镜像、代理、Node 版本、Windows `cmd /c` 排障，命令可复制，同步进 FAQ JSON-LD。数据在 `src/data/mcp-troubleshooting.ts` |
+| CAT-01 | 「SkillNav 精选」收录徽章 | shipped | `/badge/skills/<slug>.svg`、`/badge/mcp/<slug>.svg`，仅已上架条目返回 SVG，其余 404；详情页侧栏一键复制 README Markdown（Umami `badge-copy` 事件） |
 | WKL-01 | 周刊生成 + 页面 | shipped | 三支柱生成 + DB 数据层 + 列表/详情页 + 首期已发布 |
 | LEARN-01 | 学习中心索引 + 概念页 | shipped | 12 概念页全部上线（3 P1 + 9 P2），含可视化图表 + 文章交叉链接 |
 | GUIDE-01 | 专栏系列支持 | shipped | series 标签 + 导航组件 + backfill 脚本 + /guides 落地页 |
@@ -77,6 +79,7 @@
 | DAILY-01 | 每日简报生成 + Admin Dashboard | shipped | LLM 策划 + 5 格式输出（MD/WeChat/X/Zhihu/XHS）+ 审核/编辑/发布 |
 | DAILY-02 | 每日简报多渠道发布 | shipped | RSS auto + WeChat/X/Zhihu/XHS copy-ready，publication tracking |
 | DAILY-03 | 简报配图卡片生成 | shipped | HTML 模板 + gstack browse 渲染：6 张 XHS 卡片 (1080x1350) + WeChat 头图 (1080x608)，admin 内预览下载 |
+| DAILY-04 | 日报「今日覆盖 N 个源」 | shipped | 生成时把每个源（资讯 RSS、5 个 Newsletter、HF Papers、X / HN / Reddit）的抓取结果写进 `daily_briefs.coverage`；`/daily` 卡片显示 N，详情页可展开明细，失败的源照实显示。需先执行迁移 `20261101_daily_brief_coverage.sql`，旧日报不显示 |
 | SIGNAL-01 | 内容信号层（V2: LLM 编辑漏斗） | shipped | 砍掉 regex 信号解析，LLM 直读 newsletter 原文做交叉验证。ADR-005 |
 | SKILL-01 | SkillNav Skill（三合一） | shipped | brief + mcp search + trending。GitHub: skillnav-dev/skillnav-skill，ClawHub: skillnav@1.0.0 |
 | SKILL-02 | Skill CTA 全渠道集成 | shipped | 5 个 publisher footer 追加 `/skillnav brief` 安装提示 |
