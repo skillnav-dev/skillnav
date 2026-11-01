@@ -1,5 +1,6 @@
 import { siteConfig } from "@/lib/constants";
 import { getSkillsCount } from "@/lib/data";
+import { apiReferenceText } from "@/data/public-api";
 
 export const dynamic = "force-static";
 export const revalidate = 86400; // 24h
@@ -52,6 +53,7 @@ SkillNav (skillnav.dev) is an editorially curated directory of AI agent tools, f
 - Guide series: /guides/{slug}
 - Sitemap: /sitemap.xml
 
+${apiReferenceText()}
 ## Contact
 
 - GitHub: ${siteConfig.links.github}

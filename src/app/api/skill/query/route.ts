@@ -11,13 +11,23 @@ import { LEARN_CONCEPTS } from "@/data/learn";
 
 export const revalidate = 300; // 5 min ISR cache
 
+// Public read-only API (docs: /docs/api): open CORS, short edge cache.
+const CORS_HEADERS = { "Access-Control-Allow-Origin": "*" };
+const PUBLIC_HEADERS = {
+  ...CORS_HEADERS,
+  "Cache-Control": "public, max-age=60, s-maxage=300",
+};
+
 function errorResponse(
   code: string,
   message: string,
   status: number,
   fallback: unknown = null,
 ) {
-  return NextResponse.json({ error: code, message, fallback }, { status });
+  return NextResponse.json(
+    { error: code, message, fallback },
+    { status, headers: CORS_HEADERS },
+  );
 }
 
 function getTodayCST(): string {
@@ -368,7 +378,12 @@ async function handleSearch(
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const type = searchParams.get("type");
-  const q = (searchParams.get("q") ?? "").trim().slice(0, 100);
+  // Strip PostgREST filter syntax chars: q is interpolated into .or() filters
+  const q = (searchParams.get("q") ?? "")
+    .replace(/[,(){}\\"]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 100);
   const rawLimit = parseInt(searchParams.get("limit") ?? "", 10);
   const limit = Number.isNaN(rawLimit)
     ? 5
@@ -421,7 +436,10 @@ export async function GET(request: NextRequest) {
     if (!body.error) {
       body.meta = { ...body.meta, skill_version: SKILL_VERSION };
     }
-    return NextResponse.json(body, { status: response.status });
+    return NextResponse.json(body, {
+      status: response.status,
+      headers: response.ok ? PUBLIC_HEADERS : CORS_HEADERS,
+    });
   } catch (err) {
     console.error("[skill/query]", err);
     return errorResponse(

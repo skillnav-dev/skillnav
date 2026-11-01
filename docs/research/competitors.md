@@ -156,7 +156,7 @@ SkillNav 长期跟踪的竞品清单：每家的网址、类别、为什么盯�
 | 11 | 新数据源（官方 Registry、ClawHub、Glama） | AgentHub | L | 未开始（#30） |
 | 12 | 自动质量分 | Glama、MCP.so、MDSkill | M | 未开始（#31） |
 | 13 | 热度榜（总榜 / 本周新榜） | skills.sh、SkillGuide | M | 未开始（#32） |
-| 14 | 公开搜索 API + llms.txt | AgentHub | S | 未开始（#33） |
+| 14 | 公开搜索 API + llms.txt | AgentHub | S | 待合并（#33） |
 | 15 | 本地一键安装助手 | SkillGuide | L | 未开始（#34） |
 
 **暂不抄**：MCP 托管和网关（Glama、Smithery）、广告位和付费收录（MCP.so、AskSkill）、用户提交。前两项投入重，广告会削弱"精选"的可信度。
