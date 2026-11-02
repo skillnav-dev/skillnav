@@ -832,4 +832,40 @@ export const githubProjects: GitHubProject[] = [
     license: "MIT",
     editorComment: "微软出品的免费 AI 课程，质量极高",
   },
+  {
+    slug: "stanford-cs329a-skill",
+    name: "Stanford AI Agent Skill",
+    nameZh: "斯坦福 CS329A Agent Skill（非官方蒸馏）",
+    repo: "yusenthebot/stanford-ai-agent-skill",
+    description:
+      "Unofficial, installable skill distilling Stanford CS329A Self-Improving AI Agents into one Codex entry that routes to seven decision modules.",
+    descriptionZh:
+      "非官方可安装 Skill：把 Stanford CS329A《Self-Improving AI Agents》蒸馏成单一 Codex 入口，按决策路由到 7 个执行模块；附中英课单导读。",
+    category: "精选资源",
+    tags: ["stanford", "cs329a", "agent", "course", "codex", "unofficial"],
+    stars: 30,
+    language: "Python",
+    license: "MIT",
+    editorPick: false,
+    editorComment:
+      "非官方蒸馏，适合当「可执行课单」；正式课表仍以 cs329a.stanford.edu 为准",
+  },
+  {
+    slug: "qiaomu-simpleui",
+    name: "Qiaomu SimpleUI",
+    nameZh: "乔木 SimpleUI",
+    repo: "joeseesun/qiaomu-simpleui",
+    description:
+      "Phone-like KOReader home for Kindle: curated Qiaomu AI news, selection AI translate/Q&A, optional WeRead shortcut (pre-release).",
+    descriptionZh:
+      "给 Kindle/KOReader 的手机式读书首页（测试版）：乔木精选 AI 资讯、划线 AI 翻译与问答、可选微信读书入口（基于 SimpleUI 定制，GPL-3.0）。",
+    category: "精选资源",
+    tags: ["koreader", "kindle", "ebook", "rss", "ai-reading", "gpl"],
+    stars: 149,
+    language: "Lua",
+    license: "GPL-3.0",
+    editorPick: false,
+    editorComment:
+      "KOReader 插件不是 Agent Skill；当前为测试版/pre-release；需自备已装 KOReader 的设备（不提供越狱教程）",
+  },
 ];
