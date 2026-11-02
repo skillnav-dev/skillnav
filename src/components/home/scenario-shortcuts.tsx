@@ -37,7 +37,7 @@ const SCENARIOS = [
   },
   {
     label: "给 Claude Code 加技能",
-    description: "7 个仓库 · 168 个 Skills",
+    description: "官方与高星仓库精选",
     href: "/skills",
     icon: Code,
   },

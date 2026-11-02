@@ -33,6 +33,7 @@ export const footerLinks = {
     links: [
       { title: "Skills 导航", href: "/skills" },
       { title: "MCP 导航", href: "/mcp" },
+      { title: "装机包", href: "/packs" },
       { title: "Grok Bot", href: "/grok-bot" },
       { title: "日报", href: "/daily" },
       { title: "专栏", href: "/guides" },
