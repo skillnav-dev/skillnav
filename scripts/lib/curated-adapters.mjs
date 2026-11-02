@@ -276,6 +276,92 @@ const neonAdapter = {
   },
 };
 
+// ─── mattpocock/skills ──────────────────────────────────────────────
+// Structure: skills/<category>/<name>/SKILL.md
+const mattpocockAdapter = {
+  owner: "mattpocock",
+  repo: "skills",
+  ref: "main",
+  platform: ["claude", "codex"],
+
+  findSkillPaths(entries) {
+    return entries
+      .filter(
+        (e) =>
+          e.type === "blob" &&
+          e.path.startsWith("skills/") &&
+          e.path.endsWith("/SKILL.md")
+      )
+      .map((e) => e.path);
+  },
+
+  makeSlug(path) {
+    // skills/<category>/<name>/SKILL.md → mattpocock--<name>
+    const parts = path.split("/");
+    const name = parts[parts.length - 2];
+    return `mattpocock--${slugify(name)}`;
+  },
+
+  shouldInclude(path) {
+    // Exclude unstable in-progress skills
+    return !path.startsWith("skills/in-progress/");
+  },
+};
+
+// ─── obra/superpowers ───────────────────────────────────────────────
+// Structure: skills/<name>/SKILL.md
+const superpowersAdapter = {
+  owner: "obra",
+  repo: "superpowers",
+  ref: "main",
+  platform: ["claude", "codex"],
+
+  findSkillPaths(entries) {
+    return entries
+      .filter(
+        (e) =>
+          e.type === "blob" &&
+          e.path.startsWith("skills/") &&
+          e.path.endsWith("/SKILL.md")
+      )
+      .map((e) => e.path);
+  },
+
+  makeSlug(path) {
+    // skills/<name>/SKILL.md → superpowers--<name>
+    const parts = path.split("/");
+    const name = parts[parts.length - 2];
+    return `superpowers--${slugify(name)}`;
+  },
+};
+
+// ─── addyosmani/agent-skills ────────────────────────────────────────
+// Structure: skills/<name>/SKILL.md
+const addyAdapter = {
+  owner: "addyosmani",
+  repo: "agent-skills",
+  ref: "main",
+  platform: ["claude", "codex"],
+
+  findSkillPaths(entries) {
+    return entries
+      .filter(
+        (e) =>
+          e.type === "blob" &&
+          e.path.startsWith("skills/") &&
+          e.path.endsWith("/SKILL.md")
+      )
+      .map((e) => e.path);
+  },
+
+  makeSlug(path) {
+    // skills/<name>/SKILL.md → addy--<name>
+    const parts = path.split("/");
+    const name = parts[parts.length - 2];
+    return `addy--${slugify(name)}`;
+  },
+};
+
 // ─── Export all adapters ─────────────────────────────────────────────
 export const CURATED_ADAPTERS = [
   anthropicsAdapter,
@@ -285,6 +371,9 @@ export const CURATED_ADAPTERS = [
   alirezarezvaniAdapter,
   developerKitAdapter,
   neonAdapter,
+  mattpocockAdapter,
+  superpowersAdapter,
+  addyAdapter,
 ];
 
 /**
