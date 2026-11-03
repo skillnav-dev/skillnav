@@ -39,7 +39,7 @@ export const footerLinks = {
       { title: "资讯", href: "/articles" },
       { title: "论文", href: "/papers" },
       { title: "学习中心", href: "/learn" },
-      { title: "HN 聚合导航", href: "/hackeragain" },
+      { title: "HN 灵感站", href: "/hackeragain" },
       { title: "公开 API", href: "/docs/api" },
     ],
   },

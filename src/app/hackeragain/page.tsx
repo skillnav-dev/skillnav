@@ -2,12 +2,11 @@ import type { Metadata } from "next";
 import { SectionHeader } from "@/components/shared/section-header";
 import { BreadcrumbJsonLd } from "@/components/shared/json-ld";
 import { HackerAgainGrid } from "@/components/hackeragain/hackeragain-grid";
-import { hackerAgainSites } from "@/data/hackeragain-sites";
 
 export const metadata: Metadata = {
-  title: "HN 灵感站聚合导航",
+  title: "HN 灵感站导航",
   description:
-    "中文版 HackerAgain：Hacker News 灵感衍生站的「索引的索引」。外链导航视频、书、论文、电影、工具、播客等，标出 MCP 与数据包；不镜像第三方数据。",
+    "精选 Hacker News 相关衍生站：视频、书、论文、电影、工具、播客等，一站跳转。只做外链推荐，不托管站内资源。",
 };
 
 export default function HackerAgainPage() {
@@ -16,14 +15,14 @@ export default function HackerAgainPage() {
       <BreadcrumbJsonLd
         items={[
           { name: "首页", href: "/" },
-          { name: "HN 聚合导航", href: "/hackeragain" },
+          { name: "HN 灵感站", href: "/hackeragain" },
         ]}
       />
       <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
         <SectionHeader
           as="h1"
-          title="HN 灵感站聚合导航"
-          description={`这是 Hacker News 灵感衍生站的「索引的索引」——灵感来自 HackerAgain，收录与中文文案由 SkillNav 自编；只做外链导航，不镜像第三方整站数据。当前收录 ${hackerAgainSites.length} 站。`}
+          title="HN 灵感站导航"
+          description="精选从 Hacker News 衍生出的视频、书、论文、电影、工具和播客站点，点卡片即可跳转。本页只做外链推荐，不托管资源。"
         />
         <HackerAgainGrid />
       </div>

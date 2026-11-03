@@ -6,8 +6,8 @@ export type HackerAgainCategory =
   | "工具"
   | "产品"
   | "播客"
-  | "Wiki"
-  | "元目录"
+  | "维基"
+  | "目录"
   | "评测";
 
 export type HackerAgainLanguage = "zh" | "en" | "mixed";
@@ -37,8 +37,8 @@ export const HACKERAGAIN_CATEGORIES = [
   "工具",
   "产品",
   "播客",
-  "Wiki",
-  "元目录",
+  "维基",
+  "目录",
   "评测",
 ] as const;
 
@@ -57,30 +57,24 @@ export function hackerAgainLanguageLabel(
   return LANGUAGE_LABEL[language];
 }
 
-/**
- * HN 灵感站外链目录（SkillNav 自编中文简介）。
- * 只做导航，不镜像第三方整站或数据包。
- * Karpathy 原博 karpathy.bearblog.dev/hacker-tube/ 抽查 404，不单列卡片。
- */
+/** HN 灵感站外链导航数据。 */
 export const hackerAgainSites: HackerAgainSite[] = [
   {
     slug: "hackertube",
     nameZh: "HackerTube",
     nameEn: "HackerTube",
-    blurbZh:
-      "HN 灵感视频合集站。原 Karpathy 博文链暂 404，以本站为准；若引用其开放数据请遵循 ODC-By 并链回原作。",
+    blurbZh: "Hacker News 相关的技术与黑客向视频合集，适合随便刷一刷。",
     category: "视频",
     language: "en",
     url: "https://hackertube.org",
-    licenseNote:
-      "数据引用须 ODC-By 并链回原作；本页仅外链，不镜像数据集。",
+    licenseNote: "若引用其开放数据，请遵循 ODC-By 并注明出处。",
     status: "online",
   },
   {
     slug: "hackerbooks",
     nameZh: "HackerBooks",
     nameEn: "HackerBooks",
-    blurbZh: "HN 社区常推技术书与阅读清单的导航站。",
+    blurbZh: "HN 上常被提起的技术书与阅读清单。",
     category: "书",
     language: "en",
     url: "https://hackerbooks.org",
@@ -90,7 +84,7 @@ export const hackerAgainSites: HackerAgainSite[] = [
     slug: "dair-hacker-papers",
     nameZh: "DAIR 黑客论文集",
     nameEn: "DAIR Hacker Papers",
-    blurbZh: "DAIR.AI 整理的 Hacker Papers 论文合集入口。",
+    blurbZh: "DAIR.AI 整理的黑客向论文合集，方便按主题逛。",
     category: "论文",
     language: "en",
     url: "https://academy.dair.ai/papers/collections/hacker-papers",
@@ -110,20 +104,19 @@ export const hackerAgainSites: HackerAgainSite[] = [
     slug: "qiaomu-hacker-books",
     nameZh: "乔木黑客书架",
     nameEn: "Qiaomu Hacker Books",
-    blurbZh: "中文书讯与书架导航；仅链官方站，不做资源镜像。",
+    blurbZh: "中文书讯与书架导航，帮你发现值得读的书。",
     category: "书",
     language: "zh",
     url: "https://hackerbooks.qiaomu.ai",
     complianceNote:
-      "仅链官方 hackerbooks.qiaomu.ai；收录公开书讯与合法购买信息，非盗版网盘或搜索入口。切勿链 zlib 等盗版源。",
+      "仅链官方站点，提供公开书讯与正规购买信息，不含盗版资源。",
     status: "online",
   },
   {
     slug: "hnmovies",
     nameZh: "HNMovies",
     nameEn: "HNMovies",
-    blurbZh:
-      "HN 相关电影/片单站；提供 MCP 与 Hugging Face 数据包，便于 Agent 检索。",
+    blurbZh: "HN 圈常聊的电影与片单，另有 MCP 与开放数据包。",
     category: "电影",
     language: "en",
     url: "https://hnmovies.org",
@@ -135,7 +128,7 @@ export const hackerAgainSites: HackerAgainSite[] = [
     slug: "showreel-hn",
     nameZh: "Showreel HN",
     nameEn: "Showreel HN",
-    blurbZh: "Show HN 与演示类视频/作品卷轴式浏览。",
+    blurbZh: "Show HN 作品与演示视频，卷轴式浏览。",
     category: "视频",
     language: "en",
     url: "https://showreel-hn.netlify.app",
@@ -145,8 +138,8 @@ export const hackerAgainSites: HackerAgainSite[] = [
     slug: "wikihack",
     nameZh: "Wikihack",
     nameEn: "Wikihack",
-    blurbZh: "HN 灵感维基式知识库；主站不可用时可试 Netlify 备链。",
-    category: "Wiki",
+    blurbZh: "HN 灵感主题的维基知识库；主站打不开时可试备链。",
+    category: "维基",
     language: "en",
     url: "https://wikihack.org",
     secondaryUrl: "https://wikihack.netlify.app",
@@ -156,7 +149,7 @@ export const hackerAgainSites: HackerAgainSite[] = [
     slug: "hackertools",
     nameZh: "HackerTools",
     nameEn: "HackerTools",
-    blurbZh: "开发者工具目录；站点提供 tools.json 便于机器读取。",
+    blurbZh: "实用开发与效率工具目录，按需挑着用。",
     category: "工具",
     language: "en",
     url: "https://shouvik12.github.io/hackertools",
@@ -166,7 +159,7 @@ export const hackerAgainSites: HackerAgainSite[] = [
     slug: "hackerproducts",
     nameZh: "HackerProducts",
     nameEn: "HackerProducts",
-    blurbZh: "HN 产品与 Show HN 产物向的目录站。",
+    blurbZh: "Show HN 与产品向作品目录，看看大家在做什么。",
     category: "产品",
     language: "en",
     url: "https://hackerproducts.pages.dev",
@@ -176,7 +169,7 @@ export const hackerAgainSites: HackerAgainSite[] = [
     slug: "trustmebro",
     nameZh: "Trust Me Bro",
     nameEn: "Trust Me Bro",
-    blurbZh: "产品与工具的社区式评测 / 「信我」式推荐站。",
+    blurbZh: "社区风格的产品与工具评测、推荐。",
     category: "评测",
     language: "en",
     url: "https://trustmebro.reviews",
@@ -196,8 +189,8 @@ export const hackerAgainSites: HackerAgainSite[] = [
     slug: "hackeragain",
     nameZh: "HackerAgain",
     nameEn: "HackerAgain",
-    blurbZh: "英文原版「索引的索引」——本页的灵感来源与元目录。",
-    category: "元目录",
+    blurbZh: "英文原版导航目录，也是本页的灵感来源。",
+    category: "目录",
     language: "en",
     url: "https://hackeragain.com",
     status: "online",
@@ -206,8 +199,8 @@ export const hackerAgainSites: HackerAgainSite[] = [
     slug: "hackerhype",
     nameZh: "HackerHype",
     nameEn: "HackerHype",
-    blurbZh: "与 HN 灵感站生态相关的元目录 / 热度向索引。",
-    category: "元目录",
+    blurbZh: "HN 灵感站相关的热度与目录索引。",
+    category: "目录",
     language: "en",
     url: "https://epestr.com/hackerhype",
     status: "online",
@@ -215,6 +208,6 @@ export const hackerAgainSites: HackerAgainSite[] = [
 ];
 
 export const HACKERAGAIN_REFERENCE = {
-  titleZh: "V2EX：HN 灵感站讨论帖",
+  titleZh: "V2EX：大家在聊哪些 HN 灵感站",
   url: "https://www.v2ex.com/t/1253963",
 } as const;
