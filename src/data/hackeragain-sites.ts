@@ -8,7 +8,8 @@ export type HackerAgainCategory =
   | "播客"
   | "维基"
   | "目录"
-  | "评测";
+  | "评测"
+  | "博客";
 
 export type HackerAgainLanguage = "zh" | "en" | "mixed";
 
@@ -40,6 +41,7 @@ export const HACKERAGAIN_CATEGORIES = [
   "维基",
   "目录",
   "评测",
+  "博客",
 ] as const;
 
 export type HackerAgainCategoryFilter =
@@ -203,6 +205,36 @@ export const hackerAgainSites: HackerAgainSite[] = [
     category: "目录",
     language: "en",
     url: "https://epestr.com/hackerhype",
+    status: "online",
+  },
+  {
+    slug: "hackertv",
+    nameZh: "HackerTV",
+    nameEn: "HackerTV",
+    blurbZh: "把 HN 上反复被推荐的 YouTube 视频排成 24 小时不停播的主题频道，打开就能看（数据来自 HackerTube）。",
+    category: "视频",
+    language: "en",
+    url: "https://hackertv.org",
+    status: "online",
+  },
+  {
+    slug: "hackerblogs",
+    nameZh: "HackerBlogs",
+    nameEn: "Hacker Blogs",
+    blurbZh: "HN 上常被链接的个人和公司博客合集，可看热门文章，还能导出 OPML 订阅。",
+    category: "博客",
+    language: "en",
+    url: "https://hackerblogs.org",
+    status: "online",
+  },
+  {
+    slug: "hnrepos",
+    nameZh: "hnrepos",
+    nameEn: "hnrepos",
+    blurbZh: "收录 HN 讨论里提到的代码仓库，可按主题浏览，并回看原始讨论。",
+    category: "工具",
+    language: "en",
+    url: "https://hnrepos.com",
     status: "online",
   },
 ];
