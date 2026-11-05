@@ -6,7 +6,6 @@
 
 [![Deploy](https://github.com/skillnav-dev/skillnav/actions/workflows/deploy.yml/badge.svg)](https://github.com/skillnav-dev/skillnav/actions/workflows/deploy.yml)
 [![Sync Articles](https://github.com/skillnav-dev/skillnav/actions/workflows/sync-articles.yml/badge.svg)](https://github.com/skillnav-dev/skillnav/actions/workflows/sync-articles.yml)
-[![Sync Skills](https://github.com/skillnav-dev/skillnav/actions/workflows/sync-skills.yml/badge.svg)](https://github.com/skillnav-dev/skillnav/actions/workflows/sync-skills.yml)
 [![Health Check](https://github.com/skillnav-dev/skillnav/actions/workflows/health-check.yml/badge.svg)](https://github.com/skillnav-dev/skillnav/actions/workflows/health-check.yml)
 
 ---

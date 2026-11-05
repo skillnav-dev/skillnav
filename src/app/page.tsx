@@ -3,6 +3,7 @@ import { siteConfig } from "@/lib/constants";
 import { HeroSection } from "@/components/home/hero-section";
 import { StatsBar } from "@/components/home/stats-bar";
 import { ScenarioShortcuts } from "@/components/home/scenario-shortcuts";
+import { RolePicks } from "@/components/home/role-picks";
 import { EditorialHighlights } from "@/components/home/editorial-highlights";
 import { FeaturedTools } from "@/components/home/featured-tools";
 import { LatestArticles } from "@/components/home/latest-articles";
@@ -34,6 +35,7 @@ export default async function Home() {
           <div className="border-t border-border/40" />
         </div>
         <ScenarioShortcuts />
+        <RolePicks />
       </section>
       <EditorialHighlights />
       <FeaturedTools skills={skills} mcpServers={mcpServers} />
