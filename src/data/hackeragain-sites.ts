@@ -3,6 +3,7 @@ export type HackerAgainCategory =
   | "书"
   | "论文"
   | "电影"
+  | "游戏"
   | "工具"
   | "产品"
   | "播客"
@@ -36,6 +37,7 @@ export const HACKERAGAIN_CATEGORIES = [
   "书",
   "论文",
   "电影",
+  "游戏",
   "工具",
   "产品",
   "播客",
@@ -140,6 +142,16 @@ export const hackerAgainSites: HackerAgainSite[] = [
     status: "online",
   },
   {
+    slug: "hackerpapers",
+    nameZh: "HackerPapers",
+    nameEn: "HackerPapers",
+    blurbZh: "英文原版论文站：arXiv 论文按 HN 评论者排序，可回看原讨论。",
+    category: "论文",
+    language: "en",
+    url: "https://hackerpaper.kaipfister.de",
+    status: "online",
+  },
+  {
     slug: "hnmovies",
     nameZh: "HNMovies",
     nameEn: "HNMovies",
@@ -149,6 +161,16 @@ export const hackerAgainSites: HackerAgainSite[] = [
     url: "https://hnmovies.org",
     hasMcp: true,
     hasDataset: true,
+    status: "online",
+  },
+  {
+    slug: "hackergames",
+    nameZh: "HackerGames",
+    nameEn: "HackerGames",
+    blurbZh: "收录 2006–2026 年 HN 讨论过的游戏。",
+    category: "游戏",
+    language: "en",
+    url: "https://architrixs.github.io/HackerGames/",
     status: "online",
   },
   {
@@ -210,6 +232,16 @@ export const hackerAgainSites: HackerAgainSite[] = [
     category: "目录",
     language: "en",
     url: "https://epestr.com/hackerhype",
+    status: "online",
+  },
+  {
+    slug: "hackereverything",
+    nameZh: "HackerEverything",
+    nameEn: "HackerEverything",
+    blurbZh: "综合类导航：把 HN 评论里反复推荐的书、演讲、论文、代码库和工具按主题打标签。",
+    category: "目录",
+    language: "en",
+    url: "https://hackereverything.pages.dev/",
     status: "online",
   },
   {
