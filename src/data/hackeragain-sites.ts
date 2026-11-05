@@ -9,7 +9,8 @@ export type HackerAgainCategory =
   | "维基"
   | "目录"
   | "评测"
-  | "博客";
+  | "博客"
+  | "代码库";
 
 export type HackerAgainLanguage = "zh" | "en" | "mixed";
 
@@ -42,6 +43,7 @@ export const HACKERAGAIN_CATEGORIES = [
   "目录",
   "评测",
   "博客",
+  "代码库",
 ] as const;
 
 export type HackerAgainCategoryFilter =
@@ -59,7 +61,10 @@ export function hackerAgainLanguageLabel(
   return LANGUAGE_LABEL[language];
 }
 
-/** HN 灵感站外链导航数据。 */
+/**
+ * HN 灵感站外链导航数据。
+ * Keep entries grouped by category so the "全部" view reads in category order.
+ */
 export const hackerAgainSites: HackerAgainSite[] = [
   {
     slug: "hackertube",
@@ -73,6 +78,26 @@ export const hackerAgainSites: HackerAgainSite[] = [
     status: "online",
   },
   {
+    slug: "hackertv",
+    nameZh: "HackerTV",
+    nameEn: "HackerTV",
+    blurbZh: "把 HN 上反复被推荐的 YouTube 视频排成 24 小时不停播的主题频道，打开就能看（数据来自 HackerTube）。",
+    category: "视频",
+    language: "en",
+    url: "https://hackertv.org",
+    status: "online",
+  },
+  {
+    slug: "showreel-hn",
+    nameZh: "Showreel HN",
+    nameEn: "Showreel HN",
+    blurbZh: "Show HN 作品与演示视频，卷轴式浏览。",
+    category: "视频",
+    language: "en",
+    url: "https://showreel-hn.netlify.app",
+    status: "online",
+  },
+  {
     slug: "hackerbooks",
     nameZh: "HackerBooks",
     nameEn: "HackerBooks",
@@ -80,6 +105,18 @@ export const hackerAgainSites: HackerAgainSite[] = [
     category: "书",
     language: "en",
     url: "https://hackerbooks.org",
+    status: "online",
+  },
+  {
+    slug: "qiaomu-hacker-books",
+    nameZh: "乔木黑客书架",
+    nameEn: "Qiaomu Hacker Books",
+    blurbZh: "中文书讯与书架导航，帮你发现值得读的书。",
+    category: "书",
+    language: "zh",
+    url: "https://hackerbooks.qiaomu.ai",
+    complianceNote:
+      "仅链官方站点，提供公开书讯与正规购买信息，不含盗版资源。",
     status: "online",
   },
   {
@@ -103,18 +140,6 @@ export const hackerAgainSites: HackerAgainSite[] = [
     status: "online",
   },
   {
-    slug: "qiaomu-hacker-books",
-    nameZh: "乔木黑客书架",
-    nameEn: "Qiaomu Hacker Books",
-    blurbZh: "中文书讯与书架导航，帮你发现值得读的书。",
-    category: "书",
-    language: "zh",
-    url: "https://hackerbooks.qiaomu.ai",
-    complianceNote:
-      "仅链官方站点，提供公开书讯与正规购买信息，不含盗版资源。",
-    status: "online",
-  },
-  {
     slug: "hnmovies",
     nameZh: "HNMovies",
     nameEn: "HNMovies",
@@ -124,27 +149,6 @@ export const hackerAgainSites: HackerAgainSite[] = [
     url: "https://hnmovies.org",
     hasMcp: true,
     hasDataset: true,
-    status: "online",
-  },
-  {
-    slug: "showreel-hn",
-    nameZh: "Showreel HN",
-    nameEn: "Showreel HN",
-    blurbZh: "Show HN 作品与演示视频，卷轴式浏览。",
-    category: "视频",
-    language: "en",
-    url: "https://showreel-hn.netlify.app",
-    status: "online",
-  },
-  {
-    slug: "wikihack",
-    nameZh: "Wikihack",
-    nameEn: "Wikihack",
-    blurbZh: "HN 灵感主题的维基知识库；主站打不开时可试备链。",
-    category: "维基",
-    language: "en",
-    url: "https://wikihack.org",
-    secondaryUrl: "https://wikihack.netlify.app",
     status: "online",
   },
   {
@@ -168,16 +172,6 @@ export const hackerAgainSites: HackerAgainSite[] = [
     status: "online",
   },
   {
-    slug: "trustmebro",
-    nameZh: "Trust Me Bro",
-    nameEn: "Trust Me Bro",
-    blurbZh: "社区风格的产品与工具评测、推荐。",
-    category: "评测",
-    language: "en",
-    url: "https://trustmebro.reviews",
-    status: "online",
-  },
-  {
     slug: "hackerpodcasts",
     nameZh: "HackerPodcasts",
     nameEn: "HackerPodcasts",
@@ -185,6 +179,17 @@ export const hackerAgainSites: HackerAgainSite[] = [
     category: "播客",
     language: "en",
     url: "https://hackerpodcasts.org",
+    status: "online",
+  },
+  {
+    slug: "wikihack",
+    nameZh: "Wikihack",
+    nameEn: "Wikihack",
+    blurbZh: "HN 灵感主题的维基知识库；主站打不开时可试备链。",
+    category: "维基",
+    language: "en",
+    url: "https://wikihack.org",
+    secondaryUrl: "https://wikihack.netlify.app",
     status: "online",
   },
   {
@@ -208,13 +213,13 @@ export const hackerAgainSites: HackerAgainSite[] = [
     status: "online",
   },
   {
-    slug: "hackertv",
-    nameZh: "HackerTV",
-    nameEn: "HackerTV",
-    blurbZh: "把 HN 上反复被推荐的 YouTube 视频排成 24 小时不停播的主题频道，打开就能看（数据来自 HackerTube）。",
-    category: "视频",
+    slug: "trustmebro",
+    nameZh: "Trust Me Bro",
+    nameEn: "Trust Me Bro",
+    blurbZh: "社区风格的产品与工具评测、推荐。",
+    category: "评测",
     language: "en",
-    url: "https://hackertv.org",
+    url: "https://trustmebro.reviews",
     status: "online",
   },
   {
@@ -232,7 +237,7 @@ export const hackerAgainSites: HackerAgainSite[] = [
     nameZh: "hnrepos",
     nameEn: "hnrepos",
     blurbZh: "收录 HN 讨论里提到的代码仓库，可按主题浏览，并回看原始讨论。",
-    category: "工具",
+    category: "代码库",
     language: "en",
     url: "https://hnrepos.com",
     status: "online",
