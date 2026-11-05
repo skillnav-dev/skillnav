@@ -27,6 +27,7 @@
 | GUIDE-02 | 交互式深度指南 | shipped | 11 个独立 HTML 指南（AI 架构/MCP 实战/AI Coding 对比/Prompt 工坊/Agent 模式/RAG vs FT/LLM 选型/Token 计算器/安全护栏/向量数据库/Embedding 维度） |
 | GH-01 | GitHub 开源导航页 | shipped | AI Agent 生态项目导航 |
 | GROK-01 | Grok Bot 栏目 | shipped | `/grok-bot` 静态精选页（xAI 桌面 Agent）：速览、核心能力、上手步骤、落地场景、与 Skills/MCP 定位对比、教程、FAQ。数据在 `src/data/grok-bot.ts` |
+| HN-01 | HN 灵感站导航 | shipped | `/hackeragain` 外链导航页：按品类筛选（视频/书/论文/电影/工具/产品/播客/维基/目录/评测/博客/代码库）+ 搜索，17 个站点，含 HackerTV、HackerBlogs、hnrepos。数据在 `src/data/hackeragain-sites.ts`，条目按筛选按钮的品类顺序排列 |
 
 ## 运营系统
 
