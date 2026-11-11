@@ -69,27 +69,3 @@ export function transformRegistryEntry(entry) {
     last_synced_at: new Date().toISOString(),
   };
 }
-
-export function transformSmitheryEntry(entry) {
-  const slug = makeSlug(entry.name);
-  if (!slug) return null;
-
-  return {
-    slug,
-    name: entry.displayName || entry.name,
-    author: extractAuthor(entry.githubUrl, entry.name),
-    description: entry.description || "",
-    github_url: entry.githubUrl || null,
-    source: "smithery",
-    source_url: entry.homepage || null,
-    is_verified: entry.verified || false,
-    status: "draft",
-    stars: 0,
-    forks_count: 0,
-    weekly_downloads: entry.useCount || 0,
-    tools_count: 0,
-    quality_score: null,
-    discovered_at: new Date().toISOString(),
-    last_synced_at: new Date().toISOString(),
-  };
-}

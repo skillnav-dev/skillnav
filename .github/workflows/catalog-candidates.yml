@@ -50,6 +50,9 @@ jobs:
           node scripts/catalog-candidates.mjs $ARGS
           # Echo the report into the job log so it can be read without downloading the artifact
           cat candidates/*-candidates.md
+          # Published items (repo, slug, name) for curating packs and pages
+          echo "## Published items"
+          jq -r '.[] | .repo as $r | .items[] | select(.status == "published") | [$r, .slug, .name] | @tsv' candidates/*-candidates.json
 
       - name: Upload report
         if: always()

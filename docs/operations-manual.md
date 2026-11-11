@@ -189,8 +189,6 @@ $B screenshot --clip 0,8240,1080,608 wechat-header.png
 
 | 来源 | 脚本 | 调度 | LLM |
 |------|------|------|-----|
-| ClawHub | `sync-clawhub.mjs`（经 sync-skills.yml） | 周一 10:00 CST | 无 |
-| Anthropic | `sync-anthropic-skills.mjs`（经 sync-skills.yml） | 周一 10:00 CST | 无 |
 | 精选仓库 | `sync-curated-skills.mjs` | 周一 09:00 CST | GPT（使用 --evaluate 时） |
 
 **命令**:
@@ -319,7 +317,7 @@ node scripts/govern-articles.mjs --apply           # 按评分调整状态
   publish-daily ← 人工审批 via /admin/daily
 
 周任务（按品类分天，互不干扰）：
-  周一: Skills 日   → sync-curated → sync-skills → metadata snapshot
+  周一: Skills 日   → sync-curated → metadata snapshot
   周二: 元数据刷新  → refresh-tool-metadata
   周三: 数据质量日  → backfill-data（回填周一新增数据）
   周四: MCP 日      → sync-mcp-servers

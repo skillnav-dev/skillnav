@@ -2,13 +2,13 @@
 
 /**
  * Sync MCP servers from external discovery sources to Supabase.
- * Sources: Official MCP Registry, Smithery
+ * Source: Official MCP Registry (Smithery removed 2026-11: its registry API
+ * returned ~1 server and its MCP Proxy shut down on 2026-10-31).
  *
  * Usage:
  *   node scripts/sync-mcp-servers.mjs                         # Sync all sources
  *   node scripts/sync-mcp-servers.mjs --dry-run               # Preview only
  *   node scripts/sync-mcp-servers.mjs --source mcp-registry   # Only MCP Registry
- *   node scripts/sync-mcp-servers.mjs --source smithery        # Only Smithery
  *   node scripts/sync-mcp-servers.mjs --incremental            # Only new servers
  *   node scripts/sync-mcp-servers.mjs --limit 50               # Limit per source
  */
@@ -21,12 +21,11 @@ import { createAdminClient } from "./lib/supabase-admin.mjs";
 import { createLogger } from "./lib/logger.mjs";
 import { validateEnv } from "./lib/validate-env.mjs";
 import { fetchMcpRegistryServers } from "./lib/sources/mcp-registry.mjs";
-import { fetchSmitheryServers } from "./lib/sources/smithery.mjs";
-import { transformRegistryEntry, transformSmitheryEntry } from "./lib/mcp-transform.mjs";
+import { transformRegistryEntry } from "./lib/mcp-transform.mjs";
 
 const log = createLogger("mcp-sync");
 
-const VALID_SOURCES = ["mcp-registry", "smithery"];
+const VALID_SOURCES = ["mcp-registry"];
 
 // ─── Fetch existing servers for dedup ────────────────────────────────
 
@@ -129,38 +128,6 @@ async function main() {
       sourceCounts["mcp-registry"] = allRows.length;
     } catch (err) {
       log.error(`MCP Registry failed: ${err.message}`);
-    }
-  }
-
-  // 2. Smithery
-  if (!sourceFilter || sourceFilter === "smithery") {
-    log.info(`\n${"=".repeat(60)}`);
-    log.info("Source: Smithery");
-
-    const prevCount = allRows.length;
-
-    try {
-      let entries = await fetchSmitheryServers();
-      log.info(`Fetched ${entries.length} servers from Smithery`);
-
-      if (limit !== Infinity) entries = entries.slice(0, limit);
-
-      for (const entry of entries) {
-        const row = transformSmitheryEntry(entry);
-        if (!row) continue;
-
-        // Incremental dedup
-        if (incremental) {
-          if (existingSlugs.has(row.slug)) continue;
-          if (row.github_url && existingUrls.has(row.github_url.toLowerCase())) continue;
-        }
-
-        allRows.push(row);
-      }
-
-      sourceCounts["smithery"] = allRows.length - prevCount;
-    } catch (err) {
-      log.error(`Smithery failed: ${err.message}`);
     }
   }
 
