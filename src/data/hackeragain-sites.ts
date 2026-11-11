@@ -256,6 +256,16 @@ export const hackerAgainSites: HackerAgainSite[] = [
     status: "online",
   },
   {
+    slug: "still-working-on-it",
+    nameZh: "Still Working On It",
+    nameEn: "Still Working On It",
+    blurbZh: "可搜索 2009 年以来 HN「What are you working on?」帖子里的项目，看看大家在做什么。",
+    category: "产品",
+    language: "en",
+    url: "https://stillworkingonit.vercel.app/",
+    status: "online",
+  },
+  {
     slug: "hackerpodcasts",
     nameZh: "HackerPodcasts",
     nameEn: "HackerPodcasts",
@@ -334,6 +344,16 @@ export const hackerAgainSites: HackerAgainSite[] = [
     category: "目录",
     language: "en",
     url: "https://hackereverything.pages.dev/",
+    status: "online",
+  },
+  {
+    slug: "y-recombinator",
+    nameZh: "Y Recombinator",
+    nameEn: "Y Recombinator",
+    blurbZh: "汇总 HN 用户互相推荐的帖子和评论，按推荐人数排序、分话题浏览。",
+    category: "目录",
+    language: "en",
+    url: "https://yrecombinator.org/",
     status: "online",
   },
   {
